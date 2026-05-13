@@ -38,7 +38,7 @@ class SceneDelegate: UIResponder, UIWindowSceneDelegate {
         self.window = UIWindow(frame: windowScene.coordinateSpace.bounds)
         self.window?.windowScene = windowScene
 
-        AuthHelper.registerBlock(forCurrentUserChangeNotifications: scene) {
+        AuthHelper.registerBlockForCurrentUserChangeNotifications(scene) {
             self.resetViewState {
                 self.setupRootViewController()
             }

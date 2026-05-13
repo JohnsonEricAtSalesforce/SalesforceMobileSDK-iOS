@@ -64,7 +64,7 @@ public class AuthCoordinatorFrontdoorBridgeLoginOverride: NSObject {
         }
         
         // Check if the client_id matches the app's consumer key
-        guard let appConsumerKey = SalesforceManager.shared.bootConfig?.remoteAccessConsumerKey else {
+        guard let appConsumerKey = SalesforceManager.shared.appConfig?.remoteAccessConsumerKey else {
             return
         }
         self.matchesConsumerKey = frontdoorBridgeUrlClientId == appConsumerKey

@@ -44,7 +44,7 @@ public protocol SalesforceLogReceiver {
      *   - message: The log entry's message
      */
     func receive(
-        level: SalesforceLogger.Level,
+        level: SFLogLevel,
         cls: AnyClass,
         component: String,
         message: String

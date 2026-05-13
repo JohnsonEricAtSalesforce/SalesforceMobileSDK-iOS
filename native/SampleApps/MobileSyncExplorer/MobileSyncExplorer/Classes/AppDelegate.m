@@ -44,7 +44,7 @@
     if (self) {
         MobileSyncExplorerConfig *config = [MobileSyncExplorerConfig sharedInstance];
         [SFSDKDatasharingHelper sharedInstance].appGroupName = config.appGroupName;
-        [SFSDKDatasharingHelper sharedInstance].appGroupEnabled = config.appGroupsEnabled;
+        [SFSDKDatasharingHelper sharedInstance].isAppGroupEnabled = config.appGroupsEnabled;
 
         [MobileSyncSDKManager initializeSDK];
 
@@ -74,11 +74,11 @@
                [[SFPushNotificationManager sharedInstance] registerForRemoteNotifications];
             });
         } else {
-            [SFLogger d:[self class] format:@"Push notification authorization denied"];
+            [SFLogger d:[self class] message:@"Push notification authorization denied"];
         }
 
         if (error) {
-            [SFLogger e:[self class] format:@"Push notification authorization error: %@", error];
+            [SFLogger e:[self class] message:[NSString stringWithFormat:@"Push notification authorization error: %@", error]];
         }
     }];
 }
@@ -91,7 +91,7 @@
 
 - (void)didRegisterForRemoteNotificationsWithDeviceToken:(NSData *)deviceToken {
     [[SFPushNotificationManager sharedInstance] didRegisterForRemoteNotificationsWithDeviceToken:deviceToken];
-    if ([SFUserAccountManager sharedInstance].currentUser.credentials.accessToken != nil) {
+    if ([SFUserAccountManager shared].currentUserAccount.credentials.accessToken != nil) {
         [[SFPushNotificationManager sharedInstance] registerSalesforceNotificationsWithCompletionBlock:nil failBlock:nil];
     }
 }

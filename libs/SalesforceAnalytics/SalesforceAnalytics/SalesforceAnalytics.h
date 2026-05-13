@@ -27,11 +27,5 @@
  WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#import <SalesforceAnalytics/SFSDKEventStoreManager.h>
-#import <SalesforceAnalytics/SFSDKAnalyticsLogger.h>
-#import <SalesforceAnalytics/SFSDKDeviceAppAttributes.h>
-#import <SalesforceAnalytics/SFSDKInstrumentationEvent.h>
-#import <SalesforceAnalytics/SFSDKTransform.h>
-#import <SalesforceAnalytics/SFSDKAILTNTransform.h>
-#import <SalesforceAnalytics/SFSDKAnalyticsManager.h>
-#import <SalesforceAnalytics/SFSDKInstrumentationEventBuilder.h>
+// Objective-C headers have been migrated to Swift
+// Swift types are automatically available when importing this framework

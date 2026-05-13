@@ -27,34 +27,5 @@
  WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#import <MobileSync/SFObject.h>
-#import <MobileSync/SFParentChildrenSyncDownTarget.h>
-#import <MobileSync/SFMobileSyncObjectUtils.h>
-#import <MobileSync/SFRefreshSyncDownTarget.h>
-#import <MobileSync/SFMobileSyncSyncManager.h>
-#import <MobileSync/SFMobileSyncNetworkUtils.h>
-#import <MobileSync/SFMobileSyncConstants.h>
-#import <MobileSync/SFMetadataSyncDownTarget.h>
-#import <MobileSync/SFLayout.h>
-#import <MobileSync/SFMetadata.h>
-#import <MobileSync/SFMetadataSyncManager.h>
-#import <MobileSync/SFMobileSyncPersistableObject.h>
-#import <MobileSync/SFBatchSyncUpTarget.h>
-#import <MobileSync/SFSoslSyncDownTarget.h>
-#import <MobileSync/SFChildrenInfo.h>
-#import <MobileSync/SFSyncTarget.h>
-#import <MobileSync/SFLayoutSyncManager.h>
-#import <MobileSync/SFParentChildrenSyncHelper.h>
-#import <MobileSync/SFSyncUpTarget.h>
-#import <MobileSync/SFMruSyncDownTarget.h>
-#import <MobileSync/SFLayoutSyncDownTarget.h>
-#import <MobileSync/SFAdvancedSyncUpTarget.h>
-#import <MobileSync/SFSyncDownTarget.h>
-#import <MobileSync/MobileSyncSDKManager.h>
-#import <MobileSync/SFParentChildrenSyncUpTarget.h>
-#import <MobileSync/SFParentInfo.h>
-#import <MobileSync/SFSDKMobileSyncLogger.h>
-#import <MobileSync/SFSyncState.h>
-#import <MobileSync/SFSoqlSyncDownTarget.h>
-#import <MobileSync/SFSyncOptions.h>
-#import <MobileSync/SFSDKSyncsConfig.h>
+// All Objective-C headers have been migrated to Swift
+// Swift types are automatically available when importing this framework

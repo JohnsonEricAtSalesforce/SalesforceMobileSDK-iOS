@@ -1,0 +1,98 @@
+/*
+Copyright (c) 2022-present, salesforce.com, inc. All rights reserved.
+
+Redistribution and use of this software in source and binary forms, with or without modification,
+are permitted provided that the following conditions are met:
+* Redistributions of source code must retain the above copyright notice, this list of conditions
+and the following disclaimer.
+* Redistributions in binary form must reproduce the above copyright notice, this list of
+conditions and the following disclaimer in the documentation and/or other materials provided
+with the distribution.
+* Neither the name of salesforce.com, inc. nor the names of its contributors may be used to
+endorse or promote products derived from this software without specific prior written
+permission of salesforce.com, inc.
+
+THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR
+IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND
+FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR
+CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY,
+WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY
+WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+*/
+
+import Foundation
+
+/**
+ Class to represent response for a sobject collection create/update/upsert or delete request.
+ */
+
+@objc(SFSDKCollectionErrorResponse)
+@objcMembers
+public class CollectionErrorResponse: NSObject {
+    public let statusCode: String
+    public let message: String
+    public let fields: [String]
+    public let json: [String: Any]
+
+    @objc
+    public init(with dict: [String: Any]) {
+        self.json = dict
+        self.statusCode = dict["statusCode"] as? String ?? ""
+        self.message = dict["message"] as? String ?? ""
+        self.fields = dict["fields"] as? [String] ?? []
+        super.init()
+    }
+
+    public override var description: String {
+        return json.description
+    }
+}
+
+@objc(SFSDKCollectionSubResponse)
+@objcMembers
+public class CollectionSubResponse: NSObject {
+    public let objectId: String
+    public let success: Bool
+    public let errors: [CollectionErrorResponse]
+    public let json: [String: Any]
+
+    @objc
+    public init(with dict: [String: Any]) {
+        self.json = dict
+        self.objectId = dict["id"] as? String ?? ""
+        self.success = (dict["success"] as? NSNumber)?.boolValue ?? false
+
+        let rawErrors = dict["errors"] as? [[String: Any]] ?? []
+        var errorsArray = [CollectionErrorResponse]()
+        for errorDict in rawErrors {
+            errorsArray.append(CollectionErrorResponse(with: errorDict))
+        }
+        self.errors = errorsArray
+
+        super.init()
+    }
+
+    public override var description: String {
+        return json.description
+    }
+}
+
+@objc(SFSDKCollectionResponse)
+@objcMembers
+public class CollectionResponse: NSObject {
+    public let subResponses: [CollectionSubResponse]
+
+    @objc
+    public init(with array: [Any]) {
+        var subResponsesArray = [CollectionSubResponse]()
+        for item in array {
+            if let dict = item as? [String: Any] {
+                subResponsesArray.append(CollectionSubResponse(with: dict))
+            }
+        }
+        self.subResponses = subResponsesArray
+        super.init()
+    }
+}

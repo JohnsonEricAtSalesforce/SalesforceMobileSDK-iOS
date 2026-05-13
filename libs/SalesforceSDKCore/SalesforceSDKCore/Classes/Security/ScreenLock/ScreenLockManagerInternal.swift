@@ -27,6 +27,7 @@
 
 import Foundation
 import SwiftUI
+import SalesforceSDKCommon
 
 // Callback block used to launch the app when the screen is unlocked.
 public typealias ScreenLockCallbackBlock = () -> Void
@@ -54,7 +55,7 @@ public class ScreenLockManagerInternal: NSObject, ScreenLockManager {
     private override init() {
         super.init()
         NotificationCenter.default.addObserver(forName: UIApplication.didEnterBackgroundNotification, object: nil, queue: nil) { [weak self] _ in
-            if !SFSDKWindowManager.shared().screenLockWindow().isEnabled() {
+            if !SFSDKWindowManager.shared.screenLockWindow(nil).isEnabled() {
                 self?.backgroundTimestamp = Date().timeIntervalSince1970
             }
         }
@@ -93,7 +94,7 @@ public class ScreenLockManagerInternal: NSObject, ScreenLockManager {
     ///   - lockTimeout: The length of time in minutes before the app will be locked after backgrounding
     @objc public func storeMobilePolicy(userAccount: UserAccount, hasMobilePolicy: Bool, lockTimeout: Int32) {
         let hasPolicyData = try! JSONEncoder().encode(MobilePolicy(hasPolicy: hasMobilePolicy, timeout: lockTimeout))
-        let result = KeychainHelper.write(service: kScreenLockIdentifier, data: hasPolicyData, account: userAccount.idData.userId)
+        let result = KeychainHelper.write(service: kScreenLockIdentifier, data: hasPolicyData, account: userAccount.idData?.userId)
         if result.success {
             SFSDKCoreLogger.i(ScreenLockManagerInternal.self, message: "Mobile policy stored for user.")
         } else {
@@ -126,7 +127,8 @@ public class ScreenLockManagerInternal: NSObject, ScreenLockManager {
         }
         
         let allPolicies = UserAccountManager.shared.userAccounts()?.compactMap { userAccount -> MobilePolicy? in
-            readMobilePolicy(id: userAccount.idData.userId)
+            guard let userId = userAccount.idData?.userId else { return nil }
+            return readMobilePolicy(id: userId)
         }
         
         let strictestPolicy = allPolicies?
@@ -152,15 +154,16 @@ public class ScreenLockManagerInternal: NSObject, ScreenLockManager {
         let userAccounts = UserAccountManager.shared.userAccounts()
         
         userAccounts?.forEach({ account in
-            let hasMobilePolicy = account.idData.mobileAppPinLength > 0 && account.idData.mobileAppScreenLockTimeout != -1
-            self.storeMobilePolicy(userAccount: account, hasMobilePolicy: hasMobilePolicy, lockTimeout: account.idData.mobileAppScreenLockTimeout)
+            guard let idData = account.idData else { return }
+            let hasMobilePolicy = idData.mobileAppPinLength > 0 && idData.mobileAppScreenLockTimeout != -1
+            self.storeMobilePolicy(userAccount: account, hasMobilePolicy: hasMobilePolicy, lockTimeout: idData.mobileAppScreenLockTimeout)
         })
     }
     
     @objc func logoutScreenLockUsers() {
         if let accounts = UserAccountManager.shared.userAccounts() {
             accounts.forEach { userAccount in
-                let id = userAccount.idData.userId
+                let id = userAccount.idData?.userId
                 let result = KeychainHelper.read(service: kScreenLockIdentifier, account: id)
                 if result.success && result.data != nil {
                     do {
@@ -215,8 +218,8 @@ public class ScreenLockManagerInternal: NSObject, ScreenLockManager {
         // Send flow will begin notification
         SFSDKCoreLogger.d(ScreenLockManagerInternal.self, message: "Sending screen lock flow completed notification")
         NotificationCenter.default.post(name: Notification.Name(rawValue: kSFScreenLockFlowCompleted), object: nil)
-        
-        SFSDKWindowManager.shared().screenLockWindow().dismissWindow()
+
+        SFSDKWindowManager.shared.screenLockWindow(nil).dismissWindow()
         unlockPostProcessing()
     }
     
@@ -227,20 +230,20 @@ public class ScreenLockManagerInternal: NSObject, ScreenLockManager {
             }
         }
         
-        if SFSDKWindowManager.shared().snapshotWindow(nil).isEnabled() {
-            SFSDKWindowManager.shared().snapshotWindow(nil).dismissWindow()
+        if SFSDKWindowManager.shared.snapshotWindow(nil).isEnabled() {
+            SFSDKWindowManager.shared.snapshotWindow(nil).dismissWindow()
         }
-        
+
         // Send flow will begin notification
         SFSDKCoreLogger.d(ScreenLockManagerInternal.self, message: "Sending Screen Lock flow will begin notification")
         NotificationCenter.default.post(name: Notification.Name(rawValue: kSFScreenLockFlowWillBegin), object: nil)
-        
+
         // Launch Screen Lock
         let screenLockViewController = UIHostingController(rootView: ScreenLockUIView())
         screenLockViewController.modalPresentationStyle = .fullScreen
-        SFSDKWindowManager.shared().screenLockWindow().presentWindow(animated: false) {
-            SFSDKWindowManager.shared().screenLockWindow().viewController?.present(screenLockViewController, animated: false, completion: nil)
-        }
+        SFSDKWindowManager.shared.screenLockWindow(nil).presentWindowAnimated(false, withCompletion: {
+            SFSDKWindowManager.shared.screenLockWindow(nil).viewController?.present(screenLockViewController, animated: false, completion: nil)
+        })
     }
 
     @objc public func checkForPolicy(userId: String) -> Bool {

@@ -22,20 +22,28 @@
  WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#import "SFUserAccountManager.h"
-#import "SFSDKUserSelectionView.h"
-#import "SFSDKLoginFlowSelectionView.h"
-#import "SFSDKAlertView.h"
-#import "SFSDKAuthErrorManager.h"
-#import "SFSDKAuthSession.h"
-#import "SFDefaultUserManagementListViewController.h"
-#import "SFIdentityCoordinator+Internal.h"
-#import "SFSDKLoginHostDelegate.h"
-#import "SFLoginViewController.h"
-#import "SFSDKAuthViewHandler.h"
-#import <SalesforceSDKCommon/SFSDKSafeMutableDictionary.h>
-
+// Forward declarations for Swift classes (migrated from Objective-C)
+@class SFUserAccountManager;
+@class SFUserAccount;
+@class SFUserAccountIdentity;
+@class SFOAuthCoordinator;
+@class SFOAuthInfo;
+@class SFIdentityCoordinator;
 @class SFSDKAuthPreferences;
+@class SFSDKAlertView;
+@class SFSDKAuthSession;
+
+// Protocols
+@protocol SFOAuthCoordinatorDelegate;
+@protocol SFIdentityCoordinatorDelegate;
+@protocol SFSDKLoginHostDelegate;
+@protocol SFSDKUserSelectionViewDelegate;
+@protocol SFSDKLoginFlowSelectionViewDelegate;
+@protocol SFLoginViewControllerDelegate;
+
+// Block type definitions for callbacks
+typedef void (^SFUserAccountManagerSuccessCallbackBlock)(SFOAuthInfo * _Nullable authInfo, SFUserAccount * _Nullable userAccount);
+typedef void (^SFUserAccountManagerFailureCallbackBlock)(SFOAuthInfo * _Nullable authInfo, NSError * _Nullable error);
 
 extern NSString * _Nonnull const kSFSDKUserAccountManagerErrorDomain;
 

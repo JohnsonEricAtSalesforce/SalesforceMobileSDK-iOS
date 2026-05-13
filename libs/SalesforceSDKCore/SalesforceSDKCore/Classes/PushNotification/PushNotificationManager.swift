@@ -26,6 +26,7 @@
 //  WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 import Foundation
+import UIKit
 
 struct PushNotificationConstants {
     static let deviceToken = "deviceToken"
@@ -152,7 +153,7 @@ public class PushNotificationManager: NSObject {
             return
         }
         self.deviceToken = hexString
-        if let prefs = SFPreferences.currentUserLevel() {
+        if let prefs = SFPreferences.currentUserAccountLevelPreferences() {
             prefs.setObject(hexString, forKey: PushNotificationConstants.deviceToken)
             prefs.synchronize()
         }
@@ -212,7 +213,7 @@ public class PushNotificationManager: NSObject {
         
         let apiVersion = restClient.apiVersion
         let path = "/\(apiVersion)/\(PushNotificationConstants.endPoint)"
-        let request = RestRequest(method: .POST, path: path, queryParams: nil)
+        let request = RestRequest(method: .POST, serviceHostType: .instance, baseURL: nil, path: path, queryParams: nil)
         
         let bundleId = Bundle.main.bundleIdentifier ?? ""
         var bodyDict: [String: Any] = [
@@ -257,8 +258,8 @@ public class PushNotificationManager: NSObject {
                 
                 SFSDKCoreLogger.i(Self.self, message: "Registration succeeded")
                 self.deviceSalesforceId = json["id"] as? String
-                
-                let prefs = SFPreferences.currentUserLevel()
+
+                let prefs = SFPreferences.currentUserAccountLevelPreferences()
                 prefs?.setObject(self.deviceSalesforceId ?? "", forKey: PushNotificationConstants.deviceSalesforceId)
                 prefs?.synchronize()
                 
@@ -335,6 +336,8 @@ public class PushNotificationManager: NSObject {
         let apiVersion = restClient.apiVersion
         let path = "/\(apiVersion)/\(PushNotificationConstants.endPoint)/\(sfId)"
         let request = RestRequest(method: .DELETE,
+                                  serviceHostType: .instance,
+                                  baseURL: nil,
                                   path: path,
                                   queryParams: nil)
         Task {
@@ -386,10 +389,10 @@ public class PushNotificationManager: NSObject {
     public func getRSAPublicKey() -> String? {
         let name = PushNotificationManagerConstants.kPNEncryptionKeyName
         let length = PushNotificationManagerConstants.kPNEncryptionKeyLength
-        var key = SFSDKCryptoUtils.getRSAPublicKeyString(withName: name, keyLength: length)
+        var key = CryptoUtils.getRSAPublicKeyString(withName: name, keyLength: length)
         if key == nil {
-            SFSDKCryptoUtils.createRSAKeyPair(withName: name, keyLength: length, accessibleAttribute: kSecAttrAccessibleAfterFirstUnlockThisDeviceOnly)
-            key = SFSDKCryptoUtils.getRSAPublicKeyString(withName: name, keyLength: length)
+            CryptoUtils.createRSAKeyPair(withName: name, keyLength: length, accessibleAttribute: kSecAttrAccessibleAfterFirstUnlockThisDeviceOnly)
+            key = CryptoUtils.getRSAPublicKeyString(withName: name, keyLength: length)
         }
         return key
     }
@@ -446,19 +449,19 @@ private extension PushNotificationManager {
     
     private func setupNotificationObservers() {
         loginObserver =  NotificationCenter.default.addObserver(
-            forName: UserAccountManager.didLogInUser,
+            forName: .UserAccountManagerDidLogInUser,
             object: nil,
             queue: .main
         ) { [weak self] in self?.onUserLoggedIn($0) }
-        
+
         enterForegroundObserver = NotificationCenter.default.addObserver(
             forName: UIApplication.willEnterForegroundNotification,
             object: nil,
             queue: .main
         ) { [weak self] in self?.onAppWillEnterForeground($0) }
-        
+
         migrateRefreshTokenObserver = NotificationCenter.default.addObserver(
-            forName: UserAccountManager.didMigrateRefreshToken,
+            forName: .UserAccountManagerDidMigrateRefreshToken,
             object: nil,
             queue: .main
         ) { [weak self] in self?.onUserMigratedRefreshToken($0) }

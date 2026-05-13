@@ -56,8 +56,8 @@ final class DefaultRemoteNotificationRegistrar: RemoteNotificationRegistering {
     
     func preferences(for user: UserAccount?) -> SFPreferences? {
         guard let account = user else {
-            return SFPreferences.currentUserLevel()
+            return SFPreferences.currentUserAccountLevelPreferences()
         }
-        return SFPreferences.sharedPreferences(for: .user, user: account)
+        return SFPreferences.sharedPreferences(forScope: .user, user: account)
     }
 }

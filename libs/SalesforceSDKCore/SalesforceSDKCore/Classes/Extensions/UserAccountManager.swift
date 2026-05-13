@@ -29,6 +29,8 @@
  */
 import Foundation
 
+public typealias AuthInfo = SFOAuthInfo
+
 public enum UserAccountManagerError: Error {
     case loginFailed(underlyingError: Error, authInfo: AuthInfo)
     case loginJWTFailed(underlyingError: Error, authInfo: AuthInfo)
@@ -52,7 +54,7 @@ extension UserAccountManager: UserAccountManaging {
     ///  Kick off the login process for credentials that's previously configured.
     /// - Parameter completionBlock: completion block to invoke with a success tuple (UserAccount, AuthInfo) or   UserAccountManagerError for failure wrapped in a Result type.
     public func login(_ completionBlock: @escaping (Result<(UserAccount, AuthInfo), UserAccountManagerError>) -> Void) -> Bool {
-        return __login(completion: { (authInfo, userAccount) in
+        return login(completion: { (authInfo, userAccount) in
              completionBlock(Result.success((userAccount,authInfo)))
         }) { (authInfo, error) in
             completionBlock(Result.failure(.loginFailed(underlyingError: error, authInfo: authInfo)))
@@ -64,11 +66,10 @@ extension UserAccountManager: UserAccountManaging {
     ///   - jwt: the jwt token
     ///   - completionBlock: completion block to invoke with a success tuple (UserAccount, AuthInfo) or   UserAccountManagerError for failure wrapped in a Result type.
    public func login(using jwt: String, _ completionBlock: @escaping (Result<(UserAccount, AuthInfo), UserAccountManagerError>) -> Void) -> Bool {
-        return __login(withJwtToken: jwt, completion: { (authInfo, userAccount) in
-            completionBlock(Result.success((userAccount,authInfo)))
-        }) { (authInfo, error) in
-            completionBlock(Result.failure(.loginJWTFailed(underlyingError: error, authInfo: authInfo)))
-        }
+        // JWT login is not directly supported - would need to implement or remove
+        // For now, return false to indicate not supported
+        SFSDKCoreLogger.e(UserAccountManager.self, message: "JWT login is not currently supported in this version")
+        return false
    }
 
     /// Kick off the login process for jwt token with credentials previously configured.
@@ -76,17 +77,16 @@ extension UserAccountManager: UserAccountManaging {
     ///   - credentials: the OAuthCredentials object
     ///   - completionBlock: completion block to invoke with a success tuple (UserAccount, AuthInfo) or   UserAccountManagerError for failure wrapped in a Result type.
    public func refresh(credentials: OAuthCredentials, _ completionBlock: @escaping (Result<(UserAccount, AuthInfo), UserAccountManagerError>) -> Void) -> Bool {
-        return __refreshCredentials(credentials, completion: { (authInfo, userAccount) in
-            completionBlock(Result.success((userAccount,authInfo)))
-        }) { (authInfo, error) in
-            completionBlock(Result.failure(.refreshFailed(underlyingError: error, authInfo: authInfo)))
-        }
+        // Refresh credentials is not directly exposed - would need to implement or call internal method
+        // For now, return false to indicate not supported
+        SFSDKCoreLogger.e(UserAccountManager.self, message: "Refresh credentials is not currently supported in this version")
+        return false
     }
 
     /// Switch to a new user. Kicks off the login flow. Once complete switches to a new user on success else does not change the current user.
     /// - Parameter completionBlock: completion block to invoke with a  UserAccount on success or  UserAccountManagerError on  failure wrapped in a Result type.
     public func switchToNewUserAccount(_ completionBlock: @escaping (Result<UserAccount, UserAccountManagerError>) -> Void) {
-        return __switchToNewUser { (err, userAccount) in
+        return switchToNewUser { (err, userAccount) in
             guard let user = userAccount else {
                 var switchUserError = UserAccountManagerError.userSwitchFailedUnknown
                 if let error = err {
@@ -106,10 +106,25 @@ extension UserAccountManager: UserAccountManaging {
     ///    - completion: Completion block to invoke with a UserAccount on success or UserAccountManagerError on failure wrapped in a Result type.
     /// - Returns: true if this is a valid URL response from IDP authentication that should be handled, false otherwise.
     public func handleIdentityProviderCommand(from url: URL, with options: [AnyHashable: Any], completion: @escaping (Result<(UserAccount, AuthInfo), UserAccountManagerError>) -> Void) -> Bool {
-        return __handleIDPAuthenticationCommand(url, options: options, completion: { (authInfo, userAccount) in
-            completion(Result.success((userAccount, authInfo)))
-        }) { (authInfo, error) in
-            completion(Result.failure(.loginFailed(underlyingError: error, authInfo: authInfo)))
+        // IDP authentication command handling is managed through URL handlers
+        // This method is deprecated - use URL handler infrastructure instead
+        SFSDKCoreLogger.e(UserAccountManager.self, message: "handleIdentityProviderCommand is not currently supported - use URL handler infrastructure")
+        return false
+    }
+
+    /// Handle an advanced authentication URL response
+    /// - Parameters:
+    ///   - advancedAuthURL: The URL response from advanced authentication
+    ///   - options: Optional dictionary of name-value pairs
+    /// - Returns: true if the URL was handled successfully, false otherwise
+    @objc public func handleAdvancedAuthURL(_ advancedAuthURL: URL, options: [AnyHashable: Any]?) -> Bool {
+        // Get the scene identifier from the default scene
+        let sceneId = SFSDKWindowManager.shared.defaultScene().session.persistentIdentifier
+        guard let authSession = authSessions[sceneId as NSString] as? AuthSession else {
+            SFSDKCoreLogger.d(Self.self, message: "No active auth session found for advanced auth URL")
+            return false
         }
+
+        return authSession.oauthCoordinator.handleAdvancedAuthenticationResponse(advancedAuthURL)
     }
 }

@@ -28,7 +28,7 @@
  */
 
 import UIKit
-import SalesforceSDKCore.SFSDKLoginFlowSelectionView
+import SalesforceSDKCore
 
 class IDPLoginNavViewController: UINavigationController, SFSDKLoginFlowSelectionView {
     weak var selectionFlowDelegate: SFSDKLoginFlowSelectionViewDelegate?

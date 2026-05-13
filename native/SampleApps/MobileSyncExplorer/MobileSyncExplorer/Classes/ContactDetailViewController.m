@@ -282,7 +282,7 @@
 }
 
 - (UIButton *)deleteButtonView {
-    BOOL deleted = ([[self.contact fieldValueForFieldName:kSyncTargetLocallyDeleted] boolValue]);
+    BOOL deleted = ([[self.contact fieldValueForFieldName:@"__locally_deleted__"] boolValue]);
     UIButtonConfiguration *configuration = [UIButtonConfiguration plainButtonConfiguration];
     configuration.contentInsets = NSDirectionalEdgeInsetsMake(0, 15, 0, 0);
     UIButton *deleteButton = [UIButton buttonWithConfiguration:configuration primaryAction:nil];

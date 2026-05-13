@@ -33,34 +33,25 @@
 		CE2B8E111CE9352B00C6FC6A /* en.lproj in Resources */ = {isa = PBXBuildFile; fileRef = CE2B8C501CE9245B00C6FC6A /* en.lproj */; };
 		CE2B8E131CE9352B00C6FC6A /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = CE2B8C3B1CE9218900C6FC6A /* Assets.xcassets */; };
 		CE2B8FEB1CF5515E00C6FC6A /* SalesforceAnalytics-Prefix.pch in Headers */ = {isa = PBXBuildFile; fileRef = CE2B8FEA1CF5515E00C6FC6A /* SalesforceAnalytics-Prefix.pch */; };
-		CE2B8FED1CF551CC00C6FC6A /* SFSDKDeviceAppAttributes.h in Headers */ = {isa = PBXBuildFile; fileRef = CE2B8FEC1CF551CC00C6FC6A /* SFSDKDeviceAppAttributes.h */; settings = {ATTRIBUTES = (Public, ); }; };
-		CE2B8FF01CF555EF00C6FC6A /* SFSDKDeviceAppAttributes.m in Sources */ = {isa = PBXBuildFile; fileRef = CE2B8FEF1CF555EF00C6FC6A /* SFSDKDeviceAppAttributes.m */; };
-		CE2B8FF81CF5FF8A00C6FC6A /* SFSDKInstrumentationEvent.h in Headers */ = {isa = PBXBuildFile; fileRef = CE2B8FF71CF5FF8A00C6FC6A /* SFSDKInstrumentationEvent.h */; settings = {ATTRIBUTES = (Public, ); }; };
-		CE2B8FFE1CF6032C00C6FC6A /* SFSDKInstrumentationEvent.m in Sources */ = {isa = PBXBuildFile; fileRef = CE2B8FFD1CF6032C00C6FC6A /* SFSDKInstrumentationEvent.m */; };
-		CE2B91B01D03A61000C6FC6A /* SFSDKEventStoreManager.h in Headers */ = {isa = PBXBuildFile; fileRef = CE2B91AE1D03A61000C6FC6A /* SFSDKEventStoreManager.h */; settings = {ATTRIBUTES = (Public, ); }; };
-		CE2B91B11D03A61000C6FC6A /* SFSDKEventStoreManager.m in Sources */ = {isa = PBXBuildFile; fileRef = CE2B91AF1D03A61000C6FC6A /* SFSDKEventStoreManager.m */; };
-		CE47129B1F04257600D9E059 /* SFSDKAnalyticsLogger.h in Headers */ = {isa = PBXBuildFile; fileRef = CE4712991F04257600D9E059 /* SFSDKAnalyticsLogger.h */; settings = {ATTRIBUTES = (Public, ); }; };
-		CE47129C1F04257600D9E059 /* SFSDKAnalyticsLogger.m in Sources */ = {isa = PBXBuildFile; fileRef = CE47129A1F04257600D9E059 /* SFSDKAnalyticsLogger.m */; };
 		CEF371A81D0E57ED0004A237 /* Foundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = CEF371A71D0E57ED0004A237 /* Foundation.framework */; };
 		CEF371AA1D0E57F50004A237 /* UIKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = CEF371A91D0E57F50004A237 /* UIKit.framework */; };
 		CEF371AB1D0E58000004A237 /* Foundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = CEF371A71D0E57ED0004A237 /* Foundation.framework */; };
 		CEF371AC1D0E58070004A237 /* UIKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = CEF371A91D0E57F50004A237 /* UIKit.framework */; };
 		CEF371AF1D0E58260004A237 /* Foundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = CEF371A71D0E57ED0004A237 /* Foundation.framework */; };
 		CEF371B01D0E582C0004A237 /* UIKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = CEF371A91D0E57F50004A237 /* UIKit.framework */; };
-		CEF371B41D0F6E6D0004A237 /* SFSDKInstrumentationEvent+Internal.h in Headers */ = {isa = PBXBuildFile; fileRef = CEF371B31D0F6E6D0004A237 /* SFSDKInstrumentationEvent+Internal.h */; };
 		CEF371E51D10D7E60004A237 /* Main_iPad.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = CEF371E31D10D7E60004A237 /* Main_iPad.storyboard */; };
 		CEF371E61D10D7E60004A237 /* Main_iPhone.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = CEF371E41D10D7E60004A237 /* Main_iPhone.storyboard */; };
 		CEF371E81D11B76E0004A237 /* EventStoreManagerTests.m in Sources */ = {isa = PBXBuildFile; fileRef = CEF371E71D11B76E0004A237 /* EventStoreManagerTests.m */; };
 		CEF372461D12100D0004A237 /* AnalyticsTestUtil.m in Sources */ = {isa = PBXBuildFile; fileRef = CEF372451D12100D0004A237 /* AnalyticsTestUtil.m */; };
-		CEF372CB1D1324040004A237 /* SFSDKAILTNTransform.h in Headers */ = {isa = PBXBuildFile; fileRef = CEF372C81D1324040004A237 /* SFSDKAILTNTransform.h */; settings = {ATTRIBUTES = (Public, ); }; };
-		CEF372CC1D1324040004A237 /* SFSDKAILTNTransform.m in Sources */ = {isa = PBXBuildFile; fileRef = CEF372C91D1324040004A237 /* SFSDKAILTNTransform.m */; };
-		CEF372CD1D1324040004A237 /* SFSDKTransform.h in Headers */ = {isa = PBXBuildFile; fileRef = CEF372CA1D1324040004A237 /* SFSDKTransform.h */; settings = {ATTRIBUTES = (Public, ); }; };
-		CEFEB5531D048A7B007D5EAE /* SFSDKInstrumentationEventBuilder.h in Headers */ = {isa = PBXBuildFile; fileRef = CEFEB5511D048A7B007D5EAE /* SFSDKInstrumentationEventBuilder.h */; settings = {ATTRIBUTES = (Public, ); }; };
-		CEFEB5541D048A7B007D5EAE /* SFSDKInstrumentationEventBuilder.m in Sources */ = {isa = PBXBuildFile; fileRef = CEFEB5521D048A7B007D5EAE /* SFSDKInstrumentationEventBuilder.m */; };
 		CEFEB55A1D05063F007D5EAE /* InstrumentationEventBuilderTests.m in Sources */ = {isa = PBXBuildFile; fileRef = CEFEB5591D05063F007D5EAE /* InstrumentationEventBuilderTests.m */; };
-		CEFEB55F1D050E4C007D5EAE /* SFSDKAnalyticsManager.h in Headers */ = {isa = PBXBuildFile; fileRef = CEFEB55D1D050E4C007D5EAE /* SFSDKAnalyticsManager.h */; settings = {ATTRIBUTES = (Public, ); }; };
-		CEFEB5601D050E4C007D5EAE /* SFSDKAnalyticsManager.m in Sources */ = {isa = PBXBuildFile; fileRef = CEFEB55E1D050E4C007D5EAE /* SFSDKAnalyticsManager.m */; };
-		CEFEB5621D05DFFA007D5EAE /* SFSDKAnalyticsManager+Internal.h in Headers */ = {isa = PBXBuildFile; fileRef = CEFEB5611D05DFFA007D5EAE /* SFSDKAnalyticsManager+Internal.h */; };
+		SF0001001CE900F500C6FC6A /* SFSDKAnalyticsManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = SF0001011CE900F500C6FC6A /* SFSDKAnalyticsManager.swift */; };
+		SF0002001CE900F500C6FC6A /* SFSDKDeviceAppAttributes.swift in Sources */ = {isa = PBXBuildFile; fileRef = SF0002011CE900F500C6FC6A /* SFSDKDeviceAppAttributes.swift */; };
+		SF0003001CE900F500C6FC6A /* SFSDKInstrumentationEvent.swift in Sources */ = {isa = PBXBuildFile; fileRef = SF0003011CE900F500C6FC6A /* SFSDKInstrumentationEvent.swift */; };
+		SF0004001CE900F500C6FC6A /* SFSDKInstrumentationEventBuilder.swift in Sources */ = {isa = PBXBuildFile; fileRef = SF0004011CE900F500C6FC6A /* SFSDKInstrumentationEventBuilder.swift */; };
+		SF0005001CE900F500C6FC6A /* SFSDKEventStoreManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = SF0005011CE900F500C6FC6A /* SFSDKEventStoreManager.swift */; };
+		SF0006001CE900F500C6FC6A /* SFSDKAILTNTransform.swift in Sources */ = {isa = PBXBuildFile; fileRef = SF0006011CE900F500C6FC6A /* SFSDKAILTNTransform.swift */; };
+		SF0007001CE900F500C6FC6A /* SFSDKTransform.swift in Sources */ = {isa = PBXBuildFile; fileRef = SF0007011CE900F500C6FC6A /* SFSDKTransform.swift */; };
+		SF0008001CE900F500C6FC6A /* SFSDKAnalyticsLogger.swift in Sources */ = {isa = PBXBuildFile; fileRef = SF0008011CE900F500C6FC6A /* SFSDKAnalyticsLogger.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -147,31 +138,22 @@
 		CE2B8CAE1CE9281F00C6FC6A /* SalesforceAnalytics-Test.xcconfig */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.xcconfig; name = "SalesforceAnalytics-Test.xcconfig"; path = "Configuration/SalesforceAnalytics-Test.xcconfig"; sourceTree = "<group>"; };
 		CE2B8FE71CF550F900C6FC6A /* Info.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; name = Info.plist; path = "Supporting Files/Info.plist"; sourceTree = "<group>"; };
 		CE2B8FEA1CF5515E00C6FC6A /* SalesforceAnalytics-Prefix.pch */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = "SalesforceAnalytics-Prefix.pch"; path = "Supporting Files/SalesforceAnalytics-Prefix.pch"; sourceTree = "<group>"; };
-		CE2B8FEC1CF551CC00C6FC6A /* SFSDKDeviceAppAttributes.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = SFSDKDeviceAppAttributes.h; path = Classes/Model/SFSDKDeviceAppAttributes.h; sourceTree = "<group>"; };
-		CE2B8FEF1CF555EF00C6FC6A /* SFSDKDeviceAppAttributes.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = SFSDKDeviceAppAttributes.m; path = Classes/Model/SFSDKDeviceAppAttributes.m; sourceTree = "<group>"; };
-		CE2B8FF71CF5FF8A00C6FC6A /* SFSDKInstrumentationEvent.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = SFSDKInstrumentationEvent.h; path = Classes/Model/SFSDKInstrumentationEvent.h; sourceTree = "<group>"; };
-		CE2B8FFD1CF6032C00C6FC6A /* SFSDKInstrumentationEvent.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = SFSDKInstrumentationEvent.m; path = Classes/Model/SFSDKInstrumentationEvent.m; sourceTree = "<group>"; };
-		CE2B91AE1D03A61000C6FC6A /* SFSDKEventStoreManager.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = SFSDKEventStoreManager.h; path = Classes/Store/SFSDKEventStoreManager.h; sourceTree = "<group>"; };
-		CE2B91AF1D03A61000C6FC6A /* SFSDKEventStoreManager.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = SFSDKEventStoreManager.m; path = Classes/Store/SFSDKEventStoreManager.m; sourceTree = "<group>"; };
-		CE4712991F04257600D9E059 /* SFSDKAnalyticsLogger.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = SFSDKAnalyticsLogger.h; path = Classes/Util/SFSDKAnalyticsLogger.h; sourceTree = "<group>"; };
-		CE47129A1F04257600D9E059 /* SFSDKAnalyticsLogger.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = SFSDKAnalyticsLogger.m; path = Classes/Util/SFSDKAnalyticsLogger.m; sourceTree = "<group>"; };
 		CEF371A71D0E57ED0004A237 /* Foundation.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Foundation.framework; path = System/Library/Frameworks/Foundation.framework; sourceTree = SDKROOT; };
 		CEF371A91D0E57F50004A237 /* UIKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = UIKit.framework; path = System/Library/Frameworks/UIKit.framework; sourceTree = SDKROOT; };
-		CEF371B31D0F6E6D0004A237 /* SFSDKInstrumentationEvent+Internal.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = "SFSDKInstrumentationEvent+Internal.h"; path = "Classes/Model/SFSDKInstrumentationEvent+Internal.h"; sourceTree = "<group>"; };
 		CEF371E31D10D7E60004A237 /* Main_iPad.storyboard */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = file.storyboard; name = Main_iPad.storyboard; path = Base.lproj/Main_iPad.storyboard; sourceTree = "<group>"; };
 		CEF371E41D10D7E60004A237 /* Main_iPhone.storyboard */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = file.storyboard; name = Main_iPhone.storyboard; path = Base.lproj/Main_iPhone.storyboard; sourceTree = "<group>"; };
 		CEF371E71D11B76E0004A237 /* EventStoreManagerTests.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = EventStoreManagerTests.m; sourceTree = "<group>"; };
 		CEF372441D120FEE0004A237 /* AnalyticsTestUtil.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = AnalyticsTestUtil.h; sourceTree = "<group>"; };
 		CEF372451D12100D0004A237 /* AnalyticsTestUtil.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = AnalyticsTestUtil.m; sourceTree = "<group>"; };
-		CEF372C81D1324040004A237 /* SFSDKAILTNTransform.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = SFSDKAILTNTransform.h; path = Classes/Transform/SFSDKAILTNTransform.h; sourceTree = "<group>"; };
-		CEF372C91D1324040004A237 /* SFSDKAILTNTransform.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = SFSDKAILTNTransform.m; path = Classes/Transform/SFSDKAILTNTransform.m; sourceTree = "<group>"; };
-		CEF372CA1D1324040004A237 /* SFSDKTransform.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = SFSDKTransform.h; path = Classes/Transform/SFSDKTransform.h; sourceTree = "<group>"; };
-		CEFEB5511D048A7B007D5EAE /* SFSDKInstrumentationEventBuilder.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = SFSDKInstrumentationEventBuilder.h; path = Classes/Model/SFSDKInstrumentationEventBuilder.h; sourceTree = "<group>"; };
-		CEFEB5521D048A7B007D5EAE /* SFSDKInstrumentationEventBuilder.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = SFSDKInstrumentationEventBuilder.m; path = Classes/Model/SFSDKInstrumentationEventBuilder.m; sourceTree = "<group>"; };
 		CEFEB5591D05063F007D5EAE /* InstrumentationEventBuilderTests.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = InstrumentationEventBuilderTests.m; sourceTree = "<group>"; };
-		CEFEB55D1D050E4C007D5EAE /* SFSDKAnalyticsManager.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = SFSDKAnalyticsManager.h; path = Classes/Manager/SFSDKAnalyticsManager.h; sourceTree = "<group>"; };
-		CEFEB55E1D050E4C007D5EAE /* SFSDKAnalyticsManager.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = SFSDKAnalyticsManager.m; path = Classes/Manager/SFSDKAnalyticsManager.m; sourceTree = "<group>"; };
-		CEFEB5611D05DFFA007D5EAE /* SFSDKAnalyticsManager+Internal.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = "SFSDKAnalyticsManager+Internal.h"; path = "Classes/Manager/SFSDKAnalyticsManager+Internal.h"; sourceTree = "<group>"; };
+		SF0001011CE900F500C6FC6A /* SFSDKAnalyticsManager.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; name = SFSDKAnalyticsManager.swift; path = Classes/Manager/SFSDKAnalyticsManager.swift; sourceTree = "<group>"; };
+		SF0002011CE900F500C6FC6A /* SFSDKDeviceAppAttributes.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; name = SFSDKDeviceAppAttributes.swift; path = Classes/Model/SFSDKDeviceAppAttributes.swift; sourceTree = "<group>"; };
+		SF0003011CE900F500C6FC6A /* SFSDKInstrumentationEvent.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; name = SFSDKInstrumentationEvent.swift; path = Classes/Model/SFSDKInstrumentationEvent.swift; sourceTree = "<group>"; };
+		SF0004011CE900F500C6FC6A /* SFSDKInstrumentationEventBuilder.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; name = SFSDKInstrumentationEventBuilder.swift; path = Classes/Model/SFSDKInstrumentationEventBuilder.swift; sourceTree = "<group>"; };
+		SF0005011CE900F500C6FC6A /* SFSDKEventStoreManager.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; name = SFSDKEventStoreManager.swift; path = Classes/Store/SFSDKEventStoreManager.swift; sourceTree = "<group>"; };
+		SF0006011CE900F500C6FC6A /* SFSDKAILTNTransform.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; name = SFSDKAILTNTransform.swift; path = Classes/Transform/SFSDKAILTNTransform.swift; sourceTree = "<group>"; };
+		SF0007011CE900F500C6FC6A /* SFSDKTransform.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; name = SFSDKTransform.swift; path = Classes/Transform/SFSDKTransform.swift; sourceTree = "<group>"; };
+		SF0008011CE900F500C6FC6A /* SFSDKAnalyticsLogger.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; name = SFSDKAnalyticsLogger.swift; path = Classes/Util/SFSDKAnalyticsLogger.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -325,13 +307,9 @@
 		CE2B8FE91CF5510B00C6FC6A /* Model */ = {
 			isa = PBXGroup;
 			children = (
-				CE2B8FEC1CF551CC00C6FC6A /* SFSDKDeviceAppAttributes.h */,
-				CE2B8FEF1CF555EF00C6FC6A /* SFSDKDeviceAppAttributes.m */,
-				CEFEB5511D048A7B007D5EAE /* SFSDKInstrumentationEventBuilder.h */,
-				CEFEB5521D048A7B007D5EAE /* SFSDKInstrumentationEventBuilder.m */,
-				CE2B8FF71CF5FF8A00C6FC6A /* SFSDKInstrumentationEvent.h */,
-				CEF371B31D0F6E6D0004A237 /* SFSDKInstrumentationEvent+Internal.h */,
-				CE2B8FFD1CF6032C00C6FC6A /* SFSDKInstrumentationEvent.m */,
+				SF0002011CE900F500C6FC6A /* SFSDKDeviceAppAttributes.swift */,
+				SF0004011CE900F500C6FC6A /* SFSDKInstrumentationEventBuilder.swift */,
+				SF0003011CE900F500C6FC6A /* SFSDKInstrumentationEvent.swift */,
 			);
 			name = Model;
 			sourceTree = "<group>";
@@ -339,8 +317,7 @@
 		CE2B91B21D03A61800C6FC6A /* Store */ = {
 			isa = PBXGroup;
 			children = (
-				CE2B91AE1D03A61000C6FC6A /* SFSDKEventStoreManager.h */,
-				CE2B91AF1D03A61000C6FC6A /* SFSDKEventStoreManager.m */,
+				SF0005011CE900F500C6FC6A /* SFSDKEventStoreManager.swift */,
 			);
 			name = Store;
 			sourceTree = "<group>";
@@ -359,9 +336,8 @@
 		CEF372C71D1323B50004A237 /* Transform */ = {
 			isa = PBXGroup;
 			children = (
-				CEF372C81D1324040004A237 /* SFSDKAILTNTransform.h */,
-				CEF372C91D1324040004A237 /* SFSDKAILTNTransform.m */,
-				CEF372CA1D1324040004A237 /* SFSDKTransform.h */,
+				SF0006011CE900F500C6FC6A /* SFSDKAILTNTransform.swift */,
+				SF0007011CE900F500C6FC6A /* SFSDKTransform.swift */,
 			);
 			name = Transform;
 			sourceTree = "<group>";
@@ -369,9 +345,7 @@
 		CEFEB55C1D050E20007D5EAE /* Manager */ = {
 			isa = PBXGroup;
 			children = (
-				CEFEB5611D05DFFA007D5EAE /* SFSDKAnalyticsManager+Internal.h */,
-				CEFEB55D1D050E4C007D5EAE /* SFSDKAnalyticsManager.h */,
-				CEFEB55E1D050E4C007D5EAE /* SFSDKAnalyticsManager.m */,
+				SF0001011CE900F500C6FC6A /* SFSDKAnalyticsManager.swift */,
 			);
 			name = Manager;
 			sourceTree = "<group>";
@@ -379,8 +353,7 @@
 		CEFEB8481D0E51F0007D5EAE /* Util */ = {
 			isa = PBXGroup;
 			children = (
-				CE4712991F04257600D9E059 /* SFSDKAnalyticsLogger.h */,
-				CE47129A1F04257600D9E059 /* SFSDKAnalyticsLogger.m */,
+				SF0008011CE900F500C6FC6A /* SFSDKAnalyticsLogger.swift */,
 			);
 			name = Util;
 			sourceTree = "<group>";
@@ -393,17 +366,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				CE2B8BD31CE900F500C6FC6A /* SalesforceAnalytics.h in Headers */,
-				CE2B91B01D03A61000C6FC6A /* SFSDKEventStoreManager.h in Headers */,
-				CEFEB55F1D050E4C007D5EAE /* SFSDKAnalyticsManager.h in Headers */,
-				CEFEB5531D048A7B007D5EAE /* SFSDKInstrumentationEventBuilder.h in Headers */,
-				CEFEB5621D05DFFA007D5EAE /* SFSDKAnalyticsManager+Internal.h in Headers */,
 				CE2B8FEB1CF5515E00C6FC6A /* SalesforceAnalytics-Prefix.pch in Headers */,
-				CEF372CB1D1324040004A237 /* SFSDKAILTNTransform.h in Headers */,
-				CEF371B41D0F6E6D0004A237 /* SFSDKInstrumentationEvent+Internal.h in Headers */,
-				CEF372CD1D1324040004A237 /* SFSDKTransform.h in Headers */,
-				CE2B8FF81CF5FF8A00C6FC6A /* SFSDKInstrumentationEvent.h in Headers */,
-				CE47129B1F04257600D9E059 /* SFSDKAnalyticsLogger.h in Headers */,
-				CE2B8FED1CF551CC00C6FC6A /* SFSDKDeviceAppAttributes.h in Headers */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -628,13 +591,14 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				CE2B91B11D03A61000C6FC6A /* SFSDKEventStoreManager.m in Sources */,
-				CEFEB5541D048A7B007D5EAE /* SFSDKInstrumentationEventBuilder.m in Sources */,
-				CEFEB5601D050E4C007D5EAE /* SFSDKAnalyticsManager.m in Sources */,
-				CEF372CC1D1324040004A237 /* SFSDKAILTNTransform.m in Sources */,
-				CE47129C1F04257600D9E059 /* SFSDKAnalyticsLogger.m in Sources */,
-				CE2B8FF01CF555EF00C6FC6A /* SFSDKDeviceAppAttributes.m in Sources */,
-				CE2B8FFE1CF6032C00C6FC6A /* SFSDKInstrumentationEvent.m in Sources */,
+				SF0001001CE900F500C6FC6A /* SFSDKAnalyticsManager.swift in Sources */,
+				SF0002001CE900F500C6FC6A /* SFSDKDeviceAppAttributes.swift in Sources */,
+				SF0003001CE900F500C6FC6A /* SFSDKInstrumentationEvent.swift in Sources */,
+				SF0004001CE900F500C6FC6A /* SFSDKInstrumentationEventBuilder.swift in Sources */,
+				SF0005001CE900F500C6FC6A /* SFSDKEventStoreManager.swift in Sources */,
+				SF0006001CE900F500C6FC6A /* SFSDKAILTNTransform.swift in Sources */,
+				SF0007001CE900F500C6FC6A /* SFSDKTransform.swift in Sources */,
+				SF0008001CE900F500C6FC6A /* SFSDKAnalyticsLogger.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -735,6 +699,7 @@
 				MTL_ENABLE_DEBUG_INFO = YES;
 				ONLY_ACTIVE_ARCH = YES;
 				SDKROOT = iphoneos;
+				SWIFT_VERSION = 5.0;
 				TARGETED_DEVICE_FAMILY = 1;
 				VALIDATE_PRODUCT = NO;
 				VERSIONING_SYSTEM = "apple-generic";
@@ -793,6 +758,7 @@
 				IPHONEOS_DEPLOYMENT_TARGET = 18.0;
 				MTL_ENABLE_DEBUG_INFO = NO;
 				SDKROOT = iphoneos;
+				SWIFT_VERSION = 5.0;
 				TARGETED_DEVICE_FAMILY = 1;
 				VALIDATE_PRODUCT = NO;
 				VERSIONING_SYSTEM = "apple-generic";
@@ -827,6 +793,7 @@
 				SKIP_INSTALL = YES;
 				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator xros xrsimulator";
 				SUPPORTS_MACCATALYST = YES;
+				SWIFT_VERSION = 5.0;
 				TARGETED_DEVICE_FAMILY = "1,2,7";
 			};
 			name = Debug;
@@ -856,6 +823,7 @@
 				SKIP_INSTALL = YES;
 				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator xros xrsimulator";
 				SUPPORTS_MACCATALYST = YES;
+				SWIFT_VERSION = 5.0;
 				TARGETED_DEVICE_FAMILY = "1,2,7";
 				VALIDATE_PRODUCT = YES;
 			};
@@ -879,6 +847,7 @@
 				PRODUCT_BUNDLE_IDENTIFIER = "com.salesforce.mobilesdk.${PRODUCT_NAME:rfc1034identifier}";
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				PROVISIONING_PROFILE_SPECIFIER = "";
+				SWIFT_VERSION = 5.0;
 				TARGETED_DEVICE_FAMILY = "1,2";
 				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/SalesforceAnalyticsTestApp.app/SalesforceAnalyticsTestApp";
 			};
@@ -901,6 +870,7 @@
 				PRODUCT_BUNDLE_IDENTIFIER = "com.salesforce.mobilesdk.${PRODUCT_NAME:rfc1034identifier}";
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				PROVISIONING_PROFILE_SPECIFIER = "";
+				SWIFT_VERSION = 5.0;
 				TARGETED_DEVICE_FAMILY = "1,2";
 				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/SalesforceAnalyticsTestApp.app/SalesforceAnalyticsTestApp";
 			};
@@ -946,6 +916,7 @@
 				PRODUCT_BUNDLE_IDENTIFIER = com.salesforce.mobilesdk.SalesforceAnalyticsTestApp;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				PROVISIONING_PROFILE_SPECIFIER = "";
+				SWIFT_VERSION = 5.0;
 				TARGETED_DEVICE_FAMILY = "1,2";
 			};
 			name = Debug;
@@ -974,6 +945,7 @@
 				PRODUCT_BUNDLE_IDENTIFIER = com.salesforce.mobilesdk.SalesforceAnalyticsTestApp;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				PROVISIONING_PROFILE_SPECIFIER = "";
+				SWIFT_VERSION = 5.0;
 				TARGETED_DEVICE_FAMILY = "1,2";
 				VALIDATE_PRODUCT = YES;
 			};

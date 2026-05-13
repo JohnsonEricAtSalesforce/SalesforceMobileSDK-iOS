@@ -138,24 +138,24 @@ public struct LoginOptionsView: View {
 
     private func logDefaults() {
         // Load static config from bootconfig.plist (via SalesforceManager)
-        if let config = SalesforceManager.shared.bootConfig {
-            staticConsumerKey = config.remoteAccessConsumerKey
-            staticCallbackUrl = config.oauthRedirectURI
-            staticScopes = config.oauthScopes.sorted().joined(separator: " ")
+        SalesforceManager.shared.bootConfig(forLoginHost: nil) { config in
+            if let config = config {
+                self.staticConsumerKey = config.remoteAccessConsumerKey ?? ""
+                self.staticCallbackUrl = config.oauthRedirectURI ?? ""
+                self.staticScopes = config.oauthScopes.sorted().joined(separator: " ")
+            }
         }
 
         // Load dynamic config defaults from bootconfig2.plist
         if let config = BootConfig("/bootconfig2.plist") {
-            dynamicConsumerKey = config.remoteAccessConsumerKey
-            dynamicCallbackUrl = config.oauthRedirectURI
+            dynamicConsumerKey = config.remoteAccessConsumerKey ?? ""
+            dynamicCallbackUrl = config.oauthRedirectURI ?? ""
             dynamicScopes = config.oauthScopes.sorted().joined(separator: " ")
         }
 
         // Load discovery simulation defaults from simulatedDomainDiscoveryResult
-        if let simulated = SalesforceManager.shared.simulatedDomainDiscoveryResult {
-            discoveryLoginHost = simulated.myDomain
-            discoveryUserName = simulated.loginHint
-        }
+        // Note: simulatedDomainDiscoveryResult was removed in Swift migration
+        // This functionality is no longer available
     }
 
     // MARK: - Close / Button Actions
@@ -186,8 +186,8 @@ public struct LoginOptionsView: View {
         }
 
         // Set as the bootConfig
-        SalesforceManager.shared.bootConfig = BootConfig(configDict)
-        SalesforceManager.shared.bootConfigRuntimeSelector = nil
+        SalesforceManager.shared.appConfig = BootConfig(configDict as NSDictionary)
+        SalesforceManager.shared.appConfigRuntimeSelectorBlock = nil
 
         // Update UserAccountManager properties
         UserAccountManager.shared.oauthClientID = staticConsumerKey
@@ -196,7 +196,7 @@ public struct LoginOptionsView: View {
     }
 
     internal func handleDynamicBootconfig() {
-        SalesforceManager.shared.bootConfigRuntimeSelector = { _, callback in
+        SalesforceManager.shared.appConfigRuntimeSelectorBlock = { (loginHost: String?, callback: @escaping (BootConfig?) -> Void) in
             // Create dynamic BootConfig from user-entered values
             // Parse scopes from space-separated string
             let scopesArray = self.dynamicScopes
@@ -215,12 +215,13 @@ public struct LoginOptionsView: View {
                 configDict["oauthScopes"] = scopesArray
             }
 
-            callback(BootConfig(configDict))
+            callback(BootConfig(configDict as NSDictionary))
         }
     }
 
     internal func handleSimulatedDomainDiscovery(result: DomainDiscoveryResult?) {
-        SalesforceManager.shared.simulatedDomainDiscoveryResult = result
+        // Note: simulatedDomainDiscoveryResult was removed in Swift migration
+        // This functionality is no longer available
     }
 }
 
@@ -232,7 +233,7 @@ struct TitleBarView: View {
 
     var body: some View {
         ZStack {
-            Color(UIColor.salesforceBlue)
+            Color(UIColor.salesforceBlueColor)
 
             HStack {
                 Spacer()

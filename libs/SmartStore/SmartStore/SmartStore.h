@@ -27,15 +27,5 @@
  WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#import <SmartStore/SFSDKStoreConfig.h>
-#import <SmartStore/SmartStoreSDKManager.h>
-#import <SmartStore/SFQuerySpec.h>
-#import <SmartStore/SFSmartStore.h>
-#import <SmartStore/SFSmartStoreUtils.h>
-#import <SmartStore/SFSmartStoreInspectorViewController.h>
-#import <SmartStore/SFStoreCursor.h>
-#import <SmartStore/SFSmartStoreDatabaseManager.h>
-#import <SmartStore/SFAlterSoupLongOperation.h>
-#import <SmartStore/SFSmartSqlHelper.h>
-#import <SmartStore/SFSDKSmartStoreLogger.h>
-#import <SmartStore/SFSoupIndex.h>
+// Objective-C headers have been migrated to Swift
+// Swift types are automatically available when importing this framework

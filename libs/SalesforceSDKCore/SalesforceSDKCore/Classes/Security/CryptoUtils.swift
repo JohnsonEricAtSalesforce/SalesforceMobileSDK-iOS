@@ -28,7 +28,7 @@
 import Foundation
 import Security
 
-public extension SFSDKCryptoUtils {
+public extension CryptoUtils {
     static let errorDomain = "com.salesforce.crypto"
     
     @objc(encryptData:key:algorithm:error:)

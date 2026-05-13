@@ -7,41 +7,28 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
-		4F5DDEB621A4B2530024E7F3 /* SFJsonUtils.m in Sources */ = {isa = PBXBuildFile; fileRef = 4F5DDEB421A4B2520024E7F3 /* SFJsonUtils.m */; };
-		4F5DDEB721A4B2530024E7F3 /* SFJsonUtils.h in Headers */ = {isa = PBXBuildFile; fileRef = 4F5DDEB521A4B2530024E7F3 /* SFJsonUtils.h */; settings = {ATTRIBUTES = (Public, ); }; };
 		4F8A3B872CEE998900ECDC76 /* SalesforceLogReceiver.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4F8A3B852CEE998900ECDC76 /* SalesforceLogReceiver.swift */; };
 		4F8A3B882CEE998900ECDC76 /* SalesforceLogReceiverFactory.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4F8A3B862CEE998900ECDC76 /* SalesforceLogReceiverFactory.swift */; };
 		696E914D2AD0AA8B00205884 /* PrivacyInfo.xcprivacy in Resources */ = {isa = PBXBuildFile; fileRef = 696E914C2AD0AA8B00205884 /* PrivacyInfo.xcprivacy */; };
 		69AEBFCA2E15ED8E0003C1FA /* SecItemOperations.swift in Sources */ = {isa = PBXBuildFile; fileRef = 69AEBFC92E15ED890003C1FA /* SecItemOperations.swift */; };
 		69AEBFCD2E1617230003C1FA /* SecItemOperationsTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 69AEBFCC2E1617230003C1FA /* SecItemOperationsTests.swift */; };
+		AA11BB22CC33DD44EE55FF66 /* SFDefaultLogger.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA11BB22CC33DD44EE55FF65 /* SFDefaultLogger.swift */; };
+		AA11BB22CC33DD44EE55FF68 /* SFLogger.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA11BB22CC33DD44EE55FF67 /* SFLogger.swift */; };
+		AA11BB22CC33DD44EE55FF70 /* NSUserDefaults+SFAdditions.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA11BB22CC33DD44EE55FF69 /* NSUserDefaults+SFAdditions.swift */; };
+		AA11BB22CC33DD44EE55FF72 /* SFFileProtectionHelper.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA11BB22CC33DD44EE55FF71 /* SFFileProtectionHelper.swift */; };
+		AA11BB22CC33DD44EE55FF74 /* SFJsonUtils.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA11BB22CC33DD44EE55FF73 /* SFJsonUtils.swift */; };
+		AA11BB22CC33DD44EE55FF76 /* SFPathUtil.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA11BB22CC33DD44EE55FF75 /* SFPathUtil.swift */; };
+		AA11BB22CC33DD44EE55FF78 /* SFSDKDatasharingHelper.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA11BB22CC33DD44EE55FF77 /* SFSDKDatasharingHelper.swift */; };
+		AA11BB22CC33DD44EE55FF80 /* SFSDKReachability.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA11BB22CC33DD44EE55FF79 /* SFSDKReachability.swift */; };
+		AA11BB22CC33DD44EE55FF82 /* SFSDKSafeMutableArray.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA11BB22CC33DD44EE55FF81 /* SFSDKSafeMutableArray.swift */; };
+		AA11BB22CC33DD44EE55FF84 /* SFSDKSafeMutableDictionary.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA11BB22CC33DD44EE55FF83 /* SFSDKSafeMutableDictionary.swift */; };
+		AA11BB22CC33DD44EE55FF86 /* SFSDKSafeMutableSet.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA11BB22CC33DD44EE55FF85 /* SFSDKSafeMutableSet.swift */; };
+		AA11BB22CC33DD44EE55FF88 /* SFSwiftDetectUtil.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA11BB22CC33DD44EE55FF87 /* SFSwiftDetectUtil.swift */; };
+		AA11BB22CC33DD44EE55FF90 /* SFTestContext.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA11BB22CC33DD44EE55FF89 /* SFTestContext.swift */; };
 		B7136D08216684A700F6A221 /* SalesforceSDKCommon.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = B7136CFE216684A700F6A221 /* SalesforceSDKCommon.framework */; };
 		B7136D0F216684A700F6A221 /* SalesforceSDKCommon.h in Headers */ = {isa = PBXBuildFile; fileRef = B7136D01216684A700F6A221 /* SalesforceSDKCommon.h */; settings = {ATTRIBUTES = (Public, ); }; };
-		B7136D2F216686EB00F6A221 /* SFSDKDatasharingHelper.m in Sources */ = {isa = PBXBuildFile; fileRef = B7136D29216686EA00F6A221 /* SFSDKDatasharingHelper.m */; };
-		B7136D30216686EB00F6A221 /* SFSDKReachability.m in Sources */ = {isa = PBXBuildFile; fileRef = B7136D2A216686EB00F6A221 /* SFSDKReachability.m */; };
-		B7136D31216686EB00F6A221 /* SFSDKReachability.h in Headers */ = {isa = PBXBuildFile; fileRef = B7136D2B216686EB00F6A221 /* SFSDKReachability.h */; settings = {ATTRIBUTES = (Public, ); }; };
-		B7136D32216686EB00F6A221 /* NSUserDefaults+SFAdditions.m in Sources */ = {isa = PBXBuildFile; fileRef = B7136D2C216686EB00F6A221 /* NSUserDefaults+SFAdditions.m */; };
-		B7136D33216686EB00F6A221 /* NSUserDefaults+SFAdditions.h in Headers */ = {isa = PBXBuildFile; fileRef = B7136D2D216686EB00F6A221 /* NSUserDefaults+SFAdditions.h */; settings = {ATTRIBUTES = (Public, ); }; };
-		B7136D34216686EB00F6A221 /* SFSDKDatasharingHelper.h in Headers */ = {isa = PBXBuildFile; fileRef = B7136D2E216686EB00F6A221 /* SFSDKDatasharingHelper.h */; settings = {ATTRIBUTES = (Public, ); }; };
-		B7136D5021669DA400F6A221 /* SFLogger.h in Headers */ = {isa = PBXBuildFile; fileRef = B7136D4E21669DA400F6A221 /* SFLogger.h */; settings = {ATTRIBUTES = (Public, ); }; };
-		B7136D5221669DA400F6A221 /* SFLogger.m in Sources */ = {isa = PBXBuildFile; fileRef = B7136D4F21669DA400F6A221 /* SFLogger.m */; };
-		B7136D5621669F7C00F6A221 /* SFDefaultLogger.h in Headers */ = {isa = PBXBuildFile; fileRef = B7136D5421669F7C00F6A221 /* SFDefaultLogger.h */; settings = {ATTRIBUTES = (Public, ); }; };
-		B7136D5821669F7C00F6A221 /* SFDefaultLogger.m in Sources */ = {isa = PBXBuildFile; fileRef = B7136D5521669F7C00F6A221 /* SFDefaultLogger.m */; };
 		B7182B012614346B00867BFE /* KeychainHelperTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = B7182B002614346B00867BFE /* KeychainHelperTests.swift */; };
 		B77B6CA4260D261C0074BA3C /* KeychainHelper.swift in Sources */ = {isa = PBXBuildFile; fileRef = B77B6CA3260D261C0074BA3C /* KeychainHelper.swift */; };
-		B77F5CF02170FF74004F3005 /* SFSDKSafeMutableSet.m in Sources */ = {isa = PBXBuildFile; fileRef = B77F5CEA2170FF73004F3005 /* SFSDKSafeMutableSet.m */; };
-		B77F5CF22170FF74004F3005 /* SFSDKSafeMutableDictionary.h in Headers */ = {isa = PBXBuildFile; fileRef = B77F5CEB2170FF73004F3005 /* SFSDKSafeMutableDictionary.h */; settings = {ATTRIBUTES = (Public, ); }; };
-		B77F5CF42170FF74004F3005 /* SFSDKSafeMutableDictionary.m in Sources */ = {isa = PBXBuildFile; fileRef = B77F5CEC2170FF73004F3005 /* SFSDKSafeMutableDictionary.m */; };
-		B77F5CF62170FF74004F3005 /* SFSDKSafeMutableSet.h in Headers */ = {isa = PBXBuildFile; fileRef = B77F5CED2170FF73004F3005 /* SFSDKSafeMutableSet.h */; settings = {ATTRIBUTES = (Public, ); }; };
-		B77F5CF82170FF74004F3005 /* SFSDKSafeMutableArray.m in Sources */ = {isa = PBXBuildFile; fileRef = B77F5CEE2170FF74004F3005 /* SFSDKSafeMutableArray.m */; };
-		B77F5CFA2170FF74004F3005 /* SFSDKSafeMutableArray.h in Headers */ = {isa = PBXBuildFile; fileRef = B77F5CEF2170FF74004F3005 /* SFSDKSafeMutableArray.h */; settings = {ATTRIBUTES = (Public, ); }; };
-		B77F5D132170FFEE004F3005 /* SFPathUtil.h in Headers */ = {isa = PBXBuildFile; fileRef = B77F5D0F2170FFED004F3005 /* SFPathUtil.h */; settings = {ATTRIBUTES = (Public, ); }; };
-		B77F5D152170FFEE004F3005 /* SFFileProtectionHelper.m in Sources */ = {isa = PBXBuildFile; fileRef = B77F5D102170FFED004F3005 /* SFFileProtectionHelper.m */; };
-		B77F5D172170FFEE004F3005 /* SFPathUtil.m in Sources */ = {isa = PBXBuildFile; fileRef = B77F5D112170FFED004F3005 /* SFPathUtil.m */; };
-		B77F5D192170FFEE004F3005 /* SFFileProtectionHelper.h in Headers */ = {isa = PBXBuildFile; fileRef = B77F5D122170FFEE004F3005 /* SFFileProtectionHelper.h */; settings = {ATTRIBUTES = (Public, ); }; };
-		B77F5D1F2171021F004F3005 /* SFTestContext.m in Sources */ = {isa = PBXBuildFile; fileRef = B77F5D1B2171021E004F3005 /* SFTestContext.m */; };
-		B77F5D212171021F004F3005 /* SFTestContext.h in Headers */ = {isa = PBXBuildFile; fileRef = B77F5D1C2171021E004F3005 /* SFTestContext.h */; settings = {ATTRIBUTES = (Public, ); }; };
-		B77F5D232171021F004F3005 /* SFSwiftDetectUtil.m in Sources */ = {isa = PBXBuildFile; fileRef = B77F5D1D2171021F004F3005 /* SFSwiftDetectUtil.m */; };
-		B77F5D252171021F004F3005 /* SFSwiftDetectUtil.h in Headers */ = {isa = PBXBuildFile; fileRef = B77F5D1E2171021F004F3005 /* SFSwiftDetectUtil.h */; settings = {ATTRIBUTES = (Public, ); }; };
 		B78898BC218D0329006E0C77 /* Foundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = B78898BB218D0329006E0C77 /* Foundation.framework */; };
 		B7D3CABA218BA32B00780B72 /* SFLoggerTests.m in Sources */ = {isa = PBXBuildFile; fileRef = B7D3CAB9218BA32B00780B72 /* SFLoggerTests.m */; };
 		B7D3CABE218BC80600780B72 /* SFSDKSafeMutableArrayTests.m in Sources */ = {isa = PBXBuildFile; fileRef = B7D3CABB218BC80600780B72 /* SFSDKSafeMutableArrayTests.m */; };
@@ -73,44 +60,31 @@
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXFileReference section */
-		4F5DDEB421A4B2520024E7F3 /* SFJsonUtils.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = SFJsonUtils.m; sourceTree = "<group>"; };
-		4F5DDEB521A4B2530024E7F3 /* SFJsonUtils.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = SFJsonUtils.h; sourceTree = "<group>"; };
 		4F8A3B852CEE998900ECDC76 /* SalesforceLogReceiver.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SalesforceLogReceiver.swift; sourceTree = "<group>"; };
 		4F8A3B862CEE998900ECDC76 /* SalesforceLogReceiverFactory.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SalesforceLogReceiverFactory.swift; sourceTree = "<group>"; };
 		696E914C2AD0AA8B00205884 /* PrivacyInfo.xcprivacy */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.xml; path = PrivacyInfo.xcprivacy; sourceTree = "<group>"; };
 		69AEBFC92E15ED890003C1FA /* SecItemOperations.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SecItemOperations.swift; sourceTree = "<group>"; };
 		69AEBFCC2E1617230003C1FA /* SecItemOperationsTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SecItemOperationsTests.swift; sourceTree = "<group>"; };
+		AA11BB22CC33DD44EE55FF65 /* SFDefaultLogger.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SFDefaultLogger.swift; sourceTree = "<group>"; };
+		AA11BB22CC33DD44EE55FF67 /* SFLogger.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SFLogger.swift; sourceTree = "<group>"; };
+		AA11BB22CC33DD44EE55FF69 /* NSUserDefaults+SFAdditions.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "NSUserDefaults+SFAdditions.swift"; sourceTree = "<group>"; };
+		AA11BB22CC33DD44EE55FF71 /* SFFileProtectionHelper.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SFFileProtectionHelper.swift; sourceTree = "<group>"; };
+		AA11BB22CC33DD44EE55FF73 /* SFJsonUtils.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SFJsonUtils.swift; sourceTree = "<group>"; };
+		AA11BB22CC33DD44EE55FF75 /* SFPathUtil.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SFPathUtil.swift; sourceTree = "<group>"; };
+		AA11BB22CC33DD44EE55FF77 /* SFSDKDatasharingHelper.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SFSDKDatasharingHelper.swift; sourceTree = "<group>"; };
+		AA11BB22CC33DD44EE55FF79 /* SFSDKReachability.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SFSDKReachability.swift; sourceTree = "<group>"; };
+		AA11BB22CC33DD44EE55FF81 /* SFSDKSafeMutableArray.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SFSDKSafeMutableArray.swift; sourceTree = "<group>"; };
+		AA11BB22CC33DD44EE55FF83 /* SFSDKSafeMutableDictionary.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SFSDKSafeMutableDictionary.swift; sourceTree = "<group>"; };
+		AA11BB22CC33DD44EE55FF85 /* SFSDKSafeMutableSet.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SFSDKSafeMutableSet.swift; sourceTree = "<group>"; };
+		AA11BB22CC33DD44EE55FF87 /* SFSwiftDetectUtil.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SFSwiftDetectUtil.swift; sourceTree = "<group>"; };
+		AA11BB22CC33DD44EE55FF89 /* SFTestContext.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SFTestContext.swift; sourceTree = "<group>"; };
 		B7136CFE216684A700F6A221 /* SalesforceSDKCommon.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = SalesforceSDKCommon.framework; sourceTree = BUILT_PRODUCTS_DIR; };
 		B7136D01216684A700F6A221 /* SalesforceSDKCommon.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = SalesforceSDKCommon.h; sourceTree = "<group>"; };
 		B7136D02216684A700F6A221 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		B7136D07216684A700F6A221 /* SalesforceSDKCommonTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = SalesforceSDKCommonTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		B7136D0E216684A700F6A221 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
-		B7136D29216686EA00F6A221 /* SFSDKDatasharingHelper.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = SFSDKDatasharingHelper.m; sourceTree = "<group>"; };
-		B7136D2A216686EB00F6A221 /* SFSDKReachability.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = SFSDKReachability.m; sourceTree = "<group>"; };
-		B7136D2B216686EB00F6A221 /* SFSDKReachability.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = SFSDKReachability.h; sourceTree = "<group>"; };
-		B7136D2C216686EB00F6A221 /* NSUserDefaults+SFAdditions.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = "NSUserDefaults+SFAdditions.m"; sourceTree = "<group>"; };
-		B7136D2D216686EB00F6A221 /* NSUserDefaults+SFAdditions.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = "NSUserDefaults+SFAdditions.h"; sourceTree = "<group>"; };
-		B7136D2E216686EB00F6A221 /* SFSDKDatasharingHelper.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = SFSDKDatasharingHelper.h; sourceTree = "<group>"; };
-		B7136D4E21669DA400F6A221 /* SFLogger.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = SFLogger.h; sourceTree = "<group>"; };
-		B7136D4F21669DA400F6A221 /* SFLogger.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = SFLogger.m; sourceTree = "<group>"; };
-		B7136D5421669F7C00F6A221 /* SFDefaultLogger.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = SFDefaultLogger.h; sourceTree = "<group>"; };
-		B7136D5521669F7C00F6A221 /* SFDefaultLogger.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = SFDefaultLogger.m; sourceTree = "<group>"; };
 		B7182B002614346B00867BFE /* KeychainHelperTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KeychainHelperTests.swift; sourceTree = "<group>"; };
 		B77B6CA3260D261C0074BA3C /* KeychainHelper.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KeychainHelper.swift; sourceTree = "<group>"; };
-		B77F5CEA2170FF73004F3005 /* SFSDKSafeMutableSet.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = SFSDKSafeMutableSet.m; sourceTree = "<group>"; };
-		B77F5CEB2170FF73004F3005 /* SFSDKSafeMutableDictionary.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = SFSDKSafeMutableDictionary.h; sourceTree = "<group>"; };
-		B77F5CEC2170FF73004F3005 /* SFSDKSafeMutableDictionary.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = SFSDKSafeMutableDictionary.m; sourceTree = "<group>"; };
-		B77F5CED2170FF73004F3005 /* SFSDKSafeMutableSet.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = SFSDKSafeMutableSet.h; sourceTree = "<group>"; };
-		B77F5CEE2170FF74004F3005 /* SFSDKSafeMutableArray.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = SFSDKSafeMutableArray.m; sourceTree = "<group>"; };
-		B77F5CEF2170FF74004F3005 /* SFSDKSafeMutableArray.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = SFSDKSafeMutableArray.h; sourceTree = "<group>"; };
-		B77F5D0F2170FFED004F3005 /* SFPathUtil.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = SFPathUtil.h; sourceTree = "<group>"; };
-		B77F5D102170FFED004F3005 /* SFFileProtectionHelper.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = SFFileProtectionHelper.m; sourceTree = "<group>"; };
-		B77F5D112170FFED004F3005 /* SFPathUtil.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = SFPathUtil.m; sourceTree = "<group>"; };
-		B77F5D122170FFEE004F3005 /* SFFileProtectionHelper.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = SFFileProtectionHelper.h; sourceTree = "<group>"; };
-		B77F5D1B2171021E004F3005 /* SFTestContext.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = SFTestContext.m; sourceTree = "<group>"; };
-		B77F5D1C2171021E004F3005 /* SFTestContext.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = SFTestContext.h; sourceTree = "<group>"; };
-		B77F5D1D2171021F004F3005 /* SFSwiftDetectUtil.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = SFSwiftDetectUtil.m; sourceTree = "<group>"; };
-		B77F5D1E2171021F004F3005 /* SFSwiftDetectUtil.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = SFSwiftDetectUtil.h; sourceTree = "<group>"; };
 		B78898BB218D0329006E0C77 /* Foundation.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Foundation.framework; path = System/Library/Frameworks/Foundation.framework; sourceTree = SDKROOT; };
 		B7D3CAB9218BA32B00780B72 /* SFLoggerTests.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = SFLoggerTests.m; sourceTree = "<group>"; };
 		B7D3CABB218BC80600780B72 /* SFSDKSafeMutableArrayTests.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = SFSDKSafeMutableArrayTests.m; sourceTree = "<group>"; };
@@ -221,10 +195,8 @@
 			children = (
 				4F8A3B852CEE998900ECDC76 /* SalesforceLogReceiver.swift */,
 				4F8A3B862CEE998900ECDC76 /* SalesforceLogReceiverFactory.swift */,
-				B7136D4E21669DA400F6A221 /* SFLogger.h */,
-				B7136D4F21669DA400F6A221 /* SFLogger.m */,
-				B7136D5421669F7C00F6A221 /* SFDefaultLogger.h */,
-				B7136D5521669F7C00F6A221 /* SFDefaultLogger.m */,
+				AA11BB22CC33DD44EE55FF65 /* SFDefaultLogger.swift */,
+				AA11BB22CC33DD44EE55FF67 /* SFLogger.swift */,
 			);
 			path = Logger;
 			sourceTree = "<group>";
@@ -232,28 +204,17 @@
 		B7136D1A2166866F00F6A221 /* Util */ = {
 			isa = PBXGroup;
 			children = (
-				4F5DDEB521A4B2530024E7F3 /* SFJsonUtils.h */,
-				4F5DDEB421A4B2520024E7F3 /* SFJsonUtils.m */,
-				B77F5D1E2171021F004F3005 /* SFSwiftDetectUtil.h */,
-				B77F5D1D2171021F004F3005 /* SFSwiftDetectUtil.m */,
-				B77F5D1C2171021E004F3005 /* SFTestContext.h */,
-				B77F5D1B2171021E004F3005 /* SFTestContext.m */,
-				B77F5D122170FFEE004F3005 /* SFFileProtectionHelper.h */,
-				B77F5D102170FFED004F3005 /* SFFileProtectionHelper.m */,
-				B77F5D0F2170FFED004F3005 /* SFPathUtil.h */,
-				B77F5D112170FFED004F3005 /* SFPathUtil.m */,
-				B77F5CEF2170FF74004F3005 /* SFSDKSafeMutableArray.h */,
-				B77F5CEE2170FF74004F3005 /* SFSDKSafeMutableArray.m */,
-				B77F5CEB2170FF73004F3005 /* SFSDKSafeMutableDictionary.h */,
-				B77F5CEC2170FF73004F3005 /* SFSDKSafeMutableDictionary.m */,
-				B77F5CED2170FF73004F3005 /* SFSDKSafeMutableSet.h */,
-				B77F5CEA2170FF73004F3005 /* SFSDKSafeMutableSet.m */,
-				B7136D2D216686EB00F6A221 /* NSUserDefaults+SFAdditions.h */,
-				B7136D2C216686EB00F6A221 /* NSUserDefaults+SFAdditions.m */,
-				B7136D2E216686EB00F6A221 /* SFSDKDatasharingHelper.h */,
-				B7136D29216686EA00F6A221 /* SFSDKDatasharingHelper.m */,
-				B7136D2B216686EB00F6A221 /* SFSDKReachability.h */,
-				B7136D2A216686EB00F6A221 /* SFSDKReachability.m */,
+				AA11BB22CC33DD44EE55FF71 /* SFFileProtectionHelper.swift */,
+				AA11BB22CC33DD44EE55FF73 /* SFJsonUtils.swift */,
+				AA11BB22CC33DD44EE55FF69 /* NSUserDefaults+SFAdditions.swift */,
+				AA11BB22CC33DD44EE55FF75 /* SFPathUtil.swift */,
+				AA11BB22CC33DD44EE55FF77 /* SFSDKDatasharingHelper.swift */,
+				AA11BB22CC33DD44EE55FF79 /* SFSDKReachability.swift */,
+				AA11BB22CC33DD44EE55FF81 /* SFSDKSafeMutableArray.swift */,
+				AA11BB22CC33DD44EE55FF83 /* SFSDKSafeMutableDictionary.swift */,
+				AA11BB22CC33DD44EE55FF85 /* SFSDKSafeMutableSet.swift */,
+				AA11BB22CC33DD44EE55FF87 /* SFSwiftDetectUtil.swift */,
+				AA11BB22CC33DD44EE55FF89 /* SFTestContext.swift */,
 			);
 			path = Util;
 			sourceTree = "<group>";
@@ -303,20 +264,7 @@
 			isa = PBXHeadersBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				4F5DDEB721A4B2530024E7F3 /* SFJsonUtils.h in Headers */,
-				B77F5D132170FFEE004F3005 /* SFPathUtil.h in Headers */,
-				B7136D33216686EB00F6A221 /* NSUserDefaults+SFAdditions.h in Headers */,
-				B7136D5021669DA400F6A221 /* SFLogger.h in Headers */,
-				B7136D5621669F7C00F6A221 /* SFDefaultLogger.h in Headers */,
-				B77F5D252171021F004F3005 /* SFSwiftDetectUtil.h in Headers */,
-				B77F5CFA2170FF74004F3005 /* SFSDKSafeMutableArray.h in Headers */,
 				B7136D0F216684A700F6A221 /* SalesforceSDKCommon.h in Headers */,
-				B77F5CF62170FF74004F3005 /* SFSDKSafeMutableSet.h in Headers */,
-				B77F5D192170FFEE004F3005 /* SFFileProtectionHelper.h in Headers */,
-				B7136D31216686EB00F6A221 /* SFSDKReachability.h in Headers */,
-				B7136D34216686EB00F6A221 /* SFSDKDatasharingHelper.h in Headers */,
-				B77F5CF22170FF74004F3005 /* SFSDKSafeMutableDictionary.h in Headers */,
-				B77F5D212171021F004F3005 /* SFTestContext.h in Headers */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -496,23 +444,23 @@
 			buildActionMask = 2147483647;
 			files = (
 				69AEBFCA2E15ED8E0003C1FA /* SecItemOperations.swift in Sources */,
-				4F5DDEB621A4B2530024E7F3 /* SFJsonUtils.m in Sources */,
-				B77F5CF42170FF74004F3005 /* SFSDKSafeMutableDictionary.m in Sources */,
-				B77F5CF02170FF74004F3005 /* SFSDKSafeMutableSet.m in Sources */,
 				4F8A3B872CEE998900ECDC76 /* SalesforceLogReceiver.swift in Sources */,
 				4F8A3B882CEE998900ECDC76 /* SalesforceLogReceiverFactory.swift in Sources */,
-				B7136D30216686EB00F6A221 /* SFSDKReachability.m in Sources */,
-				B7136D5821669F7C00F6A221 /* SFDefaultLogger.m in Sources */,
-				B7136D32216686EB00F6A221 /* NSUserDefaults+SFAdditions.m in Sources */,
-				B77F5D172170FFEE004F3005 /* SFPathUtil.m in Sources */,
-				B77F5D1F2171021F004F3005 /* SFTestContext.m in Sources */,
-				B77F5CF82170FF74004F3005 /* SFSDKSafeMutableArray.m in Sources */,
+				AA11BB22CC33DD44EE55FF66 /* SFDefaultLogger.swift in Sources */,
+				AA11BB22CC33DD44EE55FF68 /* SFLogger.swift in Sources */,
+				AA11BB22CC33DD44EE55FF70 /* NSUserDefaults+SFAdditions.swift in Sources */,
+				AA11BB22CC33DD44EE55FF72 /* SFFileProtectionHelper.swift in Sources */,
+				AA11BB22CC33DD44EE55FF74 /* SFJsonUtils.swift in Sources */,
+				AA11BB22CC33DD44EE55FF76 /* SFPathUtil.swift in Sources */,
+				AA11BB22CC33DD44EE55FF78 /* SFSDKDatasharingHelper.swift in Sources */,
+				AA11BB22CC33DD44EE55FF80 /* SFSDKReachability.swift in Sources */,
+				AA11BB22CC33DD44EE55FF82 /* SFSDKSafeMutableArray.swift in Sources */,
+				AA11BB22CC33DD44EE55FF84 /* SFSDKSafeMutableDictionary.swift in Sources */,
+				AA11BB22CC33DD44EE55FF86 /* SFSDKSafeMutableSet.swift in Sources */,
+				AA11BB22CC33DD44EE55FF88 /* SFSwiftDetectUtil.swift in Sources */,
+				AA11BB22CC33DD44EE55FF90 /* SFTestContext.swift in Sources */,
 				B77B6CA4260D261C0074BA3C /* KeychainHelper.swift in Sources */,
 				F2F4222528B6CBF40010EF0F /* KeychainItemManager.swift in Sources */,
-				B7136D5221669DA400F6A221 /* SFLogger.m in Sources */,
-				B77F5D152170FFEE004F3005 /* SFFileProtectionHelper.m in Sources */,
-				B7136D2F216686EB00F6A221 /* SFSDKDatasharingHelper.m in Sources */,
-				B77F5D232171021F004F3005 /* SFSwiftDetectUtil.m in Sources */,
 				F2F4222328B6CBC90010EF0F /* GenericPasswordItemQuery.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;

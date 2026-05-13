@@ -202,14 +202,14 @@ public extension SalesforceLoginViewController {
                     pkceCodeVerifier: jsonMap[qrCodeLoginUrlJsonPkceCodeVerifierKey] as? String
                 )
             } else {
-                SFSDKCoreLogger().e(
-                    self,
+                SFSDKCoreLogger.e(
+                    SalesforceLoginViewController.self,
                     message: "Cannot JSON decode UI bridge API parameters due to an unexpected JSON format.")
                 return nil
             }
         } catch let error {
-            SFSDKCoreLogger().e(
-                self,
+            SFSDKCoreLogger.e(
+                SalesforceLoginViewController.self,
                 message: "Cannot JSON decode UI bridge API parameters due to a decoding error with description '\(error.localizedDescription)'.")
             return nil
         }

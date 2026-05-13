@@ -1,4 +1,5 @@
 import Foundation
+import UserNotifications
 
 @objc(SFSDKNotificationCategoryFactory)
 @objcMembers

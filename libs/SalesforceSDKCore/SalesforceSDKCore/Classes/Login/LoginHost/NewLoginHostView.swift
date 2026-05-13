@@ -26,6 +26,7 @@
 //  WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 import SwiftUI
+import UIKit
 
 @objc(SFSDKNewLoginHostViewController)
 public class NewLoginHostViewController: NSObject {
@@ -76,7 +77,7 @@ struct NewLoginHostView: View {
         if let navBarTintColor =  viewControllerConfig?.navigationBarTintColor {
             self.navBarTintColor = Color(uiColor: navBarTintColor)
         } else {
-            self.navBarTintColor = Color(uiColor: UIColor.salesforceNavBarTint)
+            self.navBarTintColor = Color(uiColor: UIColor.salesforceNavBarTintColor)
         }
     }
     

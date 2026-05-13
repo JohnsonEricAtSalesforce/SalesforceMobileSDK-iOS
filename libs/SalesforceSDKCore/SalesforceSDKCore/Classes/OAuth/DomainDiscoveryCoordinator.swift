@@ -71,6 +71,7 @@ public class DomainDiscoveryCoordinator: NSObject {
         // When simulatedDomainDiscoveryResult is set and the login server is welcome.salesforce.com,
         // we build a callback URL to trigger the code that handles the domain discovery callback,
         // simulating the user picking a specific domain/username.
+        #if DEBUG
         let requestHost = action.request.url?.host?.lowercased()
         if let simulated = SalesforceManager.shared.simulatedDomainDiscoveryResult,
            requestHost == "welcome.salesforce.com" {
@@ -78,6 +79,9 @@ public class DomainDiscoveryCoordinator: NSObject {
         } else {
             url = action.request.url
         }
+        #else
+        url = action.request.url
+        #endif
         guard let url = url else {
             return nil
         }

@@ -27,6 +27,7 @@
 
 import Foundation
 import CryptoKit
+import SalesforceSDKCommon
 
 
 @objc(SFSDKDecryptStream)
@@ -105,14 +106,14 @@ public class DecryptStream: InputStream {
                 let decryptedData = try Encryptor.decrypt(data: data, using: key)
                 guard decryptedData.count <= CryptStream.chunkSize else {
                     // Should never get here
-                    SalesforceLogger.e(DecryptStream.self, message: "Returned decrypted data is larger than the encryption block size")
+                    SFSDKCoreLogger.e(DecryptStream.self, message: "Returned decrypted data is larger than the encryption block size")
                     _streamError = NSError(domain: "DecryptStream", code: 2, userInfo: [NSLocalizedDescriptionKey: "Returned decrypted data is larger than the encryption block size"])
                     return -1
                 }
                 decryptedData.copyBytes(to: buffer.advanced(by: readCount), count: decryptedData.count)
                 readCount += decryptedData.count
             } catch {
-                SalesforceLogger.e(DecryptStream.self, message: "Error decrypting data to stream: \(error)")
+                SFSDKCoreLogger.e(DecryptStream.self, message: "Error decrypting data to stream: \(error)")
                 _streamError = error
                 return readCount == 0 ? -1 : readCount
             }

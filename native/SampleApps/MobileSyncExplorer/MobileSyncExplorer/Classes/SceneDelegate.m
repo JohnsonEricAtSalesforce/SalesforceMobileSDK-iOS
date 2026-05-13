@@ -63,7 +63,8 @@
     }
 
     UIWindowScene *windowScene = (UIWindowScene *)scene;
-    self.window = [[SFSDKUIWindow alloc] initWithWindowScene:windowScene];
+    self.window = [[SFSDKUIWindow alloc] initWithFrame:windowScene.coordinateSpace.bounds];
+    self.window.windowScene = windowScene;
 
     // App Setup for any changes to the current authenticated user
     __weak typeof(self) weakSelf = self;
@@ -124,10 +125,10 @@
 #pragma mark - Private methods
 
 - (void)resetUserloginStatus {
-    BOOL loggedIn = [SFUserAccountManager.sharedInstance currentUser] != nil;
+    BOOL loggedIn = [SFUserAccountManager.shared currentUserAccount] != nil;
     [[NSUserDefaults msdkUserDefaults] setBool:loggedIn forKey:@"userLoggedIn"];
     [[NSUserDefaults msdkUserDefaults] synchronize];
-    [SFSDKMobileSyncLogger log:[self class] level:SFLogLevelDebug format:@"%d userLoggedIn", [[NSUserDefaults msdkUserDefaults] boolForKey:@"userLoggedIn"]];
+    [SFSDKMobileSyncLogger d:[self class] message:[NSString stringWithFormat:@"%d userLoggedIn", [[NSUserDefaults msdkUserDefaults] boolForKey:@"userLoggedIn"]]];
 }
 
 - (void)initializeAppViewState {

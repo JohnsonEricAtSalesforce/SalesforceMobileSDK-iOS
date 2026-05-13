@@ -38,8 +38,8 @@ public class KeyValueEncryptedFileStore: NSObject {
     @objc public static let maxStoreNameLength = 96
 
     private let encryptionKey: SymmetricKey
-    private static var globalStores = SafeMutableDictionary<NSString, KeyValueEncryptedFileStore>()
-    private static var userStores = SafeMutableDictionary<NSString, SafeMutableDictionary<NSString, KeyValueEncryptedFileStore>>()
+    private static var globalStores = SFSDKSafeMutableDictionary<NSString, KeyValueEncryptedFileStore>()
+    private static var userStores = SFSDKSafeMutableDictionary<NSString, SFSDKSafeMutableDictionary<NSString, KeyValueEncryptedFileStore>>()
     private static let storeVersionString = "2"
     private static let storeVersionFileName = "version"
     private static let storeGCMEncryptionFileName = "gcmEncryption"
@@ -137,7 +137,7 @@ public class KeyValueEncryptedFileStore: NSObject {
     public static func shared(withName name: String, forUserAccount user: UserAccount) -> KeyValueEncryptedFileStore? {
         let userKey = KeyValueEncryptedFileStore.userKey(forUser: user)
         if userStores[userKey] == nil {
-            userStores[userKey] = SafeMutableDictionary<NSString, KeyValueEncryptedFileStore>()
+            userStores[userKey] = SFSDKSafeMutableDictionary<NSString, KeyValueEncryptedFileStore>()
         }
 
         if let store = userStores[userKey]?[name as NSString] {
@@ -452,11 +452,11 @@ public class KeyValueEncryptedFileStore: NSObject {
     }
     
     private static func storesDirectory(forUser user: UserAccount) -> String? {
-        return SFDirectoryManager.shared().directory(forUser: user, type: .documentDirectory, components: [keyValueStoresDirectory])
+        return SFDirectoryManager.sharedManager().directory(forUser: user, type: .documentDirectory, components: [keyValueStoresDirectory])
     }
 
     static func globalStoresDirectory() -> String? {
-        return SFDirectoryManager.shared().globalDirectory(ofType: .documentDirectory, components: [keyValueStoresDirectory])
+        return SFDirectoryManager.sharedManager().globalDirectory(ofType: .documentDirectory, components: [keyValueStoresDirectory])
     }
 
     private static func contentsOfDirectory(_ directory: String?, callingFunction: String = #function) -> [String] {
@@ -562,11 +562,7 @@ public class KeyValueEncryptedFileStore: NSObject {
             return SFKeyForGlobalScope() as NSString
         } else {
             let key = SFKeyForUserAndScope(user, .community)
-            if let key = key {
-                return key as NSString
-            } else {
-                return "" as NSString
-            }
+            return key as NSString
         }
     }
 }

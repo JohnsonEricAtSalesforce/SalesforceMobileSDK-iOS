@@ -41,7 +41,7 @@ struct ScreenLockUIView: View {
                     Button(action: { logout() },
                            label: {
                         Text(SFSDKResourceUtils.localizedString("logoutButtonTitle"))
-                            .foregroundColor(Color(UIColor.salesforceBlue))
+                            .foregroundColor(Color(UIColor.salesforceBlueColor))
                     }).padding()
                 }
                 Spacer()
@@ -65,7 +65,7 @@ struct ScreenLockUIView: View {
                             .foregroundColor(.white)
                     }
                     .padding()
-                    .background(Color(UIColor.salesforceBlue).cornerRadius(5))
+                    .background(Color(UIColor.salesforceBlueColor).cornerRadius(5))
                     .offset(y: -175)
                 }
             }
@@ -107,14 +107,14 @@ struct ScreenLockUIView: View {
 }
 
 private func getIcon() -> UIImage {
-    let fallbackIcon = SFSDKResourceUtils.imageNamed("salesforce-logo")
+    let fallbackIcon = SFSDKResourceUtils.imageNamed("salesforce-logo") ?? UIImage()
     if let icons = Bundle.main.infoDictionary?["CFBundleIcons"] as? [String: Any],
                 let primaryIcon = icons["CFBundlePrimaryIcon"] as? [String: Any],
                 let iconFiles = primaryIcon["CFBundleIconFiles"] as? [String],
                 let lastIcon = iconFiles.last {
         return UIImage(named: lastIcon) ?? fallbackIcon
     }
-    
+
     return fallbackIcon
 }
 

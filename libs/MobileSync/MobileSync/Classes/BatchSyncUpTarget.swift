@@ -27,22 +27,4 @@
 
 import Foundation
 
-extension BatchSyncUpTarget {
-    // Adapted from internal methods in BatchSyncUpTarget.m
-    static let maxSubRequestsCompositeAPI:UInt = 25
-    
-    @objc
-    func maxAPIBatchSize() -> UInt {
-        return BatchSyncUpTarget.maxSubRequestsCompositeAPI;
-    }
-
-
-    @objc
-    func sendRecordRequests(_ syncManager:SyncManager,
-                            recordRequests: [RecordRequest],
-                            onComplete: @escaping OnSendCompleteCallback,
-                            onFail: @escaping OnFailCallback) {
-        
-        CompositeRequestHelper.sendAsCompositeBatchRequest(syncManager, allOrNone: false, recordRequests: recordRequests, onComplete: onComplete, onFail: onFail)
-    }
-}
+// This extension file is now empty - methods moved to SFBatchSyncUpTarget.swift main class

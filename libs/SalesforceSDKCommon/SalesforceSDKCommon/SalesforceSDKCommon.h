@@ -27,16 +27,5 @@
  WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#import <SalesforceSDKCommon/SFSDKSafeMutableSet.h>
-#import <SalesforceSDKCommon/SFTestContext.h>
-#import <SalesforceSDKCommon/SFSDKSafeMutableDictionary.h>
-#import <SalesforceSDKCommon/SFPathUtil.h>
-#import <SalesforceSDKCommon/SFSwiftDetectUtil.h>
-#import <SalesforceSDKCommon/SFSDKSafeMutableArray.h>
-#import <SalesforceSDKCommon/SFFileProtectionHelper.h>
-#import <SalesforceSDKCommon/SFDefaultLogger.h>
-#import <SalesforceSDKCommon/SFLogger.h>
-#import <SalesforceSDKCommon/NSUserDefaults+SFAdditions.h>
-#import <SalesforceSDKCommon/SFJsonUtils.h>
-#import <SalesforceSDKCommon/SFSDKDatasharingHelper.h>
-#import <SalesforceSDKCommon/SFSDKReachability.h>
+// All Objective-C headers have been migrated to Swift
+// Swift types are automatically available when importing this framework

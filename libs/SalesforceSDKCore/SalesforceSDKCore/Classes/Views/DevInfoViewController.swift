@@ -166,7 +166,7 @@ struct DevInfoTitleBarView: View {
     
     var body: some View {
         ZStack {
-            Color(UIColor.salesforceBlue)
+            Color(UIColor.salesforceBlueColor)
             
             HStack {
                 Spacer()

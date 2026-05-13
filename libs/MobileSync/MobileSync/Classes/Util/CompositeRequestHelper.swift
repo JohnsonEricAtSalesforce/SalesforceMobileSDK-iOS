@@ -27,6 +27,7 @@
 
 import Foundation
 import SalesforceSDKCore
+import SalesforceSDKCommon
 
 public typealias OnSendCompleteCallback =  ([String: RecordResponse]) -> ()
 public typealias OnFailCallback = (Error) -> ()
@@ -42,12 +43,12 @@ public class CompositeRequestHelper:NSObject {
                                                          allOrNone: allOrNone,
                                                          apiVersion: nil)
   
-        NetworkUtils.sendRequest(withMobileSyncUserAgent: request) { response, error, urlResponse in
+        SFMobileSyncNetworkUtils.sendRequest(withMobileSyncUserAgent: request) { response, error, urlResponse in
             onFail(error!)
         } successBlock: { response, urlResponse in
             if let response  = response as? [String:Any] {
                 var refIdToRecordResponse = [String:RecordResponse]()
-                let compositeResponse = CompositeResponse(response)
+                let compositeResponse = CompositeResponse(with: response)
                 compositeResponse.subResponses.forEach {
                     refIdToRecordResponse[$0.referenceId] = RecordResponse.fromCompositeSubResponse(compositeSubResponse:$0)
                 }
@@ -68,11 +69,11 @@ public class CompositeRequestHelper:NSObject {
             if (!refIds.isEmpty) {
                 let request = RecordRequest.getCollectionRequest(recordRequests: recordRequests, requestType: requestType, allOrNone: allOrNone)!
                 group.enter()
-                NetworkUtils.sendRequest(withMobileSyncUserAgent: request) { response, error, urlResponse in
+                SFMobileSyncNetworkUtils.sendRequest(withMobileSyncUserAgent: request) { response, error, urlResponse in
                     onFail(error!)
                 } successBlock: { response, urlResponse in
                     if let response  = response as? [[String:Any]] {
-                        let collectionResponse = CollectionResponse(response)
+                        let collectionResponse = CollectionResponse(with: response)
                         for (i, subResponse) in collectionResponse.subResponses.enumerated() {
                             let refId = refIds[i]
                             refIdToRecordResponse[refId] = RecordResponse.fromCollectionSubResponse(collectionSubResponse:subResponse)
@@ -131,11 +132,11 @@ public class RecordResponse: NSObject {
     }
     
     func description() ->  String {
-        return SFJsonUtils.jsonRepresentation(json)
+        return SFJsonUtils.jsonRepresentation(json) ?? ""
     }
     
     static func fromCompositeSubResponse(compositeSubResponse: CompositeSubResponse) -> RecordResponse {
-        let success = RestClient.isStatusCodeSuccess(UInt(compositeSubResponse.httpStatusCode))
+        let success = RestClient.isStatusCodeSuccess(Int(compositeSubResponse.httpStatusCode))
         var objectId:String? = nil
         var recordDoesNotExist = false
         var relatedRecordDoesNotExist = false
@@ -146,7 +147,7 @@ public class RecordResponse: NSObject {
                 objectId = body["id"] as? String
             }
         } else {
-            recordDoesNotExist = RestClient.isStatusCodeNotFound(UInt(compositeSubResponse.httpStatusCode))
+            recordDoesNotExist = RestClient.isStatusCodeNotFound(Int(compositeSubResponse.httpStatusCode))
             if let bodyArray = compositeSubResponse.body as? [[String:Any]] {
                 errorJson = bodyArray[0]
                 let firstError = errorJson?["errorCode"] as? String
@@ -298,11 +299,11 @@ public class RecordRequest: NSObject {
     static func getCollectionRequest(recordRequests:[RecordRequest], requestType:RequestType, allOrNone: Bool) -> RestRequest? {
         switch (requestType) {
         case .CREATE:
-            return RestClient.shared.request(forCollectionCreate: allOrNone,
+            return RestClient.shared.requestForCollectionCreate(allOrNone,
                                              records: getArrayForCollectionRequest(recordRequests: recordRequests, requestType: .CREATE),
                                              apiVersion: nil)
         case .UPDATE:
-            return RestClient.shared.request(forCollectionUpdate: allOrNone,
+            return RestClient.shared.requestForCollectionUpdate(allOrNone,
                                              records: getArrayForCollectionRequest(recordRequests: recordRequests, requestType: .UPDATE),
                                              apiVersion: nil)
         case .UPSERT:
@@ -312,22 +313,22 @@ public class RecordRequest: NSObject {
                 let externalIdFieldNames = getExternalIdFieldName(recordRequests: recordRequests, requestType: .UPSERT)
                 
                 if (objectTypes.isEmpty || externalIdFieldNames.isEmpty) {
-                    MobileSyncLogger.default.e(CompositeRequestHelper.self, message:"Missing sobjectType or externalIdFieldName")
+                    SFSDKMobileSyncLogger.default().e(CompositeRequestHelper.self, message:"Missing sobjectType or externalIdFieldName")
                     return nil
                 }
                 
                 if (Set(objectTypes).count > 1) {
-                    MobileSyncLogger.default.e(CompositeRequestHelper.self, message:"All records must have same sobjectType")
+                    SFSDKMobileSyncLogger.default().e(CompositeRequestHelper.self, message:"All records must have same sobjectType")
                     return nil
                 }
                 
                 let objectType = objectTypes.first!
                 let externalIdFieldName = externalIdFieldNames.first!
                 
-                return RestClient.shared.request(forCollectionUpsert: allOrNone, objectType: objectType, externalIdField: externalIdFieldName, records: records, apiVersion: nil)
+                return RestClient.shared.requestForCollectionUpsert(allOrNone, objectType: objectType, externalIdField: externalIdFieldName, records: records, apiVersion: nil)
             }
         case .DELETE:
-            return RestClient.shared.request(forCollectionDelete: false,
+            return RestClient.shared.requestForCollectionDelete(false,
                                              objectIds: getIds(recordRequests: recordRequests, requestType: .DELETE),
                                              apiVersion: nil)
         }

@@ -25,7 +25,9 @@
 #import "SObjectDataManager.h"
 
 @import SalesforceSDKCore;
+@import SalesforceSDKCommon;
 @import SmartStore;
+@import MobileSync;
 
 static NSUInteger kMaxQueryPageSize = 1000;
 static char* const kSearchFilterQueueName = "com.salesforce.mobileSyncExplorer.searchFilterQueue";
@@ -48,12 +50,12 @@ static NSString* const kSyncUpName = @"syncUpContacts";
 - (id)initWithDataSpec:(SObjectDataSpec *)dataSpec {
     self = [super init];
     if (self) {
-        self.syncMgr = [SFMobileSyncSyncManager sharedInstance:[SFUserAccountManager sharedInstance].currentUser];
+        self.syncMgr = [SFMobileSyncSyncManager sharedInstanceForUserAccount:[SFUserAccountManager shared].currentUserAccount];
         self.dataSpec = dataSpec;
         _searchFilterQueue = dispatch_queue_create(kSearchFilterQueueName, NULL);
         // Setup store and syncs if needed
-        [[MobileSyncSDKManager sharedManager] setupUserStoreFromDefaultConfig];
-        [[MobileSyncSDKManager sharedManager] setupUserSyncsFromDefaultConfig];
+        [[MobileSyncSDKManager shared] setupUserStoreFromDefaultConfig];
+        [[MobileSyncSDKManager shared] setupUserSyncsFromDefaultConfig];
     }
     return self;
 }
@@ -62,13 +64,13 @@ static NSString* const kSyncUpName = @"syncUpContacts";
 }
 
 - (SFSmartStore *)store {
-    return [SFSmartStore sharedStoreWithName:kDefaultSmartStoreName];
+    return [SFSmartStore sharedWithName:@"defaultStore"];
 }
 
 - (void)refreshRemoteData:(void (^)(void))completionBlock {
     __weak SObjectDataManager *weakSelf = self;
     // See usersyncs.json
-    [self.syncMgr reSyncByName:kSyncDownName updateBlock:^(SFSyncState *sync) {
+    [self.syncMgr reSyncByName:kSyncDownName onUpdate:^(SFSyncState *sync) {
         __strong typeof(weakSelf) strongSelf = weakSelf;
         if ([sync isDone] || [sync hasFailed]) {
             [strongSelf refreshLocalData:completionBlock];
@@ -76,9 +78,9 @@ static NSString* const kSyncUpName = @"syncUpContacts";
     } error:nil];
 }
 
-- (void)updateRemoteData:(SFSyncSyncManagerUpdateBlock)completionBlock {
+- (void)updateRemoteData:(void (^)(SFSyncState *sync))completionBlock {
     // See usersyncs.json
-    [self.syncMgr reSyncByName:kSyncUpName updateBlock:^(SFSyncState* sync) {
+    [self.syncMgr reSyncByName:kSyncUpName onUpdate:^(SFSyncState* sync) {
         if ([sync isDone] || [sync hasFailed]) {
             completionBlock(sync);
         }
@@ -121,60 +123,60 @@ static NSString* const kSyncUpName = @"syncUpContacts";
 #pragma mark - Private methods
 
 - (void)refreshLocalData:(void (^)(void))completionBlock {
-    SFQuerySpec *sobjectsQuerySpec = [SFQuerySpec newAllQuerySpec:self.dataSpec.soupName withOrderPath:self.dataSpec.orderByFieldName withOrder:kSFSoupQuerySortOrderAscending withPageSize:kMaxQueryPageSize];
+    SFQuerySpec *sobjectsQuerySpec = [SFQuerySpec newAllQuerySpec:self.dataSpec.soupName withOrderPath:self.dataSpec.orderByFieldName withOrder:SFSoupQuerySortOrderAscending withPageSize:kMaxQueryPageSize];
     NSError *queryError = nil;
-    NSArray *queryResults = [self.store queryWithQuerySpec:sobjectsQuerySpec pageIndex:0 error:&queryError];
-    [SFSDKMobileSyncLogger log:[self class] level:SFLogLevelDebug format:@"Got local query results.  Populating data rows."];
+    NSArray *queryResults = [self.store queryUsing:sobjectsQuerySpec startingFromPageIndex:0 error:&queryError];
+    [SFSDKMobileSyncLogger d:[self class] message:@"Got local query results.  Populating data rows."];
     if (queryError) {
-        [SFSDKMobileSyncLogger log:[self class] level:SFLogLevelError format:@"Error retrieving '%@' data from SmartStore: %@", self.dataSpec.objectType, [queryError localizedDescription]];
+        [SFSDKMobileSyncLogger e:[self class] message:[NSString stringWithFormat:@"Error retrieving '%@' data from SmartStore: %@", self.dataSpec.objectType, [queryError localizedDescription]]];
         return;
     }
-    
+
     self.fullDataRowList = [self populateDataRows:queryResults];
-    [SFSDKMobileSyncLogger log:[self class] level:SFLogLevelDebug format:@"Finished generating data rows.  Number of rows: %d.  Refreshing view.", [self.fullDataRowList count]];
+    [SFSDKMobileSyncLogger d:[self class] message:[NSString stringWithFormat:@"Finished generating data rows.  Number of rows: %lu.  Refreshing view.", (unsigned long)[self.fullDataRowList count]]];
     self.dataRows = [self.fullDataRowList copy];
     if (completionBlock) completionBlock();
 }
 
 - (void)createLocalData:(SObjectData *)newData {
-    [newData updateSoupForFieldName:kSyncTargetLocal fieldValue:@YES];
-    [newData updateSoupForFieldName:kSyncTargetLocallyCreated fieldValue:@YES];
-    [self.store upsertEntries:@[ newData.soupDict ] toSoup:[[newData class] dataSpec].soupName];
+    [newData updateSoupForFieldName:@"__local__" fieldValue:@YES];
+    [newData updateSoupForFieldName:@"__locally_created__" fieldValue:@YES];
+    [self.store upsertWithEntries:@[ newData.soupDict ] forSoupNamed:[[newData class] dataSpec].soupName];
 }
 
 - (void)updateLocalData:(SObjectData *)updatedData {
-    [updatedData updateSoupForFieldName:kSyncTargetLocal fieldValue:@YES];
-    [updatedData updateSoupForFieldName:kSyncTargetLocallyUpdated fieldValue:@YES];
-    [self.store upsertEntries:@[ updatedData.soupDict ] toSoup:[[updatedData class] dataSpec].soupName];
+    [updatedData updateSoupForFieldName:@"__local__" fieldValue:@YES];
+    [updatedData updateSoupForFieldName:@"__locally_updated__" fieldValue:@YES];
+    [self.store upsertWithEntries:@[ updatedData.soupDict ] forSoupNamed:[[updatedData class] dataSpec].soupName];
 }
 
 - (void)deleteLocalData:(SObjectData *)dataToDelete {
-    [dataToDelete updateSoupForFieldName:kSyncTargetLocal fieldValue:@YES];
-    [dataToDelete updateSoupForFieldName:kSyncTargetLocallyDeleted fieldValue:@YES];
-    [self.store upsertEntries:@[ dataToDelete.soupDict ] toSoup:[[dataToDelete class] dataSpec].soupName];
+    [dataToDelete updateSoupForFieldName:@"__local__" fieldValue:@YES];
+    [dataToDelete updateSoupForFieldName:@"__locally_deleted__" fieldValue:@YES];
+    [self.store upsertWithEntries:@[ dataToDelete.soupDict ] forSoupNamed:[[dataToDelete class] dataSpec].soupName];
 }
 
 - (void)undeleteLocalData:(SObjectData *)dataToUnDelete {
-    [dataToUnDelete updateSoupForFieldName:kSyncTargetLocallyDeleted fieldValue:@NO];
+    [dataToUnDelete updateSoupForFieldName:@"__locally_deleted__" fieldValue:@NO];
     NSNumber* locallyCreatedOrUpdated = [NSNumber numberWithBool:[self dataLocallyCreated:dataToUnDelete] || [self dataLocallyUpdated:dataToUnDelete]];
-    [dataToUnDelete updateSoupForFieldName:kSyncTargetLocal fieldValue:locallyCreatedOrUpdated];
-    [self.store upsertEntries:@[ dataToUnDelete.soupDict ] toSoup:[[dataToUnDelete class] dataSpec].soupName withExternalIdPath:kSObjectIdField error:nil];
+    [dataToUnDelete updateSoupForFieldName:@"__local__" fieldValue:locallyCreatedOrUpdated];
+    [self.store upsertWithEntries:@[ dataToUnDelete.soupDict ] forSoupNamed:[[dataToUnDelete class] dataSpec].soupName withExternalIdPath:kSObjectIdField];
 }
 
 - (BOOL)dataHasLocalChanges:(SObjectData *)data {
-    return [[data fieldValueForFieldName:kSyncTargetLocal] boolValue];
+    return [[data fieldValueForFieldName:@"__local__"] boolValue];
 }
 
 - (BOOL)dataLocallyCreated:(SObjectData *)data {
-    return [[data fieldValueForFieldName:kSyncTargetLocallyCreated] boolValue];
+    return [[data fieldValueForFieldName:@"__locally_created__"] boolValue];
 }
 
 - (BOOL)dataLocallyUpdated:(SObjectData *)data {
-    return [[data fieldValueForFieldName:kSyncTargetLocallyUpdated] boolValue];
+    return [[data fieldValueForFieldName:@"__locally_updated__"] boolValue];
 }
 
 - (BOOL)dataLocallyDeleted:(SObjectData *)data {
-    return [[data fieldValueForFieldName:kSyncTargetLocallyDeleted] boolValue];
+    return [[data fieldValueForFieldName:@"__locally_deleted__"] boolValue];
 }
 
 - (NSArray *)populateDataRows:(NSArray *)queryResults {
@@ -186,16 +188,16 @@ static NSString* const kSyncUpName = @"syncUpContacts";
 }
 
 - (void)lastModifiedRecords:(int) limit completion:(void (^)(void))completionBlock {
-    SFQuerySpec *sobjectsQuerySpec =  [SFQuerySpec newAllQuerySpec:self.dataSpec.soupName withOrderPath:@"_soupLastModifiedDate" withOrder:kSFSoupQuerySortOrderDescending withPageSize:limit];
+    SFQuerySpec *sobjectsQuerySpec =  [SFQuerySpec newAllQuerySpec:self.dataSpec.soupName withOrderPath:@"_soupLastModifiedDate" withOrder:SFSoupQuerySortOrderDescending withPageSize:limit];
     NSError *queryError = nil;
-    [SFSDKMobileSyncLogger log:[self class] level:SFLogLevelDebug format:@"Got local query results.  Populating data rows."];
-    NSArray *queryResults = [self.store queryWithQuerySpec:sobjectsQuerySpec pageIndex:0 error:&queryError];
+    [SFSDKMobileSyncLogger d:[self class] message:@"Got local query results.  Populating data rows."];
+    NSArray *queryResults = [self.store queryUsing:sobjectsQuerySpec startingFromPageIndex:0 error:&queryError];
     if (queryError) {
-        [SFSDKMobileSyncLogger log:[self class] level:SFLogLevelError format:@"Error retrieving '%@' data from SmartStore: %@", self.dataSpec.objectType, [queryError localizedDescription]];
+        [SFSDKMobileSyncLogger e:[self class] message:[NSString stringWithFormat:@"Error retrieving '%@' data from SmartStore: %@", self.dataSpec.objectType, [queryError localizedDescription]]];
         return;
     }
     self.fullDataRowList = [self populateDataRows:queryResults];
-    [SFSDKMobileSyncLogger log:[self class] level:SFLogLevelDebug format:@"Finished generating data rows.  Number of rows: %d.  Refreshing view.", [self.fullDataRowList count]];
+    [SFSDKMobileSyncLogger d:[self class] message:[NSString stringWithFormat:@"Finished generating data rows.  Number of rows: %lu.  Refreshing view.", (unsigned long)[self.fullDataRowList count]]];
     self.dataRows = [self.fullDataRowList copy];
     completionBlock();
 }

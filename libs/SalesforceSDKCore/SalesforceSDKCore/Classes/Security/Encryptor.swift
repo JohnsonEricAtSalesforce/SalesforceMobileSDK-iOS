@@ -26,6 +26,7 @@
 //  WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 import Foundation
 import CryptoKit
+import UIKit
 import SalesforceSDKCommon
 
 @objc(SFSDKEncryptor)
@@ -204,7 +205,7 @@ public class KeyGenerator: NSObject {
                 let decryptedKeyData = try Encryptor.decrypt(data: encryptedKeyData, using: privateKey)
                 return SymmetricKey(data: decryptedKeyData)
             } catch {
-                SalesforceLogger.log(KeyGenerator.self, level: .info, message: "Unable to decrypt existing encryption key for \(label), generating new one. Error: \(error.localizedDescription)")
+                SFSDKCoreLogger.log(KeyGenerator.self, level: .info, message: "Unable to decrypt existing encryption key for \(label), generating new one. Error: \(error.localizedDescription)")
             }
         }
         // Key wasn't in keychain or couldn't be decrypted
@@ -215,7 +216,7 @@ public class KeyGenerator: NSObject {
         if result.success {
             return key
         } else {
-            SalesforceLogger.log(KeyGenerator.self, level: .error, message: "Error writing \(storedLabel) to keychain: \(result.error?.localizedDescription ?? "")")
+            SFSDKCoreLogger.log(KeyGenerator.self, level: .error, message: "Error writing \(storedLabel) to keychain: \(result.error?.localizedDescription ?? "")")
             throw KeyGeneratorError.keychainWriteError(underlyingError: result.error)
         }
     }
@@ -255,7 +256,7 @@ public class KeyGenerator: NSObject {
         if status == errSecItemNotFound {
             return nil
         } else if status != errSecSuccess {
-            SalesforceLogger.log(KeyGenerator.self, level: .error, message: "Error getting EC SecKey: \(status)")
+            SFSDKCoreLogger.log(KeyGenerator.self, level: .error, message: "Error getting EC SecKey: \(status)")
             throw KeyGeneratorError.keyQueryFailed(status: status)
         }
         
@@ -263,7 +264,7 @@ public class KeyGenerator: NSObject {
         if let key = keys?.first, keys?.count == 1 {
             return key
         }
-        SalesforceLogger.log(KeyGenerator.self, level: .error, message: "Key query result could not be read or more than one key was returned, key count: \(keys?.count ?? 0)")
+        SFSDKCoreLogger.log(KeyGenerator.self, level: .error, message: "Key query result could not be read or more than one key was returned, key count: \(keys?.count ?? 0)")
         throw KeyGeneratorError.invalidQueryResult
     }
     
@@ -279,7 +280,7 @@ public class KeyGenerator: NSObject {
         }
         
         if (status != errSecSuccess && status != errSecItemNotFound) {
-            SalesforceLogger.log(KeyGenerator.self, level: .error, message: "Error deleting EC SecKey: \(status)")
+            SFSDKCoreLogger.log(KeyGenerator.self, level: .error, message: "Error deleting EC SecKey: \(status)")
             return false
         }
         
@@ -299,7 +300,7 @@ public class KeyGenerator: NSObject {
             String(kSecAttrApplicationTag): privateTag
         ]
         
-        if SecureEnclave.isAvailable && !UIDevice.current.sfsdk_isSimulator() {
+        if SecureEnclave.isAvailable && !UIDevice.current.isSimulator {
             if let privateAccess = SecAccessControlCreateWithFlags(nil, kSecAttrAccessibleAfterFirstUnlockThisDeviceOnly, [.privateKeyUsage], nil) {
                 privateKeyAttributes[String(kSecAttrAccessControl)] = privateAccess
             }
@@ -318,7 +319,7 @@ public class KeyGenerator: NSObject {
             String(kSecAttrKeySizeInBits): 256
         ]
         
-        if SecureEnclave.isAvailable && !UIDevice.current.sfsdk_isSimulator() {
+        if SecureEnclave.isAvailable && !UIDevice.current.isSimulator {
             keyPairAttributes[String(kSecAttrTokenID)] = kSecAttrTokenIDSecureEnclave;
         }
         keyPairAttributes[String(kSecPrivateKeyAttrs)] = privateKeyAttributes;
@@ -328,7 +329,7 @@ public class KeyGenerator: NSObject {
         guard let privateKey = SecKeyCreateRandomKey(keyPairAttributes as CFDictionary, &error),
               let publicKey = SecKeyCopyPublicKey(privateKey) else {
             let error = error?.takeRetainedValue()
-            SalesforceLogger.log(KeyGenerator.self, level: .error, message: "Error creating EC key pair: \(error?.localizedDescription ?? "")")
+            SFSDKCoreLogger.log(KeyGenerator.self, level: .error, message: "Error creating EC key pair: \(error?.localizedDescription ?? "")")
             throw KeyGeneratorError.keyCreationFailed(underlyingError: error)
         }
         return KeyPair(publicKey: publicKey, privateKey: privateKey)

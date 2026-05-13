@@ -26,6 +26,7 @@
 //  WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 import CryptoKit
+import UIKit
 
 /// Global Constants
 let maximumUsernameLength = 80
@@ -111,14 +112,14 @@ public class NativeLoginManagerInternal: NSObject, NativeLoginManager {
         guard let credentials = generateColonConcatenatedBase64String(
             value1: trimmedUsername,
             value2: trimmedPassword) else {
-            SFSDKCoreLogger().e(
-                classForCoder,
+            SFSDKCoreLogger.e(
+                NativeLoginManagerInternal.self,
                 message: "Unable to UTF-8 encode colon-concatenated string with values '\(trimmedUsername)' and '\(trimmedPassword)' due to a nil encoding result.")
             return .unknownError
-            
+
         }
-        let authRequest = RestRequest(method: .POST, baseURL: loginUrl, path: kSFOAuthEndPointAuthorize, queryParams: nil)
-        let customHeaders: NSMutableDictionary = [kSFOAuthRequestTypeParamName: kSFOAuthRequestTypeNamedUser,
+        let authRequest = RestRequest(method: .POST, serviceHostType: .login, baseURL: loginUrl, path: kSFOAuthEndPointAuthorize, queryParams: nil)
+        let customHeaders: [String: String] = [kSFOAuthRequestTypeParamName: kSFOAuthRequestTypeNamedUser,
                                                         kHttpHeaderContentType: kHttpPostContentType,
                                             kSFOAuthAuthorizationTypeParamName: "\(kSFOAuthAuthorizationTypeBasic) \(credentials)"]
         
@@ -160,9 +161,9 @@ public class NativeLoginManagerInternal: NSObject, NativeLoginManager {
     
     public func cancelAuthentication() {
         if (shouldShowBackButton()) {
-            UserAccountManager.shared.stopCurrentAuthentication()
-            SFSDKWindowManager.shared().authWindow(nil).viewController?.presentedViewController?.dismiss(animated: false, completion: {
-                SFSDKWindowManager.shared().authWindow(nil).dismissWindow()
+            UserAccountManager.shared.stopCurrentAuthentication(nil)
+            SFSDKWindowManager.shared.authWindow(scene).viewController?.presentedViewController?.dismiss(animated: false, completion: {
+                SFSDKWindowManager.shared.authWindow(self.scene).dismissWindow()
             })
         }
     }
@@ -171,17 +172,17 @@ public class NativeLoginManagerInternal: NSObject, NativeLoginManager {
         let bioAuthMgr = BiometricAuthenticationManagerInternal.shared
         
         if bioAuthMgr.enabled && bioAuthMgr.locked {
-            SFSDKCoreLogger.i(classForCoder, message: "Native Login biometric authentication success.")
+            SFSDKCoreLogger.i(NativeLoginManagerInternal.self, message: "Native Login biometric authentication success.")
             bioAuthMgr.unlockPostProcessing()
-            UserAccountManager.shared.stopCurrentAuthentication()
+            UserAccountManager.shared.stopCurrentAuthentication(nil)
         }
     }
     
     public func getBiometricAuthenticationUsername() -> String? {
         if BiometricAuthenticationManagerInternal.shared.locked {
-            return UserAccountManager.shared.currentUserAccount?.idData.username
+            return UserAccountManager.shared.currentUserAccount?.idData?.username
         }
-        
+
         return nil
     }
     
@@ -212,7 +213,7 @@ public class NativeLoginManagerInternal: NSObject, NativeLoginManager {
     }
     
     private func generateCodeVerifier() -> String {
-        let randomData = SFSDKCryptoUtils.randomByteData(withLength: kSFOAuthCodeVerifierByteLength)
+        let randomData = CryptoUtils.randomByteData(withLength: kSFOAuthCodeVerifierByteLength)
         return urlSafeBase64Encode(data: randomData)
     }
     
@@ -265,7 +266,7 @@ public class NativeLoginManagerInternal: NSObject, NativeLoginManager {
                 ),
                 encoding: .utf8)
             } catch let error {
-                SFSDKCoreLogger().e(
+                SFSDKCoreLogger.e(
                     classForCoder,
                     message: "Cannot JSON encode start registration request body due to an encoding error with description '\(error.localizedDescription)'.")
                 return nil
@@ -274,6 +275,7 @@ public class NativeLoginManagerInternal: NSObject, NativeLoginManager {
         // Create the start registration request.
         let startRegistrationRequest = RestRequest(
             method: .POST,
+            serviceHostType: .login,
             baseURL: loginUrl,
             path: kSFOAuthEndPointHeadlessInitRegistration,
             queryParams: nil)
@@ -298,7 +300,7 @@ public class NativeLoginManagerInternal: NSObject, NativeLoginManager {
                 do {
                     return try startRegistrationResponse.asDecodable(type: StartRegistrationResponseBody.self)
                 } catch let error {
-                    SFSDKCoreLogger().e(
+                    SFSDKCoreLogger.e(
                         classForCoder,
                         message: "Cannot JSON decode start registration response body due to a decoding error with description '\(error.localizedDescription)'.")
                     return nil
@@ -309,8 +311,8 @@ public class NativeLoginManagerInternal: NSObject, NativeLoginManager {
                 requestIdentifier: startRegistrationResponseBody.identifier)
             
         case .failure(let error):
-            SFSDKCoreLogger().e(
-                classForCoder,
+            SFSDKCoreLogger.e(
+                NativeLoginManagerInternal.self,
                 message: "Start registration request failure with description '\(error.localizedDescription)'.")
             return StartRegistrationResult(nativeLoginResult: .unknownError)
         }
@@ -409,7 +411,7 @@ public class NativeLoginManagerInternal: NSObject, NativeLoginManager {
                 ),
                 encoding: .utf8)
             } catch let error {
-                SFSDKCoreLogger().e(
+                SFSDKCoreLogger.e(
                     classForCoder,
                     message: "Cannot JSON encode start password reset request body due to an encoding error with description '\(error.localizedDescription)'.")
                 return nil
@@ -418,6 +420,7 @@ public class NativeLoginManagerInternal: NSObject, NativeLoginManager {
         // Create the start password reset request.
         let startPasswordResetRequest = RestRequest(
             method: .POST,
+            serviceHostType: .login,
             baseURL: loginUrl,
             path: kSFOAuthEndPointHeadlessForgotPassword,
             queryParams: nil)
@@ -439,8 +442,8 @@ public class NativeLoginManagerInternal: NSObject, NativeLoginManager {
             return .success
             
         case .failure(let error):
-            SFSDKCoreLogger().e(
-                classForCoder,
+            SFSDKCoreLogger.e(
+                NativeLoginManagerInternal.self,
                 message: "Start password reset request failure with description '\(error.localizedDescription)'.")
             return  .unknownError
         }
@@ -470,7 +473,7 @@ public class NativeLoginManagerInternal: NSObject, NativeLoginManager {
                 ),
                 encoding: .utf8)
             } catch let error {
-                SFSDKCoreLogger().e(
+                SFSDKCoreLogger.e(
                     classForCoder,
                     message: "Cannot JSON encode complete password reset request body due to an encoding error with description '\(error.localizedDescription)'.")
                 return nil
@@ -479,6 +482,7 @@ public class NativeLoginManagerInternal: NSObject, NativeLoginManager {
         // Create the complete password reset request.
         let completePasswordResetRequest = RestRequest(
             method: .POST,
+            serviceHostType: .login,
             baseURL: loginUrl,
             path: kSFOAuthEndPointHeadlessForgotPassword,
             queryParams: nil)
@@ -500,8 +504,8 @@ public class NativeLoginManagerInternal: NSObject, NativeLoginManager {
             return .success
             
         case .failure(let error):
-            SFSDKCoreLogger().e(
-                classForCoder,
+            SFSDKCoreLogger.e(
+                NativeLoginManagerInternal.self,
                 message: "Complete password reset request failure with description '\(error.localizedDescription)'.")
             return  .unknownError
         }
@@ -543,7 +547,7 @@ public class NativeLoginManagerInternal: NSObject, NativeLoginManager {
                 ),
                 encoding: .utf8)
             } catch let error {
-                SFSDKCoreLogger().e(
+                SFSDKCoreLogger.e(
                     classForCoder,
                     message: "Cannot JSON encode OTP request body due to an encoding error with description '\(error.localizedDescription)'.")
                 return nil
@@ -552,6 +556,7 @@ public class NativeLoginManagerInternal: NSObject, NativeLoginManager {
         // Create the OTP request.
         let otpRequest = RestRequest(
             method: .POST,
+            serviceHostType: .login,
             baseURL: loginUrl,
             path: kSFOAuthEndPointHeadlessInitPasswordlessLogin,
             queryParams: nil)
@@ -576,7 +581,7 @@ public class NativeLoginManagerInternal: NSObject, NativeLoginManager {
                 do {
                     return try otpResponse.asDecodable(type: OtpResponseBody.self)
                 } catch let error {
-                    SFSDKCoreLogger().e(
+                    SFSDKCoreLogger.e(
                         classForCoder,
                         message: "Cannot JSON decode OTP response body due to a decoding error with description '\(error.localizedDescription)'.")
                     return nil
@@ -586,8 +591,8 @@ public class NativeLoginManagerInternal: NSObject, NativeLoginManager {
                 otpIdentifier: otpResponseBody.identifier)
             
         case .failure(let error):
-            SFSDKCoreLogger().e(
-                classForCoder,
+            SFSDKCoreLogger.e(
+                NativeLoginManagerInternal.self,
                 message: "OTP request failure with description '\(error.localizedDescription)'.")
             return OtpRequestResult(nativeLoginResult: .unknownError)
         }
@@ -607,8 +612,8 @@ public class NativeLoginManagerInternal: NSObject, NativeLoginManager {
         guard let codeChallenge = generateChallenge(
             codeVerifier: codeVerifier
         ) else {
-            SFSDKCoreLogger().e(
-                classForCoder,
+            SFSDKCoreLogger.e(
+                NativeLoginManagerInternal.self,
                 message: "Cannot generate code verifier due to a nil result.")
             return .unknownError
         }
@@ -620,13 +625,13 @@ public class NativeLoginManagerInternal: NSObject, NativeLoginManager {
             value1: otpIdentifier,
             value2: trimmedOtp) else
         {
-            SFSDKCoreLogger().e(
-                classForCoder,
+            SFSDKCoreLogger.e(
+                NativeLoginManagerInternal.self,
                 message: "Unable to UTF-8 encode colon-concatenated string with values '\(otpIdentifier)' and '\(otp)' due to a nil encoding result.")
             return .unknownError
         }
         // Generate the authorization request headers.
-        let authorizationRequestHeaders: NSMutableDictionary = [
+        let authorizationRequestHeaders: [String: String] = [
             kSFOAuthRequestTypeParamName: kSFOAuthRequestTypePasswordlessLogin,
             kSFOAuthAuthVerificationTypeParamName: otpVerificationMethodString,
             kHttpHeaderContentType: kHttpPostContentType,
@@ -638,6 +643,7 @@ public class NativeLoginManagerInternal: NSObject, NativeLoginManager {
         // Create the authorization request.
         let authorizationRequest = RestRequest(
             method: .POST,
+            serviceHostType: .login,
             baseURL: loginUrl,
             path: kSFOAuthEndPointAuthorize,
             queryParams: nil)
@@ -785,14 +791,14 @@ public class NativeLoginManagerInternal: NSObject, NativeLoginManager {
         
         // Validate state.
         guard let reCaptchaSiteKeyId else {
-            SFSDKCoreLogger().e(
-                classForCoder,
+            SFSDKCoreLogger.e(
+                NativeLoginManagerInternal.self,
                 message: "A reCAPTCHA site key wasn't and must be provided when using enterprise reCAPATCHA.")
             return ReCaptchaParameterGenerationResult(result: .unknownError)
         }
         guard let googleCloudProjectId else {
-            SFSDKCoreLogger().e(
-                classForCoder,
+            SFSDKCoreLogger.e(
+                NativeLoginManagerInternal.self,
                 message: "A Google Cloud project id wasn't and must be provided when using enterprise reCAPATCHA.")
             return ReCaptchaParameterGenerationResult(result : .unknownError)
         }
@@ -866,8 +872,8 @@ public class NativeLoginManagerInternal: NSObject, NativeLoginManager {
         guard let codeChallenge = generateChallenge(
             codeVerifier: codeVerifier
         ) else {
-            SFSDKCoreLogger().e(
-                classForCoder,
+            SFSDKCoreLogger.e(
+                NativeLoginManagerInternal.self,
                 message: "Cannot generate code verifier due to a nil result.")
             return .unknownError
         }
@@ -879,13 +885,13 @@ public class NativeLoginManagerInternal: NSObject, NativeLoginManager {
             value1: otpIdentifier,
             value2: trimmedOtp) else
         {
-            SFSDKCoreLogger().e(
-                classForCoder,
+            SFSDKCoreLogger.e(
+                NativeLoginManagerInternal.self,
                 message: "Unable to UTF-8 encode colon-concatenated string with values '\(otpIdentifier)' and '\(otp)' due to a nil encoding result.")
             return .unknownError
         }
         // Generate the authorization request headers.
-        let authorizationRequestHeaders: NSMutableDictionary = [
+        let authorizationRequestHeaders: [String: String] = [
             kSFOAuthRequestTypeParamName: authRequestType,
             kSFOAuthAuthVerificationTypeParamName: otpVerificationMethodString,
             kHttpHeaderContentType: kHttpPostContentType,
@@ -897,6 +903,7 @@ public class NativeLoginManagerInternal: NSObject, NativeLoginManager {
         // Create the authorization request.
         let authorizationRequest = RestRequest(
             method: .POST,
+            serviceHostType: .login,
             baseURL: loginUrl,
             path: kSFOAuthEndPointAuthorize,
             queryParams: nil)
@@ -943,6 +950,7 @@ public class NativeLoginManagerInternal: NSObject, NativeLoginManager {
                 // Create the access token request.
                 let tokenRequest = RestRequest(
                     method: .POST,
+                    serviceHostType: .login,
                     baseURL: authorizationResponseBody.sfdc_community_url,
                     path: kSFOAuthEndPointToken,
                     queryParams: nil)
@@ -968,19 +976,19 @@ public class NativeLoginManagerInternal: NSObject, NativeLoginManager {
                     return .success
                     
                 case .failure(let error): // Access token failure.
-                    SFSDKCoreLogger().e(
+                    SFSDKCoreLogger.e(
                         classForCoder,
                         message: "error: \(error)")
                     return .unknownError
                 }
             } catch {
-                SFSDKCoreLogger().e(classForCoder, message: "error: \(error)")
+                SFSDKCoreLogger.e(NativeLoginManagerInternal.self, message: "error: \(error)")
                 return .unknownError
             }
             
         case .failure(let error): // Authorization failure.
             // You will catch the error here in the event of auth failure or if the user cannot login this way.
-            SFSDKCoreLogger().e(classForCoder, message: "authentication error: \(error)")
+            SFSDKCoreLogger.e(NativeLoginManagerInternal.self, message: "authentication error: \(error)")
             return .invalidCredentials
         }
     }

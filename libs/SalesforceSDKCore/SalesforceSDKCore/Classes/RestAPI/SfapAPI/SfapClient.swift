@@ -208,7 +208,7 @@ public class SfapClient : NSObject {
         return feedbackResponseBody
     }
     
-    private func generateHeaders() -> NSMutableDictionary {
+    private func generateHeaders() -> [String: String] {
         return [
             "x-sfdc-app-context" : "EinsteinGPT",
             "x-client-feature-id" : "ai-platform-models-connected-app"
@@ -237,6 +237,7 @@ public class SfapClient : NSObject {
     ) -> RestRequest {
         let restRequest = RestRequest(
             method: .POST,
+            serviceHostType: .instance,
             baseURL: "https://\(apiHostName)/",
             path: path,
             queryParams: nil)
@@ -276,8 +277,8 @@ public class SfapClient : NSObject {
         messageCode: String? = nil,
         source: String? = nil) -> SfapError
     {
-        SFSDKCoreLogger().e(classForCoder, message: message)
-        
+        SFSDKCoreLogger.e(type(of: self), message: message)
+
         return SfapError(
             errorCode: errorCode,
             message: message,

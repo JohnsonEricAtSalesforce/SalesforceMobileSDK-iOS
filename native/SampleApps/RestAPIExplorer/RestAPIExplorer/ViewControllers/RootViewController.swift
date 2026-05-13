@@ -29,6 +29,7 @@
 
 import UIKit
 import SalesforceSDKCore
+import SalesforceSDKCommon
 import LocalAuthentication
 
 struct ContentSection {
@@ -114,7 +115,7 @@ class RootViewController: UIViewController {
     
     fileprivate var fullName: String {
         if let currentAccount = UserAccountManager.shared.currentUserAccount {
-            return (currentAccount.idData.firstName ?? "") + " " + (currentAccount.idData.lastName)
+            return (currentAccount.idData?.firstName ?? "") + " " + (currentAccount.idData?.lastName ?? "")
         }
         return ""
     }
@@ -524,7 +525,7 @@ class RootViewController: UIViewController {
         textView.translatesAutoresizingMaskIntoConstraints = false
         textView.isEditable = false
         textView.font = UIFont.appBoldFont(14)
-        textView.textColor = UIColor.salesforceLabel
+        textView.textColor = UIColor.salesforceLabelColor
         textView.backgroundColor = UIColor.appTextViewYellowBackground
         textView.layer.borderWidth = 1.0
         textView.layer.cornerRadius = 4.0
@@ -568,7 +569,7 @@ class RootViewController: UIViewController {
         
         var queryParams: [String: Any]?
         if let params = self.paramsTextView.text {
-            queryParams = SFJsonUtils.object(fromJSONString: params) as? [String: Any]
+            queryParams = SFJsonUtils.object(from: params) as? [String: Any]
         }
         
         let request = RestRequest(method: method, path: path, queryParams: queryParams)
@@ -589,7 +590,7 @@ class RootViewController: UIViewController {
     func handleError(request: RestRequest, error: RestClientError) {
         switch error {
             case .apiFailed(_, let underlyingError, _):
-                SalesforceLogger.e(RootViewController.self, message: "Error invoking api \(underlyingError.localizedDescription)")
+                SFLogger.e(RootViewController.self, message: "Error invoking api \(underlyingError.localizedDescription)")
             default:
                 DispatchQueue.main.async {
                     self.updateUI(request, response: nil, error: error)
@@ -651,7 +652,7 @@ class RootViewController: UIViewController {
     }
     
     @objc func clearPopoversForPasscode() {
-        SalesforceLogger.log(RootViewController.self, level: .debug, message: "Passcode screen loading. Clearing popovers")
+        SFLogger.log(RootViewController.self, level: .debug, message: "Passcode screen loading. Clearing popovers")
         
         if let alert = self.logoutAlert {
             alert.dismiss(animated: true, completion: nil)
@@ -722,7 +723,7 @@ extension RootViewController: ActionTableViewDelegate {
         let objectId = self.objectIdTextField.text
         let fieldList = self.fieldListTextField.text
         let objectList = self.objectListTextField.text
-        let fields = SFJsonUtils.object(fromJSONString: self.fieldsTextView.text) as? [String: Any]
+        let fields = SFJsonUtils.object(from: self.fieldsTextView.text) as? [String: Any]
         let search = self.searchTextField.text
         let query = self.queryTextField.text
         let externalId = self.externalIdTextField.text
@@ -738,9 +739,9 @@ extension RootViewController: ActionTableViewDelegate {
         case .versions:
             request = restApi.requestForVersions()
         case .resources:
-            request =  restApi.request(forResources: SFRestDefaultAPIVersion)
+            request =  restApi.requestForResources(SFRestDefaultAPIVersion)
         case .describeGlobal:
-            request = restApi.request(forDescribeGlobal: SFRestDefaultAPIVersion)
+            request = restApi.requestForDescribeGlobal(SFRestDefaultAPIVersion)
         case .metadataWithObjectType:
             guard let objType = objectType else {
                 self.showMissingFieldError(objectTypes)
@@ -788,78 +789,78 @@ extension RootViewController: ActionTableViewDelegate {
                 self.showMissingFieldError(objectTypes)
                 return
             }
-            request = restApi.request(forQuery: qry, apiVersion: SFRestDefaultAPIVersion)
+            request = restApi.requestForQuery(qry, apiVersion: SFRestDefaultAPIVersion)
         case .search:
             guard let srch = search else {
                 self.showMissingFieldError(objectTypes)
                 return
             }
-            request = restApi.request(forSearch: srch, apiVersion: SFRestDefaultAPIVersion)
+            request = restApi.requestForSearch(srch, apiVersion: SFRestDefaultAPIVersion)
         case .searchScopeAndOrder:
-            request = restApi.request(forSearchScopeAndOrder: SFRestDefaultAPIVersion)
+            request = restApi.requestForSearchScopeAndOrder(SFRestDefaultAPIVersion)
         case .searchResultLayout:
             guard let objList = objectList else {
                 self.showMissingFieldError(objectTypes)
                 return
             }
-            request = restApi.request(forSearchResultLayout: objList, apiVersion: SFRestDefaultAPIVersion)
+            request = restApi.requestForSearchResultLayout(objList, apiVersion: SFRestDefaultAPIVersion)
         case .ownedFilesList:
             guard let uId = userId, let pge = page else {
                 self.showMissingFieldError(objectTypes)
                 return
             }
-            request = restApi.request(forOwnedFilesList: uId, page: pge, apiVersion: SFRestDefaultAPIVersion)
+            request = restApi.requestForOwnedFilesList(uId, page: pge, apiVersion: SFRestDefaultAPIVersion)
         case .filesInUserGroups:
             guard let uId = userId, let pge = page else {
                 self.showMissingFieldError(objectTypes)
                 return
             }
-            request = restApi.requestForFiles(inUsersGroups: uId, page: pge, apiVersion: SFRestDefaultAPIVersion)
+            request = restApi.requestForFilesInUsersGroups(uId, page: pge, apiVersion: SFRestDefaultAPIVersion)
         case .filesSharedWithUser:
             guard let uId = userId, let pge = page else {
                 self.showMissingFieldError(objectTypes)
                 return
             }
-            request = restApi.requestForFilesShared(withUser: uId, page: pge, apiVersion: SFRestDefaultAPIVersion)
+            request = restApi.requestForFilesSharedWithUser(uId, page: pge, apiVersion: SFRestDefaultAPIVersion)
         case .fileDetails:
             guard let objId = objectId else {
                 self.showMissingFieldError(objectTypes)
                 return
             }
-            request = restApi.request(forFileDetails: objId, forVersion: objId, apiVersion: SFRestDefaultAPIVersion)
+            request = restApi.requestForFileDetails(objId, forVersion: nil, apiVersion: SFRestDefaultAPIVersion)
         case .batchFileDetails:
             guard let objIdList = objectIdList else {
                 self.showMissingFieldError(objectTypes)
                 return
             }
-            request = restApi.request(forBatchFileDetails: objIdList, apiVersion: SFRestDefaultAPIVersion)
+            request = restApi.requestForBatchFileDetails(objIdList, apiVersion: SFRestDefaultAPIVersion)
         case .fileShares:
             guard let objId = objectId, let pge = page else {
                 self.showMissingFieldError(objectTypes)
                 return
             }
-            request = restApi.request(forFileShares: objId, page: pge, apiVersion: SFRestDefaultAPIVersion)
+            request = restApi.requestForFileShares(objId, page: pge, apiVersion: SFRestDefaultAPIVersion)
             
         case .addFileShare:
             guard let objId = objectId, let eId = entityId, let sType = shareType else {
                 self.showMissingFieldError(objectTypes)
                 return
             }
-            request = restApi.request(forAddFileShare: objId, entityId: eId, shareType: sType, apiVersion: SFRestDefaultAPIVersion)
+            request = restApi.requestForAddFileShare(objId, entityId: eId, shareType: sType, apiVersion: SFRestDefaultAPIVersion)
         case .deleteFileShare:
             guard let objId = objectId else {
                 self.showMissingFieldError(objectTypes)
                 return
             }
-            request = restApi.request(forDeleteFileShare: objId, apiVersion: SFRestDefaultAPIVersion)
+            request = restApi.requestForDeleteFileShare(objId, apiVersion: SFRestDefaultAPIVersion)
         case .primingRecords:
-            request = restApi.request(forPrimingRecords: nil, changedAfterTimestamp: nil, apiVersion: SFRestDefaultAPIVersion)
+            request = restApi.requestForPrimingRecords(nil, changedAfterTimestamp: nil, apiVersion: SFRestDefaultAPIVersion)
         case .currentUserInfo:
             guard let currentAccount = UserAccountManager.shared.currentUserAccount else {return}
             let idData = currentAccount.idData
             var userInfoString = "Name: " + self.fullName
-            userInfoString += "\nID: " + idData.username
-            userInfoString += "\nEmail: " + idData.email
+            userInfoString += "\nID: " + (idData?.username ?? "")
+            userInfoString += "\nEmail: " + (idData?.email ?? "")
             self.showAlert("User Info", message: userInfoString)
             return
         case .logout:
@@ -878,13 +879,13 @@ extension RootViewController: ActionTableViewDelegate {
             self.exportTestingCredentials()
             return
         case .overrideStyleLight:
-            SFSDKWindowManager.shared().userInterfaceStyle = .light
+            SFSDKWindowManager.shared.userInterfaceStyle = .light
             return
         case .overrideStyleDark:
-            SFSDKWindowManager.shared().userInterfaceStyle = .dark
+            SFSDKWindowManager.shared.userInterfaceStyle = .dark
             return
         case .overrideStyleUnspecified:
-            SFSDKWindowManager.shared().userInterfaceStyle = .unspecified
+            SFSDKWindowManager.shared.userInterfaceStyle = .unspecified
             return
         }
         

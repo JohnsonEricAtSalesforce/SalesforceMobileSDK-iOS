@@ -121,7 +121,7 @@ extension RestClient {
     /// - Throws: A RestClientError if the request fails
     @objc(sendURLRequest:networkServiceType:requiresAuthentication:completion:)
     public func send(urlRequest: URLRequest,
-                     networkServiceType: RestRequest.NetWorkServiceType = RestRequest.NetWorkServiceType.SFNetworkServiceTypeDefault,
+                     networkServiceType: RestRequest.NetworkServiceType = RestRequest.NetworkServiceType.default,
                      requiresAuthentication: Bool = true) async throws -> (Data, URLResponse) {
         guard let restRequest = urlRequest.toRestRequest(networkServiceType, requiresAuthentication) else {
             throw RestClientError.invalidRequest("Request is not a valid MSDK REST request.")
@@ -237,7 +237,7 @@ extension RestClient {
         withApiVersion version: String = SFRestDefaultAPIVersion,
         withDecoder decoder: JSONDecoder = .init()
     ) async throws -> QueryResponse<Record> {
-        let request = RestClient.shared.request(forQuery: query, apiVersion: version)
+        let request = RestClient.shared.requestForQuery(query, apiVersion: version)
         return try await fetchRecords(ofModelType: modelType, forRequest: request, withDecoder: decoder)
     }
     
@@ -325,7 +325,7 @@ extension RestClient {
     public func records<Record: Decodable>(forQuery query: String,
                                            withApiVersion version: String = SFRestDefaultAPIVersion,
                                            withDecoder decoder: JSONDecoder = .init()) -> AnyPublisher<QueryResponse<Record>, Never> {
-        let request = RestClient.shared.request(forQuery: query, apiVersion: version)
+        let request = RestClient.shared.requestForQuery(query, apiVersion: version)
         return self.records(forRequest: request, withDecoder: decoder)
     }
 }
@@ -345,7 +345,7 @@ extension RestClient {
             return nil
         }
         
-        let request = RestRequest(method: .POST, path: "/services/oauth2/revoke", queryParams: nil)
+        let request = RestRequest.request(withMethod: .POST, serviceHostType: .login, path: "/services/oauth2/revoke", queryParams: nil)
         request.endpoint = ""
         
         // Set the request body with URL-encoded token

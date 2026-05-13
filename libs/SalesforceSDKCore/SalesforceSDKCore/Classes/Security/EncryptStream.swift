@@ -130,7 +130,7 @@ public class EncryptStream: OutputStream {
                     stream.write([UInt8](encryptedData), maxLength: encryptedData.count)
                     bufferSlice = bufferSlice.dropFirst(sliceSize)
                 } catch {
-                    SalesforceLogger.e(EncryptStream.self, message: "Error encrypting data: \(error)")
+                    SFSDKCoreLogger.e(EncryptStream.self, message: "Error encrypting data: \(error)")
                     _streamError = error
                     return -1
                 }
@@ -153,7 +153,7 @@ public class EncryptStream: OutputStream {
                 stream.write([UInt8](encryptedData), maxLength: encryptedData.count)
             }
         } catch {
-            SalesforceLogger.e(EncryptStream.self, message: "Error encrypting data to stream: \(error)")
+            SFSDKCoreLogger.e(EncryptStream.self, message: "Error encrypting data to stream: \(error)")
             _streamError = error
         }
     }

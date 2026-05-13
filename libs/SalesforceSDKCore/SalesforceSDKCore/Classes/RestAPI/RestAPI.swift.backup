@@ -1,0 +1,748 @@
+/*
+ Copyright (c) 2011-present, salesforce.com, inc. All rights reserved.
+
+ Redistribution and use of this software in source and binary forms, with or without modification,
+ are permitted provided that the following conditions are met:
+ * Redistributions of source code must retain the above copyright notice, this list of conditions
+   and the following disclaimer.
+ * Redistributions in binary form must reproduce the above copyright notice, this list of
+   conditions and the following disclaimer in the documentation and/or other materials provided
+   with the distribution.
+ * Neither the name of salesforce.com, inc. nor the names of its contributors may be used to
+   endorse or promote products derived from this software without specific prior written
+   permission of salesforce.com, inc.
+
+ THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR
+ IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND
+ FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR
+ CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+ DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+ DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY,
+ WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY
+ WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ */
+
+import Foundation
+import SalesforceSDKCommon
+
+public typealias RestRequestFailBlock = (_ response: Any?, _ error: Error?, _ rawResponse: URLResponse?) -> Void
+public typealias RestResponseBlock = (_ response: Any?, _ rawResponse: URLResponse?) -> Void
+
+public let SFRestErrorDomain = "com.salesforce.RestAPI.ErrorDomain"
+public let SFRestErrorCode = 999
+public let SFRestDefaultAPIVersion = "v66.0"
+public let SFRestIfUnmodifiedSince = "If-Unmodified-Since"
+public let SFRestSOQLMinBatchSize = 200
+public let SFRestSOQLMaxBatchSize = 2000
+public let SFRestSOQLDefaultBatchSize = 2000
+public let SFRestQueryOptions = "Sforce-Query-Options"
+public let SFRestCollectionRetrieveMaxSize = 2000
+
+let kSFDefaultContentType = "application/json"
+
+private var kIsTestRun = false
+private var sfRestApiList: SFSDKSafeMutableDictionary? = nil
+private var httpDateFormatter: DateFormatter = {
+    let formatter = DateFormatter()
+    formatter.dateFormat = "EEE',' dd MMM yyyy HH':'mm':'ss 'GMT'"
+    return formatter
+}()
+
+@objc(SFRestAPI)
+@objcMembers
+public class RestClient: NSObject {
+
+    // MARK: - Properties
+
+    public var apiVersion: String = SFRestDefaultAPIVersion
+
+    public private(set) var userAccount: SFUserAccount?
+
+    var requiresAuthentication: Bool = true
+
+    private(set) var activeRequests: SFSDKSafeMutableSet
+
+    private var sessionRefreshInProgress: Bool = false
+    private var pendingRequestsBeingProcessed: Bool = false
+    private var oauthSessionRefresher: SFOAuthSessionRefresher?
+
+    // MARK: - Singleton Access
+
+    @objc(sharedInstance)
+    public static var shared: RestClient {
+        return sharedInstance(for: SFUserAccountManager.sharedInstance().currentUser)
+    }
+
+    @objc(sharedGlobalInstance)
+    public static var sharedGlobal: RestClient {
+        initializeIfNeeded()
+        var restAPI: RestClient?
+        objc_sync_enter(RestClient.self)
+        defer { objc_sync_exit(RestClient.self) }
+
+        let key = SFKeyForGlobalScope()
+        restAPI = sfRestApiList?.object(forKey: key) as? RestClient
+        if restAPI == nil {
+            restAPI = RestClient(user: nil)
+            sfRestApiList?.setObject(restAPI!, forKey: key)
+        }
+        return restAPI!
+    }
+
+    @objc(sharedInstanceWithUser:)
+    public static func sharedInstance(for user: SFUserAccount?) -> RestClient {
+        initializeIfNeeded()
+        var restAPI: RestClient?
+        objc_sync_enter(RestClient.self)
+        defer { objc_sync_exit(RestClient.self) }
+
+        guard var user = user ?? SFUserAccountManager.sharedInstance().currentUser else {
+            return nil!
+        }
+
+        guard let key = SFKeyForUserAndScope(user, .community) else {
+            return nil!
+        }
+
+        restAPI = sfRestApiList?.object(forKey: key) as? RestClient
+        if restAPI == nil {
+            if user.loginState != .loggedIn {
+                SFSDKCoreLogger.w(RestClient.self, message: "A user account must be in the SFUserAccountLoginStateLoggedIn state in order to create a RestClient instance for a user.")
+                return nil!
+            }
+            restAPI = RestClient(user: user)
+            sfRestApiList?.setObject(restAPI!, forKey: key)
+        }
+        return restAPI!
+    }
+
+    @objc(restClientFor:)
+    public static func restClient(for userAccount: SFUserAccount) -> RestClient? {
+        return sharedInstance(for: userAccount)
+    }
+
+    private static func initializeIfNeeded() {
+        if sfRestApiList == nil {
+            sfRestApiList = SFSDKSafeMutableDictionary()
+        }
+    }
+
+    static func removeSharedInstance(for user: SFUserAccount?) {
+        objc_sync_enter(RestClient.self)
+        defer { objc_sync_exit(RestClient.self) }
+
+        guard let user = user ?? SFUserAccountManager.sharedInstance().currentUser else {
+            return
+        }
+
+        let userKey = SFKeyForUserAndScope(user, .user)
+
+        // Remove all sub-instances (community users) for this user as well.
+        if let keys = sfRestApiList?.allKeys() as? [String] {
+            for key in keys {
+                if let userKey = userKey, key.hasPrefix(userKey) {
+                    sfRestApiList?.removeObject(key)
+                }
+            }
+        }
+    }
+
+    // MARK: - Initialization
+
+    init(user: SFUserAccount?) {
+        self.userAccount = user
+        self.activeRequests = SFSDKSafeMutableSet(capacity: 10)
+        self.apiVersion = SFRestDefaultAPIVersion
+        self.sessionRefreshInProgress = false
+        self.pendingRequestsBeingProcessed = false
+        self.requiresAuthentication = (user != nil && user?.credentials.accessToken != nil)
+        super.init()
+
+        NotificationCenter.default.addObserver(
+            self,
+            selector: #selector(handleUserDidLogout(_:)),
+            name: NSNotification.Name(kSFNotificationUserDidLogout),
+            object: nil
+        )
+    }
+
+    deinit {
+        NotificationCenter.default.removeObserver(self)
+    }
+
+    // MARK: - Public Methods
+
+    public func cleanup() {
+        activeRequests.removeAllObjects()
+    }
+
+    public func cancelAllRequests() {
+        activeRequests.enumerat eObjects { obj, stop in
+            if let request = obj as? RestRequest {
+                request.cancel()
+            }
+        }
+        activeRequests.removeAllObjects()
+    }
+
+    public func send(_ request: RestRequest, requestDelegate: RestRequestDelegate?) {
+        send(request, requestDelegate: requestDelegate, shouldRetry: requiresAuthentication && request.requiresAuthentication)
+    }
+
+    private func send(_ request: RestRequest, requestDelegate: RestRequestDelegate?, shouldRetry: Bool) {
+        if let requestDelegate = requestDelegate {
+            request.requestDelegate = requestDelegate
+        }
+
+        send(request, failureBlock: { [weak self] response, error, rawResponse in
+            self?.notifyDelegate(ofFailure: requestDelegate, request: request, data: response, rawResponse: rawResponse, error: error)
+        }, successBlock: { [weak self] response, rawResponse in
+            self?.notifyDelegate(ofSuccess: requestDelegate, request: request, data: response, rawResponse: rawResponse)
+        }, shouldRetry: shouldRetry)
+    }
+
+    public func send(_ request: RestRequest, failureBlock: @escaping RestRequestFailBlock, successBlock: @escaping RestResponseBlock) {
+        send(request, failureBlock: { [weak self] response, error, rawResponse in
+            failureBlock(response, error, rawResponse)
+            self?.removeActiveRequestObject(request)
+        }, successBlock: { [weak self] response, rawResponse in
+            successBlock(response, rawResponse)
+            self?.removeActiveRequestObject(request)
+        }, shouldRetry: requiresAuthentication && request.requiresAuthentication)
+    }
+
+    private func send(_ request: RestRequest, failureBlock: @escaping RestRequestFailBlock, successBlock: @escaping RestResponseBlock, shouldRetry: Bool) {
+        request.failureBlock = failureBlock
+        request.successBlock = successBlock
+
+        if !requiresAuthentication {
+            assert(!request.requiresAuthentication, "Use RestClient.shared for authenticated requests")
+        }
+
+        activeRequests.add(request)
+
+        if userAccount?.credentials.accessToken == nil && userAccount?.credentials.refreshToken == nil && requiresAuthentication {
+            SFSDKCoreLogger.i(RestClient.self, message: "No auth credentials found. Authenticating before sending request: \(request.description)")
+            SFUserAccountManager.sharedInstance().login { [weak self] authInfo, userAccount in
+                guard let self = self else { return }
+                self.userAccount = userAccount
+                self.enqueue(request, shouldRetry: shouldRetry)
+            } failure: { [weak self] authInfo, error in
+                guard let self = self else { return }
+                SFSDKCoreLogger.e(RestClient.self, message: "Authentication failed in RestClient: \(error). Logging out.")
+                SFUserAccountManager.sharedInstance().logout(.unexpected)
+            }
+        } else {
+            enqueue(request, shouldRetry: shouldRetry)
+        }
+    }
+
+    // MARK: - Request Factory Methods
+
+    public func requestForUserInfo() -> RestRequest {
+        let path = "/services/oauth2/userinfo"
+        let request = RestRequest(method: .GET, serviceHostType: .login, path: path, queryParams: nil)
+        request.endpoint = ""
+        return request
+    }
+
+    public func requestForSingleAccess(_ redirectUri: String) -> RestRequest {
+        let path = "/services/oauth2/singleaccess"
+        let bodyStr = "redirect_uri=\(redirectUri.sfsdk_stringByURLEncoding())"
+        let request = RestRequest(method: .POST, serviceHostType: .instance, path: path, queryParams: nil)
+        request.setCustomRequestBodyString(bodyStr, contentType: kHttpPostContentType)
+        request.endpoint = ""
+        return request
+    }
+
+    public func requestForVersions() -> RestRequest {
+        let path = "/"
+        let request = RestRequest(method: .GET, path: path, queryParams: nil)
+        request.requiresAuthentication = false
+        return request
+    }
+
+    public func requestForLimits(_ apiVersion: String?) -> RestRequest {
+        let path = "/\(computeAPIVersion(apiVersion))/limits"
+        return RestRequest(method: .GET, path: path, queryParams: nil)
+    }
+
+    public func cheapRequest(_ apiVersion: String?) -> RestRequest {
+        return requestForResources(apiVersion)
+    }
+
+    public func requestForResources(_ apiVersion: String?) -> RestRequest {
+        let path = "/\(computeAPIVersion(apiVersion))"
+        return RestRequest(method: .GET, path: path, queryParams: nil)
+    }
+
+    public func requestForDescribeGlobal(_ apiVersion: String?) -> RestRequest {
+        let path = "/\(computeAPIVersion(apiVersion))/sobjects"
+        return RestRequest(method: .GET, path: path, queryParams: nil)
+    }
+
+    public func requestForMetadata(objectType: String, apiVersion: String?) -> RestRequest {
+        let path = "/\(computeAPIVersion(apiVersion))/sobjects/\(objectType)"
+        return RestRequest(method: .GET, path: path, queryParams: nil)
+    }
+
+    public func requestForDescribe(objectType: String, apiVersion: String?) -> RestRequest {
+        let path = "/\(computeAPIVersion(apiVersion))/sobjects/\(objectType)/describe"
+        return RestRequest(method: .GET, path: path, queryParams: nil)
+    }
+
+    public func requestForLayout(objectAPIName: String, formFactor: String?, layoutType: String?, mode: String?, recordTypeId: String?, apiVersion: String?) -> RestRequest {
+        var queryParams: [String: Any] = [:]
+        if let formFactor = formFactor {
+            queryParams["formFactor"] = formFactor
+        }
+        if let layoutType = layoutType {
+            queryParams["layoutType"] = layoutType
+        }
+        if let mode = mode {
+            queryParams["mode"] = mode
+        }
+        if let recordTypeId = recordTypeId {
+            queryParams["recordTypeId"] = recordTypeId
+        }
+        let path = "/\(computeAPIVersion(apiVersion))/ui-api/layout/\(objectAPIName)"
+        return RestRequest(method: .GET, path: path, queryParams: queryParams)
+    }
+
+    public func requestForRetrieve(objectType: String, objectId: String, fieldList: String?, apiVersion: String?) -> RestRequest {
+        var queryParams: [String: Any]? = nil
+        if let fieldList = fieldList {
+            queryParams = ["fields": fieldList]
+        }
+        let path = "/\(computeAPIVersion(apiVersion))/sobjects/\(objectType)/\(objectId)"
+        return RestRequest(method: .GET, path: path, queryParams: queryParams)
+    }
+
+    public func requestForCreate(objectType: String, fields: [String: Any]?, apiVersion: String?) -> RestRequest {
+        let path = "/\(computeAPIVersion(apiVersion))/sobjects/\(objectType)"
+        let request = RestRequest(method: .POST, path: path, queryParams: nil)
+        return addBody(forPostRequest: fields, request: request)
+    }
+
+    public func requestForUpdate(objectType: String, objectId: String, fields: [String: Any]?, apiVersion: String?) -> RestRequest {
+        return requestForUpdate(objectType: objectType, objectId: objectId, fields: fields, ifUnmodifiedSinceDate: nil, apiVersion: computeAPIVersion(apiVersion))
+    }
+
+    public func requestForUpdate(objectType: String, objectId: String, fields: [String: Any]?, ifUnmodifiedSinceDate: Date?, apiVersion: String?) -> RestRequest {
+        let path = "/\(computeAPIVersion(apiVersion))/sobjects/\(objectType)/\(objectId)"
+        let request = RestRequest(method: .PATCH, path: path, queryParams: nil)
+        let updatedRequest = addBody(forPostRequest: fields, request: request)
+        if let ifUnmodifiedSinceDate = ifUnmodifiedSinceDate {
+            updatedRequest.setHeaderValue(RestClient.httpString(from: ifUnmodifiedSinceDate), forHeaderName: SFRestIfUnmodifiedSince)
+        }
+        return updatedRequest
+    }
+
+    public func requestForUpsert(objectType: String, externalIdField: String, externalId: String?, fields: [String: Any], apiVersion: String?) -> RestRequest {
+        let path = "/\(computeAPIVersion(apiVersion))/sobjects/\(objectType)/\(externalIdField)/\(externalId ?? "")"
+        let method: RestRequest.Method = externalId == nil ? .POST : .PATCH
+        let request = RestRequest(method: method, path: path, queryParams: nil)
+        return addBody(forPostRequest: fields, request: request)
+    }
+
+    public func requestForDelete(objectType: String, objectId: String, apiVersion: String?) -> RestRequest {
+        let path = "/\(computeAPIVersion(apiVersion))/sobjects/\(objectType)/\(objectId)"
+        return RestRequest(method: .DELETE, path: path, queryParams: nil)
+    }
+
+    public func requestForQuery(_ soql: String, apiVersion: String?) -> RestRequest {
+        var queryParams: [String: Any]? = nil
+        if !soql.isEmpty {
+            queryParams = ["q": soql]
+        }
+        let path = "/\(computeAPIVersion(apiVersion))/query"
+        return RestRequest(method: .GET, path: path, queryParams: queryParams)
+    }
+
+    public func requestForQuery(_ soql: String, apiVersion: String?, batchSize: Int) -> RestRequest {
+        let request = requestForQuery(soql, apiVersion: apiVersion)
+        let validatedBatchSize = max(min(batchSize, SFRestSOQLMaxBatchSize), SFRestSOQLMinBatchSize)
+        if batchSize != SFRestSOQLDefaultBatchSize {
+            request.setHeaderValue("batchSize=\(validatedBatchSize)", forHeaderName: SFRestQueryOptions)
+        }
+        return request
+    }
+
+    public func requestForQueryAll(_ soql: String, apiVersion: String?) -> RestRequest {
+        var queryParams: [String: Any]? = nil
+        if !soql.isEmpty {
+            queryParams = ["q": soql]
+        }
+        let path = "/\(computeAPIVersion(apiVersion))/queryAll"
+        return RestRequest(method: .GET, path: path, queryParams: queryParams)
+    }
+
+    public func requestForSearch(_ sosl: String, apiVersion: String?) -> RestRequest {
+        var queryParams: [String: Any]? = nil
+        if !sosl.isEmpty {
+            queryParams = ["q": sosl]
+        }
+        let path = "/\(computeAPIVersion(apiVersion))/search"
+        return RestRequest(method: .GET, path: path, queryParams: queryParams)
+    }
+
+    public func requestForSearchScopeAndOrder(_ apiVersion: String?) -> RestRequest {
+        let path = "/\(computeAPIVersion(apiVersion))/search/scopeOrder"
+        return RestRequest(method: .GET, path: path, queryParams: nil)
+    }
+
+    public func requestForSearchResultLayout(_ objectList: String, apiVersion: String?) -> RestRequest {
+        let queryParams = ["q": objectList]
+        let path = "/\(computeAPIVersion(apiVersion))/search/layout"
+        return RestRequest(method: .GET, path: path, queryParams: queryParams)
+    }
+
+    public func batchRequest(_ requests: [RestRequest], haltOnError: Bool, apiVersion: String?) -> RestRequest {
+        let builder = BatchRequestBuilder()
+        for request in requests {
+            builder.addRequest(request)
+        }
+        builder.setHaltOnError(haltOnError)
+        return builder.buildBatchRequest(computeAPIVersion(apiVersion))
+    }
+
+    public func compositeRequest(_ requests: [RestRequest], refIds: [String], allOrNone: Bool, apiVersion: String?) -> RestRequest {
+        let builder = CompositeRequestBuilder()
+        for (index, request) in requests.enumerated() {
+            builder.addRequest(request, referenceId: refIds[index])
+        }
+        builder.setAllOrNone(allOrNone)
+        return builder.buildCompositeRequest(computeAPIVersion(apiVersion))
+    }
+
+    public func requestForSObjectTree(_ objectType: String, objectTrees: [SObjectTree], apiVersion: String?) -> RestRequest {
+        let jsonTrees = objectTrees.map { $0.asJSON() }
+        let requestJson: [String: Any] = ["records": jsonTrees]
+        let path = "/\(computeAPIVersion(apiVersion))/composite/tree/\(objectType)"
+        let request = RestRequest(method: .POST, path: path, queryParams: nil)
+        return addBody(forPostRequest: requestJson, request: request)
+    }
+
+    public func requestForPrimingRecords(_ relayToken: String?, changedAfterTimestamp timestamp: NSNumber?, apiVersion: String?) -> RestRequest {
+        let path = "/\(computeAPIVersion(apiVersion))/connect/briefcase/priming-records"
+
+        var queryParams: [String: Any]? = nil
+        if let relayToken = relayToken {
+            queryParams = ["relayToken": relayToken]
+        }
+        if let timestamp = timestamp {
+            if let isoTimestamp = SFFormatUtils.getIsoString(fromMillis: timestamp.int64Value) {
+                queryParams = ["changedAfterTimestamp": isoTimestamp]
+            }
+        }
+
+        return RestRequest(method: .GET, path: path, queryParams: queryParams)
+    }
+
+    public func requestForCollectionCreate(_ allOrNone: Bool, records: [[String: Any]], apiVersion: String?) -> RestRequest {
+        let path = "/\(computeAPIVersion(apiVersion))/composite/sobjects"
+        let requestJson: [String: Any] = ["allOrNone": allOrNone, "records": records]
+        let request = RestRequest(method: .POST, path: path, queryParams: nil)
+        return addBody(forPostRequest: requestJson, request: request)
+    }
+
+    public func requestForCollectionRetrieve(_ objectType: String, objectIds: [String], fieldList: [String], apiVersion: String?) -> RestRequest {
+        let path = "/\(computeAPIVersion(apiVersion))/composite/sobjects/\(objectType)"
+        let requestJson: [String: Any] = ["ids": objectIds, "fields": fieldList]
+        let request = RestRequest(method: .POST, path: path, queryParams: nil)
+        return addBody(forPostRequest: requestJson, request: request)
+    }
+
+    public func requestForCollectionUpdate(_ allOrNone: Bool, records: [[String: Any]], apiVersion: String?) -> RestRequest {
+        let path = "/\(computeAPIVersion(apiVersion))/composite/sobjects"
+        let requestJson: [String: Any] = ["allOrNone": allOrNone, "records": records]
+        let request = RestRequest(method: .PATCH, path: path, queryParams: nil)
+        return addBody(forPostRequest: requestJson, request: request)
+    }
+
+    public func requestForCollectionUpsert(_ allOrNone: Bool, objectType: String, externalIdField: String, records: [[String: Any]], apiVersion: String?) -> RestRequest {
+        let path = "/\(computeAPIVersion(apiVersion))/composite/sobjects/\(objectType)/\(externalIdField)"
+        let requestJson: [String: Any] = ["allOrNone": allOrNone, "records": records]
+        let request = RestRequest(method: .PATCH, path: path, queryParams: nil)
+        return addBody(forPostRequest: requestJson, request: request)
+    }
+
+    public func requestForCollectionDelete(_ allOrNone: Bool, objectIds: [String], apiVersion: String?) -> RestRequest {
+        let path = "/\(computeAPIVersion(apiVersion))/composite/sobjects"
+        let queryParams: [String: Any] = [
+            "allOrNone": allOrNone ? "true" : "false",
+            "ids": objectIds.joined(separator: ",")
+        ]
+        return RestRequest(method: .DELETE, path: path, queryParams: queryParams)
+    }
+
+    // MARK: - Utility Methods
+
+    public static func isStatusCodeSuccess(_ statusCode: UInt) -> Bool {
+        return statusCode >= 200 && statusCode < 300
+    }
+
+    public static func isStatusCodeNotFound(_ statusCode: UInt) -> Bool {
+        return statusCode == 404
+    }
+
+    public static func userAgentString() -> String {
+        return userAgentString("")
+    }
+
+    public static func userAgentString(_ qualifier: String) -> String {
+        return SalesforceSDKManager.shared().userAgentString(qualifier)
+    }
+
+    static func httpString(from date: Date?) -> String? {
+        guard let date = date else { return nil }
+        return httpDateFormatter.string(from: date)
+    }
+
+    func computeAPIVersion(_ apiVersion: String?) -> String {
+        return apiVersion ?? self.apiVersion
+    }
+
+    // MARK: - Internal Methods
+
+    func removeActiveRequestObject(_ request: RestRequest) {
+        activeRequests.remove(request)
+    }
+
+    @discardableResult
+    func forceTimeoutRequest(_ request: RestRequest?) -> Bool {
+        var found = false
+        let toCancel = request ?? (activeRequests.anyObject() as? RestRequest)
+        if let toCancel = toCancel {
+            found = true
+            toCancel.cancel()
+        }
+        return found
+    }
+
+    private func sessionRefresher(for user: SFUserAccount) -> SFOAuthSessionRefresher {
+        objc_sync_enter(self)
+        defer { objc_sync_exit(self) }
+
+        if oauthSessionRefresher == nil {
+            oauthSessionRefresher = SFOAuthSessionRefresher(credentials: user.credentials)
+        }
+        return oauthSessionRefresher!
+    }
+
+    private func enqueue(_ request: RestRequest, shouldRetry: Bool) {
+        guard let user = userAccount, let finalRequest = request.prepareRequestForSend(user) else {
+            return
+        }
+
+        let network: Network
+        var instanceIdentifier: String? = nil
+        if request.serviceHostType == .custom {
+            instanceIdentifier = Network.uniqueInstanceIdentifier()
+            network = networkForRequest(request, identifier: instanceIdentifier!)
+        } else {
+            network = networkForRequest(request)
+        }
+
+        let dataTask = network.sendRequest(finalRequest) { [weak self] data, response, error in
+            guard let self = self else { return }
+
+            if let instanceIdentifier = instanceIdentifier {
+                Network.removeSharedInstance(forIdentifier: instanceIdentifier)
+            }
+
+            // Guard: ignore callbacks from stale dataTasks superseded by retry.
+            if dataTask != request.sessionDataTask {
+                SFSDKCoreLogger.d(RestClient.self, message: "Ignoring callback from stale task for request: \(request.path)")
+                return
+            }
+
+            // Network error.
+            if let error = error {
+                SFSDKCoreLogger.d(RestClient.self, message: "REST request failed with error: Error Code: \(error._code), Description: \(error.localizedDescription), URL: \(finalRequest.url?.absoluteString ?? "")")
+                let dataForDelegate = self.prepareData(forDelegate: data, request: request, response: response)
+                request.failureBlock?(dataForDelegate, error, response)
+                return
+            }
+
+            // Timeout.
+            guard let response = response else {
+                request.failureBlock?(nil, nil, nil)
+                return
+            }
+
+            let statusCode = (response as? HTTPURLResponse)?.statusCode ?? 0
+
+            // 2xx indicates success.
+            if RestClient.isStatusCodeSuccess(UInt(statusCode)) {
+                let dataForDelegate = self.prepareData(forDelegate: data, request: request, response: response)
+                request.successBlock?(dataForDelegate, response)
+            } else {
+                if shouldRetry && self.shouldRetryTask(dataTask, withData: data) {
+                    self.replay(request, response: response)
+                } else {
+                    // Other status codes indicate failure.
+                    let errorForDelegate = self.prepareError(forDelegate: data, response: response)
+                    let dataForDelegate = self.prepareData(forDelegate: data, request: request, response: response)
+                    request.failureBlock?(dataForDelegate, errorForDelegate, response)
+                }
+            }
+        }
+        request.sessionDataTask = dataTask
+    }
+
+    private func shouldRetryTask(_ task: URLSessionDataTask, withData data: Data?) -> Bool {
+        return task.shouldRetry(with: data, biometricAuthManager: SFBiometricAuthenticationManagerInternal.shared)
+    }
+
+    private func networkForRequest(_ request: RestRequest) -> Network {
+        if request.networkServiceType == .background {
+            return Network.sharedBackgroundInstance()
+        } else {
+            return Network.sharedEphemeralInstance()
+        }
+    }
+
+    private func networkForRequest(_ request: RestRequest, identifier: String) -> Network {
+        if request.networkServiceType == .background {
+            return Network.sharedBackgroundInstance(withIdentifier: identifier)
+        } else {
+            return Network.sharedEphemeralInstance(withIdentifier: identifier)
+        }
+    }
+
+    private func prepareData(forDelegate data: Data?, request: RestRequest, response: URLResponse?) -> Any? {
+        // No parsing.
+        guard request.parseResponse else {
+            return data
+        }
+
+        // Parsing.
+        if let data = data, let jsonDict = SFJsonUtils.objectFromJSONData(data) as? [String: Any] {
+            return jsonDict
+        }
+
+        // Parsing failed.
+        return data?.count == 0 ? nil : data
+    }
+
+    private func prepareError(forDelegate data: Data?, response: URLResponse?) -> NSError {
+        var errorDict: [String: Any]? = nil
+        let statusCode = (response as? HTTPURLResponse)?.statusCode ?? 0
+
+        // Parse error from data if any.
+        if let data = data {
+            if let errorObj = SFJsonUtils.objectFromJSONData(data) {
+                if let dict = errorObj as? [String: Any] {
+                    errorDict = dict
+                } else {
+                    errorDict = ["error": errorObj]
+                }
+            } else {
+                errorDict = ["error": String(data: data, encoding: .utf8) ?? ""]
+            }
+        }
+        return NSError(domain: SFRestErrorDomain, code: statusCode, userInfo: errorDict)
+    }
+
+    private func replay(_ request: RestRequest, response: URLResponse?) {
+        SFSDKCoreLogger.i(RestClient.self, message: "REST request failed due to expired credentials. Attempting to refresh credentials.")
+
+        objc_sync_enter(self)
+        defer { objc_sync_exit(self) }
+
+        if !sessionRefreshInProgress {
+            sessionRefreshInProgress = true
+            let sessionRefresher = self.sessionRefresher(for: userAccount!)
+            sessionRefresher.refreshSession(completion: { [weak self] updatedCredentials in
+                guard let self = self else { return }
+                SFSDKCoreLogger.i(RestClient.self, message: "Credentials refresh successful. Replaying original REST request.")
+                objc_sync_enter(self)
+                defer { objc_sync_exit(self) }
+
+                self.sessionRefreshInProgress = false
+                self.oauthSessionRefresher = nil
+                if !self.pendingRequestsBeingProcessed {
+                    self.pendingRequestsBeingProcessed = true
+                    self.resendActiveRequestsRequiringAuthentication()
+                }
+            }, error: { [weak self] refreshError in
+                guard let self = self else { return }
+                SFSDKCoreLogger.e(RestClient.self, message: "Failed to refresh expired session. Error: \(refreshError)")
+                objc_sync_enter(self)
+                defer { objc_sync_exit(self) }
+
+                self.pendingRequestsBeingProcessed = true
+                self.flushPendingRequestQueue(refreshError, rawResponse: response)
+                self.sessionRefreshInProgress = false
+                self.oauthSessionRefresher = nil
+
+                if refreshError.domain == kSFOAuthErrorDomain && refreshError.code == Int(kSFOAuthErrorInvalidGrant) {
+                    SFSDKCoreLogger.i(RestClient.self, message: "Invalid grant error received, triggering logout.")
+                    DispatchQueue.main.async {
+                        SFUserAccountManager.sharedInstance().logout(self.userAccount, reason: .tokenExpired)
+                    }
+                }
+            })
+        }
+    }
+
+    private func flushPendingRequestQueue(_ error: Error, rawResponse: URLResponse?) {
+        objc_sync_enter(self)
+        defer { objc_sync_exit(self) }
+
+        let pendingRequests = activeRequests.asSet() as? Set<RestRequest> ?? Set()
+        for request in pendingRequests {
+            let oldTask = request.sessionDataTask
+            request.sessionDataTask = nil
+            oldTask?.cancel()
+            request.failureBlock?(nil, error, rawResponse)
+        }
+        pendingRequestsBeingProcessed = false
+    }
+
+    private func resendActiveRequestsRequiringAuthentication() {
+        objc_sync_enter(self)
+        defer { objc_sync_exit(self) }
+
+        let pendingRequests = activeRequests.asSet() as? Set<RestRequest> ?? Set()
+        for request in pendingRequests {
+            let oldTask = request.sessionDataTask
+            send(request, failureBlock: request.failureBlock!, successBlock: request.successBlock!, shouldRetry: false)
+            oldTask?.cancel()
+        }
+        pendingRequestsBeingProcessed = false
+    }
+
+    private func notifyDelegate(ofSuccess delegate: RestRequestDelegate?, request: RestRequest, data: Any?, rawResponse: URLResponse?) {
+        delegate?.request?(request, didSucceed: data, rawResponse: rawResponse)
+        removeActiveRequestObject(request)
+    }
+
+    private func notifyDelegate(ofFailure delegate: RestRequestDelegate?, request: RestRequest, data: Any?, rawResponse: URLResponse?, error: Error?) {
+        delegate?.request?(request, didFail: data, rawResponse: rawResponse, error: error)
+        removeActiveRequestObject(request)
+    }
+
+    private func addBody(forPostRequest params: [String: Any]?, request: RestRequest) -> RestRequest {
+        request.setCustomRequestBodyDictionary(params, contentType: kSFDefaultContentType)
+        return request
+    }
+
+    @objc private func handleUserDidLogout(_ notification: Notification) {
+        guard let user = notification.userInfo?[kSFNotificationUserInfoAccountKey] as? SFUserAccount else {
+            return
+        }
+        handleLogout(for: user)
+    }
+
+    private func handleLogout(for user: SFUserAccount) {
+        guard let key = SFKeyForUserAndScope(user, .community) else {
+            return
+        }
+        if let sfRestApi = sfRestApiList?.object(forKey: key) as? RestClient {
+            sfRestApi.cleanup()
+        }
+        RestClient.removeSharedInstance(for: user)
+    }
+}

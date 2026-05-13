@@ -1,0 +1,80 @@
+/*
+ SFSDKSPLoginRequestCommand.swift
+ SalesforceSDKCore
+
+ Created by Raj Rao on 9/28/17.
+
+ Copyright (c) 2017-present, salesforce.com, inc. All rights reserved.
+
+ Redistribution and use of this software in source and binary forms, with or without modification,
+ are permitted provided that the following conditions are met:
+ * Redistributions of source code must retain the above copyright notice, this list of conditions
+ and the following disclaimer.
+ * Redistributions in binary form must reproduce the above copyright notice, this list of
+ conditions and the following disclaimer in the documentation and/or other materials provided
+ with the distribution.
+ * Neither the name of salesforce.com, inc. nor the names of its contributors may be used to
+ endorse or promote products derived from this software without specific prior written
+ permission of salesforce.com, inc.
+
+ THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR
+ IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND
+ FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR
+ CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+ DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+ DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY,
+ WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY
+ WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ */
+
+import Foundation
+
+// Sent by SP to IDP for SP initiated login flow
+@objc(SFSDKSPLoginRequestCommand)
+public class SFSDKSPLoginRequestCommand: SFSDKAuthCommand {
+
+    @objc public override var command: String {
+        get { return "authrequest" }
+        set { }
+    }
+
+    @objc public var spState: String? {
+        get { return param(forKey: kSFStateParam) }
+        set { if let value = newValue { setParam(value, forKey: kSFStateParam) } }
+    }
+
+    @objc public var spClientId: String? {
+        get { return param(forKey: kSFOAuthClientIdParam) }
+        set { if let value = newValue { setParam(value, forKey: kSFOAuthClientIdParam) } }
+    }
+
+    @objc public var spRedirectURI: String? {
+        get { return param(forKey: kSFOAuthRedirectUrlParam) }
+        set { if let value = newValue { setParam(value, forKey: kSFOAuthRedirectUrlParam) } }
+    }
+
+    @objc public var spCodeChallenge: String? {
+        get { return param(forKey: kSFChallengeParamName) }
+        set { if let value = newValue { setParam(value, forKey: kSFChallengeParamName) } }
+    }
+
+    @objc public var spUserHint: String? {
+        get { return param(forKey: kSFUserHintParam) }
+        set { if let value = newValue { setParam(value, forKey: kSFUserHintParam) } }
+    }
+
+    @objc public var spAppName: String? {
+        get { return param(forKey: kSFAppNameParam) }
+        set { if let value = newValue { setParam(value, forKey: kSFAppNameParam) } }
+    }
+
+    @objc public var spLoginHost: String? {
+        get { return param(forKey: kSFLoginHostParam) }
+        set { if let value = newValue { setParam(value, forKey: kSFLoginHostParam) } }
+    }
+
+    @objc public var spAppScopes: String? {
+        get { return param(forKey: kSFScopesParam) }
+        set { if let value = newValue { setParam(value, forKey: kSFScopesParam) } }
+    }
+}

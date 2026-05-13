@@ -28,14 +28,14 @@
  */
 
 import UIKit
-import SalesforceSDKCore.UIColor_SFColors
+import SalesforceSDKCore
 
 class InitialViewController: UIViewController {
 
     override func viewDidLoad() {
         super.viewDidLoad()
         
-        self.view.backgroundColor = UIColor.salesforceSystemBackground
+        self.view.backgroundColor = UIColor.salesforceSystemBackgroundColor
         
         let label = UILabel()
         label.translatesAutoresizingMaskIntoConstraints = false

@@ -97,7 +97,7 @@
 }
 
 - (NSString*)lastModifiedDate {
-    return [self nonNullFieldValue:kLastModifiedDate];
+    return [self nonNullFieldValue:@"LastModifiedDate"];
 }
 
 @end

@@ -80,11 +80,11 @@ extension RestClient {
                                      successBlock: @escaping SFRestCompositeResponseBlock) {
         self.sendRequest(request, failureBlock: failureBlock) { response, rawResponse in
             do {
-                guard let dict = response as? [AnyHashable: Any] else {
+                guard let dict = response as? [String: Any] else {
                     let errFunc: (String) -> NSError = RestClient.error(withDescription:)
                     throw errFunc("CompositeResponse format invalid")
                 }
-                let compositeResponse = CompositeResponse(dict)
+                let compositeResponse = CompositeResponse(with: dict)
                 successBlock(compositeResponse, rawResponse)
             } catch {
                 failureBlock(response, error, rawResponse)
@@ -105,11 +105,11 @@ extension RestClient {
                                  successBlock: @escaping SFRestBatchResponseBlock) {
         self.sendRequest(request, failureBlock: failureBlock) { response, rawResponse in
             do {
-                guard let dict = response as? [AnyHashable: Any] else {
+                guard let dict = response as? [String: Any] else {
                     let errFunc: (String) -> NSError = RestClient.error(withDescription:)
                     throw errFunc("BatchResponse format invalid")
                 }
-                let batchResponse = BatchResponse(dict)
+                let batchResponse = BatchResponse(with: dict)
                 successBlock(batchResponse, rawResponse)
             } catch {
                 failureBlock(response, error, rawResponse)
@@ -236,7 +236,7 @@ extension RestClient {
                                                 withApiVersion version: String = SFRestDefaultAPIVersion,
                                                 withDecoder decoder: JSONDecoder = .init(),
                                                 _ completionBlock: @escaping (Result<QueryResponse<Record>, RestClientError>) -> Void) {
-        let request = RestClient.shared.request(forQuery: query, apiVersion: version)
+        let request = RestClient.shared.requestForQuery(query, apiVersion: version)
         guard request.isQueryRequest else { return }
         return self.fetchRecords(ofModelType: modelType, forRequest: request, withDecoder: decoder, completionBlock)
     }

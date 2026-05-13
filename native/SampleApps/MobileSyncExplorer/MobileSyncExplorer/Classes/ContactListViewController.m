@@ -108,7 +108,7 @@ static NSUInteger const kColorCodesList[] = { 0x1abc9c,  0x2ecc71,  0x3498db,  0
 
     [[NSNotificationCenter defaultCenter] addObserver:self
                                              selector:@selector(clearPopovers:)
-                                                 name:kSFScreenLockFlowWillBegin
+                                                 name:@"SFScreenLockFlowWillBegin"
                                                object:nil];
 }
 
@@ -267,7 +267,7 @@ static NSUInteger const kColorCodesList[] = { 0x1abc9c,  0x2ecc71,  0x3498db,  0
 #pragma mark - UISearchBarDelegate methods
 
 - (void)searchBar:(UISearchBar *)searchBar textDidChange:(NSString *)searchText {
-    [SFSDKMobileSyncLogger log:[self class] level:SFLogLevelDebug format:@"searching with text: %@", searchText];
+    [SFSDKMobileSyncLogger d:[self class] message:[NSString stringWithFormat:@"searching with text: %@", searchText]];
     self.searchText = searchText;
     [self refreshList];
 }
@@ -464,7 +464,7 @@ static NSUInteger const kColorCodesList[] = { 0x1abc9c,  0x2ecc71,  0x3498db,  0
                                                            style:UIAlertActionStyleDestructive
                                                          handler:^(UIAlertAction * action) {
                                                             self.logoutActionSheet = nil;
-                                                            [[SFUserAccountManager sharedInstance] logout];
+                                                            [[SFUserAccountManager shared] logout];
                                                         }];
     
     UIAlertAction *cancelAction = [UIAlertAction actionWithTitle:@"Cancel"
@@ -636,7 +636,7 @@ static NSUInteger const kColorCodesList[] = { 0x1abc9c,  0x2ecc71,  0x3498db,  0
 
 - (void)clearPopovers:(NSNotification *)note
 {
-    [SFSDKMobileSyncLogger log:[self class] level:SFLogLevelDebug format:@"Passcode screen loading. Clearing popovers."];
+    [SFSDKMobileSyncLogger d:[self class] message:@"Passcode screen loading. Clearing popovers."];
     if (self.actionsPopupPresentingController.presentedViewController) {
         [self.actionsPopupPresentingController dismissViewControllerAnimated:NO completion:nil];
     }

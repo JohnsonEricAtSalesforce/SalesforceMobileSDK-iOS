@@ -45,7 +45,7 @@
 - (BOOL)dataLocallyUpdated:(SObjectData *)data;
 - (BOOL)dataLocallyDeleted:(SObjectData *)data;
 - (void)refreshRemoteData:(void (^)(void))completionBlock;
-- (void)updateRemoteData:(SFSyncSyncManagerUpdateBlock)completionBlock;
+- (void)updateRemoteData:(void (^)(SFSyncState *sync))completionBlock;
 - (void)filterOnSearchTerm:(NSString *)searchTerm completion:(void (^)(void))completionBlock;
 - (void)lastModifiedRecords:(int)limit completion:(void (^)(void))completionBlock;
 

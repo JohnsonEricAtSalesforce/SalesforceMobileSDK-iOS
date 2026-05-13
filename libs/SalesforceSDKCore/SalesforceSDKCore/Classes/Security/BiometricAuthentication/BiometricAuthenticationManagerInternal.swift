@@ -27,6 +27,8 @@
 
 import Foundation
 import LocalAuthentication
+import UIKit
+import SalesforceSDKCommon
 
 /*
  * This class is internal to the Mobile SDK - don't instantiate in your application code
@@ -81,11 +83,12 @@ public class BiometricAuthenticationManagerInternal: NSObject, BiometricAuthenti
     }
     
     @objc public func storePolicy(userAccount: UserAccount, hasMobilePolicy: Bool, sessionTimeout: Int32) {
-        let existingPolicy = readBioAuthPolicy(userId: userAccount.idData.userId)
+        guard let userId = userAccount.idData?.userId else { return }
+        let existingPolicy = readBioAuthPolicy(userId: userId)
         if let policyData = try? JSONEncoder().encode(
             BioAuthPolicy(hasPolicy: hasMobilePolicy, timeout: sessionTimeout, optIn: existingPolicy?.optIn)
         ) {
-            let result = KeychainHelper.write(service: kBioAuthPolicyIdentifier, data: policyData, account: userAccount.idData.userId)
+            let result = KeychainHelper.write(service: kBioAuthPolicyIdentifier, data: policyData, account: userId)
             if result.success {
                 SFSDKCoreLogger.i(BiometricAuthenticationManagerInternal.self, message: "Biometric authentication policy stored for user.")
             } else {
@@ -97,12 +100,13 @@ public class BiometricAuthenticationManagerInternal: NSObject, BiometricAuthenti
     }
     
     private func storePolicy(policy: BioAuthPolicy) {
-        guard let userAccount = UserAccountManager.shared.currentUserAccount else {
+        guard let userAccount = UserAccountManager.shared.currentUserAccount,
+              let userId = userAccount.idData?.userId else {
             return
         }
-        
+
         let policyData = try! JSONEncoder().encode(policy)
-        let result = KeychainHelper.write(service: kBioAuthPolicyIdentifier, data: policyData, account: userAccount.idData.userId)
+        let result = KeychainHelper.write(service: kBioAuthPolicyIdentifier, data: policyData, account: userId)
         if result.success {
             SFSDKCoreLogger.i(BiometricAuthenticationManagerInternal.self, message: "Biometric authentication policy stored for user.")
         } else {
@@ -111,11 +115,12 @@ public class BiometricAuthenticationManagerInternal: NSObject, BiometricAuthenti
     }
     
     private func readBioAuhPolicy() -> BioAuthPolicy? {
-        guard let userAccount = UserAccountManager.shared.currentUserAccount else {
+        guard let userAccount = UserAccountManager.shared.currentUserAccount,
+              let userId = userAccount.idData?.userId else {
             return nil
         }
-        
-        return readBioAuthPolicy(userId: userAccount.idData.userId)
+
+        return readBioAuthPolicy(userId: userId)
     }
     
     internal func readBioAuthPolicy(userId: String) -> BioAuthPolicy? {
@@ -196,7 +201,9 @@ public class BiometricAuthenticationManagerInternal: NSObject, BiometricAuthenti
     }
     
     @objc public func cleanup(user: UserAccount) {
-        _ = KeychainHelper.remove(service: kBioAuthPolicyIdentifier, account: user.idData.userId)
+        if let userId = user.idData?.userId {
+            _ = KeychainHelper.remove(service: kBioAuthPolicyIdentifier, account: userId)
+        }
         locked = false
     }
     
@@ -225,20 +232,20 @@ public class BiometricAuthenticationManagerInternal: NSObject, BiometricAuthenti
                     // Refresh token and unlock
                     let accountManager = UserAccountManager.shared
                     if let currentAccount = accountManager.currentUserAccount {
-                        _ = accountManager.refresh(credentials: currentAccount.credentials, { (result) in
+                        _ = accountManager.refresh(credentials: currentAccount.credentials) { (result) in
                             switch(result) {
                             case .success((_, _)):
                                 SFSDKCoreLogger.d(BiometricAuthenticationManagerInternal.self, message: "Refresh credentials succeeded")
                             case .failure(let error):
                                 SFSDKCoreLogger.d(BiometricAuthenticationManagerInternal.self, message: "Refresh credentials failed: \(error)")
                             }
-                        })
+                        }
                     }
-                    
+
                     unlockPostProcessing()
-                    await accountManager.stopCurrentAuthentication()
+                    await accountManager.stopCurrentAuthentication { _ in }
                     await MainActor.run {
-                        SFSDKWindowManager.shared().authWindow(scene).viewController?.dismiss(animated: false)
+                        SFSDKWindowManager.shared.authWindow(scene as? UIScene).viewController?.dismiss(animated: false)
                     }
                 } catch {
                     // This just means the user chose the fallback option instead of biometric

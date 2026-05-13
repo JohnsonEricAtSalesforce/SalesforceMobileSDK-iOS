@@ -28,7 +28,7 @@
  */
 
 #import <Foundation/Foundation.h>
-#import "SFUserAccountManager.h"
+#import "SFUserAccountManager+Internal.h"
 
 @protocol SFSDKURLHandler<NSObject>
 

@@ -26,6 +26,7 @@
 //  WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 import Foundation
+import UserNotifications
 
 @objc
 public extension PushNotificationManager {
@@ -110,7 +111,7 @@ public extension PushNotificationManager {
             throw PushNotificationManagerError.notificationActionInvocationFailed("API Version must be at least v64.0")
         }
         
-        let request = client.request(forInvokeNotificationAction: notificationId, actionIdentifier: actionIdentifier)
+        let request = client.requestForInvokeNotificationAction(notificationId, actionIdentifier: actionIdentifier)
         do {
             let response = try await client.send(request: request)
             return try response.asDecodable(type: ActionResultRepresentation.self)

@@ -85,9 +85,9 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
             PushNotificationManager.sharedInstance().registerForSalesforceNotifications { (result) in
                 switch (result) {
                 case .success(let successFlag):
-                    SalesforceLogger.d(AppDelegate.self, message: "Registration for Salesforce notifications status:  \(successFlag)")
+                    SFLogger.d(AppDelegate.self, message: "Registration for Salesforce notifications status:  \(successFlag)")
                 case .failure(let error):
-                    SalesforceLogger.e(AppDelegate.self, message: "Registration for Salesforce notifications failed \(error)")
+                    SFLogger.e(AppDelegate.self, message: "Registration for Salesforce notifications failed \(error)")
                 }
             }
         }
@@ -105,11 +105,11 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
                     PushNotificationManager.sharedInstance().registerForRemoteNotifications()
                 }
             } else {
-                SalesforceLogger.d(AppDelegate.self, message: "Push notification authorization denied")
+                SFLogger.d(AppDelegate.self, message: "Push notification authorization denied")
             }
             
             if let error = error {
-                SalesforceLogger.e(AppDelegate.self, message: "Push notification authorization error: \(error)")
+                SFLogger.e(AppDelegate.self, message: "Push notification authorization error: \(error)")
             }
         }
     }
@@ -137,9 +137,9 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
         }
         
         var config = [
-            "test_client_id": SalesforceManager.shared.bootConfig?.remoteAccessConsumerKey,
+            "test_client_id": UserAccountManager.shared.oauthClientID,
             "test_login_domain": UserAccountManager.shared.loginHost,
-            "test_redirect_uri": SalesforceManager.shared.bootConfig?.oauthRedirectURI,
+            "test_redirect_uri": UserAccountManager.shared.oauthCompletionURL,
             "refresh_token": creds.refreshToken,
             "instance_url": instance.absoluteString,
             "api_instance_url": creds.apiInstanceUrl?.absoluteString,
@@ -163,7 +163,7 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
     private func setUpLoggingCustomizations() {
         // Create a custom Salesfoce Mobile SDK (MSDK) log receiver so this app can customize log entry handling.
         class MyLogReceiver: SalesforceLogReceiver {
-            func receive(level: SalesforceLogger.Level, cls: AnyClass, component: String, message: String) {
+            func receive(level: SFLogLevel, cls: AnyClass, component: String, message: String) {
                 print("AppMsdkLogReceiver: '\(cls)', [\(level)], '\(component)', '\(message)'")
             }
         }
@@ -175,6 +175,6 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
             }
         }
         
-        SalesforceLogger.setLogReceiverFactory(MyLogReceiverFactory())
+        SFLogger.setLogReceiverFactory(MyLogReceiverFactory())
     }
 }
