@@ -110,6 +110,7 @@ public class AlterSoupLongOperation: NSObject {
 
         store.storeQueue.inTransaction { db, rollback in
             tableName = store.tableName(forSoup: soupName, with: db) ?? ""
+            self.soupTableName = tableName
             rId = self.createLongOperationDbRow(with: db)
         }
 

@@ -483,7 +483,7 @@ public class SmartStore: NSObject {
         var localError: NSError?
         _ = inDatabase({ db in
             result = self.allSoupNames(with: db)
-        }, error: &localError)
+        })
         return result
     }
 
@@ -538,7 +538,7 @@ public class SmartStore: NSObject {
         var localError: NSError?
         _ = inDatabase({ db in
             result = self.indices(forSoup: soupName, with: db)
-        }, error: &localError)
+        })
         return result
     }
 
@@ -547,7 +547,7 @@ public class SmartStore: NSObject {
         var localError: NSError?
         _ = inDatabase({ db in
             result = self.soupExists(soupName, with: db)
-        }, error: &localError)
+        })
         return result
     }
 
@@ -565,7 +565,7 @@ public class SmartStore: NSObject {
         var localError: NSError?
         _ = inTransaction({ db, rollback in
             self.registerSoup(withName: soupName, withIndexSpecs: indexSpecs, withSoupTableName: nil, with: db)
-        }, error: &localError)
+        })
 
         if let localError = localError {
             throw localError
@@ -577,7 +577,7 @@ public class SmartStore: NSObject {
         var result: Int = 0
         _ = inDatabase({ db in
             result = self.count(with: querySpec, with: db)
-        }, error: &localError)
+        })
 
         if let localError = localError {
             throw localError
@@ -618,7 +618,7 @@ public class SmartStore: NSObject {
         var resultArray: [Any]? = []
         let success = inDatabase({ db in
             self.runQuery(&resultArray, resultString: nil, querySpec: querySpec, pageIndex: pageIndex, whereArgs: whereArgs, with: db)
-        }, error: &localError)
+        })
 
         if !success, let localError = localError {
             throw localError
@@ -631,7 +631,7 @@ public class SmartStore: NSObject {
         _ = inDatabase({ db in
             var emptyArray: [Any]? = nil
             self.runQuery(&emptyArray, resultString: resultString, querySpec: querySpec, pageIndex: pageIndex, whereArgs: nil, with: db)
-        }, error: &localError)
+        })
 
         if let localError = localError {
             throw localError
@@ -795,7 +795,7 @@ public class SmartStore: NSObject {
         var localError: NSError?
         _ = inDatabase({ db in
             result = self.retrieveEntries(soupEntryIds, fromSoup: soupName, with: db)
-        }, error: &localError)
+        })
         return result
     }
 
@@ -834,7 +834,7 @@ public class SmartStore: NSObject {
 
         _ = inTransaction({ db, rollback in
             result = self.upsertEntries(entries, toSoup: soupName, withExternalIdPath: externalIdPath, error: &localError, with: db)
-        }, error: &localError)
+        })
 
         return result
     }
@@ -973,7 +973,7 @@ public class SmartStore: NSObject {
             guard let soupTableName = self.tableName(forSoup: soupName, with: db) else { return }
             result = self.lookupSoupEntryId(forSoupName: soupName, soupTableName: soupTableName, forFieldPath: fieldPath, fieldValue: fieldValue, error: &innerError, with: db)
             localError = innerError
-        }, error: &localError)
+        })
 
         if let localError = localError {
             throw localError
@@ -1029,7 +1029,7 @@ public class SmartStore: NSObject {
         var localError: NSError?
         _ = inTransaction({ db, rollback in
             self.removeEntries(entryIds, fromSoup: soupName, with: db)
-        }, error: &localError)
+        })
 
         if let localError = localError {
             throw localError
@@ -1054,7 +1054,7 @@ public class SmartStore: NSObject {
         var localError: NSError?
         _ = inTransaction({ db, rollback in
             self.removeEntriesByQuery(querySpec, fromSoup: soupName, with: db)
-        }, error: &localError)
+        })
 
         if let localError = localError {
             throw localError
@@ -1080,7 +1080,7 @@ public class SmartStore: NSObject {
         var localError: NSError?
         _ = inTransaction({ db, rollback in
             self.clearSoup(soupName, with: db)
-        }, error: &localError)
+        })
     }
 
     func clearSoup(_ soupName: String, with db: FMDatabase?) {
@@ -1100,7 +1100,7 @@ public class SmartStore: NSObject {
         var localError: NSError?
         _ = inTransaction({ db, rollback in
             self.removeSoup(soupName, with: db)
-        }, error: &localError)
+        })
     }
 
     func removeSoup(_ soupName: String, with db: FMDatabase?) {
@@ -1128,7 +1128,7 @@ public class SmartStore: NSObject {
         var localError: NSError?
         _ = inTransaction({ db, rollback in
             self.removeAllSoup(with: db)
-        }, error: &localError)
+        })
     }
 
     func removeAllSoup(with db: FMDatabase?) {
@@ -1165,7 +1165,7 @@ public class SmartStore: NSObject {
         var localError: NSError?
         _ = inTransaction({ db, rollback in
             result = self.reIndexSoup(soupName, withIndexPaths: indexPaths, with: db)
-        }, error: &localError)
+        })
         return result
     }
 
@@ -1315,20 +1315,17 @@ public class SmartStore: NSObject {
                 SmartStoreLogger.d(type(of: self), message: "renameSoupNamesTableSql: \(renameSql)")
                 self.executeUpdateThrows(renameSql, with: db)
             }
-        }, error: &localError)
+        })
     }
 
     @discardableResult
-    func inDatabase(_ block: @escaping (FMDatabase?) -> Void, error: inout NSError?) -> Bool {
+    func inDatabase(_ block: @escaping (FMDatabase?) -> Void) -> Bool {
         var success = true
         _storeQueue.inDatabase { db in
             do {
                 try self.tryCatch {
                     block(db)
                 }
-            } catch let caught as NSError {
-                error = caught
-                success = false
             } catch {
                 success = false
             }
@@ -1337,17 +1334,13 @@ public class SmartStore: NSObject {
     }
 
     @discardableResult
-    func inTransaction(_ block: @escaping (FMDatabase?, UnsafeMutablePointer<ObjCBool>) -> Void, error: inout NSError?) -> Bool {
+    func inTransaction(_ block: @escaping (FMDatabase?, UnsafeMutablePointer<ObjCBool>) -> Void) -> Bool {
         var success = true
         _storeQueue.inTransaction { db, rollback in
             do {
                 try self.tryCatch {
                     block(db, rollback)
                 }
-            } catch let caught as NSError {
-                rollback.pointee = true
-                error = caught
-                success = false
             } catch {
                 rollback.pointee = true
                 success = false

@@ -126,6 +126,8 @@ public class SFSDKOAuthTokenEndpointResponse: NSObject {
 
     private let values: NSMutableDictionary
     private var additionalOAuthParameterKeys: [String]?
+    private var parsedScopes: [String]?
+    private var parsedAdditionalOAuthFields: [String: Any]?
 
     @objc public var hasError: Bool {
         return error != nil
@@ -187,11 +189,11 @@ public class SFSDKOAuthTokenEndpointResponse: NSObject {
     }
 
     @objc public var scopes: [String]? {
-        return nil
+        return parsedScopes
     }
 
     @objc public var additionalOAuthFields: [String: Any]? {
-        return nil
+        return parsedAdditionalOAuthFields
     }
 
     @objc public var lightningDomain: String? {
@@ -268,11 +270,13 @@ public class SFSDKOAuthTokenEndpointResponse: NSObject {
                     parsedValues[key] = obj
                 }
             }
-            // Store additional fields if needed
+            if !parsedValues.isEmpty {
+                self.parsedAdditionalOAuthFields = parsedValues
+            }
         }
 
         if let rawScope = nvPairs[kSFOAuthScope] as? String {
-            // Store scopes if needed
+            self.parsedScopes = rawScope.components(separatedBy: " ")
         }
 
         if let errorType = nvPairs[kSFOAuthError] as? String {

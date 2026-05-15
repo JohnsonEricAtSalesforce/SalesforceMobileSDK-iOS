@@ -51,7 +51,7 @@ internal let kSFDefaultNativeLoginViewControllerKey = "defaultKey"
 private var uid: String?
 private var instanceClass: AnyClass?
 private var ailtnAppName: String?
-private var appName: String?
+private var _sdkAppName: String?
 private var motionEndedImplementation: IMP?
 private var nativeLogin: SFNativeLoginManagerInternal?
 
@@ -258,34 +258,38 @@ open class SalesforceManager: NSObject, SalesforceSDKManagerFlow {
     public var simulatedDomainDiscoveryResult: DomainDiscoveryResult?
     #endif
 
-    public var URLCacheType: SFURLCacheType = .encrypted {
+    public var URLCacheType: SFURLCacheType = .standard {
         didSet {
             guard URLCacheType != oldValue else { return }
-            URLCache.shared.removeAllCachedResponses()
-
-            let cache: URLCache
-            switch URLCacheType {
-            case .encrypted:
-                cache = SFSDKEncryptedURLCache(
-                    memoryCapacity: kDefaultCacheMemoryCapacity,
-                    diskCapacity: kDefaultCacheDiskCapacity,
-                    diskPath: nil
-                )
-            case .null:
-                cache = SFSDKNullURLCache(
-                    memoryCapacity: kDefaultCacheMemoryCapacity,
-                    diskCapacity: kDefaultCacheDiskCapacity,
-                    diskPath: nil
-                )
-            case .standard:
-                cache = URLCache(
-                    memoryCapacity: kDefaultCacheMemoryCapacity,
-                    diskCapacity: kDefaultCacheDiskCapacity,
-                    diskPath: nil
-                )
-            }
-            URLCache.shared = cache
+            applyURLCacheType()
         }
+    }
+
+    private func applyURLCacheType() {
+        URLCache.shared.removeAllCachedResponses()
+
+        let cache: URLCache
+        switch URLCacheType {
+        case .encrypted:
+            cache = SFSDKEncryptedURLCache(
+                memoryCapacity: kDefaultCacheMemoryCapacity,
+                diskCapacity: kDefaultCacheDiskCapacity,
+                diskPath: nil
+            )
+        case .null:
+            cache = SFSDKNullURLCache(
+                memoryCapacity: kDefaultCacheMemoryCapacity,
+                diskCapacity: kDefaultCacheDiskCapacity,
+                diskPath: nil
+            )
+        case .standard:
+            cache = URLCache(
+                memoryCapacity: kDefaultCacheMemoryCapacity,
+                diskCapacity: kDefaultCacheDiskCapacity,
+                diskPath: nil
+            )
+        }
+        URLCache.shared = cache
     }
 
     public var useEphemeralSessionForAdvancedAuth: Bool = true
@@ -323,10 +327,10 @@ open class SalesforceManager: NSObject, SalesforceSDKManagerFlow {
 
     public static var appName: String {
         get {
-            return SalesforceManager.appName ?? ""
+            return _sdkAppName ?? ""
         }
         set {
-            SalesforceManager.appName = newValue
+            _sdkAppName = newValue
         }
     }
 
@@ -375,6 +379,7 @@ open class SalesforceManager: NSObject, SalesforceSDKManagerFlow {
         computeWebViewUserAgent()
         userAgentString = SalesforceManager.defaultUserAgentString()
         URLCacheType = .encrypted
+        applyURLCacheType()
         useEphemeralSessionForAdvancedAuth = true
         useWebServerAuthentication = true
         blockSalesforceIntegrationUser = false

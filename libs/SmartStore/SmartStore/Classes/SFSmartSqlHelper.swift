@@ -157,7 +157,7 @@ public class SmartSqlHelper: NSObject {
                     let indexed = store.hasIndex(forPath: path, inSoup: soupName, with: db)
                     if !indexed {
                         // Thanks to the json1 extension we can query the data even if it is not indexed
-                        columnName = "json_extract(soup, '$.\\(path)')"
+                        columnName = "json_extract(soup, '$.\(path)')"
                     } else {
                         guard let column = store.columnName(forPath: path, inSoup: soupName, with: db) else {
                             NSException(name: NSExceptionName("convertSmartSql failed"), reason: "Invalid path:\(path)", userInfo: nil).raise()

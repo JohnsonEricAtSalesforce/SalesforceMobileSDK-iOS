@@ -32,4 +32,8 @@ public class NullURLCache: URLCache {
         // No-op: don't cache anything
         return
     }
+
+    public override func cachedResponse(for request: URLRequest) -> CachedURLResponse? {
+        return nil
+    }
 }

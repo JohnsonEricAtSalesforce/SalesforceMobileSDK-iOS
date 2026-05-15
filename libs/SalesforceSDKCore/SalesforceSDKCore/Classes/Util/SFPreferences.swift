@@ -28,6 +28,9 @@ import Foundation
 
 /// Creates a cache key for a user and scope
 fileprivate func SFKeyForUserAndScope(_ user: UserAccount?, _ scope: UserAccount.AccountScope) -> String? {
+    if scope == .global {
+        return "global"
+    }
     guard let user = user else { return nil }
     return SFKeyForUserIdAndScope(user.credentials.userId, user.credentials.organizationId, user.credentials.communityId, scope)
 }

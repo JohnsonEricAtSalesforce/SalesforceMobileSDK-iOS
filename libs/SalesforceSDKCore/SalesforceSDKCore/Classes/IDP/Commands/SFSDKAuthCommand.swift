@@ -75,6 +75,7 @@ public class SFSDKAuthCommand: NSObject {
         command = pathComponents[2]
 
         scheme = url.scheme ?? ""
+        path = url.host ?? ""
 
         // put all the query params in our backing store
         if let dictionary = (url as NSURL).sfsdk_dictionaryFromQuery {

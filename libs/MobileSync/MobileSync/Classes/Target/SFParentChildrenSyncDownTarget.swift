@@ -29,12 +29,12 @@ import SalesforceSDKCore
 @objcMembers
 public class ParentChildrenSyncDownTarget: SoqlSyncDownTarget {
 
-    private var parentInfo: ParentInfo
-    private var parentFieldlist: [String]
-    private var parentSoqlFilter: String?
-    private var childrenInfo: ChildrenInfo
-    private var childrenFieldlist: [String]
-    private var relationshipType: ParentChildrenRelationshipType
+    var parentInfo: ParentInfo
+    var parentFieldlist: [String]
+    var parentSoqlFilter: String?
+    var childrenInfo: ChildrenInfo
+    var childrenFieldlist: [String]
+    var relationshipType: ParentChildrenRelationshipType
 
     init(
         parentInfo: ParentInfo,

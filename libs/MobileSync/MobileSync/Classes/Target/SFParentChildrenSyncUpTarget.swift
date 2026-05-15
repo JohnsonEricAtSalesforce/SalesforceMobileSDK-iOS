@@ -33,11 +33,11 @@ typealias SendCompositeRequestCompleteBlock = OnSendCompleteCallback
 @objcMembers
 public class ParentChildrenSyncUpTarget: SyncUpTarget, AdvancedSyncUpTarget {
 
-    private var parentInfo: ParentInfo
-    private var childrenInfo: ChildrenInfo
-    private var childrenCreateFieldlist: [String]?
-    private var childrenUpdateFieldlist: [String]?
-    private var relationshipType: ParentChildrenRelationshipType
+    var parentInfo: ParentInfo
+    var childrenInfo: ChildrenInfo
+    var childrenCreateFieldlist: [String]?
+    var childrenUpdateFieldlist: [String]?
+    var relationshipType: ParentChildrenRelationshipType
 
     init(
         parentInfo: ParentInfo,

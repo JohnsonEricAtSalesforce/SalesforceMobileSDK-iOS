@@ -100,7 +100,7 @@ extension SmartStore {
         var error: NSError?
         inDatabase({ db in
             self.createMetaTables(with: db)
-        }, error: &error)
+        })
         return error == nil
     }
 
@@ -133,7 +133,7 @@ extension SmartStore {
         var error: NSError?
         inDatabase({ db in
             self.createLongOperationsStatusTable(with: db)
-        }, error: &error)
+        })
         return error == nil
     }
 
@@ -499,14 +499,12 @@ extension SmartStore {
     /// - Returns: string decoded from the specified input stream
     @objc public class func string(from inputStream: InputStream) -> String? {
         var buffer = [UInt8](repeating: 0, count: kBufferSize)
-        var len: Int
         let content = NSMutableData()
         inputStream.open()
-        while inputStream.read(&buffer, maxLength: buffer.count) > 0 {
+        var len = inputStream.read(&buffer, maxLength: buffer.count)
+        while len > 0 {
+            content.append(buffer, length: len)
             len = inputStream.read(&buffer, maxLength: buffer.count)
-            if len > 0 {
-                content.append(buffer, length: len)
-            }
         }
         inputStream.close()
         return String(data: content as Data, encoding: .utf8)
@@ -520,7 +518,7 @@ extension SmartStore {
         var error: NSError?
         _ = inDatabase({ db in
             result = self.convertSmartSql(smartSql, with: db)
-        }, error: &error)
+        })
         return result
     }
 
@@ -559,7 +557,7 @@ extension SmartStore {
         var error: NSError?
         _ = inDatabase({ db in
             results = self.getLongOperations(with: db)
-        }, error: &error)
+        })
         return results
     }
 
