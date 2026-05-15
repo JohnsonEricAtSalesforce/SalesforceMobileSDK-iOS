@@ -42,22 +42,22 @@ class PushNotificationDecryptionTests: XCTestCase {
                                                     "sid": "0031Q00002kRzYLQA0"]
     
     override func setUpWithError() throws {
-        SFSDKCryptoUtils.createRSAKeyPair(withName: "com.salesforce.mobilesdk.notificationKey", keyLength: 2048, accessibleAttribute: kSecAttrAccessibleAfterFirstUnlockThisDeviceOnly)
-        publicKey = try XCTUnwrap(SFSDKCryptoUtils.getRSAPublicKeyRef(withName: "com.salesforce.mobilesdk.notificationKey", keyLength: 2048)).takeUnretainedValue()
+        CryptoUtils.createRSAKeyPair(withName: "com.salesforce.mobilesdk.notificationKey", keyLength: 2048, accessibleAttribute: kSecAttrAccessibleAfterFirstUnlockThisDeviceOnly)
+        publicKey = try XCTUnwrap(CryptoUtils.getRSAPublicKeyRef(withName: "com.salesforce.mobilesdk.notificationKey", keyLength: 2048))
     }
     
     func testPKCS1Secret() throws {
         let notificationContent = baseNotificationContent()
         
         // Symmetric encryption for payload
-        let key = SFSDKCryptoUtils.randomByteData(withLength: 16)
-        let iv = SFSDKCryptoUtils.randomByteData(withLength: 16)
+        let key = CryptoUtils.randomByteData(withLength: 16)
+        let iv = CryptoUtils.randomByteData(withLength: 16)
         let jsonContent = try JSONSerialization.data(withJSONObject: contentDictionary)
-        let encryptedContent = try XCTUnwrap(SFSDKCryptoUtils.aes128EncryptData(jsonContent, withKey: key, iv: iv)).base64EncodedString()
+        let encryptedContent = try XCTUnwrap(CryptoUtils.aes128EncryptData(jsonContent, withKey: key, iv: iv)).base64EncodedString()
         
         // RSA-PKCS1 encryption for secret
         let secret = key + iv
-        let encryptedSecret = try SFSDKCryptoUtils.encrypt(data: secret, key: publicKey, algorithm: SecKeyAlgorithm.rsaEncryptionPKCS1)
+        let encryptedSecret = try CryptoUtils.encrypt(data: secret, key: publicKey, algorithm: SecKeyAlgorithm.rsaEncryptionPKCS1)
         let secretString = encryptedSecret.base64EncodedString()
         
         notificationContent.userInfo[kRemoteNotificationKeySecret] = secretString
@@ -73,14 +73,14 @@ class PushNotificationDecryptionTests: XCTestCase {
         let notificationContent = baseNotificationContent()
         
         // Symmetric encryption for payload
-        let key = SFSDKCryptoUtils.randomByteData(withLength: 16)
-        let iv = SFSDKCryptoUtils.randomByteData(withLength: 16)
+        let key = CryptoUtils.randomByteData(withLength: 16)
+        let iv = CryptoUtils.randomByteData(withLength: 16)
         let jsonContent = try JSONSerialization.data(withJSONObject: contentDictionary)
-        let encryptedContent = try XCTUnwrap(SFSDKCryptoUtils.aes128EncryptData(jsonContent, withKey: key, iv: iv)).base64EncodedString()
+        let encryptedContent = try XCTUnwrap(CryptoUtils.aes128EncryptData(jsonContent, withKey: key, iv: iv)).base64EncodedString()
         
         // RSA-OAEP encryption for secret
         let secret = key + iv
-        let encryptedSecret = try XCTUnwrap(SFSDKCryptoUtils.encrypt(data: secret, key: publicKey, algorithm: SecKeyAlgorithm.rsaEncryptionOAEPSHA256))
+        let encryptedSecret = try XCTUnwrap(CryptoUtils.encrypt(data: secret, key: publicKey, algorithm: SecKeyAlgorithm.rsaEncryptionOAEPSHA256))
         let secretString = encryptedSecret.base64EncodedString()
         
         notificationContent.userInfo[kRemoteNotificationKeySecret] = secretString

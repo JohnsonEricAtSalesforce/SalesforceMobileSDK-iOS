@@ -28,12 +28,12 @@
 		B7136D08216684A700F6A221 /* SalesforceSDKCommon.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = B7136CFE216684A700F6A221 /* SalesforceSDKCommon.framework */; };
 		B7136D0F216684A700F6A221 /* SalesforceSDKCommon.h in Headers */ = {isa = PBXBuildFile; fileRef = B7136D01216684A700F6A221 /* SalesforceSDKCommon.h */; settings = {ATTRIBUTES = (Public, ); }; };
 		B7182B012614346B00867BFE /* KeychainHelperTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = B7182B002614346B00867BFE /* KeychainHelperTests.swift */; };
+		BB0001012E15ED890003C1FA /* SFLoggerTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB0001002E15ED890003C1FA /* SFLoggerTests.swift */; };
+		BB0002012E15ED890003C1FA /* SFSDKSafeMutableArrayTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB0002002E15ED890003C1FA /* SFSDKSafeMutableArrayTests.swift */; };
+		BB0003012E15ED890003C1FA /* SFSDKSafeMutableDictionaryTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB0003002E15ED890003C1FA /* SFSDKSafeMutableDictionaryTests.swift */; };
+		BB0004012E15ED890003C1FA /* SFSDKSafeMutableSetTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB0004002E15ED890003C1FA /* SFSDKSafeMutableSetTests.swift */; };
 		B77B6CA4260D261C0074BA3C /* KeychainHelper.swift in Sources */ = {isa = PBXBuildFile; fileRef = B77B6CA3260D261C0074BA3C /* KeychainHelper.swift */; };
 		B78898BC218D0329006E0C77 /* Foundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = B78898BB218D0329006E0C77 /* Foundation.framework */; };
-		B7D3CABA218BA32B00780B72 /* SFLoggerTests.m in Sources */ = {isa = PBXBuildFile; fileRef = B7D3CAB9218BA32B00780B72 /* SFLoggerTests.m */; };
-		B7D3CABE218BC80600780B72 /* SFSDKSafeMutableArrayTests.m in Sources */ = {isa = PBXBuildFile; fileRef = B7D3CABB218BC80600780B72 /* SFSDKSafeMutableArrayTests.m */; };
-		B7D3CABF218BC80600780B72 /* SFSDKSafeMutableDictionaryTests.m in Sources */ = {isa = PBXBuildFile; fileRef = B7D3CABC218BC80600780B72 /* SFSDKSafeMutableDictionaryTests.m */; };
-		B7D3CAC0218BC80600780B72 /* SFSDKSafeMutableSetTests.m in Sources */ = {isa = PBXBuildFile; fileRef = B7D3CABD218BC80600780B72 /* SFSDKSafeMutableSetTests.m */; };
 		F27137BD28405BB8003B3D69 /* SalesforceSDKCommonTestApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = F27137BC28405BB8003B3D69 /* SalesforceSDKCommonTestApp.swift */; };
 		F27137BF28405BB8003B3D69 /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F27137BE28405BB8003B3D69 /* ContentView.swift */; };
 		F27137C128405BB9003B3D69 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = F27137C028405BB9003B3D69 /* Assets.xcassets */; };
@@ -84,12 +84,12 @@
 		B7136D07216684A700F6A221 /* SalesforceSDKCommonTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = SalesforceSDKCommonTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		B7136D0E216684A700F6A221 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		B7182B002614346B00867BFE /* KeychainHelperTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KeychainHelperTests.swift; sourceTree = "<group>"; };
+		BB0001002E15ED890003C1FA /* SFLoggerTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SFLoggerTests.swift; sourceTree = "<group>"; };
+		BB0002002E15ED890003C1FA /* SFSDKSafeMutableArrayTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SFSDKSafeMutableArrayTests.swift; sourceTree = "<group>"; };
+		BB0003002E15ED890003C1FA /* SFSDKSafeMutableDictionaryTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SFSDKSafeMutableDictionaryTests.swift; sourceTree = "<group>"; };
+		BB0004002E15ED890003C1FA /* SFSDKSafeMutableSetTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SFSDKSafeMutableSetTests.swift; sourceTree = "<group>"; };
 		B77B6CA3260D261C0074BA3C /* KeychainHelper.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KeychainHelper.swift; sourceTree = "<group>"; };
 		B78898BB218D0329006E0C77 /* Foundation.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Foundation.framework; path = System/Library/Frameworks/Foundation.framework; sourceTree = SDKROOT; };
-		B7D3CAB9218BA32B00780B72 /* SFLoggerTests.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = SFLoggerTests.m; sourceTree = "<group>"; };
-		B7D3CABB218BC80600780B72 /* SFSDKSafeMutableArrayTests.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = SFSDKSafeMutableArrayTests.m; sourceTree = "<group>"; };
-		B7D3CABC218BC80600780B72 /* SFSDKSafeMutableDictionaryTests.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = SFSDKSafeMutableDictionaryTests.m; sourceTree = "<group>"; };
-		B7D3CABD218BC80600780B72 /* SFSDKSafeMutableSetTests.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = SFSDKSafeMutableSetTests.m; sourceTree = "<group>"; };
 		F27137BA28405BB8003B3D69 /* SalesforceSDKCommonTestApp.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = SalesforceSDKCommonTestApp.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		F27137BC28405BB8003B3D69 /* SalesforceSDKCommonTestApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SalesforceSDKCommonTestApp.swift; sourceTree = "<group>"; };
 		F27137BE28405BB8003B3D69 /* ContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentView.swift; sourceTree = "<group>"; };
@@ -172,10 +172,10 @@
 				B7136D0E216684A700F6A221 /* Info.plist */,
 				B7182B002614346B00867BFE /* KeychainHelperTests.swift */,
 				69AEBFCC2E1617230003C1FA /* SecItemOperationsTests.swift */,
-				B7D3CAB9218BA32B00780B72 /* SFLoggerTests.m */,
-				B7D3CABB218BC80600780B72 /* SFSDKSafeMutableArrayTests.m */,
-				B7D3CABC218BC80600780B72 /* SFSDKSafeMutableDictionaryTests.m */,
-				B7D3CABD218BC80600780B72 /* SFSDKSafeMutableSetTests.m */,
+				BB0001002E15ED890003C1FA /* SFLoggerTests.swift */,
+				BB0002002E15ED890003C1FA /* SFSDKSafeMutableArrayTests.swift */,
+				BB0003002E15ED890003C1FA /* SFSDKSafeMutableDictionaryTests.swift */,
+				BB0004002E15ED890003C1FA /* SFSDKSafeMutableSetTests.swift */,
 			);
 			path = SalesforceSDKCommonTests;
 			sourceTree = "<group>";
@@ -470,11 +470,11 @@
 			buildActionMask = 2147483647;
 			files = (
 				69AEBFCD2E1617230003C1FA /* SecItemOperationsTests.swift in Sources */,
-				B7D3CABA218BA32B00780B72 /* SFLoggerTests.m in Sources */,
 				B7182B012614346B00867BFE /* KeychainHelperTests.swift in Sources */,
-				B7D3CABE218BC80600780B72 /* SFSDKSafeMutableArrayTests.m in Sources */,
-				B7D3CAC0218BC80600780B72 /* SFSDKSafeMutableSetTests.m in Sources */,
-				B7D3CABF218BC80600780B72 /* SFSDKSafeMutableDictionaryTests.m in Sources */,
+				BB0001012E15ED890003C1FA /* SFLoggerTests.swift in Sources */,
+				BB0002012E15ED890003C1FA /* SFSDKSafeMutableArrayTests.swift in Sources */,
+				BB0003012E15ED890003C1FA /* SFSDKSafeMutableDictionaryTests.swift in Sources */,
+				BB0004012E15ED890003C1FA /* SFSDKSafeMutableSetTests.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

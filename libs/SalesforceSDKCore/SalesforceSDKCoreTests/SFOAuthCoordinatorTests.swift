@@ -1,4 +1,6 @@
 import XCTest
+import WebKit
+import AuthenticationServices
 @testable import SalesforceSDKCore
 
 class SFOAuthCoordinatorTests: XCTestCase {
@@ -17,12 +19,12 @@ class SFOAuthCoordinatorTests: XCTestCase {
         let credentials = OAuthCredentials(identifier: "test",
                                            clientId: "client",
                                            encrypted: false)
-        credentials?.testDomain = "foo.bar.com/discovery"
-        credentials?.testRedirectURI = "sfdc://callback"
+        credentials.testDomain = "foo.bar.com/discovery"
+        credentials.testRedirectURI = "sfdc://callback"
         coordinator.credentials = credentials
-        
+
         // When
-        coordinator.authenticate(with: credentials!)
+        coordinator.authenticate(with: credentials)
         
         // Then
         var didCallDecisionHandlerPolicy: WKNavigationActionPolicy = .allow

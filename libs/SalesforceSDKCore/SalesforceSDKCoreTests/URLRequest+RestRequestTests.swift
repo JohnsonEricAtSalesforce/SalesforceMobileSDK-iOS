@@ -178,7 +178,7 @@ class URLRequestRestRequestTests: XCTestCase {
         // When
         let restRequest = originalRequest.toRestRequest()
         let mockUser = UserAccount()
-        let convertedRequest = restRequest?.prepare(forSend: mockUser)
+        let convertedRequest = restRequest?.prepareRequestForSend(mockUser)
         
         // Then
         XCTAssertNotNil(convertedRequest)

@@ -26,6 +26,20 @@
 		2D52A9AEA6E1A65641C08DD8 /* SFAlterSoupLongOperation.swift in Sources */ = {isa = PBXBuildFile; fileRef = B31F7C2968CFD0C09E013A0F /* SFAlterSoupLongOperation.swift */; };
 		3B47C74763DA6874083FF4CC /* SFSmartStoreInspectorViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3EEE70C7A763DCC394873A13 /* SFSmartStoreInspectorViewController.swift */; };
 		3F94286AA13E598A0326A878 /* SmartStoreSDKManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = A42C6C9795CDD838C3861FCD /* SmartStoreSDKManager.swift */; };
+		A1B2C3D4E5F6A7B8C9D0E1A1 /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1B2C3D4E5F6A7B8C9D0E1F1 /* AppDelegate.swift */; };
+		A1B2C3D4E5F6A7B8C9D0E1A2 /* ViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1B2C3D4E5F6A7B8C9D0E1F2 /* ViewController.swift */; };
+		A1B2C3D4E5F6A7B8C9D0E2A1 /* SFSmartStoreTestCase.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1B2C3D4E5F6A7B8C9D0E2F1 /* SFSmartStoreTestCase.swift */; };
+		A1B2C3D4E5F6A7B8C9D0E2A2 /* SFSmartStoreTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1B2C3D4E5F6A7B8C9D0E2F2 /* SFSmartStoreTests.swift */; };
+		A1B2C3D4E5F6A7B8C9D0E2A3 /* SFQuerySpecTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1B2C3D4E5F6A7B8C9D0E2F3 /* SFQuerySpecTests.swift */; };
+		A1B2C3D4E5F6A7B8C9D0E2A4 /* SFSmartSqlTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1B2C3D4E5F6A7B8C9D0E2F4 /* SFSmartSqlTests.swift */; };
+		A1B2C3D4E5F6A7B8C9D0E2A5 /* SFSmartSqlCacheTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1B2C3D4E5F6A7B8C9D0E2F5 /* SFSmartSqlCacheTests.swift */; };
+		A1B2C3D4E5F6A7B8C9D0E2A6 /* SFSmartStoreAlterTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1B2C3D4E5F6A7B8C9D0E2F6 /* SFSmartStoreAlterTests.swift */; };
+		A1B2C3D4E5F6A7B8C9D0E2A7 /* SFSmartStoreFullTextSearchTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1B2C3D4E5F6A7B8C9D0E2F7 /* SFSmartStoreFullTextSearchTests.swift */; };
+		A1B2C3D4E5F6A7B8C9D0E2A8 /* SFSmartStoreFullTextSearchSpeedTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1B2C3D4E5F6A7B8C9D0E2F8 /* SFSmartStoreFullTextSearchSpeedTests.swift */; };
+		A1B2C3D4E5F6A7B8C9D0E2A9 /* SFSmartStoreLoadTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1B2C3D4E5F6A7B8C9D0E2F9 /* SFSmartStoreLoadTests.swift */; };
+		A1B2C3D4E5F6A7B8C9D0E2AA /* SFMultipleSmartStoresTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1B2C3D4E5F6A7B8C9D0E2FA /* SFMultipleSmartStoresTests.swift */; };
+		A1B2C3D4E5F6A7B8C9D0E2AB /* SFSDKStoreConfigTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1B2C3D4E5F6A7B8C9D0E2FB /* SFSDKStoreConfigTests.swift */; };
+		A1B2C3D4E5F6A7B8C9D0E2AC /* SmartStoreSDKManagerTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1B2C3D4E5F6A7B8C9D0E2FC /* SmartStoreSDKManagerTests.swift */; };
 		4F06AF0D1C499EB600F70798 /* main.m in Sources */ = {isa = PBXBuildFile; fileRef = 4F06AF0C1C499EB600F70798 /* main.m */; };
 		4F06AF101C499EB600F70798 /* AppDelegate.m in Sources */ = {isa = PBXBuildFile; fileRef = 4F06AF0F1C499EB600F70798 /* AppDelegate.m */; };
 		4F06AF131C499EB600F70798 /* ViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = 4F06AF121C499EB600F70798 /* ViewController.m */; };
@@ -36,22 +50,12 @@
 		4F06AFF11C49D53D00F70798 /* SmartStore.framework in Embed Frameworks */ = {isa = PBXBuildFile; fileRef = CE4CE2B91C0E4581009F6029 /* SmartStore.framework */; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
 		4F5BBB9D23592EBB00E6D619 /* SmartStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4F5BBB9C23592EBB00E6D619 /* SmartStore.swift */; };
 		4F5BBBB4235E1FD900E6D619 /* SmartStoreTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4F5BBBB3235E1FD900E6D619 /* SmartStoreTests.swift */; };
-		4F75747222B9BA9000528BE2 /* SFSmartSqlCacheTests.m in Sources */ = {isa = PBXBuildFile; fileRef = 4F75747122B9BA9000528BE2 /* SFSmartSqlCacheTests.m */; };
-		4F99B53C1CEA81A6007BC4D2 /* SFSmartStoreLoadTests.m in Sources */ = {isa = PBXBuildFile; fileRef = 4F99B53B1CEA81A6007BC4D2 /* SFSmartStoreLoadTests.m */; };
 		4FAB7D791F8D888400226249 /* userstore.json in Resources */ = {isa = PBXBuildFile; fileRef = 4FAB7D781F8D888400226249 /* userstore.json */; };
 		4FAB7D7E1F8D88C100226249 /* globalstore.json in Resources */ = {isa = PBXBuildFile; fileRef = 4FAB7D7D1F8D88C100226249 /* globalstore.json */; };
-		4FAB7D811F8D8C3C00226249 /* SFSDKStoreConfigTests.m in Sources */ = {isa = PBXBuildFile; fileRef = 4FAB7D801F8D8C3C00226249 /* SFSDKStoreConfigTests.m */; };
 		4FC72E702E500C9300A8AA8D /* FMDB in Frameworks */ = {isa = PBXBuildFile; productRef = 4FC72E6F2E500C9300A8AA8D /* FMDB */; };
 		4FC72E722E500CAD00A8AA8D /* FMDB in Frameworks */ = {isa = PBXBuildFile; productRef = 4FC72E712E500CAD00A8AA8D /* FMDB */; };
 		4FE34A4E2E5527A0000D6367 /* SQLCipher in Frameworks */ = {isa = PBXBuildFile; productRef = 4FE34A4D2E5527A0000D6367 /* SQLCipher */; };
-		4FEE44861BFD5CD200F09C43 /* SFSmartStoreAlterTests.m in Sources */ = {isa = PBXBuildFile; fileRef = 4F9601561BFD33B30022F021 /* SFSmartStoreAlterTests.m */; };
-		4FEE44871BFD5CD500F09C43 /* SFSmartStoreFullTextSearchSpeedTests.m in Sources */ = {isa = PBXBuildFile; fileRef = 4F9601581BFD33B30022F021 /* SFSmartStoreFullTextSearchSpeedTests.m */; };
-		4FEE44881BFD5CD900F09C43 /* SFSmartStoreFullTextSearchTests.m in Sources */ = {isa = PBXBuildFile; fileRef = 4F96015A1BFD33B30022F021 /* SFSmartStoreFullTextSearchTests.m */; };
-		4FEE44891BFD5CDC00F09C43 /* SFSmartStoreTestCase.m in Sources */ = {isa = PBXBuildFile; fileRef = 4F96015C1BFD33B30022F021 /* SFSmartStoreTestCase.m */; };
-		4FEE448A1BFD5CE500F09C43 /* SFSmartStoreTests.m in Sources */ = {isa = PBXBuildFile; fileRef = 4F96015E1BFD33B30022F021 /* SFSmartStoreTests.m */; };
-		4FF4DC671CF51D9300385C2C /* SFQuerySpecTests.m in Sources */ = {isa = PBXBuildFile; fileRef = 4FF4DC661CF51D9300385C2C /* SFQuerySpecTests.m */; };
 		4FFEE6351BFE98E100B7AA8A /* InfoPlist.strings in Resources */ = {isa = PBXBuildFile; fileRef = CEAAAE61195911E600CBBFE9 /* InfoPlist.strings */; };
-		4FSSSDKMGR001234567890AB /* SmartStoreSDKManagerTests.m in Sources */ = {isa = PBXBuildFile; fileRef = 4FSSSDKMGR112345678901AB /* SmartStoreSDKManagerTests.m */; };
 		696E912D2AD0977600205884 /* PrivacyInfo.xcprivacy in Resources */ = {isa = PBXBuildFile; fileRef = 696E91232AD0975B00205884 /* PrivacyInfo.xcprivacy */; };
 		6A54491E13BCB6D44E983908 /* SFSDKStoreConfig.swift in Sources */ = {isa = PBXBuildFile; fileRef = C3CACE2F46AAD9579E3F1EBD /* SFSDKStoreConfig.swift */; };
 		6CCC125128C4A7C2AB070671 /* SFSmartStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0FD16A1C458A258E00E1F64F /* SFSmartStore.swift */; };
@@ -64,8 +68,6 @@
 		B716A3D7218F6AD6009D407F /* SalesforceAnalytics.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = B716A3B2218F6AAC009D407F /* SalesforceAnalytics.framework */; };
 		B716A3D8218F6AD6009D407F /* SalesforceSDKCommon.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = B716A3C0218F6AB3009D407F /* SalesforceSDKCommon.framework */; };
 		B716A3D9218F6AD6009D407F /* SalesforceSDKCore.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = B716A3CE218F6ABA009D407F /* SalesforceSDKCore.framework */; };
-		B7DD6CE61DC178D0004C04F4 /* SFMultipleSmartStoresTests.m in Sources */ = {isa = PBXBuildFile; fileRef = B7DD6CE51DC178D0004C04F4 /* SFMultipleSmartStoresTests.m */; };
-		C03DE7E11D1B6B8E00BFA6BD /* SFSmartSqlTests.m in Sources */ = {isa = PBXBuildFile; fileRef = C03DE7E01D1B6B8E00BFA6BD /* SFSmartSqlTests.m */; };
 		CE0AB0761C10D3AF00BFAEED /* libz.tbd in Frameworks */ = {isa = PBXBuildFile; fileRef = CE4CE5841C0FB648009F6029 /* libz.tbd */; };
 		CE0AB0781C10D3B500BFAEED /* libxml2.tbd in Frameworks */ = {isa = PBXBuildFile; fileRef = CE0AB0771C10D3B500BFAEED /* libxml2.tbd */; };
 		CE1F0B0419ACF95B0007F22F /* ImageIO.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = CE1F0AFA19ACF95B0007F22F /* ImageIO.framework */; };
@@ -202,6 +204,20 @@
 /* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
+		A1B2C3D4E5F6A7B8C9D0E1F1 /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppDelegate.swift; sourceTree = "<group>"; };
+		A1B2C3D4E5F6A7B8C9D0E1F2 /* ViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ViewController.swift; sourceTree = "<group>"; };
+		A1B2C3D4E5F6A7B8C9D0E2F1 /* SFSmartStoreTestCase.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SFSmartStoreTestCase.swift; sourceTree = "<group>"; };
+		A1B2C3D4E5F6A7B8C9D0E2F2 /* SFSmartStoreTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SFSmartStoreTests.swift; sourceTree = "<group>"; };
+		A1B2C3D4E5F6A7B8C9D0E2F3 /* SFQuerySpecTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SFQuerySpecTests.swift; sourceTree = "<group>"; };
+		A1B2C3D4E5F6A7B8C9D0E2F4 /* SFSmartSqlTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SFSmartSqlTests.swift; sourceTree = "<group>"; };
+		A1B2C3D4E5F6A7B8C9D0E2F5 /* SFSmartSqlCacheTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SFSmartSqlCacheTests.swift; sourceTree = "<group>"; };
+		A1B2C3D4E5F6A7B8C9D0E2F6 /* SFSmartStoreAlterTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SFSmartStoreAlterTests.swift; sourceTree = "<group>"; };
+		A1B2C3D4E5F6A7B8C9D0E2F7 /* SFSmartStoreFullTextSearchTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SFSmartStoreFullTextSearchTests.swift; sourceTree = "<group>"; };
+		A1B2C3D4E5F6A7B8C9D0E2F8 /* SFSmartStoreFullTextSearchSpeedTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SFSmartStoreFullTextSearchSpeedTests.swift; sourceTree = "<group>"; };
+		A1B2C3D4E5F6A7B8C9D0E2F9 /* SFSmartStoreLoadTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SFSmartStoreLoadTests.swift; sourceTree = "<group>"; };
+		A1B2C3D4E5F6A7B8C9D0E2FA /* SFMultipleSmartStoresTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SFMultipleSmartStoresTests.swift; sourceTree = "<group>"; };
+		A1B2C3D4E5F6A7B8C9D0E2FB /* SFSDKStoreConfigTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SFSDKStoreConfigTests.swift; sourceTree = "<group>"; };
+		A1B2C3D4E5F6A7B8C9D0E2FC /* SmartStoreSDKManagerTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SmartStoreSDKManagerTests.swift; sourceTree = "<group>"; };
 		084B4BEC399839E4AB3D052A /* SFSDKSmartStoreLogger.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = SFSDKSmartStoreLogger.swift; sourceTree = "<group>"; };
 		0FD16A1C458A258E00E1F64F /* SFSmartStore.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = SFSmartStore.swift; sourceTree = "<group>"; };
 		161A2BE38F893CF7AB10DA94 /* SFSmartStoreUtils.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = SFSmartStoreUtils.swift; sourceTree = "<group>"; };
@@ -220,26 +236,12 @@
 		4F230BC31BFEAE430030EEFA /* SmartStore-Prefix.pch */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = "SmartStore-Prefix.pch"; path = "SmartStore/SmartStore-Prefix.pch"; sourceTree = SOURCE_ROOT; };
 		4F5BBB9C23592EBB00E6D619 /* SmartStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SmartStore.swift; sourceTree = "<group>"; };
 		4F5BBBB3235E1FD900E6D619 /* SmartStoreTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SmartStoreTests.swift; sourceTree = "<group>"; };
-		4F75747122B9BA9000528BE2 /* SFSmartSqlCacheTests.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = SFSmartSqlCacheTests.m; sourceTree = "<group>"; };
-		4F9601561BFD33B30022F021 /* SFSmartStoreAlterTests.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = SFSmartStoreAlterTests.m; path = SmartStoreTests/SFSmartStoreAlterTests.m; sourceTree = SOURCE_ROOT; };
-		4F9601581BFD33B30022F021 /* SFSmartStoreFullTextSearchSpeedTests.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = SFSmartStoreFullTextSearchSpeedTests.m; path = SmartStoreTests/SFSmartStoreFullTextSearchSpeedTests.m; sourceTree = SOURCE_ROOT; };
-		4F9601591BFD33B30022F021 /* SFSmartStoreFullTextSearchTests.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = SFSmartStoreFullTextSearchTests.h; path = SmartStoreTests/SFSmartStoreFullTextSearchTests.h; sourceTree = SOURCE_ROOT; };
-		4F96015A1BFD33B30022F021 /* SFSmartStoreFullTextSearchTests.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = SFSmartStoreFullTextSearchTests.m; path = SmartStoreTests/SFSmartStoreFullTextSearchTests.m; sourceTree = SOURCE_ROOT; };
-		4F96015B1BFD33B30022F021 /* SFSmartStoreTestCase.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = SFSmartStoreTestCase.h; path = SmartStoreTests/SFSmartStoreTestCase.h; sourceTree = SOURCE_ROOT; };
-		4F96015C1BFD33B30022F021 /* SFSmartStoreTestCase.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = SFSmartStoreTestCase.m; path = SmartStoreTests/SFSmartStoreTestCase.m; sourceTree = SOURCE_ROOT; };
-		4F96015D1BFD33B30022F021 /* SFSmartStoreTests.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = SFSmartStoreTests.h; path = SmartStoreTests/SFSmartStoreTests.h; sourceTree = SOURCE_ROOT; };
-		4F96015E1BFD33B30022F021 /* SFSmartStoreTests.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = SFSmartStoreTests.m; path = SmartStoreTests/SFSmartStoreTests.m; sourceTree = SOURCE_ROOT; };
 		4F96FC4D1BFD31EF0022F021 /* SmartStore-Common.xcconfig */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.xcconfig; name = "SmartStore-Common.xcconfig"; path = "Configuration/SmartStore-Common.xcconfig"; sourceTree = "<group>"; };
 		4F96FC501BFD31EF0022F021 /* SmartStore-Test.xcconfig */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.xcconfig; name = "SmartStore-Test.xcconfig"; path = "Configuration/SmartStore-Test.xcconfig"; sourceTree = "<group>"; };
-		4F99B53B1CEA81A6007BC4D2 /* SFSmartStoreLoadTests.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = SFSmartStoreLoadTests.m; sourceTree = "<group>"; };
 		4FAB7D781F8D888400226249 /* userstore.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = userstore.json; sourceTree = "<group>"; };
 		4FAB7D7D1F8D88C100226249 /* globalstore.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = globalstore.json; sourceTree = "<group>"; };
-		4FAB7D7F1F8D8BB500226249 /* SFSDKStoreConfigTests.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = SFSDKStoreConfigTests.h; sourceTree = "<group>"; };
-		4FAB7D801F8D8C3C00226249 /* SFSDKStoreConfigTests.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = SFSDKStoreConfigTests.m; sourceTree = "<group>"; };
-		4FF4DC661CF51D9300385C2C /* SFQuerySpecTests.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = SFQuerySpecTests.m; sourceTree = "<group>"; };
 		4FFE50CD36D6A3525CD31DED /* SFSoupIndex.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = SFSoupIndex.swift; sourceTree = "<group>"; };
 		4FFEE6341BFE98B600B7AA8A /* SmartStoreTests-Info.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; name = "SmartStoreTests-Info.plist"; path = "SmartStoreTests/SmartStoreTests-Info.plist"; sourceTree = SOURCE_ROOT; };
-		4FSSSDKMGR112345678901AB /* SmartStoreSDKManagerTests.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; name = SmartStoreSDKManagerTests.m; path = SmartStoreTests/SmartStoreSDKManagerTests.m; sourceTree = SOURCE_ROOT; };
 		523400522760DBC4AB85F892 /* SFSmartSqlCache.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = SFSmartSqlCache.swift; sourceTree = "<group>"; };
 		696E91232AD0975B00205884 /* PrivacyInfo.xcprivacy */ = {isa = PBXFileReference; lastKnownFileType = text.xml; path = PrivacyInfo.xcprivacy; sourceTree = "<group>"; };
 		80756FBC5CC9273627C7413B /* SFQuerySpec.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = SFQuerySpec.swift; sourceTree = "<group>"; };
@@ -252,9 +254,6 @@
 		B716A3B9218F6AB3009D407F /* SalesforceSDKCommon.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; name = SalesforceSDKCommon.xcodeproj; path = ../SalesforceSDKCommon/SalesforceSDKCommon.xcodeproj; sourceTree = "<group>"; };
 		B716A3C5218F6ABA009D407F /* SalesforceSDKCore.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; name = SalesforceSDKCore.xcodeproj; path = ../SalesforceSDKCore/SalesforceSDKCore.xcodeproj; sourceTree = "<group>"; };
 		B7282F441D8C713C00475F79 /* SmartStoreTestApp.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = SmartStoreTestApp.entitlements; sourceTree = "<group>"; };
-		B7DD6CE51DC178D0004C04F4 /* SFMultipleSmartStoresTests.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = SFMultipleSmartStoresTests.m; sourceTree = "<group>"; };
-		C03DE7DF1D1B6B8E00BFA6BD /* SFSmartSqlTests.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = SFSmartSqlTests.h; sourceTree = "<group>"; };
-		C03DE7E01D1B6B8E00BFA6BD /* SFSmartSqlTests.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = SFSmartSqlTests.m; sourceTree = "<group>"; };
 		C3CACE2F46AAD9579E3F1EBD /* SFSDKStoreConfig.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = SFSDKStoreConfig.swift; sourceTree = "<group>"; };
 		CE0AB0771C10D3B500BFAEED /* libxml2.tbd */ = {isa = PBXFileReference; lastKnownFileType = "sourcecode.text-based-dylib-definition"; name = libxml2.tbd; path = usr/lib/libxml2.tbd; sourceTree = SDKROOT; };
 		CE1F0AFA19ACF95B0007F22F /* ImageIO.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = ImageIO.framework; path = System/Library/Frameworks/ImageIO.framework; sourceTree = SDKROOT; };
@@ -330,6 +329,8 @@
 			isa = PBXGroup;
 			children = (
 				B7282F441D8C713C00475F79 /* SmartStoreTestApp.entitlements */,
+				A1B2C3D4E5F6A7B8C9D0E1F1 /* AppDelegate.swift */,
+				A1B2C3D4E5F6A7B8C9D0E1F2 /* ViewController.swift */,
 				4F06AF0E1C499EB600F70798 /* AppDelegate.h */,
 				4F06AF0F1C499EB600F70798 /* AppDelegate.m */,
 				4F06AF111C499EB600F70798 /* ViewController.h */,
@@ -478,25 +479,20 @@
 		CEAAAE5E195911E600CBBFE9 /* SmartStoreTests */ = {
 			isa = PBXGroup;
 			children = (
-				B7DD6CE51DC178D0004C04F4 /* SFMultipleSmartStoresTests.m */,
-				4FF4DC661CF51D9300385C2C /* SFQuerySpecTests.m */,
-				4FAB7D7F1F8D8BB500226249 /* SFSDKStoreConfigTests.h */,
-				4FAB7D801F8D8C3C00226249 /* SFSDKStoreConfigTests.m */,
-				C03DE7DF1D1B6B8E00BFA6BD /* SFSmartSqlTests.h */,
-				C03DE7E01D1B6B8E00BFA6BD /* SFSmartSqlTests.m */,
-				4F9601561BFD33B30022F021 /* SFSmartStoreAlterTests.m */,
-				4F9601581BFD33B30022F021 /* SFSmartStoreFullTextSearchSpeedTests.m */,
-				4F9601591BFD33B30022F021 /* SFSmartStoreFullTextSearchTests.h */,
-				4F96015A1BFD33B30022F021 /* SFSmartStoreFullTextSearchTests.m */,
-				4F99B53B1CEA81A6007BC4D2 /* SFSmartStoreLoadTests.m */,
-				4F96015B1BFD33B30022F021 /* SFSmartStoreTestCase.h */,
-				4F96015C1BFD33B30022F021 /* SFSmartStoreTestCase.m */,
-				4F96015D1BFD33B30022F021 /* SFSmartStoreTests.h */,
-				4F96015E1BFD33B30022F021 /* SFSmartStoreTests.m */,
-				4FSSSDKMGR112345678901AB /* SmartStoreSDKManagerTests.m */,
 				CEAAAE5F195911E600CBBFE9 /* Supporting Files */,
-				4F75747122B9BA9000528BE2 /* SFSmartSqlCacheTests.m */,
 				4F5BBBB3235E1FD900E6D619 /* SmartStoreTests.swift */,
+				A1B2C3D4E5F6A7B8C9D0E2F1 /* SFSmartStoreTestCase.swift */,
+				A1B2C3D4E5F6A7B8C9D0E2F2 /* SFSmartStoreTests.swift */,
+				A1B2C3D4E5F6A7B8C9D0E2F3 /* SFQuerySpecTests.swift */,
+				A1B2C3D4E5F6A7B8C9D0E2F4 /* SFSmartSqlTests.swift */,
+				A1B2C3D4E5F6A7B8C9D0E2F5 /* SFSmartSqlCacheTests.swift */,
+				A1B2C3D4E5F6A7B8C9D0E2F6 /* SFSmartStoreAlterTests.swift */,
+				A1B2C3D4E5F6A7B8C9D0E2F7 /* SFSmartStoreFullTextSearchTests.swift */,
+				A1B2C3D4E5F6A7B8C9D0E2F8 /* SFSmartStoreFullTextSearchSpeedTests.swift */,
+				A1B2C3D4E5F6A7B8C9D0E2F9 /* SFSmartStoreLoadTests.swift */,
+				A1B2C3D4E5F6A7B8C9D0E2FA /* SFMultipleSmartStoresTests.swift */,
+				A1B2C3D4E5F6A7B8C9D0E2FB /* SFSDKStoreConfigTests.swift */,
+				A1B2C3D4E5F6A7B8C9D0E2FC /* SmartStoreSDKManagerTests.swift */,
 			);
 			path = SmartStoreTests;
 			sourceTree = "<group>";
@@ -821,9 +817,8 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				4F06AF131C499EB600F70798 /* ViewController.m in Sources */,
-				4F06AF101C499EB600F70798 /* AppDelegate.m in Sources */,
-				4F06AF0D1C499EB600F70798 /* main.m in Sources */,
+				A1B2C3D4E5F6A7B8C9D0E1A1 /* AppDelegate.swift in Sources */,
+				A1B2C3D4E5F6A7B8C9D0E1A2 /* ViewController.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -853,19 +848,19 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				4F75747222B9BA9000528BE2 /* SFSmartSqlCacheTests.m in Sources */,
-				4FEE44891BFD5CDC00F09C43 /* SFSmartStoreTestCase.m in Sources */,
-				4FAB7D811F8D8C3C00226249 /* SFSDKStoreConfigTests.m in Sources */,
-				B7DD6CE61DC178D0004C04F4 /* SFMultipleSmartStoresTests.m in Sources */,
-				4FF4DC671CF51D9300385C2C /* SFQuerySpecTests.m in Sources */,
 				4F5BBBB4235E1FD900E6D619 /* SmartStoreTests.swift in Sources */,
-				4FEE44861BFD5CD200F09C43 /* SFSmartStoreAlterTests.m in Sources */,
-				4F99B53C1CEA81A6007BC4D2 /* SFSmartStoreLoadTests.m in Sources */,
-				C03DE7E11D1B6B8E00BFA6BD /* SFSmartSqlTests.m in Sources */,
-				4FEE44881BFD5CD900F09C43 /* SFSmartStoreFullTextSearchTests.m in Sources */,
-				4FEE448A1BFD5CE500F09C43 /* SFSmartStoreTests.m in Sources */,
-				4FSSSDKMGR001234567890AB /* SmartStoreSDKManagerTests.m in Sources */,
-				4FEE44871BFD5CD500F09C43 /* SFSmartStoreFullTextSearchSpeedTests.m in Sources */,
+				A1B2C3D4E5F6A7B8C9D0E2A1 /* SFSmartStoreTestCase.swift in Sources */,
+				A1B2C3D4E5F6A7B8C9D0E2A2 /* SFSmartStoreTests.swift in Sources */,
+				A1B2C3D4E5F6A7B8C9D0E2A3 /* SFQuerySpecTests.swift in Sources */,
+				A1B2C3D4E5F6A7B8C9D0E2A4 /* SFSmartSqlTests.swift in Sources */,
+				A1B2C3D4E5F6A7B8C9D0E2A5 /* SFSmartSqlCacheTests.swift in Sources */,
+				A1B2C3D4E5F6A7B8C9D0E2A6 /* SFSmartStoreAlterTests.swift in Sources */,
+				A1B2C3D4E5F6A7B8C9D0E2A7 /* SFSmartStoreFullTextSearchTests.swift in Sources */,
+				A1B2C3D4E5F6A7B8C9D0E2A8 /* SFSmartStoreFullTextSearchSpeedTests.swift in Sources */,
+				A1B2C3D4E5F6A7B8C9D0E2A9 /* SFSmartStoreLoadTests.swift in Sources */,
+				A1B2C3D4E5F6A7B8C9D0E2AA /* SFMultipleSmartStoresTests.swift in Sources */,
+				A1B2C3D4E5F6A7B8C9D0E2AB /* SFSDKStoreConfigTests.swift in Sources */,
+				A1B2C3D4E5F6A7B8C9D0E2AC /* SmartStoreSDKManagerTests.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -949,6 +944,7 @@
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				PROVISIONING_PROFILE_SPECIFIER = "";
 				SUPPORTS_MACCATALYST = YES;
+				SWIFT_VERSION = 5.0;
 				TARGETED_DEVICE_FAMILY = "1,2";
 			};
 			name = Debug;
@@ -976,6 +972,7 @@
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				PROVISIONING_PROFILE_SPECIFIER = "";
 				SUPPORTS_MACCATALYST = YES;
+				SWIFT_VERSION = 5.0;
 				TARGETED_DEVICE_FAMILY = "1,2";
 			};
 			name = Release;

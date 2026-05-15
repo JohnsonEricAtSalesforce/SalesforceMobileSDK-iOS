@@ -26,6 +26,7 @@
 //  WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 import XCTest
+import SalesforceSDKCommon
 @testable import SalesforceSDKCore
 
 class EncryptionTests: XCTestCase {
@@ -145,7 +146,7 @@ class EncryptionTests: XCTestCase {
     }
     
     func testConcurrency() throws {
-        let result = SafeMutableArray()
+        let result = SFSDKSafeMutableArray()
         DispatchQueue.concurrentPerform(iterations: 1000) { index in
             if let symmetricKey = try? KeyGenerator.encryptionKey(for: "singleLabel") {
                 result.add(symmetricKey.dataRepresentation as NSData)
@@ -153,7 +154,7 @@ class EncryptionTests: XCTestCase {
         }
         
         XCTAssertEqual(1000, result.count)
-        let firstItem = try XCTUnwrap(result.object(atIndexed: 0) as? NSData)
+        let firstItem = try XCTUnwrap(result.objectAtIndexed(0) as? NSData)
         XCTAssertTrue(result.asArray().allSatisfy { item in
             return item as? NSData == firstItem
         })

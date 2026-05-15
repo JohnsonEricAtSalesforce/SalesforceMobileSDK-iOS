@@ -28,6 +28,7 @@
 import XCTest
 @testable import MobileSync
 import SmartStore
+import SalesforceSDKCore
 
 let briefcaseAccountInfo = BriefcaseObjectInfo(soupName: ACCOUNTS_SOUP, sobjectType: ACCOUNT_TYPE, fieldlist: [NAME, DESCRIPTION])
 let briefcaseContactInfo = BriefcaseObjectInfo(soupName: CONTACTS_SOUP, sobjectType: CONTACT_TYPE, fieldlist: [LAST_NAME])
@@ -47,7 +48,7 @@ class BriefcaseSyncDownTests: SyncManagerTestCase {
         super.tearDown()
     }
     
-    override func createRecordName(_ objectType: String!) -> String! {
+    override func createRecordName(_ objectType: String) -> String {
         return "BriefcaseTest_\(objectType ?? "")_\(Date().timeIntervalSince1970)"
     }
     
@@ -121,9 +122,9 @@ class BriefcaseSyncDownTests: SyncManagerTestCase {
         
         // Create more accounts locally
         let localAccounts = try XCTUnwrap(createAccountsLocally(["local_1", "local_2"]) as? [[String: Any]])
-        let localAccountIds = localAccounts.compactMap { $0[ID] }
+        let localAccountIds = localAccounts.compactMap { $0[ID] as? String }
         XCTAssertEqual(localAccountIds.count, 2)
-        
+
         // Clean ghosts
         let expectation = expectation(description: "clean ghosts")
         try syncManager.cleanResyncGhosts(forId: syncId as NSNumber) { _, _ in
@@ -161,10 +162,10 @@ class BriefcaseSyncDownTests: SyncManagerTestCase {
 
         // Create more accounts locally
         let localAccounts = try XCTUnwrap(createAccountsLocally(["local_1", "local_2"]) as? [[String: Any]])
-        let localAccountIds = localAccounts.compactMap { $0[ID] }
+        let localAccountIds = localAccounts.compactMap { $0[ID] as? String }
         XCTAssertEqual(localAccountIds.count, 2)
         let localContacts = try XCTUnwrap(createContacts(forAccountsLocally: localAccountIds, numberOfContactsPerAccounts:2) as? [[String: Any]])
-        let localContactIds = localContacts.compactMap { $0[ID] }
+        let localContactIds = localContacts.compactMap { $0[ID] as? String }
         XCTAssertEqual(localContactIds.count, 4)
 
         // Clean ghosts
@@ -193,7 +194,7 @@ class BriefcaseSyncDownTests: SyncManagerTestCase {
         let target = try XCTUnwrap(syncManager.syncStatus(forId: syncResult.syncId as NSNumber)?.target as? SyncDownTarget)
         
         // No dirty records
-        var idsToSkip = target.getIdsToSkip(syncManager, soupName: "")
+        var idsToSkip = target.getIdsToSkip(syncManager: syncManager, soupName: "")
         XCTAssert(idsToSkip.set.isEmpty)
         
         // Make local changes
@@ -203,7 +204,7 @@ class BriefcaseSyncDownTests: SyncManagerTestCase {
         deleteRecordsLocally(deleteContactIds, soupName: CONTACTS_SOUP)
         
         // Verify dirty records are returned
-        idsToSkip = target.getIdsToSkip(syncManager, soupName: "")
+        idsToSkip = target.getIdsToSkip(syncManager: syncManager, soupName: "")
         XCTAssertTrue(Set(deleteAccountIds).isSubset(of: idsToSkip.set))
         XCTAssertTrue(Set(deleteContactIds).isSubset(of: idsToSkip.set))
     }
@@ -238,7 +239,7 @@ class BriefcaseSyncDownTests: SyncManagerTestCase {
     
     func idsOnServer(objectType: String, criteria: String) throws -> [String]  {
         let query = "SELECT Id FROM \(objectType) WHERE \(criteria)"
-        let request = RestClient.shared.request(forQuery: query, apiVersion: nil)
+        let request = RestClient.shared.requestForQuery(query, apiVersion: nil)
         let records = try XCTUnwrap(sendSyncRequest(request)?["records"] as? [[String: Any]])
         
         

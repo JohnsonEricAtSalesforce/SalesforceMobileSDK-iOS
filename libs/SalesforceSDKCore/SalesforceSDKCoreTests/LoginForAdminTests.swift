@@ -23,6 +23,8 @@
  */
 
 import XCTest
+import WebKit
+import AuthenticationServices
 @testable import SalesforceSDKCore
 
 // MARK: - Login for Admin Tests
@@ -44,15 +46,15 @@ class LoginForAdminTests: XCTestCase {
         super.tearDown()
     }
 
-    // MARK: - SFSDKAuthRequest loginAsAdmin Property
+    // MARK: - AuthRequest loginAsAdmin Property
 
     func testGivenNewAuthRequest_whenCreated_thenLoginAsAdminIsFalse() {
-        let request = SFSDKAuthRequest()
+        let request = AuthRequest()
         XCTAssertFalse(request.loginAsAdmin, "loginAsAdmin should default to false")
     }
 
     func testGivenAuthRequest_whenLoginAsAdminSet_thenUseBrowserAuthUnchanged() {
-        let request = SFSDKAuthRequest()
+        let request = AuthRequest()
         XCTAssertFalse(request.useBrowserAuth, "useBrowserAuth should default to false")
 
         request.loginAsAdmin = true
@@ -68,7 +70,7 @@ class LoginForAdminTests: XCTestCase {
         request.loginAsAdmin = true
         request.useBrowserAuth = false
 
-        let session = SFSDKAuthSession(request, credentials: nil)
+        let session = SFSDKAuthSession(with: request, credentials: nil)
         XCTAssertTrue(session.oauthCoordinator.useBrowserAuth,
                       "Coordinator useBrowserAuth should be true when loginAsAdmin is true")
     }
@@ -78,7 +80,7 @@ class LoginForAdminTests: XCTestCase {
         request.loginAsAdmin = false
         request.useBrowserAuth = true
 
-        let session = SFSDKAuthSession(request, credentials: nil)
+        let session = SFSDKAuthSession(with: request, credentials: nil)
         XCTAssertTrue(session.oauthCoordinator.useBrowserAuth,
                       "Coordinator useBrowserAuth should be true when request useBrowserAuth is true")
     }
@@ -88,7 +90,7 @@ class LoginForAdminTests: XCTestCase {
         request.loginAsAdmin = false
         request.useBrowserAuth = false
 
-        let session = SFSDKAuthSession(request, credentials: nil)
+        let session = SFSDKAuthSession(with: request, credentials: nil)
         XCTAssertFalse(session.oauthCoordinator.useBrowserAuth,
                        "Coordinator useBrowserAuth should be false when both flags are false")
     }
@@ -101,12 +103,12 @@ class LoginForAdminTests: XCTestCase {
         let request = makeAuthRequest()
         request.loginAsAdmin = true
 
-        let session = SFSDKAuthSession(request, credentials: nil)
+        let session = SFSDKAuthSession(with: request, credentials: nil)
         session.oauthCoordinator.delegate = self
 
         session.oauthCoordinator.authenticate()
 
-        XCTAssertEqual(session.oauthCoordinator.authInfo.authType, AuthInfo.AuthType.advancedBrowser,
+        XCTAssertEqual(session.oauthCoordinator.authInfo.authType, SFOAuthType.advancedBrowser,
                        "Auth info type should be advancedBrowser when loginAsAdmin is true")
         session.oauthCoordinator.stopAuthentication()
     }
@@ -119,12 +121,12 @@ class LoginForAdminTests: XCTestCase {
         request.loginAsAdmin = false
         request.useBrowserAuth = false
 
-        let session = SFSDKAuthSession(request, credentials: nil)
+        let session = SFSDKAuthSession(with: request, credentials: nil)
         session.oauthCoordinator.delegate = self
 
         session.oauthCoordinator.authenticate()
 
-        XCTAssertEqual(session.oauthCoordinator.authInfo.authType, AuthInfo.AuthType.webServer,
+        XCTAssertEqual(session.oauthCoordinator.authInfo.authType, SFOAuthType.webServer,
                        "Auth info type should be webServer when useWebServerAuthentication is true")
         session.oauthCoordinator.stopAuthentication()
     }
@@ -137,12 +139,12 @@ class LoginForAdminTests: XCTestCase {
         request.loginAsAdmin = false
         request.useBrowserAuth = false
 
-        let session = SFSDKAuthSession(request, credentials: nil)
+        let session = SFSDKAuthSession(with: request, credentials: nil)
         session.oauthCoordinator.delegate = self
 
         session.oauthCoordinator.authenticate()
 
-        XCTAssertEqual(session.oauthCoordinator.authInfo.authType, AuthInfo.AuthType.userAgent,
+        XCTAssertEqual(session.oauthCoordinator.authInfo.authType, SFOAuthType.userAgent,
                        "Auth info type should be userAgent when both flags are false")
         session.oauthCoordinator.stopAuthentication()
     }
@@ -156,7 +158,7 @@ class LoginForAdminTests: XCTestCase {
         let request = makeAuthRequest()
         request.loginAsAdmin = true
 
-        let session = SFSDKAuthSession(request, credentials: nil)
+        let session = SFSDKAuthSession(with: request, credentials: nil)
         let approvalUrl = session.oauthCoordinator.generateApprovalUrlString()
 
         XCTAssertTrue(approvalUrl.contains("response_type=code"),
@@ -174,7 +176,7 @@ class LoginForAdminTests: XCTestCase {
         request.loginAsAdmin = false
         request.useBrowserAuth = false
 
-        let session = SFSDKAuthSession(request, credentials: nil)
+        let session = SFSDKAuthSession(with: request, credentials: nil)
         let approvalUrl = session.oauthCoordinator.generateApprovalUrlString()
 
         XCTAssertTrue(approvalUrl.contains("response_type=token"),
@@ -186,7 +188,7 @@ class LoginForAdminTests: XCTestCase {
     func testGivenLoginAsAdmin_whenSet_thenGlobalWebServerAuthUnchanged() {
         let originalValue = SalesforceManager.shared.useWebServerAuthentication
 
-        let request = SFSDKAuthRequest()
+        let request = AuthRequest()
         request.loginAsAdmin = true
 
         XCTAssertEqual(SalesforceManager.shared.useWebServerAuthentication, originalValue,
@@ -199,7 +201,7 @@ class LoginForAdminTests: XCTestCase {
         let request = makeAuthRequest()
         request.loginAsAdmin = true
 
-        let session = SFSDKAuthSession(request, credentials: nil)
+        let session = SFSDKAuthSession(with: request, credentials: nil)
 
         XCTAssertTrue(session.oauthCoordinator.useBrowserAuth,
                       "Coordinator should use browser auth")
@@ -221,7 +223,7 @@ class LoginForAdminTests: XCTestCase {
         XCTAssertFalse(request.loginAsAdmin, "loginAsAdmin should be false after cancel")
 
         // Creating a new session from the cleared request should not use browser auth
-        let session = SFSDKAuthSession(request, credentials: nil)
+        let session = SFSDKAuthSession(with: request, credentials: nil)
         XCTAssertFalse(session.oauthCoordinator.useBrowserAuth,
                        "Coordinator should not use browser auth after loginAsAdmin is cleared")
     }
@@ -234,20 +236,20 @@ class LoginForAdminTests: XCTestCase {
         request.loginAsAdmin = true
 
         // Admin session uses advanced browser
-        let adminSession = SFSDKAuthSession(request, credentials: nil)
+        let adminSession = SFSDKAuthSession(with: request, credentials: nil)
         adminSession.oauthCoordinator.delegate = self
         adminSession.oauthCoordinator.authenticate()
-        XCTAssertEqual(adminSession.oauthCoordinator.authInfo.authType, AuthInfo.AuthType.advancedBrowser)
+        XCTAssertEqual(adminSession.oauthCoordinator.authInfo.authType, SFOAuthType.advancedBrowser)
         adminSession.oauthCoordinator.stopAuthentication()
 
         // Simulate cancel
         request.loginAsAdmin = false
 
         // New session from same request uses global setting
-        let normalSession = SFSDKAuthSession(request, credentials: nil)
+        let normalSession = SFSDKAuthSession(with: request, credentials: nil)
         normalSession.oauthCoordinator.delegate = self
         normalSession.oauthCoordinator.authenticate()
-        XCTAssertEqual(normalSession.oauthCoordinator.authInfo.authType, AuthInfo.AuthType.webServer,
+        XCTAssertEqual(normalSession.oauthCoordinator.authInfo.authType, SFOAuthType.webServer,
                        "After cancel, auth type should match global setting (webServer)")
         normalSession.oauthCoordinator.stopAuthentication()
     }
@@ -263,7 +265,7 @@ class LoginForAdminTests: XCTestCase {
         XCTAssertTrue(request.useBrowserAuth, "useBrowserAuth should be true for org-initiated browser auth")
 
         // After cancel of org-initiated auth, useBrowserAuth should remain true
-        let session = SFSDKAuthSession(request, credentials: nil)
+        let session = SFSDKAuthSession(with: request, credentials: nil)
         XCTAssertTrue(session.oauthCoordinator.useBrowserAuth,
                       "Org-initiated browser auth should keep useBrowserAuth after cancel")
     }
@@ -279,7 +281,7 @@ class LoginForAdminTests: XCTestCase {
         XCTAssertFalse(request.useBrowserAuth, "useBrowserAuth should remain false after setting loginAsAdmin")
 
         // Create session - coordinator gets useBrowserAuth from the OR of both flags
-        let session = SFSDKAuthSession(request, credentials: nil)
+        let session = SFSDKAuthSession(with: request, credentials: nil)
         XCTAssertTrue(session.oauthCoordinator.useBrowserAuth, "Coordinator should use browser auth")
         XCTAssertFalse(request.useBrowserAuth, "Request useBrowserAuth should still be false")
 
@@ -288,7 +290,7 @@ class LoginForAdminTests: XCTestCase {
         XCTAssertFalse(request.useBrowserAuth, "useBrowserAuth should still be false after clearing loginAsAdmin")
 
         // New session should not use browser auth
-        let newSession = SFSDKAuthSession(request, credentials: nil)
+        let newSession = SFSDKAuthSession(with: request, credentials: nil)
         XCTAssertFalse(newSession.oauthCoordinator.useBrowserAuth, "New coordinator should not use browser auth")
     }
 
@@ -306,7 +308,7 @@ class LoginForAdminTests: XCTestCase {
         let request = makeAuthRequest()
         request.loginAsAdmin = true
 
-        let session = SFSDKAuthSession(request, credentials: nil)
+        let session = SFSDKAuthSession(with: request, credentials: nil)
         session.oauthCoordinator.delegate = UserAccountManager.shared
 
         XCTAssertTrue(session.oauthRequest.loginAsAdmin, "loginAsAdmin should be true before cancel")
@@ -321,7 +323,7 @@ class LoginForAdminTests: XCTestCase {
         let request = makeAuthRequest()
         request.loginAsAdmin = true
 
-        let session = SFSDKAuthSession(request, credentials: nil)
+        let session = SFSDKAuthSession(with: request, credentials: nil)
         session.oauthCoordinator.delegate = UserAccountManager.shared
 
         var notificationPosted = false
@@ -345,7 +347,7 @@ class LoginForAdminTests: XCTestCase {
         request.loginAsAdmin = false
         request.useBrowserAuth = false
 
-        let session = SFSDKAuthSession(request, credentials: nil)
+        let session = SFSDKAuthSession(with: request, credentials: nil)
         session.oauthCoordinator.delegate = UserAccountManager.shared
 
         // Set the handler block to avoid the server picker UI code path
@@ -377,7 +379,7 @@ class LoginForAdminTests: XCTestCase {
         let request = makeAuthRequest()
         request.loginAsAdmin = true
 
-        let session = SFSDKAuthSession(request, credentials: nil)
+        let session = SFSDKAuthSession(with: request, credentials: nil)
         session.oauthCoordinator.delegate = UserAccountManager.shared
 
         var handlerCalled = false
@@ -399,7 +401,7 @@ class LoginForAdminTests: XCTestCase {
         let request = makeAuthRequest()
         request.loginAsAdmin = false
 
-        let session = SFSDKAuthSession(request, credentials: nil)
+        let session = SFSDKAuthSession(with: request, credentials: nil)
         session.oauthCoordinator.delegate = UserAccountManager.shared
 
         let uam = UserAccountManager.shared
@@ -457,7 +459,7 @@ class LoginForAdminTests: XCTestCase {
         // Create an auth session and seed it into authSessions with the real sceneId
         let request = makeAuthRequest()
         request.loginAsAdmin = false
-        let session = SFSDKAuthSession(request, credentials: nil)
+        let session = SFSDKAuthSession(with: request, credentials: nil)
         uam.authSessions[sceneId as NSString] = session
 
         XCTAssertFalse(session.oauthRequest.loginAsAdmin, "loginAsAdmin should be false before selecting Login for Admin")
@@ -484,8 +486,8 @@ class LoginForAdminTests: XCTestCase {
 
     // MARK: - Private Helpers
 
-    private func makeAuthRequest() -> SFSDKAuthRequest {
-        let request = SFSDKAuthRequest()
+    private func makeAuthRequest() -> AuthRequest {
+        let request = AuthRequest()
         request.oauthClientId = "testClientId"
         request.oauthCompletionUrl = "test://callback"
         request.loginHost = "test.salesforce.com"

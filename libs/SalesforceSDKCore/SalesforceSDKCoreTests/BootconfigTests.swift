@@ -37,13 +37,13 @@ class BootconfigTests: XCTestCase {
             "shouldAuthenticate": true
         ]
         
-        let appConfig = BootConfig(configDict)
+        let appConfig = BootConfig(configDict as NSDictionary)
         
         XCTAssertNotNil(appConfig)
         XCTAssertEqual(appConfig?.remoteAccessConsumerKey, "testConsumerKey")
         XCTAssertEqual(appConfig?.oauthRedirectURI, "testRedirectURI")
         XCTAssertEqual(appConfig?.oauthScopes, Set(["scope1", "scope2"]))
-        XCTAssertTrue(appConfig?.shouldAuthenticateOnFirstLaunch ?? false)
+        XCTAssertTrue(appConfig?.shouldAuthenticate ?? false)
     }
     
     func testInitializationWithEmptyDictionary() {
@@ -53,7 +53,7 @@ class BootconfigTests: XCTestCase {
         XCTAssertEqual(appConfig?.remoteAccessConsumerKey, "")
         XCTAssertEqual(appConfig?.oauthRedirectURI, "")
         XCTAssertEqual(appConfig?.oauthScopes, Set<String>())
-        XCTAssertTrue(appConfig?.shouldAuthenticateOnFirstLaunch ?? false) // Default value should be true
+        XCTAssertTrue(appConfig?.shouldAuthenticate ?? false) // Default value should be true
     }
     
     func testInitializationWithNonExistentConfigFile() {
@@ -88,9 +88,9 @@ class BootconfigTests: XCTestCase {
             "oauthScopes": ["scope1", "scope2"],
         ]
         
-        let appConfig = BootConfig(configDict)
+        let appConfig = BootConfig(configDict as NSDictionary)
         do {
-            try appConfig?.validate()
+            let _ = appConfig?.validate(nil)
             XCTAssertTrue(true, "Validation should pass with valid config")
         } catch {
             XCTFail("Validation should not throw with valid config: \(error)")
@@ -102,9 +102,9 @@ class BootconfigTests: XCTestCase {
             "oauthRedirectURI": "testRedirectURI"
         ]
         
-        let appConfig = BootConfig(configDict)
+        let appConfig = BootConfig(configDict as NSDictionary)
         do {
-            try appConfig?.validate()
+            let _ = appConfig?.validate(nil)
             XCTFail("Validation should throw with missing consumer key")
         } catch {
             XCTAssertTrue(true, "Validation should throw with missing consumer key: \(error)")
@@ -117,9 +117,9 @@ class BootconfigTests: XCTestCase {
             "oauthRedirectURI": "testRedirectURI"
         ]
         
-        let appConfig = BootConfig(configDict)
+        let appConfig = BootConfig(configDict as NSDictionary)
         do {
-            try appConfig?.validate()
+            let _ = appConfig?.validate(nil)
             XCTFail("Validation should throw with empty consumer key")
         } catch {
             XCTAssertTrue(true, "Validation should throw with empty consumer key: \(error)")
@@ -131,9 +131,9 @@ class BootconfigTests: XCTestCase {
             "remoteAccessConsumerKey": "testConsumerKey"
         ]
         
-        let appConfig = BootConfig(configDict)
+        let appConfig = BootConfig(configDict as NSDictionary)
         do {
-            try appConfig?.validate()
+            let _ = appConfig?.validate(nil)
             XCTFail("Validation should throw with missing redirect URI")
         } catch {
             XCTAssertTrue(true, "Validation should throw with missing redirect URI: \(error)")
@@ -146,9 +146,9 @@ class BootconfigTests: XCTestCase {
             "oauthRedirectURI": ""
         ]
         
-        let appConfig = BootConfig(configDict)
+        let appConfig = BootConfig(configDict as NSDictionary)
         do {
-            try appConfig?.validate()
+            let _ = appConfig?.validate(nil)
             XCTFail("Validation should throw with empty redirect URI")
         } catch {
             XCTAssertTrue(true, "Validation should throw with empty redirect URI: \(error)")
@@ -162,9 +162,9 @@ class BootconfigTests: XCTestCase {
             "oauthScopes": []
         ]
         
-        let appConfig = BootConfig(configDict)
+        let appConfig = BootConfig(configDict as NSDictionary)
         do {
-            try appConfig?.validate()
+            let _ = appConfig?.validate(nil)
             XCTAssertTrue(true, "Validation should pass with empty oauth scopes")
         } catch {
             XCTFail("Validation should not throw with empty oauth scopes: \(error)")
@@ -177,9 +177,9 @@ class BootconfigTests: XCTestCase {
             "oauthRedirectURI": "testRedirectURI"
         ]
         
-        let appConfig = BootConfig(configDict)
+        let appConfig = BootConfig(configDict as NSDictionary)
         do {
-            try appConfig?.validate()
+            let _ = appConfig?.validate(nil)
             XCTAssertTrue(true, "Validation should pass with nil oauth scopes")
         } catch {
             XCTFail("Validation should not throw with nil oauth scopes: \(error)")
@@ -194,7 +194,7 @@ class BootconfigTests: XCTestCase {
             "oauthRedirectURI": "  testRedirectURI  "
         ]
         
-        let appConfig = BootConfig(configDict)
+        let appConfig = BootConfig(configDict as NSDictionary)
         
         XCTAssertEqual(appConfig?.remoteAccessConsumerKey, "testConsumerKey")
         XCTAssertEqual(appConfig?.oauthRedirectURI, "testRedirectURI")
@@ -204,7 +204,7 @@ class BootconfigTests: XCTestCase {
     
     func testDefaultShouldAuthenticateValue() {
         let appConfig = BootConfig(nil)
-        XCTAssertTrue(appConfig?.shouldAuthenticateOnFirstLaunch ?? false, "Default shouldAuthenticateOnFirstLaunch should be true")
+        XCTAssertTrue(appConfig?.shouldAuthenticate ?? false, "Default shouldAuthenticate should be true")
     }
     
     func testExplicitShouldAuthenticateValue() {
@@ -212,8 +212,8 @@ class BootconfigTests: XCTestCase {
             "shouldAuthenticate": false
         ]
         
-        let appConfig = BootConfig(configDict)
-        XCTAssertFalse(appConfig?.shouldAuthenticateOnFirstLaunch ?? true, "Explicit shouldAuthenticateOnFirstLaunch value should be respected")
+        let appConfig = BootConfig(configDict as NSDictionary)
+        XCTAssertFalse(appConfig?.shouldAuthenticate ?? true, "Explicit shouldAuthenticate value should be respected")
     }
     
     // MARK: - Class Methods Tests
@@ -248,9 +248,9 @@ class BootconfigTests: XCTestCase {
             "oauthRedirectURI": "   "
         ]
         
-        let appConfig = BootConfig(configDict)
+        let appConfig = BootConfig(configDict as NSDictionary)
         do {
-            try appConfig?.validate()
+            let _ = appConfig?.validate(nil)
             XCTFail("Validation should throw with whitespace-only values")
         } catch {
             XCTAssertTrue(true, "Validation should throw with whitespace-only values: \(error)")
@@ -264,7 +264,7 @@ class BootconfigTests: XCTestCase {
             "oauthScopes": []
         ]
         
-        let appConfig = BootConfig(configDict)
+        let appConfig = BootConfig(configDict as NSDictionary)
         
         XCTAssertNotNil(appConfig?.oauthScopes)
         XCTAssertEqual(appConfig?.oauthScopes.count, 0)
@@ -277,7 +277,7 @@ class BootconfigTests: XCTestCase {
             "oauthScopes": ["scope1", "scope2", "scope1"] // Duplicate scope1
         ]
         
-        let appConfig = BootConfig(configDict)
+        let appConfig = BootConfig(configDict as NSDictionary)
         
         XCTAssertNotNil(appConfig?.oauthScopes)
         XCTAssertEqual(appConfig?.oauthScopes.count, 2) // Should deduplicate

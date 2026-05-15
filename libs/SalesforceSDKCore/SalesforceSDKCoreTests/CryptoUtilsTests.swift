@@ -36,9 +36,9 @@ class CryptoUtilsTests: XCTestCase {
     private var publicKey: SecKey!
     
     override func setUpWithError() throws {
-        SFSDKCryptoUtils.createRSAKeyPair(withName: rsaKeyPairName, keyLength: 2048, accessibleAttribute: kSecAttrAccessibleAfterFirstUnlockThisDeviceOnly)
-        publicKey = try XCTUnwrap(SFSDKCryptoUtils.getRSAPublicKeyRef(withName: rsaKeyPairName, keyLength: 2048)?.takeUnretainedValue())
-        privateKey = try XCTUnwrap(SFSDKCryptoUtils.getRSAPrivateKeyRef(withName: rsaKeyPairName, keyLength: 2048)?.takeUnretainedValue())
+        CryptoUtils.createRSAKeyPair(withName: rsaKeyPairName, keyLength: 2048, accessibleAttribute: kSecAttrAccessibleAfterFirstUnlockThisDeviceOnly)
+        publicKey = try XCTUnwrap(CryptoUtils.getRSAPublicKeyRef(withName: rsaKeyPairName, keyLength: 2048))
+        privateKey = try XCTUnwrap(CryptoUtils.getRSAPrivateKeyRef(withName: rsaKeyPairName, keyLength: 2048))
     }
     
     func testEncryptDecrypt() throws {
@@ -46,13 +46,13 @@ class CryptoUtilsTests: XCTestCase {
         let data = try XCTUnwrap(stringToEncrypt.data(using: .utf8))
         
         // rsaEncryptionPKCS1
-        var encryptedData = try XCTUnwrap(SFSDKCryptoUtils.encrypt(data: data, key: publicKey, algorithm: SecKeyAlgorithm.rsaEncryptionPKCS1))
-        var decryptedData = try XCTUnwrap(SFSDKCryptoUtils.decrypt(data: encryptedData, key: privateKey, algorithm: SecKeyAlgorithm.rsaEncryptionPKCS1))
+        var encryptedData = try XCTUnwrap(CryptoUtils.encrypt(data: data, key: publicKey, algorithm: SecKeyAlgorithm.rsaEncryptionPKCS1))
+        var decryptedData = try XCTUnwrap(CryptoUtils.decrypt(data: encryptedData, key: privateKey, algorithm: SecKeyAlgorithm.rsaEncryptionPKCS1))
         XCTAssertEqual(stringToEncrypt, String(bytes: decryptedData, encoding: .utf8))
         
         // rsaEncryptionOAEPSHA256
-        encryptedData = try XCTUnwrap(SFSDKCryptoUtils.encrypt(data: data, key: publicKey, algorithm: SecKeyAlgorithm.rsaEncryptionOAEPSHA256))
-        decryptedData = try XCTUnwrap(SFSDKCryptoUtils.decrypt(data: encryptedData, key: privateKey, algorithm: SecKeyAlgorithm.rsaEncryptionOAEPSHA256))
+        encryptedData = try XCTUnwrap(CryptoUtils.encrypt(data: data, key: publicKey, algorithm: SecKeyAlgorithm.rsaEncryptionOAEPSHA256))
+        decryptedData = try XCTUnwrap(CryptoUtils.decrypt(data: encryptedData, key: privateKey, algorithm: SecKeyAlgorithm.rsaEncryptionOAEPSHA256))
         XCTAssertEqual(stringToEncrypt, String(bytes: decryptedData, encoding: .utf8))
     }
 }

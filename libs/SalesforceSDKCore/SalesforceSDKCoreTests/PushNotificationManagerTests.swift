@@ -19,7 +19,7 @@ class PushNotificationManagerTests: XCTestCase {
         mockUserAccount = UserAccount()
         UserAccountManager.shared.currentUserAccount = mockUserAccount
         
-        mockRestClient = MockRestClient()
+        mockRestClient = MockRestClient(user: mockUserAccount)
         mockRestClient.apiVersion = SFRestDefaultAPIVersion
         
         mockApplicationHelper = MockApplicationHelper()
@@ -33,7 +33,7 @@ class PushNotificationManagerTests: XCTestCase {
     override func tearDown() {
         // Restore original method
         if let originalMethod = originalMethod {
-            let originalSelector = #selector(SFPreferences.sharedPreferences(for:user:))
+            let originalSelector = #selector(SFPreferences.sharedPreferences(forScope:user:))
             class_replaceMethod(SFPreferences.self, originalSelector, originalMethod, "@@:@@")
         }
         
@@ -546,7 +546,7 @@ class PushNotificationManagerTests: XCTestCase {
         // When
         let expectation = XCTestExpectation(description: "Registration triggered")
         NotificationCenter.default.post(
-            name: UserAccountManager.didMigrateRefreshToken,
+            name: Notification.Name.UserAccountManagerDidMigrateRefreshToken,
             object: nil
         )
 
@@ -601,7 +601,7 @@ class PushNotificationManagerTests: XCTestCase {
 
         // Also verify posting notification after dealloc doesn't crash
         NotificationCenter.default.post(
-            name: UserAccountManager.didMigrateRefreshToken,
+            name: Notification.Name.UserAccountManagerDidMigrateRefreshToken,
             object: nil
         )
         // If we get here without crashing, the weak reference in the observer worked correctly
@@ -1071,7 +1071,7 @@ class MockPreferences: SFPreferences {
         return objects[key] as? String
     }
     
-    override func setObject(_ object: Any, forKey key: String) {
+    override func setObject(_ object: Any?, forKey key: String) {
         objects[key] = object
     }
 }

@@ -41,9 +41,6 @@
 		CEF371B01D0E582C0004A237 /* UIKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = CEF371A91D0E57F50004A237 /* UIKit.framework */; };
 		CEF371E51D10D7E60004A237 /* Main_iPad.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = CEF371E31D10D7E60004A237 /* Main_iPad.storyboard */; };
 		CEF371E61D10D7E60004A237 /* Main_iPhone.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = CEF371E41D10D7E60004A237 /* Main_iPhone.storyboard */; };
-		CEF371E81D11B76E0004A237 /* EventStoreManagerTests.m in Sources */ = {isa = PBXBuildFile; fileRef = CEF371E71D11B76E0004A237 /* EventStoreManagerTests.m */; };
-		CEF372461D12100D0004A237 /* AnalyticsTestUtil.m in Sources */ = {isa = PBXBuildFile; fileRef = CEF372451D12100D0004A237 /* AnalyticsTestUtil.m */; };
-		CEFEB55A1D05063F007D5EAE /* InstrumentationEventBuilderTests.m in Sources */ = {isa = PBXBuildFile; fileRef = CEFEB5591D05063F007D5EAE /* InstrumentationEventBuilderTests.m */; };
 		SF0001001CE900F500C6FC6A /* SFSDKAnalyticsManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = SF0001011CE900F500C6FC6A /* SFSDKAnalyticsManager.swift */; };
 		SF0002001CE900F500C6FC6A /* SFSDKDeviceAppAttributes.swift in Sources */ = {isa = PBXBuildFile; fileRef = SF0002011CE900F500C6FC6A /* SFSDKDeviceAppAttributes.swift */; };
 		SF0003001CE900F500C6FC6A /* SFSDKInstrumentationEvent.swift in Sources */ = {isa = PBXBuildFile; fileRef = SF0003011CE900F500C6FC6A /* SFSDKInstrumentationEvent.swift */; };
@@ -52,6 +49,9 @@
 		SF0006001CE900F500C6FC6A /* SFSDKAILTNTransform.swift in Sources */ = {isa = PBXBuildFile; fileRef = SF0006011CE900F500C6FC6A /* SFSDKAILTNTransform.swift */; };
 		SF0007001CE900F500C6FC6A /* SFSDKTransform.swift in Sources */ = {isa = PBXBuildFile; fileRef = SF0007011CE900F500C6FC6A /* SFSDKTransform.swift */; };
 		SF0008001CE900F500C6FC6A /* SFSDKAnalyticsLogger.swift in Sources */ = {isa = PBXBuildFile; fileRef = SF0008011CE900F500C6FC6A /* SFSDKAnalyticsLogger.swift */; };
+		SF0009001CE900F500C6FC6A /* AnalyticsTestUtil.swift in Sources */ = {isa = PBXBuildFile; fileRef = SF0009011CE900F500C6FC6A /* AnalyticsTestUtil.swift */; };
+		SF000A001CE900F500C6FC6A /* EventStoreManagerTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = SF000A011CE900F500C6FC6A /* EventStoreManagerTests.swift */; };
+		SF000B001CE900F500C6FC6A /* InstrumentationEventBuilderTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = SF000B011CE900F500C6FC6A /* InstrumentationEventBuilderTests.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -142,10 +142,6 @@
 		CEF371A91D0E57F50004A237 /* UIKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = UIKit.framework; path = System/Library/Frameworks/UIKit.framework; sourceTree = SDKROOT; };
 		CEF371E31D10D7E60004A237 /* Main_iPad.storyboard */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = file.storyboard; name = Main_iPad.storyboard; path = Base.lproj/Main_iPad.storyboard; sourceTree = "<group>"; };
 		CEF371E41D10D7E60004A237 /* Main_iPhone.storyboard */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = file.storyboard; name = Main_iPhone.storyboard; path = Base.lproj/Main_iPhone.storyboard; sourceTree = "<group>"; };
-		CEF371E71D11B76E0004A237 /* EventStoreManagerTests.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = EventStoreManagerTests.m; sourceTree = "<group>"; };
-		CEF372441D120FEE0004A237 /* AnalyticsTestUtil.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = AnalyticsTestUtil.h; sourceTree = "<group>"; };
-		CEF372451D12100D0004A237 /* AnalyticsTestUtil.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = AnalyticsTestUtil.m; sourceTree = "<group>"; };
-		CEFEB5591D05063F007D5EAE /* InstrumentationEventBuilderTests.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = InstrumentationEventBuilderTests.m; sourceTree = "<group>"; };
 		SF0001011CE900F500C6FC6A /* SFSDKAnalyticsManager.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; name = SFSDKAnalyticsManager.swift; path = Classes/Manager/SFSDKAnalyticsManager.swift; sourceTree = "<group>"; };
 		SF0002011CE900F500C6FC6A /* SFSDKDeviceAppAttributes.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; name = SFSDKDeviceAppAttributes.swift; path = Classes/Model/SFSDKDeviceAppAttributes.swift; sourceTree = "<group>"; };
 		SF0003011CE900F500C6FC6A /* SFSDKInstrumentationEvent.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; name = SFSDKInstrumentationEvent.swift; path = Classes/Model/SFSDKInstrumentationEvent.swift; sourceTree = "<group>"; };
@@ -154,6 +150,9 @@
 		SF0006011CE900F500C6FC6A /* SFSDKAILTNTransform.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; name = SFSDKAILTNTransform.swift; path = Classes/Transform/SFSDKAILTNTransform.swift; sourceTree = "<group>"; };
 		SF0007011CE900F500C6FC6A /* SFSDKTransform.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; name = SFSDKTransform.swift; path = Classes/Transform/SFSDKTransform.swift; sourceTree = "<group>"; };
 		SF0008011CE900F500C6FC6A /* SFSDKAnalyticsLogger.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; name = SFSDKAnalyticsLogger.swift; path = Classes/Util/SFSDKAnalyticsLogger.swift; sourceTree = "<group>"; };
+		SF0009011CE900F500C6FC6A /* AnalyticsTestUtil.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AnalyticsTestUtil.swift; sourceTree = "<group>"; };
+		SF000A011CE900F500C6FC6A /* EventStoreManagerTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EventStoreManagerTests.swift; sourceTree = "<group>"; };
+		SF000B011CE900F500C6FC6A /* InstrumentationEventBuilderTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = InstrumentationEventBuilderTests.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -235,10 +234,9 @@
 		CE2B8BDD1CE900F500C6FC6A /* SalesforceAnalyticsTests */ = {
 			isa = PBXGroup;
 			children = (
-				CEFEB5591D05063F007D5EAE /* InstrumentationEventBuilderTests.m */,
-				CEF371E71D11B76E0004A237 /* EventStoreManagerTests.m */,
-				CEF372441D120FEE0004A237 /* AnalyticsTestUtil.h */,
-				CEF372451D12100D0004A237 /* AnalyticsTestUtil.m */,
+				SF0009011CE900F500C6FC6A /* AnalyticsTestUtil.swift */,
+				SF000A011CE900F500C6FC6A /* EventStoreManagerTests.swift */,
+				SF000B011CE900F500C6FC6A /* InstrumentationEventBuilderTests.swift */,
 			);
 			path = SalesforceAnalyticsTests;
 			sourceTree = "<group>";
@@ -606,9 +604,9 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				CEF371E81D11B76E0004A237 /* EventStoreManagerTests.m in Sources */,
-				CEF372461D12100D0004A237 /* AnalyticsTestUtil.m in Sources */,
-				CEFEB55A1D05063F007D5EAE /* InstrumentationEventBuilderTests.m in Sources */,
+				SF0009001CE900F500C6FC6A /* AnalyticsTestUtil.swift in Sources */,
+				SF000A001CE900F500C6FC6A /* EventStoreManagerTests.swift in Sources */,
+				SF000B001CE900F500C6FC6A /* InstrumentationEventBuilderTests.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

@@ -65,7 +65,7 @@ class MockNetwork: WebSocketNetworkProtocol {
 
 class MockUserAccountManager: UserAccountManaging {
     let mockUserAccount = UserAccount()
-    let mockInfo = AuthInfo()
+    let mockInfo = AuthInfo(authType: .advancedBrowser)
     
     var shouldError = false
     
