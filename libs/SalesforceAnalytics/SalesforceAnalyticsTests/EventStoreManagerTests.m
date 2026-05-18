@@ -28,7 +28,7 @@
  */
 
 #import <XCTest/XCTest.h>
-#import <SalesforceAnalytics/SFSDKInstrumentationEventBuilder.h>
+@import SalesforceAnalytics;
 #import "AnalyticsTestUtil.h"
 
 static NSString * const kTestEventName = @"TEST_EVENT_NAME_%lf";
