@@ -658,6 +658,16 @@ Instead of building downstream at each boundary, downstream effects are resolved
 ### Phase 1 exception (already done)
 Phase 1 (SalesforceSDKCommon) already fixed downstream imports for all 4 libraries and refactored the 4 Logger subclasses. This work is committed and passing. Future phases do NOT need to re-do this for SalesforceSDKCommon imports — they're already `@import SalesforceSDKCommon;`.
 
+### `@synchronized` → `NSRecursiveLock` (NEW — Rule 33)
+ObjC `@synchronized(obj)` is ALWAYS re-entrant — the same thread can acquire the lock multiple times without deadlocking. When converting to Swift, ALWAYS use `NSRecursiveLock` (not `NSLock`). `NSLock` will deadlock if any method that holds the lock calls another method that also acquires the same lock. This is extremely common in manager/singleton patterns where convenience methods call through to core methods.
+
+### NSException preservation for ObjC callers (NEW — Rule 34)
+When ObjC callers (especially tests) use `@try/@catch` or `XCTAssertThrows` to catch exceptions from a method, the Swift conversion must preserve that behavior. Two approaches:
+1. **Preferred:** Keep `NSException(name:..., reason:...).raise()` in the Swift code. This works — ObjC callers can still catch it with `@try/@catch`. Swift callers cannot catch it with `do/catch`, but that's acceptable since Swift callers should use the `throws` variant.
+2. **Alternative:** Provide both a throwing Swift method AND an ObjC-visible wrapper that raises NSException. Use when the method needs to be callable from both Swift (with try) and ObjC (with @try/@catch).
+
+Do NOT silently convert `NSException.raise()` to `return nil` or `return []` — this changes behavior from "error" to "empty result", which breaks test assertions.
+
 ### ObjC generic classes — deferral rule (NEW — Rule 31)
 ObjC classes using lightweight generics (`SFSDKSafeMutableDictionary<KeyType, ObjectType>`) cannot be converted to Swift `@objc` classes because Swift generics are not ObjC-representable. These files are **deferred** — their .swift conversion files exist on disk but are not compiled. They remain as ObjC until all their consumers are also Swift. The 3 deferred files from Phase 1:
 - `SFSDKSafeMutableArray` (SalesforceSDKCommon)
@@ -945,11 +955,11 @@ This map identifies every existing Swift file and its relationship to ObjC files
 | 🔶 Operator Gate 2 — report generated, awaiting review | 2026-05-17 22:15 MDT | |
 | 🔶 Operator Gate 2 — approved, proceeding | 2026-05-17 22:20 MDT | |
 | Phase 3 (SmartStore) — conversion started | 2026-05-17 22:20 MDT | |
-| Phase 3 — library boundary (build+test) started | | |
-| Phase 3 — library boundary complete | | |
-| 🔶 Operator Gate 3 — report generated, awaiting review | | |
-| 🔶 Operator Gate 3 — approved, proceeding | | |
-| Phase 4 (MobileSync) — conversion started | | |
+| Phase 3 — library boundary (build+test) started | 2026-05-18 09:00 MDT | |
+| Phase 3 — library boundary complete | 2026-05-18 14:30 MDT | ~5.5h (complex, 4 fix iterations) |
+| 🔶 Operator Gate 3 — report generated, awaiting review | 2026-05-18 14:30 MDT | |
+| 🔶 Operator Gate 3 — approved (with adjustments), proceeding | 2026-05-18 14:35 MDT | |
+| Phase 4 (MobileSync) — conversion started | 2026-05-18 14:35 MDT | |
 | Phase 4 — library boundary (build+test) started | | |
 | Phase 4 — library boundary complete | | |
 | 🔶 Operator Gate 4 — report generated, awaiting review | | |
@@ -1077,15 +1087,15 @@ Existing Swift: 7 files (SyncTarget.swift, BatchSyncUpTarget.swift, CollectionSy
 
 | Batch | Files | Lines | Status |
 |-------|-------|-------|--------|
-| 10 | `SFSyncTarget.m`, `SFSyncDownTarget.m`, `SFSyncUpTarget.m` (386) | ~700 | [ ] |
-| 11 | `SFSoqlSyncDownTarget.m`, `SFSoslSyncDownTarget.m`, `SFMruSyncDownTarget.m`, `SFRefreshSyncDownTarget.m` | ~600 | [ ] |
-| 12 | `SFLayoutSyncDownTarget.m`, `SFMetadataSyncDownTarget.m`, `SFBatchSyncUpTarget.m`, `SFAdvancedSyncUpTarget.m` | ~400 | [ ] |
-| 13 | `SFParentChildrenSyncDownTarget.m`, `SFParentChildrenSyncUpTarget.m` (592) | ~900 | [ ] |
-| 14 | `SFMobileSyncSyncManager.m` (552), `SFSyncTask.m`, `SFSyncDownTask.m`, `SFSyncUpTask.m` | ~1,000 | [ ] |
-| 15 | `SFAdvancedSyncUpTask.m`, `SFCleanSyncGhostsTask.m`, `SFLayoutSyncManager.m`, `SFMetadataSyncManager.m`, `MobileSyncSDKManager.m` | ~600 | [ ] |
-| 16 | `SFSyncState.m` (380), `SFSyncOptions.m`, `SFSDKSoqlMutator.m`, `SFSDKSoqlTokenizer.m`, `SFSDKSyncsConfig.m` | ~800 | [ ] |
-| 17 | `SFChildrenInfo.m`, `SFParentInfo.m`, `SFParentChildrenSyncHelper.m`, `SFCompositeRequestHelper.m` (**→ Legacy suffix**, see conflict map), `SFMobileSyncNetworkUtils.m`, `SFMobileSyncObjectUtils.m` | ~600 | [ ] |
-| 18 | `SFMobileSyncConstants.m`, `SFSDKMobileSyncLogger.m`, `SFObject.m`, `SFLayout.m`, `SFMetadata.m`, `SFMobileSyncPersistableObject.m` | ~600 | [ ] |
+| 10 | `SFSyncTarget.m`, `SFSyncDownTarget.m`, `SFSyncUpTarget.m` (386) | ~700 | [✓] |
+| 11 | `SFSoqlSyncDownTarget.m`, `SFSoslSyncDownTarget.m`, `SFMruSyncDownTarget.m`, `SFRefreshSyncDownTarget.m` | ~600 | [✓] |
+| 12 | `SFLayoutSyncDownTarget.m`, `SFMetadataSyncDownTarget.m`, `SFBatchSyncUpTarget.m`, `SFAdvancedSyncUpTarget.m` | ~400 | [✓] |
+| 13 | `SFParentChildrenSyncDownTarget.m`, `SFParentChildrenSyncUpTarget.m` (592) | ~900 | [✓] |
+| 14 | `SFMobileSyncSyncManager.m` (552), `SFSyncTask.m`, `SFSyncDownTask.m`, `SFSyncUpTask.m` | ~1,000 | [✓] |
+| 15 | `SFAdvancedSyncUpTask.m`, `SFCleanSyncGhostsTask.m`, `SFLayoutSyncManager.m`, `SFMetadataSyncManager.m`, `MobileSyncSDKManager.m` | ~600 | [✓] |
+| 16 | `SFSyncState.m` (380), `SFSyncOptions.m`, `SFSDKSoqlMutator.m`, `SFSDKSoqlTokenizer.m`, `SFSDKSyncsConfig.m` | ~800 | [✓] |
+| 17 | `SFChildrenInfo.m`, `SFParentInfo.m`, `SFParentChildrenSyncHelper.m`, `SFCompositeRequestHelper.m` (**→ Legacy suffix**, see conflict map), `SFMobileSyncNetworkUtils.m`, `SFMobileSyncObjectUtils.m` | ~600 | [✓] |
+| 18 | `SFMobileSyncConstants.m`, `SFSDKMobileSyncLogger.m`, `SFObject.m`, `SFLayout.m`, `SFMetadata.m`, `SFMobileSyncPersistableObject.m` | ~600 | [✓] |
 
 **Library boundary after batch 18:**
 - Retain .m/.h originals on disk; remove from Xcode project only (keep/update umbrella header `MobileSync.h`)

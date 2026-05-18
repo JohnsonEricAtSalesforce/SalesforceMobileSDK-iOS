@@ -1,11 +1,6 @@
 /*
- MobileSync.h
- MobileSync
+ Copyright (c) 2014-present, salesforce.com, inc. All rights reserved.
 
- Created by Wolfgang Mathurin on Thu Sep 19 10:37:50 PDT 2019.
-
- Copyright (c) 2019-present, salesforce.com, inc. All rights reserved.
- 
  Redistribution and use of this software in source and binary forms, with or without modification,
  are permitted provided that the following conditions are met:
  * Redistributions of source code must retain the above copyright notice, this list of conditions
@@ -16,7 +11,7 @@
  * Neither the name of salesforce.com, inc. nor the names of its contributors may be used to
  endorse or promote products derived from this software without specific prior written
  permission of salesforce.com, inc.
- 
+
  THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR
  IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND
  FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR
@@ -27,5 +22,33 @@
  WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-// All public types are now exposed via Swift and the MobileSync-Swift.h generated header.
-// This umbrella header is retained for framework packaging compatibility.
+import Foundation
+import SalesforceSDKCore
+
+@objc(SFMobileSyncObjectUtils)
+@objcMembers
+public class SFMobileSyncObjectUtils: FormatUtils {
+
+    @objc public class func formatValue(_ value: Any?) -> String? {
+        guard let value = value else { return "" }
+
+        if value is NSNull { return "" }
+        if let stringValue = value as? String {
+            if stringValue == "<null>" { return "" }
+            return stringValue
+        }
+        if let numberValue = value as? NSNumber {
+            return numberValue.stringValue
+        }
+        if let respondable = value as? NSObjectProtocol, respondable.responds(to: NSSelectorFromString("stringValue")) {
+            return (respondable.perform(NSSelectorFromString("stringValue"))?.takeUnretainedValue() as? String)
+        }
+        return ""
+    }
+
+    @objc public class func isEmpty(_ value: String?) -> Bool {
+        guard let value = value else { return true }
+        return value.trimmingCharacters(in: .whitespaces).isEmpty
+    }
+
+}

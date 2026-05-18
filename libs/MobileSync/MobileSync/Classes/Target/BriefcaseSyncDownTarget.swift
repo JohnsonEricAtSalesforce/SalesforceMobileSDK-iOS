@@ -75,9 +75,10 @@ public class BriefcaseSyncDownTarget: SyncDownTarget {
     private var sliceIndex = 0
     private var cancellableSet: Set<AnyCancellable> = []
 
-    override required public convenience init(dict: [AnyHashable : Any]) {
+    public required convenience init(dict: NSDictionary) {
+        let dictMap = dict as! [AnyHashable: Any]
         var infos: [BriefcaseObjectInfo] = []
-        if let encodedInfos = dict[BriefcaseSyncDownTarget.infos] {
+        if let encodedInfos = dictMap[BriefcaseSyncDownTarget.infos] {
             do {
                 let json = try JSONSerialization.data(withJSONObject: encodedInfos)
                 infos.append(contentsOf: try JSONDecoder().decode([BriefcaseObjectInfo].self, from: json))
@@ -85,7 +86,7 @@ public class BriefcaseSyncDownTarget: SyncDownTarget {
                 SalesforceLogger.log(BriefcaseSyncDownTarget.self, level: .error, message: "Error decoding briefcase info: \(error)")
             }
         }
-        self.init(infos: infos, countIdsPerRetrieve: dict[BriefcaseSyncDownTarget.countIdsPerRetrieve] as? Int)
+        self.init(infos: infos, countIdsPerRetrieve: dictMap[BriefcaseSyncDownTarget.countIdsPerRetrieve] as? Int)
     }
     
     @objc public convenience init(infos: [BriefcaseObjectInfo]) {
@@ -102,11 +103,11 @@ public class BriefcaseSyncDownTarget: SyncDownTarget {
             self.countIdsPerRetrieve = BriefcaseSyncDownTarget.maxCountIdsPerRetrieve
         }
         super.init()
-        self.queryType = QueryType.briefcase
+        self.queryType = SFSyncDownTargetQueryType.briefcase
         SFSDKAppFeatureMarkers.registerAppFeature(BriefcaseSyncDownTarget.briefcaseFeatureMarker)
     }
     
-    override public class func new(fromDict dict: [AnyHashable : Any]) -> Self? {
+    open override class func newFromDict(_ dict: NSDictionary) -> SFSyncDownTarget? {
         return self.init(dict: dict)
     }
     
@@ -123,31 +124,31 @@ public class BriefcaseSyncDownTarget: SyncDownTarget {
         return dict
     }
 
-    override public func startFetch(syncManager: SyncManager, maxTimeStamp: Int64, onFail errorBlock: @escaping SyncDownErrorBlock, onComplete completeBlock: @escaping SyncDownCompletionBlock) {
+    override public func startFetch(_ syncManager: SFMobileSyncSyncManager, maxTimeStamp: Int64, errorBlock: @escaping SFSyncDownTargetFetchErrorBlock, completeBlock: @escaping SFSyncDownTargetFetchCompleteBlock) {
         self.maxTimeStamp = maxTimeStamp
         relayToken = nil
         totalSize = 0
         getIdsFromBriefcasesAndFetchFromServer(syncManager: syncManager, relayToken: relayToken, onFail: errorBlock, onComplete: completeBlock)
     }
-    
-    override public func continueFetch(syncManager: SyncManager, onFail errorBlock: @escaping SyncDownErrorBlock, onComplete completeBlock: SyncDownCompletionBlock? = nil) {
+
+    override public func continueFetch(_ syncManager: SFMobileSyncSyncManager, errorBlock: @escaping SFSyncDownTargetFetchErrorBlock, completeBlock: @escaping SFSyncDownTargetFetchCompleteBlock) {
         if fetchedTypedIds != nil {
             fetchRecordsFromServer(errorBlock: errorBlock, completeBlock: completeBlock)
         } else if let relayToken = relayToken {
             getIdsFromBriefcasesAndFetchFromServer(syncManager: syncManager, relayToken: relayToken, onFail: errorBlock, onComplete: completeBlock)
         } else {
-            completeBlock?(nil)
+            completeBlock(nil)
         }
     }
-    
-    override public func getIdsToSkip(_ syncManager: SyncManager, soupName: String) -> NSOrderedSet {
+
+    override public func getIdsToSkip(_ syncManager: SFMobileSyncSyncManager, soupName: String) -> NSOrderedSet {
         let ids = infosMap.values.flatMap { info in
             return super.getIdsToSkip(syncManager, soupName: info.soupName)
         }
         return NSOrderedSet(array: ids)
     }
     
-    private func getIdsFromBriefcasesAndFetchFromServer(syncManager: SyncManager, relayToken: String?, onFail errorBlock: @escaping SyncDownErrorBlock, onComplete completeBlock: SyncDownCompletionBlock?) {
+    private func getIdsFromBriefcasesAndFetchFromServer(syncManager: SFMobileSyncSyncManager, relayToken: String?, onFail errorBlock: @escaping SFSyncDownTargetFetchErrorBlock, onComplete completeBlock: SFSyncDownTargetFetchCompleteBlock?) {
         idsFromBriefcases(syncManager: syncManager, maxTimeStamp: maxTimeStamp as NSNumber, relayToken: relayToken)
             .sink { result in
                 if case .failure(let error) = result {
@@ -170,7 +171,7 @@ public class BriefcaseSyncDownTarget: SyncDownTarget {
         return RestClient.shared.request(forCollectionRetrieve: objectInfo.sobjectType, objectIds: ids, fieldList: Array(fieldList), apiVersion: nil)
     }
 
-    private func fetchRecordsFromServer(errorBlock: @escaping SyncDownErrorBlock, completeBlock: SyncDownCompletionBlock?) {
+    private func fetchRecordsFromServer(errorBlock: @escaping SFSyncDownTargetFetchErrorBlock, completeBlock: SFSyncDownTargetFetchCompleteBlock?) {
         guard let typedIdBatch = fetchedTypedIds?.slice(sliceIndex: sliceIndex, sliceSize: countIdsPerRetrieve) else {
             SalesforceLogger.log(BriefcaseSyncDownTarget.self, level: .error, message: "Fetch records called but there are no record IDs to fetch")
             completeBlock?(nil)
@@ -205,7 +206,7 @@ public class BriefcaseSyncDownTarget: SyncDownTarget {
         }
     }
 
-    func allIdsFromBriefcases(syncManager: SyncManager, completion: @escaping (Result<(TypedIds), Error>) -> Void) {
+    func allIdsFromBriefcases(syncManager: SFMobileSyncSyncManager, completion: @escaping (Result<(TypedIds), Error>) -> Void) {
         let briefcasePagePublisher = CurrentValueSubject<(NSNumber?, String?), Error>((NSNumber(value: maxTimeStamp), nil))
         briefcasePagePublisher
             .flatMap {
@@ -230,7 +231,7 @@ public class BriefcaseSyncDownTarget: SyncDownTarget {
             .store(in: &cancellableSet)
     }
     
-    private func idsFromBriefcases(syncManager: SyncManager, maxTimeStamp: NSNumber?, relayToken: String?) -> AnyPublisher<(TypedIds, String?), Error> {
+    private func idsFromBriefcases(syncManager: SFMobileSyncSyncManager, maxTimeStamp: NSNumber?, relayToken: String?) -> AnyPublisher<(TypedIds, String?), Error> {
         let request = RestClient.shared.request(forPrimingRecords: relayToken, changedAfterTimestamp: maxTimeStamp, apiVersion: nil)
         // Setting the MobileSync user agent because this publisher isn't using SFMobileSyncNetworkUtils
         request.setHeaderValue(RestClient.userAgentString("MobileSync"), forHeaderName: "User-Agent")
@@ -252,7 +253,7 @@ public class BriefcaseSyncDownTarget: SyncDownTarget {
         .eraseToAnyPublisher()
      }
 
-    override public func cleanGhosts(syncManager: SyncManager, soupName: String, syncId: NSNumber, onFail errorBlock: @escaping SyncDownErrorBlock, onComplete completeBlock: @escaping SyncDownCompletionBlock) {
+    override public func cleanGhosts(_ syncManager: SFMobileSyncSyncManager, soupName: String, syncId: NSNumber, errorBlock: @escaping SFSyncDownTargetFetchErrorBlock, completeBlock: @escaping SFSyncDownTargetFetchCompleteBlock) {
         
         allIdsFromBriefcases(syncManager: syncManager) { [weak self] result in
             guard let self = self else { return }
@@ -270,7 +271,7 @@ public class BriefcaseSyncDownTarget: SyncDownTarget {
         }
     }
     
-    private func cleanGhosts(typedIds: TypedIds, syncManager: SyncManager, syncId: NSNumber) throws -> [Any]  {
+    private func cleanGhosts(typedIds: TypedIds, syncManager: SFMobileSyncSyncManager, syncId: NSNumber) throws -> [Any]  {
         // Cleaning up ghosts one object type at a time
         return try typedIds.objectTypeToIds.flatMap { (objectInfo, records) -> [String] in
             let predicate = buildSyncIdPredicateIfIndexed(syncManager: syncManager, soupName: objectInfo.soupName, syncId: syncId)
@@ -285,7 +286,7 @@ public class BriefcaseSyncDownTarget: SyncDownTarget {
     }
 
     // Overriding because records could be in different soups
-    override public func cleanAndSaveRecordsToLocalStore(syncManager: SyncManager, soupName: String, records: [Any], syncId: NSNumber) {
+    override public func cleanAndSaveRecordsToLocalStore(syncManager: SFMobileSyncSyncManager, soupName: String, records: [Any], syncId: NSNumber) {
         guard let records = records as? [[String: Any]] else { return }
         
         let soupRecords = Dictionary(grouping: records) { record -> String? in

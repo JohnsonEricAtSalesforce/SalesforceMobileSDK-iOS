@@ -34,16 +34,16 @@ import Combine
 public enum MobileSyncError: Error {
     case notStarted(_ error: Error?)
     case stopped
-    case failed(_ SyncState: SyncState?)
+    case failed(_ SyncState: SFSyncState?)
     case unknown
 }
 
-extension SyncManager {
+extension SFMobileSyncSyncManager {
     
     /// Runs or reruns a sync. Does not send progress updates like reSync(named, updateBlock).
     /// - Parameter named: name of sync to run
-    /// - Parameter completionBlock: block invoked when sync completes or fails with Result<SyncState, MobileSyncError>)
-    public func reSyncWithoutUpdates(named syncName: String, _ completionBlock: @escaping (Result<SyncState, MobileSyncError>) -> Void) {
+    /// - Parameter completionBlock: block invoked when sync completes or fails with Result<SFSyncState, MobileSyncError>)
+    public func reSyncWithoutUpdates(named syncName: String, _ completionBlock: @escaping (Result<SFSyncState, MobileSyncError>) -> Void) {
         do {
             try self.reSync(named: syncName) { (state) in
                 switch state.status {
@@ -77,12 +77,12 @@ extension SyncManager {
     }
 }
 
-extension SyncManager {
+extension SFMobileSyncSyncManager {
     /// Runs or reruns a sync.
     /// - Parameter named: name of sync to run
-    /// - Returns: a Future<SyncState, MobileSyncError> publisher.
-    public func publisher(for syncName: String) -> Future<SyncState, MobileSyncError> {
-        Future<SyncState, MobileSyncError> { promise in
+    /// - Returns: a Future<SFSyncState, MobileSyncError> publisher.
+    public func publisher(for syncName: String) -> Future<SFSyncState, MobileSyncError> {
+        Future<SFSyncState, MobileSyncError> { promise in
             self.reSyncWithoutUpdates(named: syncName) { (result) in
                 switch result {
                 case .success(let state):

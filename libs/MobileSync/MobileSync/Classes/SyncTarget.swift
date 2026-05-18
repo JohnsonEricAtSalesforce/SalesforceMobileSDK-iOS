@@ -26,16 +26,17 @@
 //  WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 import Foundation
+import SmartStore
 
-extension SyncTarget {
+extension SFSyncTarget {
     // Internal value from SyncTarget.m
     static let pageSize = 2000
 }
 
-extension SyncDownTarget {
+extension SFSyncDownTarget {
     // Adapted from internal methods in SyncDownTarget.m
 
-    func buildSyncIdPredicateIfIndexed(syncManager: SyncManager, soupName: String, syncId: NSNumber) -> String {
+    func buildSyncIdPredicateIfIndexed(syncManager: SFMobileSyncSyncManager, soupName: String, syncId: NSNumber) -> String {
         let indexSpecs = syncManager.store.indices(forSoupNamed: soupName)
         for indexSpec in indexSpecs {
             if indexSpec.path == kSyncTargetSyncId {
@@ -45,29 +46,29 @@ extension SyncDownTarget {
         return ""
     }
 
-    func deleteRecordsFromLocalStore(syncManager: SyncManager, soupName: String, ids: [String], idField: String) throws {
+    func deleteRecordsFromLocalStore(syncManager: SFMobileSyncSyncManager, soupName: String, ids: [String], idField: String) throws {
         if !ids.isEmpty {
-            let smartSql = "SELECT {\(soupName):\(SmartStore.soupEntryId)} FROM {\(soupName)} WHERE {\(soupName):\(idField)} IN ('\(ids.joined(separator: "','"))')"
+            let smartSql = "SELECT {\(soupName):\(SmartStoreSoupEntryId)} FROM {\(soupName)} WHERE {\(soupName):\(idField)} IN ('\(ids.joined(separator: "','"))')"
             if let spec = QuerySpec.buildSmartQuerySpec(smartSql: smartSql, pageSize: UInt(ids.count)) {
                 try syncManager.store.removeEntries(usingQuerySpec: spec, forSoupNamed: soupName)
             }
         }
     }
 
-    func nonDirtyRecordsIds(syncManager: SyncManager, soupName: String, idField: String, additionalPredicate: String) throws -> NSOrderedSet {
+    func nonDirtyRecordsIds(syncManager: SFMobileSyncSyncManager, soupName: String, idField: String, additionalPredicate: String) throws -> NSOrderedSet {
         let sql = "SELECT {\(soupName):\(idField)} FROM {\(soupName)} WHERE {\(soupName):\(kSyncTargetLocal)} = '0' \(additionalPredicate) ORDER BY {\(soupName):\(idField)} ASC"
 
         return try idsWithQuery(sql, syncManager: syncManager)
     }
 
-    func idsWithQuery(_ query: String, syncManager: SyncManager) throws -> NSOrderedSet {
-        guard let querySpec = QuerySpec.buildSmartQuerySpec(smartSql: query, pageSize: UInt(SyncTarget.pageSize))  else { return NSOrderedSet() }
+    func idsWithQuery(_ query: String, syncManager: SFMobileSyncSyncManager) throws -> NSOrderedSet {
+        guard let querySpec = QuerySpec.buildSmartQuerySpec(smartSql: query, pageSize: UInt(SFSyncTarget.pageSize))  else { return NSOrderedSet() }
 
         let ids = NSMutableOrderedSet()
         var pageIndex: UInt = 0
         var hasMore = true
         while let results = try syncManager.store.query(using: querySpec, startingFromPageIndex: pageIndex) as? [[Any]], hasMore {
-            hasMore = (results.count == UInt(SyncTarget.pageSize))
+            hasMore = (results.count == UInt(SFSyncTarget.pageSize))
             pageIndex += 1
             ids.addObjects(from: results.flatMap { $0 })
         }
