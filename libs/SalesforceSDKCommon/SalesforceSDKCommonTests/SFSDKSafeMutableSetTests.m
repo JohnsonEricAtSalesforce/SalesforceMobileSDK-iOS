@@ -23,7 +23,7 @@
  */
 
 @import XCTest;
-#import "SFSDKSafeMutableSet.h"
+@import SalesforceSDKCommon;
 
 @interface SFSDKSafeMutableSetTests : XCTestCase
 @end

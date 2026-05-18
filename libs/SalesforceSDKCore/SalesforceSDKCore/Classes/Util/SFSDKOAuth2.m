@@ -31,8 +31,7 @@
 #import "NSString+SFAdditions.h"
 #import "SFOAuthCredentials+Internal.h"
 #import "SFNetwork.h"
-#import <SalesforceSDKCommon/NSUserDefaults+SFAdditions.h>
-#import <SalesforceSDKCommon/SFJsonUtils.h>
+@import SalesforceSDKCommon;
 #import "NSData+SFAdditions.h"
 
 NSString * const  kSFOAuthErrorDomain  = @"com.salesforce.OAuth.ErrorDomain";

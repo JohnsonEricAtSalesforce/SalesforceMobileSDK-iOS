@@ -24,7 +24,7 @@
 
 #import <XCTest/XCTest.h>
 #import <SalesforceSDKCore/SalesforceSDKCore.h>
-#import <SalesforceSDKCommon/SalesforceSDKCommon.h>
+@import SalesforceSDKCommon;
 #import "SFOAuthCredentials+Internal.h"
 #import "SFUserAccount+Internal.h"
 #import "SFDirectoryManager+Internal.h"

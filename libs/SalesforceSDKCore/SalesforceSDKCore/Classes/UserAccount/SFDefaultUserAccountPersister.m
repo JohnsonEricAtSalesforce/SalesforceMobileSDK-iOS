@@ -28,7 +28,7 @@
 #import "SFDirectoryManager.h"
 #import "SFDirectoryManager+Internal.h"
 #import "SFSDKCryptoUtils.h"
-#import <SalesforceSDKCommon/SFFileProtectionHelper.h>
+@import SalesforceSDKCommon;
 #import <SalesforceSDKCore/SalesforceSDKCore-Swift.h>
 
 

@@ -29,7 +29,7 @@
 #import <SmartStore/SFSmartStore.h>
 #import <SmartStore/SFSoupIndex.h>
 #import <SmartStore/SFQuerySpec.h>
-#import <SalesforceSDKCommon/SFJsonUtils.h>
+@import SalesforceSDKCommon;
 
 // soups and soup fields
 NSString * const kSFSyncStateSyncsSoupName = @"syncs_soup";

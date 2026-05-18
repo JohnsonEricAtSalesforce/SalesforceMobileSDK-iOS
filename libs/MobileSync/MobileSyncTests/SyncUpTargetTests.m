@@ -24,7 +24,7 @@
 
 #import "SyncManagerTestCase.h"
 #import "SFSyncUpdateCallbackQueue.h"
-#import <SalesforceSDKCommon/SFJsonUtils.h>
+@import SalesforceSDKCommon;
 
 #define COUNT_TEST_ACCOUNTS 10
 

@@ -23,7 +23,7 @@
  */
 
 #import <XCTest/XCTest.h>
-#import <SalesforceSDKCommon/SFJsonUtils.h>
+@import SalesforceSDKCommon;
 #import <SalesforceSDKCore/SalesforceSDKCore.h>
 #import "SFSDKLogoutBlocker.h"
 #import "SFSDKAuthViewHandler.h"

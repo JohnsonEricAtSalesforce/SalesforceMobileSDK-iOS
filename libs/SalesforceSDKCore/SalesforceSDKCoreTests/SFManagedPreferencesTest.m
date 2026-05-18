@@ -26,7 +26,7 @@
  WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 #import <XCTest/XCTest.h>
-#import <SalesforceSDKCommon/NSUserDefaults+SFAdditions.h>
+@import SalesforceSDKCommon;
 #import <SalesforceSDKCore/SalesforceSDKCore.h>
 #import "SFUserAccountManager+Internal.h"
 @interface SFManagedPreferencesTest : XCTestCase

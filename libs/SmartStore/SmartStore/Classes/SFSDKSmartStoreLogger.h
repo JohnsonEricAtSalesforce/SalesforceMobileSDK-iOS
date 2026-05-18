@@ -27,13 +27,42 @@
  WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#import <SalesforceSDKCommon/SFLogger.h>
+@import SalesforceSDKCommon;
 
 NS_ASSUME_NONNULL_BEGIN
 
 extern NSString * _Nonnull const kSFSDKSmartStoreComponentName;
+
+/// Component-specific logger. Forwards to SalesforceLogger for this component.
 NS_SWIFT_NAME(SmartStoreLogger)
-@interface SFSDKSmartStoreLogger : SFLogger
+@interface SFSDKSmartStoreLogger : NSObject
+
+// Class methods (format variants for ObjC callers)
++ (void)e:(nonnull Class)cls format:(nonnull NSString *)format, ... NS_FORMAT_FUNCTION(2, 3);
++ (void)w:(nonnull Class)cls format:(nonnull NSString *)format, ... NS_FORMAT_FUNCTION(2, 3);
++ (void)i:(nonnull Class)cls format:(nonnull NSString *)format, ... NS_FORMAT_FUNCTION(2, 3);
++ (void)d:(nonnull Class)cls format:(nonnull NSString *)format, ... NS_FORMAT_FUNCTION(2, 3);
++ (void)f:(nonnull Class)cls format:(nonnull NSString *)format, ... NS_FORMAT_FUNCTION(2, 3);
++ (void)v:(nonnull Class)cls format:(nonnull NSString *)format, ... NS_FORMAT_FUNCTION(2, 3);
++ (void)log:(nonnull Class)cls level:(enum SFLogLevel)level format:(nonnull NSString *)format, ... NS_FORMAT_FUNCTION(3, 4);
+
+// Class methods (message variants)
++ (void)e:(nonnull Class)cls message:(nonnull NSString *)message;
++ (void)w:(nonnull Class)cls message:(nonnull NSString *)message;
++ (void)i:(nonnull Class)cls message:(nonnull NSString *)message;
++ (void)d:(nonnull Class)cls message:(nonnull NSString *)message;
++ (void)f:(nonnull Class)cls message:(nonnull NSString *)message;
++ (void)v:(nonnull Class)cls message:(nonnull NSString *)message;
++ (void)log:(nonnull Class)cls level:(enum SFLogLevel)level message:(nonnull NSString *)message;
+
+// Instance methods (for Swift callers using SFSDKXxxLogger().e(cls, message:) pattern)
+- (void)e:(nonnull Class)cls message:(nonnull NSString *)message;
+- (void)w:(nonnull Class)cls message:(nonnull NSString *)message;
+- (void)i:(nonnull Class)cls message:(nonnull NSString *)message;
+- (void)d:(nonnull Class)cls message:(nonnull NSString *)message;
+- (void)f:(nonnull Class)cls message:(nonnull NSString *)message;
+- (void)v:(nonnull Class)cls message:(nonnull NSString *)message;
+- (void)log:(nonnull Class)cls level:(enum SFLogLevel)level message:(nonnull NSString *)message;
 
 @end
 

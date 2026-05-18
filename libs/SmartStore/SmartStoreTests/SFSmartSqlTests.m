@@ -28,7 +28,7 @@
 #import "SFSmartStore+Internal.h"
 #import "SFSoupIndex.h"
 #import "SFQuerySpec.h"
-#import <SalesforceSDKCommon/SFJsonUtils.h>
+@import SalesforceSDKCommon;
 
 @interface SFOAuthCredentials ()
 @property (nonatomic, readwrite, nullable) NSURL *identityUrl;

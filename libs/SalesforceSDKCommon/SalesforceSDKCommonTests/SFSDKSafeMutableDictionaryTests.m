@@ -23,7 +23,7 @@
  */
 
 @import XCTest;
-#import "SFSDKSafeMutableDictionary.h"
+@import SalesforceSDKCommon;
 
 @interface SFSDKSafeMutableDictionaryTests : XCTestCase
 

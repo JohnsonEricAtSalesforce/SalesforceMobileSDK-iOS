@@ -131,7 +131,7 @@ public class RecordResponse: NSObject {
     }
     
     func description() ->  String {
-        return SFJsonUtils.jsonRepresentation(json)
+        return SFJsonUtils.jsonRepresentation(json) ?? ""
     }
     
     static func fromCompositeSubResponse(compositeSubResponse: CompositeSubResponse) -> RecordResponse {
@@ -312,12 +312,12 @@ public class RecordRequest: NSObject {
                 let externalIdFieldNames = getExternalIdFieldName(recordRequests: recordRequests, requestType: .UPSERT)
                 
                 if (objectTypes.isEmpty || externalIdFieldNames.isEmpty) {
-                    MobileSyncLogger.default.e(CompositeRequestHelper.self, message:"Missing sobjectType or externalIdFieldName")
+                    MobileSyncLogger.e(CompositeRequestHelper.self, message:"Missing sobjectType or externalIdFieldName")
                     return nil
                 }
                 
                 if (Set(objectTypes).count > 1) {
-                    MobileSyncLogger.default.e(CompositeRequestHelper.self, message:"All records must have same sobjectType")
+                    MobileSyncLogger.e(CompositeRequestHelper.self, message:"All records must have same sobjectType")
                     return nil
                 }
                 

@@ -24,7 +24,7 @@ WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH 
 
 #import <SalesforceSDKCore/SFSDKCryptoUtils.h>
 #import <SalesforceSDKCore/SalesforceSDKCore-Swift.h>
-#import <SalesforceSDKCommon/SFJsonUtils.h>
+@import SalesforceSDKCommon;
 #import "SFSDKPushNotificationDecryption.h"
 #import "SFSDKPushNotificationDecryption+Internal.h"
 #import "SFSDKPushNotificationFieldsConstants.h"

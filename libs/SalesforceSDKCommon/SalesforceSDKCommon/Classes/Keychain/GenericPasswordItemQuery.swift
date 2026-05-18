@@ -26,6 +26,7 @@
 //  WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 import Foundation
+import Security
 
 internal protocol KeychainItemQueryable {
     var query: [String: Any] { get }

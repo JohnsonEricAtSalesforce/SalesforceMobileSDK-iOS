@@ -27,7 +27,7 @@
 
 #import <XCTest/XCTest.h>
 #import <SalesforceSDKCore/SalesforceSDKCore-Swift.h>
-#import <SalesforceSDKCommon/SalesforceSDKCommon-Swift.h>
+@import SalesforceSDKCommon;
 #import "SFUserAccountManager+Internal.h"
 #import "SFUserAccount+Internal.h"
 #import "SFSDKWindowManager.h"

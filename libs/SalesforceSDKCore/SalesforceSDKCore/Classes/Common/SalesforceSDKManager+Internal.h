@@ -1,4 +1,4 @@
-#import <SalesforceSDKCommon/SFSDKSafeMutableDictionary.h>
+@import SalesforceSDKCommon;
 #import "SalesforceSDKManager.h"
 #import "SFUserAccountManager.h"
 #import "SFUserAccount.h"

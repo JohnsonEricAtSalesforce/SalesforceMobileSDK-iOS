@@ -23,7 +23,7 @@
  */
 #import "SFSDKLogoutBlocker.h"
 #import <SalesforceSDKCore/SalesforceSDKCore.h>
-#import <SalesforceSDKCommon/SFJsonUtils.h>
+@import SalesforceSDKCommon;
 #import "SFRestAPI+Internal.h"
 #import "SFRestRequest+Internal.h"
 #import "SFUserAccount+Internal.h"

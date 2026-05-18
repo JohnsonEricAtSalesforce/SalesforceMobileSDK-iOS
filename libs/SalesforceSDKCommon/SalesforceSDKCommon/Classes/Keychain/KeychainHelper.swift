@@ -27,6 +27,7 @@
 //
 
 import Foundation
+import Security
 
 @objc(SFSDKKeychainHelper)
 public class KeychainHelper: NSObject {

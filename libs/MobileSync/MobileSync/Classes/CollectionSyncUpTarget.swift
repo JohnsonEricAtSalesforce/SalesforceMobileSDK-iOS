@@ -121,7 +121,7 @@ public class CollectionSyncUpTarget: BatchSyncUpTarget {
         var batchServerIds = [String]()
         
         guard let objectType = getRecordType(records[0]) else {
-            MobileSyncLogger.default.e(CollectionSyncUpTarget.self, message:"Record does not have an sobject type")
+            MobileSyncLogger.e(CollectionSyncUpTarget.self, message:"Record does not have an sobject type")
             completeBlock(recordIdToLastModifiedDate)
             return
         }
@@ -131,7 +131,7 @@ public class CollectionSyncUpTarget: BatchSyncUpTarget {
         for i in 0...totalSize-1 {
             let record = records[i]
             if (getRecordType(record) != objectType) {
-                MobileSyncLogger.default.e(CollectionSyncUpTarget.self, message:"All records should have same sobject type")
+                MobileSyncLogger.e(CollectionSyncUpTarget.self, message:"All records should have same sobject type")
                 completeBlock(recordIdToLastModifiedDate)
                 return
             }

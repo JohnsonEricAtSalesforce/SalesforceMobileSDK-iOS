@@ -42,9 +42,7 @@
 #import <SalesforceSDKCore/SFSDKAppFeatureMarkers.h>
 #import <SalesforceSDKCore/SFSDKCryptoUtils.h>
 #import <SalesforceSDKCore/NSData+SFAdditions.h>
-#import <SalesforceSDKCommon/SalesforceSDKCommon-Swift.h>
-#import <SalesforceSDKCommon/SFSDKDataSharingHelper.h>
-#import <SalesforceSDKCommon/SFJsonUtils.h>
+@import SalesforceSDKCommon;
 
 static NSMutableDictionary *_allSharedStores;
 static NSMutableDictionary *_allGlobalSharedStores;

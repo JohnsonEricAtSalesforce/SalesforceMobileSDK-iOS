@@ -33,7 +33,7 @@
 #import "SFSDKLoginHostDelegate.h"
 #import "SFLoginViewController.h"
 #import "SFSDKAuthViewHandler.h"
-#import <SalesforceSDKCommon/SFSDKSafeMutableDictionary.h>
+@import SalesforceSDKCommon;
 
 @class SFSDKAuthPreferences;
 

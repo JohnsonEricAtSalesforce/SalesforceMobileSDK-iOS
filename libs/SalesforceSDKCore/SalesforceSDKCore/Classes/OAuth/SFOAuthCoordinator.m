@@ -42,16 +42,13 @@
 #import "SFNetwork.h"
 #import "NSURL+SFAdditions.h"
 #import "SFSDKURLHandlerManager.h"
-#import <SalesforceSDKCommon/NSUserDefaults+SFAdditions.h>
-#import <SalesforceSDKCommon/SFJsonUtils.h>
+@import SalesforceSDKCommon;
 #import "SFSDKOAuth2+Internal.h"
 #import "SFSDKOAuthConstants.h"
 #import "SFSDKIDPConstants.h"
 #import "SFSDKAuthSession.h"
 #import "SFSDKAuthRequest.h"
 #import <SalesforceSDKCore/SalesforceSDKCore-Swift.h>
-#import <SalesforceSDKCommon/SalesforceSDKCommon-Swift.h>
-#import <SalesforceSDKCommon/SFSDKDatasharingHelper.h>
 #import <LocalAuthentication/LocalAuthentication.h>
 @interface SFOAuthCoordinator()
 

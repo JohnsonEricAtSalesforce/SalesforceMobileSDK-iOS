@@ -29,7 +29,7 @@
 
 #import "SFNetwork.h"
 #import "SalesforceSDKManager.h"
-#import <SalesforceSDKCommon/SFSDKSafeMutableDictionary.h>
+@import SalesforceSDKCommon;
 
 NSString * const kSFNetworkEphemeralInstanceIdentifier = @"com.salesforce.network.ephemeralSession";
 NSString * const kSFNetworkBackgroundInstanceIdentifier = @"com.salesforce.network.backgroundSession";

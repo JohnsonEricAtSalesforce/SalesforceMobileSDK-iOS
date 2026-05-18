@@ -24,7 +24,7 @@ WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH 
 
 #import <SalesforceSDKCore/SFSDKPushNotificationFieldsConstants.h>
 #import <SalesforceSDKCore/SFSDKCryptoUtils.h>
-#import <SalesforceSDKCommon/SFJsonUtils.h>
+@import SalesforceSDKCommon;
 #import "SFSDKPushNotificationDataProvider.h"
 #import "SFSDKPushNotificationEncryptionConstants.h"
 #import "SFEncryptionKey.h"

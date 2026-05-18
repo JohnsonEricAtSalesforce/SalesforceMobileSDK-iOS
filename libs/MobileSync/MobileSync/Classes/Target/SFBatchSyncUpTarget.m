@@ -23,7 +23,7 @@
  */
 
 
-#import <SalesforceSDKCommon/SFJsonUtils.h>
+@import SalesforceSDKCommon;
 #import "MobileSync.h"
 #import "SFSyncTarget+Internal.h"
 #import "SFSyncUpTarget+Internal.h"

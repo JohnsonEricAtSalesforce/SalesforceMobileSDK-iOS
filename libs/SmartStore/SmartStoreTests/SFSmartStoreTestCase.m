@@ -24,7 +24,7 @@
 
 #import "SFSmartStoreTestCase.h"
 #import "SFSoupIndex.h"
-#import <SalesforceSDKCommon/SFJsonUtils.h>
+@import SalesforceSDKCommon;
 #import "SFSmartStore+Internal.h"
 @import FMDB;
 @interface SFOAuthCredentials ()

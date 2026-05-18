@@ -29,7 +29,7 @@
 #import "SFMobileSyncSyncManager.h"
 #import "SFMobileSyncObjectUtils.h"
 #import "SFSyncTarget+Internal.h"
-#import <SalesforceSDKCommon/SFJsonUtils.h>
+@import SalesforceSDKCommon;
 #import <SmartStore/SFSmartStore.h>
 
 //

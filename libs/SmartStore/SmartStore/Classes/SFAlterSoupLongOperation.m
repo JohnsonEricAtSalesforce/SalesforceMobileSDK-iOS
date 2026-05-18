@@ -26,7 +26,7 @@
 @import FMDB;
 #import "SFSmartStore+Internal.h"
 #import "SFSoupIndex.h"
-#import <SalesforceSDKCommon/SFJsonUtils.h>
+@import SalesforceSDKCommon;
 
 @interface SFAlterSoupLongOperation ()
 

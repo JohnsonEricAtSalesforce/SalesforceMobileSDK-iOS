@@ -27,8 +27,7 @@
 #import "SFSDKCryptoUtils.h"
 #import "UIDevice+SFHardware.h"
 #import "NSString+SFAdditions.h"
-#import <SalesforceSDKCommon/NSUserDefaults+SFAdditions.h>
-#import <SalesforceSDKCommon/SalesforceSDKCommon-Swift.h>
+@import SalesforceSDKCommon;
 #import <SalesforceSDKCore/SalesforceSDKCore-Swift.h>
 
 @implementation SFOAuthKeychainCredentials

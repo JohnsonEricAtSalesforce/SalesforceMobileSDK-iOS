@@ -29,7 +29,7 @@
 #import "SFSmartStoreInspectorViewController.h"
 #import <SalesforceSDKCore/SFSDKResourceUtils.h>
 #import "SFQuerySpec.h"
-#import <SalesforceSDKCommon/SFJsonUtils.h>
+@import SalesforceSDKCommon;
 #import <SalesforceSDKCore/SFUserAccountManager.h>
 #import <SalesforceSDKCore/UIColor+SFColors.h>
 #import "SFSmartStore+Internal.h"

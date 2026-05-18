@@ -1,11 +1,11 @@
 /*
  SFLoggerTests.m
  SFLoggerTests
- 
+
  Created by Raj Rao on Tue Nov  6 12:04:13 PST 2018.
- 
+
  Copyright (c) 2018-present, salesforce.com, inc. All rights reserved.
- 
+
  Redistribution and use of this software in source and binary forms, with or without modification,
  are permitted provided that the following conditions are met:
  * Redistributions of source code must retain the above copyright notice, this list of conditions
@@ -16,7 +16,7 @@
  * Neither the name of salesforce.com, inc. nor the names of its contributors may be used to
  endorse or promote products derived from this software without specific prior written
  permission of salesforce.com, inc.
- 
+
  THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR
  IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND
  FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR
@@ -28,8 +28,7 @@
  */
 
 @import XCTest;
-#import "SFLogger.h"
-#import "SFDefaultLogger.h"
+@import SalesforceSDKCommon;
 
 static NSString * const kTestDefaultComponent = @"TestDefaultComponent";
 static NSString * const kTestComponent1 = @"TestComponent1";
@@ -43,33 +42,7 @@ static NSString * const kLogLevelKey = @"loglevel";
 static NSString * const kClassKey = @"class";
 static NSString * const kMessageKey = @"message";
 
-
-@interface SFLogger(Test)
-+ (void)clearAllComponents;
-@end
-
-@interface TestLogger: SFLogger
-@property id<SFLogging> logger;
-- (id<SFLogging>)loggerImpl;
-+ (void)clearAllComponents;
-
-@end
-
-@implementation TestLogger
-@dynamic logger;
-
-- (id<SFLogging>)loggerImpl {
-    return self.logger;
-}
-
-+ (instancetype)sharedInstance {
-    return [self loggerForComponent:kTestDefaultComponent];
-}
-
-+ (void)clearAllComponents {
-    [super clearAllComponents];
-}
-@end
+#pragma mark - TestLoggingImpl
 
 @interface TestLoggingImpl : NSObject<SFLogging>
 @property (nonatomic, readonly, strong, nonnull) NSString *componentName;
@@ -80,39 +53,29 @@ static NSString * const kMessageKey = @"message";
 @implementation TestLoggingImpl
 @synthesize  componentName,logger,logLevel = _logLevel;
 
-- (instancetype)initWithComponent:(NSString *)componentName {
-    if (self == [super init]) {
-        componentName = componentName;
+- (instancetype)initWithComponent:(NSString *)component {
+    if (self = [super init]) {
+        componentName = component;
     }
     return self;
 }
 
 - (void)log:(nonnull Class)cls level:(SFLogLevel)level message:(nonnull NSString *)message {
-    [[NSNotificationCenter defaultCenter]postNotificationName:kLogNotification object:self  userInfo:@{kLogLevelKey: @(level),kMessageKey:message,kClassKey:cls}];
-}
-
-- (void)log:(nonnull Class)cls level:(SFLogLevel)level format:(nonnull NSString *)format, ... {
-    va_list args;
-    va_start(args, format);
-    [self log:cls level:level format:format args:args];
-    va_end(args);
-}
-
-- (void)log:(Class)cls level:(SFLogLevel)level format:(NSString *)format args:(va_list)args {
-    NSString *formattedMessage = [[NSString alloc] initWithFormat:format arguments:args];
-    [self log:cls level:level message:formattedMessage];
+    [[NSNotificationCenter defaultCenter] postNotificationName:kLogNotification object:self userInfo:@{kLogLevelKey: @(level), kMessageKey: message, kClassKey: cls}];
 }
 
 - (void)setLogLevel:(SFLogLevel)level {
-    if (_logLevel!=level) {
+    if (_logLevel != level) {
        _logLevel = level;
     }
 }
+
 - (SFLogLevel)logLevel {
     return _logLevel;
 }
 @end
 
+#pragma mark - SFLoggerTests
 
 @interface SFLoggerTests : XCTestCase {
     SFLogLevel _origLogLevel;
@@ -124,146 +87,158 @@ static NSString * const kMessageKey = @"message";
 
 - (void)setUp {
     [super setUp];
-    [TestLogger setInstanceClass:[TestLoggingImpl class]];
-    _origLogLevel = [TestLogger loggerForComponent:kTestDefaultComponent].logLevel;
+    [SFLogger setInstanceClass:[TestLoggingImpl class]];
+    // clearAllComponents is internal but exposed via @objcMembers at runtime
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wundeclared-selector"
+    if ([SFLogger respondsToSelector:@selector(clearAllComponents)]) {
+        [SFLogger performSelector:@selector(clearAllComponents)];
+    }
+#pragma clang diagnostic pop
+    _origLogLevel = [SFLogger loggerForComponent:kTestDefaultComponent].level;
 }
 
 - (void)tearDown {
-    [TestLogger setInstanceClass:[SFDefaultLogger class]];
-    [TestLogger clearAllComponents];
+    [SFLogger setInstanceClass:[SFDefaultLogger class]];
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wundeclared-selector"
+    if ([SFLogger respondsToSelector:@selector(clearAllComponents)]) {
+        [SFLogger performSelector:@selector(clearAllComponents)];
+    }
+#pragma clang diagnostic pop
+    [super tearDown];
 }
 
 /**
  * Test Logger Class is correct
  */
 - (void)testLoggerInstance {
-    TestLogger *logger = [TestLogger sharedInstance];
+    SFLogger *logger = [SFLogger loggerForComponent:kTestDefaultComponent];
     XCTAssertNotNil(logger, "Logger instance should have been created");
-    XCTAssertTrue([logger.logger isKindOfClass:[TestLoggingImpl class]], "Logger should be an instance of TestLoggingImpl");
-    TestLogger.logLevel = SFLogLevelDebug;
-     XCTAssertTrue(TestLogger.logLevel == SFLogLevelDebug, "Logger level should be set to debug");
+    logger.level = SFLogLevelDebug;
+    XCTAssertTrue(logger.level == SFLogLevelDebug, "Logger level should be set to debug");
 }
 
 /**
- * Test Logger Class is correct
+ * Test Multiple Logger Components
  */
 - (void)testMultipleLoggerComponents {
-    TestLogger *logger = [TestLogger sharedInstance];
-    TestLogger *anotherLogger = [TestLogger loggerForComponent:kTestComponent1];
+    SFLogger *logger = [SFLogger loggerForComponent:kTestDefaultComponent];
+    SFLogger *anotherLogger = [SFLogger loggerForComponent:kTestComponent1];
     XCTAssertNotNil(logger, "Logger instance should have been created");
     XCTAssertNotNil(anotherLogger, "Component Logger instance should have been created");
-    XCTAssertTrue(logger!=anotherLogger, "Should be 2 different instances of logger");
-    TestLogger.logLevel = SFLogLevelDebug;
-    XCTAssertTrue(TestLogger.logLevel == SFLogLevelDebug, "Logger level should be set to debug");
-    XCTAssertTrue(anotherLogger.logLevel == SFLogLevelDefault, "Component Logger level should not have changed");
+    XCTAssertTrue(logger != anotherLogger, "Should be 2 different instances of logger");
+    logger.level = SFLogLevelDebug;
+    XCTAssertTrue(logger.level == SFLogLevelDebug, "Logger level should be set to debug");
+    XCTAssertTrue(anotherLogger.level == SFLogLevelDefault, "Component Logger level should not have changed");
 }
 
 /**
  * Test Log Level debug
  */
 - (void)testLoggerDebugLog {
-    TestLogger *logger = [TestLogger sharedInstance];
+    SFLogger *logger = [SFLogger loggerForComponent:kTestDefaultComponent];
     XCTAssertNotNil(logger, "Logger instance should have been created");
-    logger.logLevel = SFLogLevelDebug;
-    XCTAssertTrue(logger.logLevel == SFLogLevelDebug, "Logger level should be set to debug");
+    logger.level = SFLogLevelDebug;
+    XCTAssertTrue(logger.level == SFLogLevelDebug, "Logger level should be set to debug");
 
     XCTestExpectation *expectation = [[XCTestExpectation alloc] initWithDescription:@"Log Notification"];
-    
+
     __block SFLogLevel logLevelUsed  = SFLogLevelDefault;
     __block Class classUsed  = nil;
     __block NSString *message = nil;
-    [[NSNotificationCenter defaultCenter] addObserverForName:@"LogNotification" object:nil   queue:nil usingBlock:^(NSNotification *note) {
+    [[NSNotificationCenter defaultCenter] addObserverForName:@"LogNotification" object:nil queue:nil usingBlock:^(NSNotification *note) {
          logLevelUsed = [(NSNumber *) note.userInfo[kLogLevelKey] intValue];
          classUsed = (Class) note.userInfo[kClassKey];
          message = (NSString *) note.userInfo[kMessageKey];
          [expectation fulfill];
     }];
-    
-    [logger d:self.class format:@"TestDebugStatement %@",@"TestValue"];
+
+    [logger d:self.class message:@"TestDebugStatement TestValue"];
     [self waitForExpectations:@[expectation] timeout:10];
-    XCTAssertTrue(logLevelUsed==SFLogLevelDebug,"Log statement should have been at Debug level");
-    XCTAssertTrue([self isKindOfClass:classUsed],"Log statement should have been logged against  the class");
-    XCTAssertTrue(message && message.length > 0 ,"Log statement should not be emtpty");
+    XCTAssertTrue(logLevelUsed == SFLogLevelDebug, "Log statement should have been at Debug level");
+    XCTAssertTrue([self isKindOfClass:classUsed], "Log statement should have been logged against the class");
+    XCTAssertTrue(message && message.length > 0, "Log statement should not be empty");
 }
 
 /**
  * Test Log Level Info
  */
 - (void)testLoggerInfoLog {
-    TestLogger *logger = [TestLogger sharedInstance];
+    SFLogger *logger = [SFLogger loggerForComponent:kTestDefaultComponent];
     XCTAssertNotNil(logger, "Logger instance should have been created");
-    logger.logLevel = SFLogLevelInfo;
-    XCTAssertTrue(logger.logLevel == SFLogLevelInfo, "Logger level should be set to info");
-    
+    logger.level = SFLogLevelInfo;
+    XCTAssertTrue(logger.level == SFLogLevelInfo, "Logger level should be set to info");
+
     XCTestExpectation *expectation = [[XCTestExpectation alloc] initWithDescription:@"Log Notification"];
     __block SFLogLevel logLevelUsed  = SFLogLevelDefault;
     __block Class classUsed  = nil;
     __block NSString *message = nil;
-    [[NSNotificationCenter defaultCenter] addObserverForName:kLogNotification object:nil   queue:nil usingBlock:^(NSNotification *note) {
+    [[NSNotificationCenter defaultCenter] addObserverForName:kLogNotification object:nil queue:nil usingBlock:^(NSNotification *note) {
         logLevelUsed = [(NSNumber *) note.userInfo[kLogLevelKey] intValue];
         classUsed = (Class) note.userInfo[kClassKey];
         message = (NSString *) note.userInfo[kMessageKey];
         [expectation fulfill];
     }];
-    
-    [logger i:self.class format:@"TestDebugStatement %@",@"TestValue"];
+
+    [logger i:self.class message:@"TestInfoStatement TestValue"];
     [self waitForExpectations:@[expectation] timeout:10];
-    XCTAssertTrue(logLevelUsed==SFLogLevelInfo,"Log statement should have been at Info  level");
-    XCTAssertTrue([self isKindOfClass:classUsed],"Log statement should have been logged against  the class");
-    XCTAssertTrue(message && message.length > 0 ,"Log statement should not be emtpty");
+    XCTAssertTrue(logLevelUsed == SFLogLevelInfo, "Log statement should have been at Info level");
+    XCTAssertTrue([self isKindOfClass:classUsed], "Log statement should have been logged against the class");
+    XCTAssertTrue(message && message.length > 0, "Log statement should not be empty");
 }
 
 /**
  * Test Log Level Error
  */
 - (void)testLoggerErrorLog {
-    TestLogger *logger = [TestLogger sharedInstance];
+    SFLogger *logger = [SFLogger loggerForComponent:kTestDefaultComponent];
     XCTAssertNotNil(logger, "Logger instance should have been created");
-    logger.logLevel = SFLogLevelError;
-    XCTAssertTrue(logger.logLevel == SFLogLevelError, "Logger level should be set to error");
-    
+    logger.level = SFLogLevelError;
+    XCTAssertTrue(logger.level == SFLogLevelError, "Logger level should be set to error");
+
     XCTestExpectation *expectation = [[XCTestExpectation alloc] initWithDescription:@"Log Notification"];
     __block SFLogLevel logLevelUsed  = SFLogLevelDefault;
     __block Class classUsed  = nil;
     __block NSString *message = nil;
-    [[NSNotificationCenter defaultCenter] addObserverForName:kLogNotification object:nil   queue:nil usingBlock:^(NSNotification *note) {
+    [[NSNotificationCenter defaultCenter] addObserverForName:kLogNotification object:nil queue:nil usingBlock:^(NSNotification *note) {
         logLevelUsed = [(NSNumber *) note.userInfo[kLogLevelKey] intValue];
         classUsed = (Class) note.userInfo[kClassKey];
         message = (NSString *) note.userInfo[kMessageKey];
         [expectation fulfill];
     }];
-    
-    [logger e:self.class format:@"TestDebugStatement %@",@"TestValue"];
+
+    [logger e:self.class message:@"TestErrorStatement TestValue"];
     [self waitForExpectations:@[expectation] timeout:10];
-    XCTAssertTrue(logLevelUsed==SFLogLevelError,"Log statement should have been at Error  level");
-    XCTAssertTrue([self isKindOfClass:classUsed],"Log statement should have been logged against  the class");
-    XCTAssertTrue(message && message.length > 0 ,"Log statement should not be emtpty");
+    XCTAssertTrue(logLevelUsed == SFLogLevelError, "Log statement should have been at Error level");
+    XCTAssertTrue([self isKindOfClass:classUsed], "Log statement should have been logged against the class");
+    XCTAssertTrue(message && message.length > 0, "Log statement should not be empty");
 }
 
 /**
  * Test Log Level Fault
  */
 - (void)testLoggerFaultLog {
-    TestLogger *logger = [TestLogger sharedInstance];
+    SFLogger *logger = [SFLogger loggerForComponent:kTestDefaultComponent];
     XCTAssertNotNil(logger, "Logger instance should have been created");
-    logger.logLevel = SFLogLevelFault;
-    XCTAssertTrue(logger.logLevel == SFLogLevelFault, "Logger level should be set to error");
-    
+    logger.level = SFLogLevelFault;
+    XCTAssertTrue(logger.level == SFLogLevelFault, "Logger level should be set to fault");
+
     XCTestExpectation *expectation = [[XCTestExpectation alloc] initWithDescription:@"Log Notification"];
     __block SFLogLevel logLevelUsed  = SFLogLevelDefault;
     __block Class classUsed  = nil;
     __block NSString *message = nil;
-    [[NSNotificationCenter defaultCenter] addObserverForName:kLogNotification object:nil   queue:nil usingBlock:^(NSNotification *note) {
+    [[NSNotificationCenter defaultCenter] addObserverForName:kLogNotification object:nil queue:nil usingBlock:^(NSNotification *note) {
         logLevelUsed = [(NSNumber *) note.userInfo[kLogLevelKey] intValue];
         classUsed = (Class) note.userInfo[kClassKey];
         message = (NSString *) note.userInfo[kMessageKey];
         [expectation fulfill];
     }];
-    
-    [logger f:self.class format:@"TestDebugStatement %@",@"TestValue"];
+
+    [logger f:self.class message:@"TestFaultStatement TestValue"];
     [self waitForExpectations:@[expectation] timeout:10];
-    XCTAssertTrue(logLevelUsed==SFLogLevelFault,"Log statement should have been at Fault   level");
-    XCTAssertTrue([self isKindOfClass:classUsed],"Log statement should have been logged against  the class");
-    XCTAssertTrue(message && message.length > 0 ,"Log statement should not be emtpty");
+    XCTAssertTrue(logLevelUsed == SFLogLevelFault, "Log statement should have been at Fault level");
+    XCTAssertTrue([self isKindOfClass:classUsed], "Log statement should have been logged against the class");
+    XCTAssertTrue(message && message.length > 0, "Log statement should not be empty");
 }
 @end

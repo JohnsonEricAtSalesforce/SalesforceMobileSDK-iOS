@@ -30,7 +30,7 @@
 #import "SFSDKInstrumentationEventBuilder.h"
 #import "SFSDKAnalyticsManager+Internal.h"
 #import "SFSDKInstrumentationEvent+Internal.h"
-#import <SalesforceSDKCommon/SFSDKReachability.h>
+@import SalesforceSDKCommon;
 
 #if __has_include(<CoreTelephony/CTTelephonyNetworkInfo.h>)
 #import <CoreTelephony/CTTelephonyNetworkInfo.h>
@@ -103,11 +103,11 @@
         [reachability startNotifier];
         SFSDKReachabilityNetworkStatus networkStatus = [reachability currentReachabilityStatus];
         switch (networkStatus) {
-            case SFSDKReachabilityNotReachable:
+            case SFSDKReachabilityNetworkStatusNotReachable:
                 return @"None";
-            case SFSDKReachabilityReachableViaWWAN:
+            case SFSDKReachabilityNetworkStatusReachableViaWWAN:
                 return [self getMobileConnectionSubType];
-            case SFSDKReachabilityReachableViaWiFi:
+            case SFSDKReachabilityNetworkStatusReachableViaWiFi:
                 return @"WiFi";
             default:
                 return defaultType;

@@ -23,8 +23,7 @@
  */
 
 #import "SFSmartStoreTests.h"
-#import <SalesforceSDKCommon/SalesforceSDKCommon-Swift.h>
-#import <SalesforceSDKCommon/SFJsonUtils.h>
+@import SalesforceSDKCommon;
 @import FMDB;
 #import "SFQuerySpec.h"
 #import "SFStoreCursor.h"

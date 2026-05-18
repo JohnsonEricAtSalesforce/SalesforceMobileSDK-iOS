@@ -34,8 +34,7 @@
 #import "SFSDKAuthRequest.h"
 #import "SFOAuthCoordinator+Internal.h"
 #import "SFIdentityCoordinator+Internal.h"
-#import <SalesforceSDKCommon/NSUserDefaults+SFAdditions.h>
-#import <SalesforceSDKCommon/SFSDKDatasharingHelper.h>
+@import SalesforceSDKCommon;
 #import "SFSDKAuthRootController.h"
 #import "SFSDKWindowContainer.h"
 #import "SFSDKIDPAuthHelper.h"
@@ -58,7 +57,6 @@
 #import "SFSDKSalesforceAnalyticsManager.h"
 #import "SFApplicationHelper.h"
 #import <SalesforceSDKCore/SalesforceSDKCore-Swift.h>
-#import <SalesforceSDKCommon/SalesforceSDKCommon-Swift.h>
 #import "SFSDKSPLoginRequestCommand.h"
 #import "SFSDKSPLoginResponseCommand.h"
 #import "SFSDKCryptoUtils.h"
@@ -66,7 +64,6 @@
 #import "SFSDKIDPAuthHelper.h"
 #import "SFSDKIDPLoginRequestCommand.h"
 #import "SFSDKIDPAuthCodeLoginRequestCommand.h"
-#import <SalesforceSDKCommon/SFJsonUtils.h>
 #import "SFSDKOAuth2+Internal.h"
 #import "SFSDKResourceUtils.h"
 

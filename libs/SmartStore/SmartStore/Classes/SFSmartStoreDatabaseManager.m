@@ -27,12 +27,10 @@
 #import <SalesforceSDKCore/UIDevice+SFHardware.h>
 #import <SalesforceSDKCore/NSData+SFAdditions.h>
 #import <SalesforceSDKCore/NSString+SFAdditions.h>
-#import <SalesforceSDKCommon/SFFileProtectionHelper.h>
-#import <SalesforceSDKCommon/SFSDKDatasharingHelper.h>
+@import SalesforceSDKCommon;
 #import <SalesforceSDKCore/SFUserAccountManager.h>
 #import <SalesforceSDKCore/SFUserAccount.h>
 #import <SalesforceSDKCore/SFDirectoryManager.h>
-#import <SalesforceSDKCommon/SFPathUtil.h>
 #import "SFSmartStoreUtils.h"
 @import FMDB;
 @import SQLCipher;

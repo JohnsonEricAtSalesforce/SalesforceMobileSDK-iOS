@@ -25,11 +25,10 @@
 //  WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY
 //  WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-#import <SalesforceSDKCommon/NSUserDefaults+SFAdditions.h>
-#import <SalesforceSDKCommon/SFFileProtectionHelper.h>
-#import <SalesforceSDKCommon/SalesforceSDKCommon-Swift.h>
+@import SalesforceSDKCommon;
 #import <SalesforceSDKCore/SalesforceSDKCore-Swift.h>
 #import "SFSDKSalesforceSDKUpgradeManager.h"
+#import "SFSDKCoreLogger.h"
 #import "SFDirectoryManager+Internal.h"
 #import "SFUserAccount+Internal.h"
 #import "SFDefaultUserAccountPersister.h"
@@ -56,10 +55,10 @@ static NSString * _currentVersion = nil;
 
             if (![SFSDKKeychainHelper accessibilityAttribute]) {
                 // Only update accessible attribute if the app isn't setting it
-                [SFLogger log:[self class] level:SFLogLevelError format:@"Attempt keychain attribute update"];
+                [SFSDKCoreLogger log:[self class] level:SFLogLevelError format:@"Attempt keychain attribute update"];
                 SFSDKKeychainResult *result = [SFSDKKeychainHelper setAccessibleAttribute:KeychainItemAccessibilityAfterFirstUnlockThisDeviceOnly];
                 if (result.status == errSecInteractionNotAllowed) {
-                    [SFLogger log:[self class] level:SFLogLevelError format:@"Upgrade step skipped because keychain access not allowed"];
+                    [SFSDKCoreLogger log:[self class] level:SFLogLevelError format:@"Upgrade step skipped because keychain access not allowed"];
                     return;
                 }
             }
@@ -67,7 +66,7 @@ static NSString * _currentVersion = nil;
             NSArray<NSString *> *filesWithCompleteProtection = [SFSDKSalesforceSDKUpgradeManager filesWithCompleteProtection];
             if ([filesWithCompleteProtection count] > 0) {
                 if (![SFApplicationHelper sharedApplication].isProtectedDataAvailable) {
-                    [SFLogger log:[self class] level:SFLogLevelError format:@"Upgrade step skipped because files have complete protection and protected data isn't available"];
+                    [SFSDKCoreLogger log:[self class] level:SFLogLevelError format:@"Upgrade step skipped because files have complete protection and protected data isn't available"];
                     return;
                 }
                 [SFSDKSalesforceSDKUpgradeManager updateDefaultProtection:filesWithCompleteProtection];
@@ -120,7 +119,7 @@ static NSString * _currentVersion = nil;
     [[NSUserDefaults msdkUserDefaults] setValue:version forKey:kSalesforceSDKManagerVersionKey];
     [[NSUserDefaults msdkUserDefaults] synchronize];
     _lastVersion = version;
-    [SFLogger log:[self class] level:SFLogLevelInfo format:@"Upgraded to %@", version];
+    [SFSDKCoreLogger log:[self class] level:SFLogLevelInfo format:@"Upgraded to %@", version];
 }
 
 + (NSString *)lastVersion {
