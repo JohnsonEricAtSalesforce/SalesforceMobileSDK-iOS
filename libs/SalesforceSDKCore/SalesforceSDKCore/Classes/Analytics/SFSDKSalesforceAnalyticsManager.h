@@ -29,8 +29,7 @@
 
 #import <SalesforceSDKCore/SFUserAccount.h>
 #import <SalesforceSDKCore/SFSDKAnalyticsPublisher.h>
-#import <SalesforceAnalytics/SFSDKAnalyticsManager.h>
-#import <SalesforceAnalytics/SFSDKTransform.h>
+@import SalesforceAnalytics;
 
 @interface SFSDKSalesforceAnalyticsManager : NSObject
 

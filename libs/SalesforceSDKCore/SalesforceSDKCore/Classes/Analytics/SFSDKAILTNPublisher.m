@@ -34,6 +34,7 @@
 #import "SFRestAPI+Blocks.h"
 #import "SalesforceSDKCore/SalesforceSDKCore-Swift.h"
 
+static NSString* const kSchemaTypeKey = @"schemaType";
 static NSString* const kCode = @"code";
 static NSString* const kAiltn = @"ailtn";
 static NSString* const kData = @"data";

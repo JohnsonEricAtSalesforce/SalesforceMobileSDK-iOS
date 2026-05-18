@@ -37,8 +37,7 @@
 #import "UIDevice+SFHardware.h"
 #import "SFIdentityData.h"
 #import "SFApplicationHelper.h"
-#import <SalesforceAnalytics/SFSDKAILTNTransform.h>
-#import <SalesforceAnalytics/SFSDKDeviceAppAttributes.h>
+@import SalesforceAnalytics;
 @import SalesforceSDKCommon;
 #import "SFSDKAppFeatureMarkers.h"
 #import "SFSDKAppConfig.h"
@@ -156,7 +155,7 @@ static SInt32 kBatchProcessCount = 100;
             [SFSDKCoreLogger e:[self class] format:@"Error getting encryption key: %@", error.localizedDescription];
         }
 
-        DataEncryptorBlock dataEncryptorBlock = ^NSData*(NSData *data) {
+        NSData* (^dataEncryptorBlock)(NSData*) = ^NSData*(NSData *data) {
             NSError *error = nil;
             NSData *encryptedData = [SFSDKEncryptor encryptData:data key:encryptionKey error:&error];
             if (error) {
@@ -164,7 +163,7 @@ static SInt32 kBatchProcessCount = 100;
             }
             return encryptedData;
         };
-        DataDecryptorBlock dataDecryptorBlock = ^NSData*(NSData *data) {
+        NSData* (^dataDecryptorBlock)(NSData*) = ^NSData*(NSData *data) {
             NSError *error = nil;
             NSData *decryptedData = [SFSDKEncryptor decryptData:data key:encryptionKey error:&error];
             if (error) {

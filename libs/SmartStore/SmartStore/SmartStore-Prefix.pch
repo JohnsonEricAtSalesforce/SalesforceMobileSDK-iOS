@@ -7,5 +7,61 @@
 #ifdef __OBJC__
     #import <Foundation/Foundation.h>
     #import <SalesforceSDKCore/SalesforceSDKConstants.h>
-    #import "SFSDKSmartStoreLogger.h"
+
+    // Extern constant declarations for ObjC backward compatibility
+    extern NSString * const kSoupIndexPath;
+    extern NSString * const kSoupIndexType;
+    extern NSString * const kSoupIndexTypeString;
+    extern NSString * const kSoupIndexTypeInteger;
+    extern NSString * const kSoupIndexTypeFloating;
+    extern NSString * const kSoupIndexTypeFullText;
+    extern NSString * const kSoupIndexTypeJSON1;
+
+    extern NSString * const kQuerySpecSortOrderAscending;
+    extern NSString * const kQuerySpecSortOrderDescending;
+    extern NSString * const kQuerySpecTypeExact;
+    extern NSString * const kQuerySpecTypeRange;
+    extern NSString * const kQuerySpecTypeLike;
+    extern NSString * const kQuerySpecTypeSmart;
+    extern NSString * const kQuerySpecTypeMatch;
+    extern NSString * const kQuerySpecParamQueryType;
+    extern NSString * const kQuerySpecParamSelectPaths;
+    extern NSString * const kQuerySpecParamIndexPath;
+    extern NSString * const kQuerySpecParamOrderPath;
+    extern NSString * const kQuerySpecParamOrder;
+    extern NSString * const kQuerySpecParamPageSize;
+    extern NSString * const kQuerySpecParamMatchKey;
+    extern NSString * const kQuerySpecParamBeginKey;
+    extern NSString * const kQuerySpecParamEndKey;
+    extern NSString * const kQuerySpecParamLikeKey;
+    extern NSString * const kQuerySpecParamSmartSql;
+    extern NSUInteger const kQuerySpecDefaultPageSize;
+
+    extern NSString * const kDefaultSmartStoreName;
+    extern NSString * const kSFSmartStoreErrorDomain;
+    extern NSString * const kSFSmartStoreJSONParseErrorNotification;
+    extern NSString * const kSFSmartStoreErrorLoadExternalSoup;
+    extern NSString * const kSFSmartStoreEncryptionKeyLabel;
+    extern NSString * const kSFSmartStoreEncryptionSaltLabel;
+    extern NSString * const ID_COL;
+    extern NSString * const CREATED_COL;
+    extern NSString * const LAST_MODIFIED_COL;
+    extern NSString * const SOUP_COL;
+    extern NSString * const SOUP_ENTRY_ID;
+    extern NSString * const SOUP_LAST_MODIFIED_DATE;
+    extern NSString * const ROWID_COL;
+    extern NSString * const kSFSDKSmartStoreComponentName;
+    extern NSString * const EXPLAIN_ROWS;
+
+    // Block-type filter constants (declared as function pointers for ObjC)
+    typedef BOOL (^SFIndexSpecTypeFilter)(id);
+    extern SFIndexSpecTypeFilter kValueExtractedToColumn;
+    extern SFIndexSpecTypeFilter kValueExtractedToFtsColumn;
+    extern SFIndexSpecTypeFilter kValueIndexedWithJSONExtract;
+
+    // Enum and internal aliases
+    #define SFSmartStoreFTS4  SFSmartStoreFtsExtensionFts4
+    #define SFSmartStoreFTS5  SFSmartStoreFtsExtensionFts5
+    #define kLastStep         SFAlterSoupStepCleanup
+    #define kBufferSize       4096
 #endif

@@ -940,11 +940,11 @@ This map identifies every existing Swift file and its relationship to ObjC files
 | 🔶 Operator Gate 1 — report generated, awaiting review | 2026-05-17 21:00 MDT | |
 | 🔶 Operator Gate 1 — approved, proceeding | | |
 | Phase 2 (SalesforceAnalytics) — conversion started | 2026-05-17 21:30 MDT | |
-| Phase 2 — library boundary (build+test) started | | |
-| Phase 2 — library boundary complete | | |
-| 🔶 Operator Gate 2 — report generated, awaiting review | | |
-| 🔶 Operator Gate 2 — approved, proceeding | | |
-| Phase 3 (SmartStore) — conversion started | | |
+| Phase 2 — library boundary (build+test) started | 2026-05-17 22:00 MDT | |
+| Phase 2 — library boundary complete | 2026-05-17 22:15 MDT | ~15m |
+| 🔶 Operator Gate 2 — report generated, awaiting review | 2026-05-17 22:15 MDT | |
+| 🔶 Operator Gate 2 — approved, proceeding | 2026-05-17 22:20 MDT | |
+| Phase 3 (SmartStore) — conversion started | 2026-05-17 22:20 MDT | |
 | Phase 3 — library boundary (build+test) started | | |
 | Phase 3 — library boundary complete | | |
 | 🔶 Operator Gate 3 — report generated, awaiting review | | |
@@ -1054,10 +1054,10 @@ Existing Swift: 1 file (`SmartStore.swift` — extension)
 
 | Batch | Files | Lines | Status |
 |-------|-------|-------|--------|
-| 06 | `SFSoupIndex.m`, `SFStoreCursor.m`, `SFSDKStoreConfig.m`, `SFSDKSmartStoreLogger.m` | ~450 | [ ] |
-| 07 | `SFSmartStore.m` (2,066 lines — solo large file) | 2,066 | [ ] |
-| 08 | `SFSmartStoreDatabaseManager.m` (571), `SFSmartStoreUtils.m`, `SFQuerySpec.m` (526) | ~1,200 | [ ] |
-| 09 | `SFSmartSqlHelper.m`, `SFSmartSqlCache.m`, `SFAlterSoupLongOperation.m`, `SFSmartStoreInspectorViewController.m` (607), `SmartStoreSDKManager.m` | ~1,300 | [ ] |
+| 06 | `SFSoupIndex.m`, `SFStoreCursor.m`, `SFSDKStoreConfig.m`, `SFSDKSmartStoreLogger.m` | ~450 | [✓] |
+| 07 | `SFSmartStore.m` (2,066 lines — solo large file) | 2,066 | [✓] |
+| 08 | `SFSmartStoreDatabaseManager.m` (571), `SFSmartStoreUtils.m`, `SFQuerySpec.m` (526) | ~1,200 | [✓] |
+| 09 | `SFSmartSqlHelper.m`, `SFSmartSqlCache.m`, `SFAlterSoupLongOperation.m`, `SFSmartStoreInspectorViewController.m` (607), `SmartStoreSDKManager.m` | ~1,300 | [✓] |
 
 **Library boundary after batch 09:**
 - Retain .m/.h originals on disk; remove from Xcode project only (keep/update umbrella header `SmartStore.h`)

@@ -1,10 +1,5 @@
 /*
- SmartStore.h
- SmartStore
-
- Created by Eric C. Johnson on Mon May 18 09:24:25 MDT 2026.
-
- Copyright (c) 2026-present, salesforce.com, inc. All rights reserved.
+ Copyright (c) 2014-present, salesforce.com, inc. All rights reserved.
 
  Redistribution and use of this software in source and binary forms, with or without modification,
  are permitted provided that the following conditions are met:
@@ -27,6 +22,21 @@
  WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-// SmartStore umbrella header
-// After Swift conversion, types are provided by SmartStore-Swift.h
-@import SalesforceSDKCommon;
+import Foundation
+import SalesforceSDKCore
+
+/// Utility methods used by SmartStore.
+@objc(SFSmartStoreUtils)
+@objcMembers
+public class SmartStoreUtils: NSObject {
+
+    /// Returns a unique key for the given user, or a "global" key if no proper user is configured.
+    @objc
+    public class func userKey(forUser user: UserAccount?) -> String? {
+        if user == nil {
+            return SFKeyForUserAndScope(nil, .global)
+        } else {
+            return SFKeyForUserAndScope(user, .community)
+        }
+    }
+}
