@@ -27,8 +27,10 @@
 #import <SalesforceSDKCore/SFUserAccountIdentity.h>
 #import <SalesforceSDKCore/SFUserAccountConstants.h>
 #import <SalesforceSDKCore/SFOAuthCoordinator.h>
+#import <SalesforceSDKCore/SFSDKOAuth2.h>
 #import <SalesforceSDKCore/SFSDKLoginViewControllerConfig.h>
 #import <SalesforceSDKCore/SalesforceSDKConstants.h>
+#import <WebKit/WebKit.h>
 
 @class SFSDKSPConfig;
 @class SFLoginViewController;

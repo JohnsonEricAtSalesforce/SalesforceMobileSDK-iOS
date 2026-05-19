@@ -27,6 +27,7 @@
 #import "SFOAuthCredentials+Internal.h"
 #import "SFOAuthInfo.h"
 #import "SFSDKOAuth2.h"
+#import <SalesforceSDKCore/SalesforceSDKCore-Swift.h>
 
 @interface SFOAuthSessionRefresher()
 

@@ -23,10 +23,8 @@
  */
 
 #import <XCTest/XCTest.h>
+@import MobileSync;
 #import "SyncManagerTestCase.h"
-#import "MobileSyncSDKManager.h"
-#import "SFSoqlSyncDownTarget.h"
-#import <MobileSync/MobileSync-Swift.h>
 
 @interface SFSDKSyncsConfigTests : SyncManagerTestCase
 

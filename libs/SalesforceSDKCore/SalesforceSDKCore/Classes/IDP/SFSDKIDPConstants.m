@@ -70,7 +70,3 @@ NSString *const kSFStartURLParam = @"start_url";
 NSString *const kSFKeychainReferenceParam = @"keychain_reference";
 
 NSString *const kSFKeychainGroupParam = @"keychain_group";
-
-@implementation SFSDKIDPConstants
-
-@end

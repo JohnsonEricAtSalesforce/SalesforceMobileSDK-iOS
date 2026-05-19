@@ -166,7 +166,7 @@ struct DevInfoTitleBarView: View {
     
     var body: some View {
         ZStack {
-            Color(UIColor.salesforceBlue)
+            Color(UIColor.salesforceBlueColor)
             
             HStack {
                 Spacer()
@@ -200,15 +200,15 @@ struct DevInfoTitleBarView: View {
 public class DevInfoViewController: NSObject {
     
     @objc public static func makeViewController() -> UIViewController {
-        let infoData = SalesforceManager.shared.devSupportInfoList()
-        let title = SalesforceManager.shared.devInfoTitleString()
+        let infoData = SalesforceSDKManager.shared.getDevSupportInfos()
+        let title = SalesforceSDKManager.shared.devInfoTitleString()
         let view = DevInfoView(infoData: infoData, title: title)
         let hostingController = UIHostingController(rootView: view)
         
         // Use pageSheet for slide-up presentation
         #if !os(visionOS)
         if let sheet = hostingController.sheetPresentationController {
-            sheet.detents = [.medium(), .large()]
+            sheet.detents = [UISheetPresentationController.Detent.medium(), UISheetPresentationController.Detent.large()]
             sheet.prefersGrabberVisible = true
             sheet.preferredCornerRadius = 16
         }

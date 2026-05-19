@@ -24,6 +24,7 @@
 
 #import "NSDictionary+SFAdditions.h"
 #import "NSString+SFAdditions.h"
+#import <SalesforceSDKCore/SalesforceSDKCore-Swift.h>
 
 @implementation NSDictionary (SFAdditions)
 

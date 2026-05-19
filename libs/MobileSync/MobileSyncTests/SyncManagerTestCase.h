@@ -23,9 +23,9 @@
  */
 
 #import <XCTest/XCTest.h>
-#import <SalesforceSDKCore/SFUserAccountManager.h>
-#import <SmartStore/SmartStore.h>
-#import <MobileSync/MobileSync.h>
+@import SalesforceSDKCore;
+@import SmartStore;
+@import MobileSync;
 
 #define ACCOUNTS_SOUP       @"accounts"
 #define ACCOUNT_TYPE        @"Account"

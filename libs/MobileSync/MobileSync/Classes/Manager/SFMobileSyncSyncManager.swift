@@ -342,7 +342,7 @@ open class SFMobileSyncSyncManager: NSObject {
 
     // MARK: - Run sync
 
-    private func runSync(_ sync: SFSyncState, updateBlock: @escaping SFSyncSyncManagerUpdateBlock) {
+    @objc func runSync(_ sync: SFSyncState, updateBlock: @escaping SFSyncSyncManagerUpdateBlock) {
         var task: SFSyncTask
         switch sync.type {
         case .down:

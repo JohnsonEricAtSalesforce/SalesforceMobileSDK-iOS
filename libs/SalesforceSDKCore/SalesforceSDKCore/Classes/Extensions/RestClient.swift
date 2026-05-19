@@ -121,7 +121,7 @@ extension RestClient {
     /// - Throws: A RestClientError if the request fails
     @objc(sendURLRequest:networkServiceType:requiresAuthentication:completion:)
     public func send(urlRequest: URLRequest,
-                     networkServiceType: RestRequest.NetWorkServiceType = RestRequest.NetWorkServiceType.SFNetworkServiceTypeDefault,
+                     networkServiceType: RestRequest.NetWorkServiceType = RestRequest.NetWorkServiceType.default,
                      requiresAuthentication: Bool = true) async throws -> (Data, URLResponse) {
         guard let restRequest = urlRequest.toRestRequest(networkServiceType, requiresAuthentication) else {
             throw RestClientError.invalidRequest("Request is not a valid MSDK REST request.")
@@ -214,7 +214,7 @@ extension RestClient {
         }
         
         do {
-            let response = try await RestClient.shared.send(request: request)
+            let response = try await RestClient.sharedInstance.send(request: request)
             return try response.asDecodable(type: QueryResponse<Record>.self, decoder: decoder)
         } catch _ as RestClientError {
             return QueryResponse<Record>(totalSize: 0, done: true, records: [])
@@ -237,7 +237,7 @@ extension RestClient {
         withApiVersion version: String = SFRestDefaultAPIVersion,
         withDecoder decoder: JSONDecoder = .init()
     ) async throws -> QueryResponse<Record> {
-        let request = RestClient.shared.request(forQuery: query, apiVersion: version)
+        let request = RestClient.sharedInstance.requestForQuery(query, apiVersion: version)
         return try await fetchRecords(ofModelType: modelType, forRequest: request, withDecoder: decoder)
     }
     
@@ -298,7 +298,7 @@ extension RestClient {
     ///  models to create.
     ///
     /// Given a model object - Contact, you can use this pipeline like this:
-    /// contactsForCancellable = RestClient.shared.records(forRequest: request)
+    /// contactsForCancellable = RestClient.sharedInstance.records(forRequest: request)
     ///   .receive(on: RunLoop.main)
     ///   .assign(to: \.contacts, on: self)
     ///
@@ -308,7 +308,7 @@ extension RestClient {
         guard request.isQueryRequest else {
             return Empty(completeImmediately: true).eraseToAnyPublisher()
         }
-        return RestClient.shared.publisher(for: request)
+        return RestClient.sharedInstance.publisher(for: request)
             .tryMap({ (response) -> Data in
                 response.asData()
             })
@@ -325,7 +325,7 @@ extension RestClient {
     public func records<Record: Decodable>(forQuery query: String,
                                            withApiVersion version: String = SFRestDefaultAPIVersion,
                                            withDecoder decoder: JSONDecoder = .init()) -> AnyPublisher<QueryResponse<Record>, Never> {
-        let request = RestClient.shared.request(forQuery: query, apiVersion: version)
+        let request = RestClient.sharedInstance.requestForQuery(query, apiVersion: version)
         return self.records(forRequest: request, withDecoder: decoder)
     }
 }

@@ -36,6 +36,8 @@
 @import SalesforceSDKCommon;
 
 @class SFSDKAuthPreferences;
+@class SFSDKAuthRequest;
+@class SFSDKAppConfig;
 
 extern NSString * _Nonnull const kSFSDKUserAccountManagerErrorDomain;
 

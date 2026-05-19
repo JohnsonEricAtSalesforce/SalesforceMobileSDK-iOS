@@ -26,6 +26,7 @@
 #import "SFUserAccountManager.h"
 #import "SFUserAccountIdentity.h"
 #import "SFDirectoryManager.h"
+#import <SalesforceSDKCore/SalesforceSDKCore-Swift.h>
 
 static NSString * const kPreferencesFileName = @"Preferences.plist";
 

@@ -1,6 +1,6 @@
 /*
  Copyright (c) 2012-present, salesforce.com, inc. All rights reserved.
- 
+
  Redistribution and use of this software in source and binary forms, with or without modification,
  are permitted provided that the following conditions are met:
  * Redistributions of source code must retain the above copyright notice, this list of conditions
@@ -11,7 +11,7 @@
  * Neither the name of salesforce.com, inc. nor the names of its contributors may be used to
  endorse or promote products derived from this software without specific prior written
  permission of salesforce.com, inc.
- 
+
  THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR
  IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND
  FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR
@@ -25,78 +25,15 @@
 #ifndef __SF_USER_ACCOUNT_CONSTANTS_H__
 #define __SF_USER_ACCOUNT_CONSTANTS_H__
 
-/** User account restrictions
- */
-typedef NS_OPTIONS(NSUInteger, SFUserAccountAccessRestriction) {
-    SFUserAccountAccessRestrictionNone    = 0,
-    SFUserAccountAccessRestrictionChatter = 1 << 0,
-    SFUserAccountAccessRestrictionREST    = 1 << 1,
-    SFUserAccountAccessRestrictionOther   = 1 << 2,
-} NS_SWIFT_NAME(UserAccount.AccessRestriction);
+// These enums are now defined natively in Swift (UserAccount.AccountScope, etc.)
+// ObjC callers access them via the generated -Swift.h header which exports them
+// under their @objc names: SFUserAccountScope, SFUserAccountAccessRestriction, etc.
+//
+// Forward-declare the enum types for ObjC headers that reference them by name.
 
-/** The various scopes related to a user account
- */
-typedef NS_ENUM(NSUInteger, SFUserAccountScope) {
-    /** Global scope (one per application)
-     */
-    SFUserAccountScopeGlobal = 0,
-    
-    /** Scope by organization
-     */
-    SFUserAccountScopeOrg,
-    
-    /** Scope by user
-     */
-    SFUserAccountScopeUser,
-    
-    /** Scope by community
-     */
-    SFUserAccountScopeCommunity
-} NS_SWIFT_NAME(UserAccount.AccountScope);
-
-/** The various changes that can affect a user account
- */
-typedef NS_OPTIONS(NSUInteger, SFUserAccountDataChange) {
-    /** Unknown change
-     */
-    SFUserAccountDataChangeUnknown      = 1 << 0,
-
-    /** The community ID changed
-     */
-    SFUserAccountDataChangeCommunityId  = 1 << 1,
-
-    /** The ID data changed
-     */
-    SFUserAccountDataChangeIdData = 1 << 2,
-
-    /** InstanceURL Changed
-    */
-    SFUserAccountDataChangeInstanceURL = 1 << 3,
-
-    /** AccessToken Changed
-    */
-    SFUserAccountDataChangeAccessToken = 1 << 4
-
-}  NS_SWIFT_NAME(UserAccount.AccountDataChange);
-
-
-/** The various changes that can affect a user account
- */
-typedef NS_OPTIONS(NSUInteger, SFUserAccountChange) {
-    /** Unknown change
-     */
-     SFUserAccountChangeUnknown = 1 << 0,
-
-     /** New User
-      */
-    SFUserAccountChangeNewUser = 1 << 1,
-
-    /** Change of Current User
-     */
-    SFUserAccountChangeCurrentUser = 1 << 2
-
-}  NS_SWIFT_NAME(UserAccount.AccountChange);
-
-
+typedef NS_ENUM(NSUInteger, SFUserAccountScope);
+typedef NS_OPTIONS(NSUInteger, SFUserAccountAccessRestriction);
+typedef NS_OPTIONS(NSUInteger, SFUserAccountDataChange);
+typedef NS_OPTIONS(NSUInteger, SFUserAccountChange);
 
 #endif

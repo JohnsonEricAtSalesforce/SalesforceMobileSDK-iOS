@@ -26,6 +26,7 @@
 #import "SFDefaultUserManagementListViewController.h"
 #import "SFUserAccountManager.h"
 #import "UIColor+SFColors.h"
+#import <SalesforceSDKCore/SalesforceSDKCore-Swift.h>
 
 @interface SFDefaultUserManagementViewController ()
 

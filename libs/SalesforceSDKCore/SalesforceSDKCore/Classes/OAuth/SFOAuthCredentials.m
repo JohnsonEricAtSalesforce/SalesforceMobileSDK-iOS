@@ -25,6 +25,8 @@
 #import "SFOAuthCredentials+Internal.h"
 #import "SFSDKOAuth2+Internal.h"
 #import "SFSDKOAuthConstants.h"
+#import <SalesforceSDKCore/SalesforceSDKCore-Swift.h>
+#import "SFSDKCoreLogger.h"
 
 static NSString * const kSFOAuthArchiveVersion         = @"1.0.3"; // internal version included when archiving via encodeWithCoder
 static NSString * const kSFOAuthAccessGroup            = @"com.salesforce.oauth";
@@ -408,7 +410,11 @@ NSException * SFOAuthInvalidIdentifierException(void) {
         [self setPropertyForKey:@"accessToken" withValue:params[kSFOAuthAccessToken]];
     }
     if (params[kSFOAuthIssuedAt]) {
-        self.issuedAt = [SFSDKOAuth2 timestampStringToDate:params[kSFOAuthIssuedAt]];
+        NSString *timestamp = params[kSFOAuthIssuedAt];
+        if (timestamp) {
+            NSTimeInterval unixTimeInSecs = [timestamp doubleValue] / 1000.0;
+            self.issuedAt = [NSDate dateWithTimeIntervalSince1970:unixTimeInSecs];
+        }
     }
     if (params[kSFOAuthInstanceUrl]) {
         [self setPropertyForKey:@"instanceUrl" withValue:[NSURL URLWithString:params[kSFOAuthInstanceUrl]]];

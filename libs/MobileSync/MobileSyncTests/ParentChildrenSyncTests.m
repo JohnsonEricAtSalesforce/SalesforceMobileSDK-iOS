@@ -22,12 +22,10 @@
  WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#import <SmartStore/SFQuerySpec.h>
+@import SmartStore;
+@import MobileSync;
 #import "SyncManagerTestCase.h"
-#import "SFParentChildrenSyncDownTarget.h"
-#import "SFMobileSyncObjectUtils.h"
-#import "SFSyncUpdateCallbackQueue.h"
-#import "SFParentChildrenSyncUpTarget.h"
+#import "MobileSyncTests-Swift.h"
 
 //  Useful enum for trySyncUpsWithVariousChanges
 typedef NS_ENUM(NSInteger, SFSyncUpChange) {

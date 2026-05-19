@@ -97,12 +97,12 @@ public extension PushNotificationManager {
     /// Invokes a server-side notification action for a specific notification.
     ///
     /// - Parameters:
-    ///   - client: The `RestClient` instance to use for the request. Defaults to `RestClient.shared`.
+    ///   - client: The `RestClient` instance to use for the request. Defaults to `RestClient.sharedInstance`.
     ///   - notificationId: The ID of the notification for which the action is invoked.
     ///   - actionIdentifier: The identifier of the action to be performed.
     /// - Throws: `PushNotificationManagerError.notificationActionInvocationFailed` if the action invocation fails.
     /// - Returns: An `ActionResultRepresentation` containing the response from the server.
-    func invokeServerNotificationAction(client: RestClient = RestClient.shared,
+    func invokeServerNotificationAction(client: RestClient = RestClient.sharedInstance,
                                                notificationId: String,
                                                actionIdentifier: String
     ) async throws -> ActionResultRepresentation {
@@ -110,7 +110,7 @@ public extension PushNotificationManager {
             throw PushNotificationManagerError.notificationActionInvocationFailed("API Version must be at least v64.0")
         }
         
-        let request = client.request(forInvokeNotificationAction: notificationId, actionIdentifier: actionIdentifier)
+        let request = client.requestForInvokeNotificationAction(notificationId, actionIdentifier: actionIdentifier)
         do {
             let response = try await client.send(request: request)
             return try response.asDecodable(type: ActionResultRepresentation.self)

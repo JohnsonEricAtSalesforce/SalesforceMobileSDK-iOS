@@ -6,5 +6,5 @@
     #import <Foundation/Foundation.h>
     #import <UIKit/UIKit.h>
     #import "SalesforceSDKConstants.h"
-    #import "SFSDKCoreLogger.h"
+    // SFSDKCoreLogger is now in Swift; import -Swift.h in .m files that need it
 #endif

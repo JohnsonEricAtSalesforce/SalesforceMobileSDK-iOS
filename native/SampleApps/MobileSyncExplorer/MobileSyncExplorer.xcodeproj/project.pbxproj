@@ -61,6 +61,20 @@
 		BCAE02051D7F7A9A00944153 /* SalesforceAnalytics.framework in Embed Frameworks */ = {isa = PBXBuildFile; fileRef = CE2B8D4C1CE932BD00C6FC6A /* SalesforceAnalytics.framework */; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
 		CE2B8D671CE932D600C6FC6A /* SalesforceAnalytics.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = CE2B8D4C1CE932BD00C6FC6A /* SalesforceAnalytics.framework */; };
 		CE6AB39B1C10C4F50012125E /* libz.tbd in Frameworks */ = {isa = PBXBuildFile; fileRef = CE6AB39A1C10C4F50012125E /* libz.tbd */; };
+		C49B0DA0F8BBC9A23C0FC736 /* main.swift in Sources */ = {isa = PBXBuildFile; fileRef = 30323BAE39EE9BCC5D4F3A21 /* main.swift */; };
+		B02490387E2BBA0C46F00B31 /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = A5981C37C758CBF16C74814D /* AppDelegate.swift */; };
+		993CF0D9D328221A43F7DAEA /* SceneDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 62A5C7CF4AFDACE86CE80FC6 /* SceneDelegate.swift */; };
+		B43040CDF0C484F16176894D /* InitialViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = C8700EB8616A9C3B54A14BE2 /* InitialViewController.swift */; };
+		7504B0732AAEEF09B179D96F /* ActionsPopupController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 603D4E3C33C1E052D3AEC721 /* ActionsPopupController.swift */; };
+		9F96BA4AA01DBEAEF858458F /* ContactDetailViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8867D4AA390ED060D7E0E2CD /* ContactDetailViewController.swift */; };
+		D263F6C1373D764338C377C5 /* ContactListViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 361AE8F97FF0FF1BED8250F2 /* ContactListViewController.swift */; };
+		81208F3C10B63E5E0E8F8880 /* SObjectDataFieldSpec.swift in Sources */ = {isa = PBXBuildFile; fileRef = CAA1A08BCD40757476D067C9 /* SObjectDataFieldSpec.swift */; };
+		9A7A61B49D80634594F04E9E /* SObjectDataSpec.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7145B1EDA16B5F65C9C7A959 /* SObjectDataSpec.swift */; };
+		516A85FAEA3C222E868CF4AC /* SObjectData.swift in Sources */ = {isa = PBXBuildFile; fileRef = 08B1EC3C291F09E4577154BE /* SObjectData.swift */; };
+		2F525CD0F8F75D8B37141CE2 /* ContactSObjectDataSpec.swift in Sources */ = {isa = PBXBuildFile; fileRef = 96B1329B8F9B2E60D7B6BBFF /* ContactSObjectDataSpec.swift */; };
+		142B8F0644DF7F7EE8DEE640 /* ContactSObjectData.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0AA38BF678FAFE7C3AFF64E7 /* ContactSObjectData.swift */; };
+		10DED726AAC00E9DE4A51A7D /* MobileSyncExplorerConfig.swift in Sources */ = {isa = PBXBuildFile; fileRef = 62377FD403BF6C33A4B01EC1 /* MobileSyncExplorerConfig.swift */; };
+		16F95CEAADA0E71222FCC34F /* SObjectDataManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5BA792462CC15C8382A1A520 /* SObjectDataManager.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -322,6 +336,20 @@
 		B7E0CF321D91CECE0050A1F4 /* NotificationCenter.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = NotificationCenter.framework; path = System/Library/Frameworks/NotificationCenter.framework; sourceTree = SDKROOT; };
 		CE2B8D341CE932BD00C6FC6A /* SalesforceAnalytics.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; name = SalesforceAnalytics.xcodeproj; path = ../../../libs/SalesforceAnalytics/SalesforceAnalytics.xcodeproj; sourceTree = "<group>"; };
 		CE6AB39A1C10C4F50012125E /* libz.tbd */ = {isa = PBXFileReference; lastKnownFileType = "sourcecode.text-based-dylib-definition"; name = libz.tbd; path = usr/lib/libz.tbd; sourceTree = SDKROOT; };
+		30323BAE39EE9BCC5D4F3A21 /* main.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = main.swift; sourceTree = "<group>"; };
+		A5981C37C758CBF16C74814D /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppDelegate.swift; sourceTree = "<group>"; };
+		62A5C7CF4AFDACE86CE80FC6 /* SceneDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SceneDelegate.swift; sourceTree = "<group>"; };
+		C8700EB8616A9C3B54A14BE2 /* InitialViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = InitialViewController.swift; sourceTree = "<group>"; };
+		603D4E3C33C1E052D3AEC721 /* ActionsPopupController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ActionsPopupController.swift; sourceTree = "<group>"; };
+		8867D4AA390ED060D7E0E2CD /* ContactDetailViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContactDetailViewController.swift; sourceTree = "<group>"; };
+		361AE8F97FF0FF1BED8250F2 /* ContactListViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContactListViewController.swift; sourceTree = "<group>"; };
+		CAA1A08BCD40757476D067C9 /* SObjectDataFieldSpec.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SObjectDataFieldSpec.swift; sourceTree = "<group>"; };
+		7145B1EDA16B5F65C9C7A959 /* SObjectDataSpec.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SObjectDataSpec.swift; sourceTree = "<group>"; };
+		08B1EC3C291F09E4577154BE /* SObjectData.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SObjectData.swift; sourceTree = "<group>"; };
+		96B1329B8F9B2E60D7B6BBFF /* ContactSObjectDataSpec.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContactSObjectDataSpec.swift; sourceTree = "<group>"; };
+		0AA38BF678FAFE7C3AFF64E7 /* ContactSObjectData.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContactSObjectData.swift; sourceTree = "<group>"; };
+		62377FD403BF6C33A4B01EC1 /* MobileSyncExplorerConfig.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MobileSyncExplorerConfig.swift; sourceTree = "<group>"; };
+		5BA792462CC15C8382A1A520 /* SObjectDataManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SObjectDataManager.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -362,16 +390,22 @@
 			isa = PBXGroup;
 			children = (
 				B7BAD7321FBB7DC30046629F /* IDPLoginViewController.xib */,
+				603D4E3C33C1E052D3AEC721 /* ActionsPopupController.swift */,
 				4FEAC2421B97C65C00B08512 /* ActionsPopupController.m */,
 				4FEAC2431B97C65C00B08512 /* ActionsPopupController.h */,
+				A5981C37C758CBF16C74814D /* AppDelegate.swift */,
 				820C8B0C19E6054E00E9BE5C /* AppDelegate.h */,
 				820C8B0D19E6054E00E9BE5C /* AppDelegate.m */,
+				62A5C7CF4AFDACE86CE80FC6 /* SceneDelegate.swift */,
 				SD00000219E6054E00D37B27 /* SceneDelegate.h */,
 				SD00000019E6054E00D37B27 /* SceneDelegate.m */,
+				C8700EB8616A9C3B54A14BE2 /* InitialViewController.swift */,
 				820C8B0F19E6059400E9BE5C /* InitialViewController.h */,
 				820C8B1019E6059400E9BE5C /* InitialViewController.m */,
+				8867D4AA390ED060D7E0E2CD /* ContactDetailViewController.swift */,
 				8284055419EA09E40079AB60 /* ContactDetailViewController.h */,
 				8284055519EA09E40079AB60 /* ContactDetailViewController.m */,
+				361AE8F97FF0FF1BED8250F2 /* ContactListViewController.swift */,
 				820C8B3019E60BDE00E9BE5C /* ContactListViewController.h */,
 				820C8B3119E60BDE00E9BE5C /* ContactListViewController.m */,
 			);
@@ -447,6 +481,7 @@
 				82A171DD1D8377BB00688320 /* MobileSyncExplorer.entitlements */,
 				827C631C19E6018C00027484 /* MobileSyncExplorer-Info.plist */,
 				827C631D19E6018C00027484 /* InfoPlist.strings */,
+				30323BAE39EE9BCC5D4F3A21 /* main.swift */,
 				827C632019E6018C00027484 /* main.m */,
 				827C632219E6018C00027484 /* MobileSyncExplorer-Prefix.pch */,
 				696A8B692AD0F7B300A85A1D /* PrivacyInfo.xcprivacy */,
@@ -487,21 +522,28 @@
 		B7A134311D99D52600A4559C /* MobileSyncExplorerCommon */ = {
 			isa = PBXGroup;
 			children = (
+				5BA792462CC15C8382A1A520 /* SObjectDataManager.swift */,
 				B7A134661D99DF8E00A4559C /* SObjectDataManager.m */,
 				B7A134671D99DF8E00A4559C /* SObjectDataManager.h */,
+				96B1329B8F9B2E60D7B6BBFF /* ContactSObjectDataSpec.swift */,
 				B7A134681D99DF8E00A4559C /* ContactSObjectDataSpec.m */,
+				0AA38BF678FAFE7C3AFF64E7 /* ContactSObjectData.swift */,
 				B7A134691D99DF8E00A4559C /* ContactSObjectData.h */,
 				B7A1346A1D99DF8E00A4559C /* ContactSObjectData.m */,
 				B7A1346B1D99DF8E00A4559C /* ContactSObjectDataSpec.h */,
+				08B1EC3C291F09E4577154BE /* SObjectData.swift */,
 				B7A1346C1D99DF8E00A4559C /* SObjectData.h */,
 				B7A1346D1D99DF8E00A4559C /* SObjectData.m */,
 				B7A1346E1D99DF8E00A4559C /* SObjectData+Internal.h */,
+				CAA1A08BCD40757476D067C9 /* SObjectDataFieldSpec.swift */,
 				B7A1346F1D99DF8E00A4559C /* SObjectDataFieldSpec.h */,
 				B7A134701D99DF8E00A4559C /* SObjectDataFieldSpec.m */,
+				7145B1EDA16B5F65C9C7A959 /* SObjectDataSpec.swift */,
 				B7A134711D99DF8E00A4559C /* SObjectDataSpec.h */,
 				B7A134721D99DF8E00A4559C /* SObjectDataSpec.m */,
 				B7A134321D99D52600A4559C /* MobileSyncExplorerCommon.h */,
 				B7A134331D99D52600A4559C /* Info.plist */,
+				62377FD403BF6C33A4B01EC1 /* MobileSyncExplorerConfig.swift */,
 				B71E61B31D9AD4990065FD4E /* MobileSyncExplorerConfig.h */,
 				B71E61B41D9AD4990065FD4E /* MobileSyncExplorerConfig.m */,
 			);
@@ -536,14 +578,6 @@
 			buildActionMask = 2147483647;
 			files = (
 				B7A134341D99D52600A4559C /* MobileSyncExplorerCommon.h in Headers */,
-				B7A134A81D99E9FE00A4559C /* SObjectDataManager.h in Headers */,
-				B7A134A91D99E9FE00A4559C /* ContactSObjectData.h in Headers */,
-				B7A134AA1D99E9FE00A4559C /* ContactSObjectDataSpec.h in Headers */,
-				B7A134AB1D99E9FE00A4559C /* SObjectData.h in Headers */,
-				B7A134AD1D99E9FE00A4559C /* SObjectDataFieldSpec.h in Headers */,
-				B71E61B51D9AD4990065FD4E /* MobileSyncExplorerConfig.h in Headers */,
-				B7A134AE1D99E9FE00A4559C /* SObjectDataSpec.h in Headers */,
-				B7A134AC1D99E9FE00A4559C /* SObjectData+Internal.h in Headers */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -812,13 +846,13 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				820C8B1119E6059400E9BE5C /* InitialViewController.m in Sources */,
-				820C8B0E19E6054E00E9BE5C /* AppDelegate.m in Sources */,
-				SD00000119E6054E00D37B27 /* SceneDelegate.m in Sources */,
-				4FEAC2451B97C65C00B08512 /* ActionsPopupController.m in Sources */,
-				8284055619EA09E40079AB60 /* ContactDetailViewController.m in Sources */,
-				820C8B3219E60BDE00E9BE5C /* ContactListViewController.m in Sources */,
-				827C632119E6018C00027484 /* main.m in Sources */,
+				B43040CDF0C484F16176894D /* InitialViewController.swift in Sources */,
+				B02490387E2BBA0C46F00B31 /* AppDelegate.swift in Sources */,
+				993CF0D9D328221A43F7DAEA /* SceneDelegate.swift in Sources */,
+				7504B0732AAEEF09B179D96F /* ActionsPopupController.swift in Sources */,
+				9F96BA4AA01DBEAEF858458F /* ContactDetailViewController.swift in Sources */,
+				D263F6C1373D764338C377C5 /* ContactListViewController.swift in Sources */,
+				C49B0DA0F8BBC9A23C0FC736 /* main.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -826,13 +860,13 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				B7A135161D99EC6100A4559C /* SObjectData.m in Sources */,
-				B7A135141D99EC6100A4559C /* ContactSObjectDataSpec.m in Sources */,
-				B7A135131D99EC6100A4559C /* SObjectDataManager.m in Sources */,
-				B7A135181D99EC6100A4559C /* SObjectDataSpec.m in Sources */,
-				B71E61B61D9AD4990065FD4E /* MobileSyncExplorerConfig.m in Sources */,
-				B7A135171D99EC6100A4559C /* SObjectDataFieldSpec.m in Sources */,
-				B7A135151D99EC6100A4559C /* ContactSObjectData.m in Sources */,
+				516A85FAEA3C222E868CF4AC /* SObjectData.swift in Sources */,
+				2F525CD0F8F75D8B37141CE2 /* ContactSObjectDataSpec.swift in Sources */,
+				16F95CEAADA0E71222FCC34F /* SObjectDataManager.swift in Sources */,
+				9A7A61B49D80634594F04E9E /* SObjectDataSpec.swift in Sources */,
+				10DED726AAC00E9DE4A51A7D /* MobileSyncExplorerConfig.swift in Sources */,
+				81208F3C10B63E5E0E8F8880 /* SObjectDataFieldSpec.swift in Sources */,
+				142B8F0644DF7F7EE8DEE640 /* ContactSObjectData.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -1039,7 +1073,7 @@
 				PRODUCT_BUNDLE_IDENTIFIER = com.salesforce.mobilesdk.MobileSyncExplorer;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SUPPORTS_MACCATALYST = NO;
-				SWIFT_VERSION = 4.0;
+				SWIFT_VERSION = 5.0;
 				TARGETED_DEVICE_FAMILY = "1,2";
 				WRAPPER_EXTENSION = app;
 			};
@@ -1063,7 +1097,7 @@
 				PRODUCT_BUNDLE_IDENTIFIER = com.salesforce.mobilesdk.MobileSyncExplorer;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SUPPORTS_MACCATALYST = NO;
-				SWIFT_VERSION = 4.0;
+				SWIFT_VERSION = 5.0;
 				TARGETED_DEVICE_FAMILY = "1,2";
 				WRAPPER_EXTENSION = app;
 			};
@@ -1094,6 +1128,7 @@
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SKIP_INSTALL = YES;
 				SUPPORTS_MACCATALYST = YES;
+				SWIFT_VERSION = 5.0;
 				TARGETED_DEVICE_FAMILY = "1,2";
 				VERSIONING_SYSTEM = "apple-generic";
 				VERSION_INFO_PREFIX = "";
@@ -1126,6 +1161,7 @@
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SKIP_INSTALL = YES;
 				SUPPORTS_MACCATALYST = YES;
+				SWIFT_VERSION = 5.0;
 				TARGETED_DEVICE_FAMILY = "1,2";
 				VERSIONING_SYSTEM = "apple-generic";
 				VERSION_INFO_PREFIX = "";

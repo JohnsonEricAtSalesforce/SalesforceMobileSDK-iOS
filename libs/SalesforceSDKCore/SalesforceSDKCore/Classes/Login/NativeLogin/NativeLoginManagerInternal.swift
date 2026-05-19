@@ -117,7 +117,7 @@ public class NativeLoginManagerInternal: NSObject, NativeLoginManager {
             return .unknownError
             
         }
-        let authRequest = RestRequest(method: .POST, baseURL: loginUrl, path: kSFOAuthEndPointAuthorize, queryParams: nil)
+        let authRequest = RestRequest(method: .POST, serviceHostType: .custom, baseURL: loginUrl, path: kSFOAuthEndPointAuthorize, queryParams: nil)
         let customHeaders: NSMutableDictionary = [kSFOAuthRequestTypeParamName: kSFOAuthRequestTypeNamedUser,
                                                         kHttpHeaderContentType: kHttpPostContentType,
                                             kSFOAuthAuthorizationTypeParamName: "\(kSFOAuthAuthorizationTypeBasic) \(credentials)"]
@@ -133,7 +133,7 @@ public class NativeLoginManagerInternal: NSObject, NativeLoginManager {
         
         // First REST Call - Authorization
         let authorizationResponse = await handleResponseForRequest {
-            try await RestClient.sharedGlobal.send(request: authRequest)
+            try await RestClient.sharedGlobalInstance.send(request: authRequest)
         }
         
         // Second REST Call - Access token request with code verifier
@@ -150,7 +150,7 @@ public class NativeLoginManagerInternal: NSObject, NativeLoginManager {
     }
     
     public func shouldShowBackButton() -> Bool {
-        if (SalesforceManager.shared.biometricAuthenticationManager().locked) {
+        if (SalesforceSDKManager.shared.biometricAuthenticationManager().locked) {
             return false
         }
         
@@ -161,8 +161,8 @@ public class NativeLoginManagerInternal: NSObject, NativeLoginManager {
     public func cancelAuthentication() {
         if (shouldShowBackButton()) {
             UserAccountManager.shared.stopCurrentAuthentication()
-            SFSDKWindowManager.shared().authWindow(nil).viewController?.presentedViewController?.dismiss(animated: false, completion: {
-                SFSDKWindowManager.shared().authWindow(nil).dismissWindow()
+            SFSDKWindowManager.shared.authWindow(nil).viewController?.presentedViewController?.dismiss(animated: false, completion: {
+                SFSDKWindowManager.shared.authWindow(nil).dismissWindow()
             })
         }
     }
@@ -179,7 +179,7 @@ public class NativeLoginManagerInternal: NSObject, NativeLoginManager {
     
     public func getBiometricAuthenticationUsername() -> String? {
         if BiometricAuthenticationManagerInternal.shared.locked {
-            return UserAccountManager.shared.currentUserAccount?.idData.username
+            return UserAccountManager.shared.currentUserAccount?.idData?.username
         }
         
         return nil
@@ -273,7 +273,7 @@ public class NativeLoginManagerInternal: NSObject, NativeLoginManager {
         
         // Create the start registration request.
         let startRegistrationRequest = RestRequest(
-            method: .POST,
+            method: .POST, serviceHostType: .custom,
             baseURL: loginUrl,
             path: kSFOAuthEndPointHeadlessInitRegistration,
             queryParams: nil)
@@ -286,7 +286,7 @@ public class NativeLoginManagerInternal: NSObject, NativeLoginManager {
 
         // Submit the start registration request and fetch the response.
         let startRegistrationResponse = await handleResponseForRequest {
-            try await RestClient.sharedGlobal.send(request: startRegistrationRequest)
+            try await RestClient.sharedGlobalInstance.send(request: startRegistrationRequest)
         }
         
         // React to the start registration response.
@@ -417,7 +417,7 @@ public class NativeLoginManagerInternal: NSObject, NativeLoginManager {
         
         // Create the start password reset request.
         let startPasswordResetRequest = RestRequest(
-            method: .POST,
+            method: .POST, serviceHostType: .custom,
             baseURL: loginUrl,
             path: kSFOAuthEndPointHeadlessForgotPassword,
             queryParams: nil)
@@ -429,7 +429,7 @@ public class NativeLoginManagerInternal: NSObject, NativeLoginManager {
         )
         
         let startPasswordResetResponse = await handleResponseForRequest {
-            try await RestClient.sharedGlobal.send(request: startPasswordResetRequest)
+            try await RestClient.sharedGlobalInstance.send(request: startPasswordResetRequest)
         }
         
         // React to the start password reset response.
@@ -478,7 +478,7 @@ public class NativeLoginManagerInternal: NSObject, NativeLoginManager {
         
         // Create the complete password reset request.
         let completePasswordResetRequest = RestRequest(
-            method: .POST,
+            method: .POST, serviceHostType: .custom,
             baseURL: loginUrl,
             path: kSFOAuthEndPointHeadlessForgotPassword,
             queryParams: nil)
@@ -490,7 +490,7 @@ public class NativeLoginManagerInternal: NSObject, NativeLoginManager {
         )
         
         let completePasswordResetResponse = await handleResponseForRequest {
-            try await RestClient.sharedGlobal.send(request: completePasswordResetRequest)
+            try await RestClient.sharedGlobalInstance.send(request: completePasswordResetRequest)
         }
         
         // React to the complete password reset response.
@@ -551,7 +551,7 @@ public class NativeLoginManagerInternal: NSObject, NativeLoginManager {
         
         // Create the OTP request.
         let otpRequest = RestRequest(
-            method: .POST,
+            method: .POST, serviceHostType: .custom,
             baseURL: loginUrl,
             path: kSFOAuthEndPointHeadlessInitPasswordlessLogin,
             queryParams: nil)
@@ -564,7 +564,7 @@ public class NativeLoginManagerInternal: NSObject, NativeLoginManager {
         
         // Submit the OTP request and fetch the OTP response.
         let otpResponse = await handleResponseForRequest {
-            try await RestClient.sharedGlobal.send(request: otpRequest)
+            try await RestClient.sharedGlobalInstance.send(request: otpRequest)
         }
         
         // React to the OTP response.
@@ -637,7 +637,7 @@ public class NativeLoginManagerInternal: NSObject, NativeLoginManager {
         
         // Create the authorization request.
         let authorizationRequest = RestRequest(
-            method: .POST,
+            method: .POST, serviceHostType: .custom,
             baseURL: loginUrl,
             path: kSFOAuthEndPointAuthorize,
             queryParams: nil)
@@ -650,7 +650,7 @@ public class NativeLoginManagerInternal: NSObject, NativeLoginManager {
         
         // Submit the authorization request and fetch the authorization response.
         let authorizationResponse = await handleResponseForRequest {
-            try await RestClient.sharedGlobal.send(request: authorizationRequest)
+            try await RestClient.sharedGlobalInstance.send(request: authorizationRequest)
         }
         
         // React to the authorization response.
@@ -896,7 +896,7 @@ public class NativeLoginManagerInternal: NSObject, NativeLoginManager {
         
         // Create the authorization request.
         let authorizationRequest = RestRequest(
-            method: .POST,
+            method: .POST, serviceHostType: .custom,
             baseURL: loginUrl,
             path: kSFOAuthEndPointAuthorize,
             queryParams: nil)
@@ -909,7 +909,7 @@ public class NativeLoginManagerInternal: NSObject, NativeLoginManager {
         
         // Submit the authorization request and fetch the authorization response.
         let authorizationResponse = await handleResponseForRequest {
-            try await RestClient.sharedGlobal.send(request: authorizationRequest)
+            try await RestClient.sharedGlobalInstance.send(request: authorizationRequest)
         }
         
         // React to the authorization response.
@@ -935,14 +935,14 @@ public class NativeLoginManagerInternal: NSObject, NativeLoginManager {
                 // Decode the authorization response.
                 let authorizationResponseBody = try successfulResponse.asDecodable(
                     type: AuthorizationResponseBody.self)
-                let grantType = SalesforceManager.shared.useHybridAuthentication ? kSFOAuthGrantTypeHybridAuthorizationCode : kSFOAuthGrantTypeAuthorizationCode
+                let grantType = SalesforceSDKManager.shared.useHybridAuthentication ? kSFOAuthGrantTypeHybridAuthorizationCode : kSFOAuthGrantTypeAuthorizationCode
                 
                 // Generate the access token request body.
                 let tokenRequestBody = "\(kSFOAuthResponseTypeCode)=\(authorizationResponseBody.code)&\(kSFOAuthGrantType)=\(grantType)&\(kSFOAuthClientId)=\(clientId)&\(kSFOAuthRedirectUri)=\(redirectUri)&\(kSFOAuthCodeVerifierParamName)=\(codeVerifier)"
                 
                 // Create the access token request.
                 let tokenRequest = RestRequest(
-                    method: .POST,
+                    method: .POST, serviceHostType: .custom,
                     baseURL: authorizationResponseBody.sfdc_community_url,
                     path: kSFOAuthEndPointToken,
                     queryParams: nil)
@@ -954,7 +954,7 @@ public class NativeLoginManagerInternal: NSObject, NativeLoginManager {
                 
                 // Submit the access token request.
                 let tokenResponse = await handleResponseForRequest {
-                    try await RestClient.sharedGlobal.send(request: tokenRequest)
+                    try await RestClient.sharedGlobalInstance.send(request: tokenRequest)
                 }
                 
                 // React to the token response.

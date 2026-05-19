@@ -24,6 +24,7 @@
 
 #import "SFSDKLogoutBlocker.h"
 #import <objc/runtime.h>
+#import <SalesforceSDKCore/SalesforceSDKCore-Swift.h>
 #import "SFSDKCoreLogger.h"
 #import "SFUserAccountManager.h"
 #import "SFOAuthCredentials.h"

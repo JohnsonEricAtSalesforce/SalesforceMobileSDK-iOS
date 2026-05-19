@@ -43,7 +43,7 @@ extension RestClient {
     ///   - request: MSDK RestRequest.
     /// - Returns: A configured WebSocketClient.
     public func newWebSocket(from request: RestRequest) async throws -> WebSocketClient {
-        guard let urlRequest = request.prepare(forSend: userAccount) else {
+        guard let user = self.user, let urlRequest = request.prepareRequestForSend(user) else {
             throw RestClientError.invalidRequest("Request is not a valid MSDK REST request.")
         }
         let network = Network.sharedEphemeralInstance()

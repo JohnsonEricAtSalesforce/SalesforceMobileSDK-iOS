@@ -73,10 +73,10 @@ struct NewLoginHostView: View {
     
     init(viewControllerConfig: SFSDKViewControllerConfig?, saveAction: @escaping ((String, String?) -> Void)) {
         self.saveAction = saveAction
-        if let navBarTintColor =  viewControllerConfig?.navigationBarTintColor {
+        if let navBarTintColor =  viewControllerConfig?.navBarTintColor {
             self.navBarTintColor = Color(uiColor: navBarTintColor)
         } else {
-            self.navBarTintColor = Color(uiColor: UIColor.salesforceNavBarTint)
+            self.navBarTintColor = Color(uiColor: UIColor.salesforceNavBarTintColor)
         }
     }
     

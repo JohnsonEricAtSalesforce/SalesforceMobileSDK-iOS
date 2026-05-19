@@ -27,10 +27,9 @@
  WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+@import SmartStore;
+@import MobileSync;
 #import "SyncManagerTestCase.h"
-#import "SFMetadataSyncManager.h"
-#import "SFMobileSyncSyncManager.h"
-#import <SmartStore/SFQuerySpec.h>
 
 static NSString * const kAccountKeyPrefix = @"001";
 static NSString * const kSoupName = @"sfdcMetadata";

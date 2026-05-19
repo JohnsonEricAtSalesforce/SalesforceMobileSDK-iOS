@@ -29,6 +29,7 @@
 
 #import "SFSDKStartURLHandler.h"
 #import "SFApplicationHelper.h"
+#import <SalesforceSDKCore/SalesforceSDKCore-Swift.h>
 @implementation SFSDKStartURLHandler
 
 - (BOOL)canHandleRequest:(NSURL *)url options:(NSDictionary *)options {

@@ -40,8 +40,8 @@ public struct AuthFlowTypesView: View {
     @State private var importJSONText: String = ""
 
     public init() {
-        _useWebServerFlow = State(initialValue: SalesforceManager.shared.useWebServerAuthentication)
-        _useHybridFlow = State(initialValue: SalesforceManager.shared.useHybridAuthentication)
+        _useWebServerFlow = State(initialValue: SalesforceSDKManager.shared.useWebServerAuthentication)
+        _useHybridFlow = State(initialValue: SalesforceSDKManager.shared.useHybridAuthentication)
     }
 
     public var body: some View {
@@ -69,7 +69,7 @@ public struct AuthFlowTypesView: View {
                 }
                 .accessibilityIdentifier("useWebServerFlowToggle")
                 .onChange(of: useWebServerFlow) { _, newValue in
-                    SalesforceManager.shared.useWebServerAuthentication = newValue
+                    SalesforceSDKManager.shared.useWebServerAuthentication = newValue
                 }
                 .padding(.horizontal)
 
@@ -79,7 +79,7 @@ public struct AuthFlowTypesView: View {
                 }
                 .accessibilityIdentifier("useHybridFlowToggle")
                 .onChange(of: useHybridFlow) { _, newValue in
-                    SalesforceManager.shared.useHybridAuthentication = newValue
+                    SalesforceSDKManager.shared.useHybridAuthentication = newValue
                 }
                 .padding(.horizontal)
             }
@@ -106,11 +106,11 @@ public struct AuthFlowTypesView: View {
 
         if let webServerFlow = json[AuthFlowTypesJSONKeys.useWebServerFlow] as? Bool {
             useWebServerFlow = webServerFlow
-            SalesforceManager.shared.useWebServerAuthentication = webServerFlow
+            SalesforceSDKManager.shared.useWebServerAuthentication = webServerFlow
         }
         if let hybridFlow = json[AuthFlowTypesJSONKeys.useHybridFlow] as? Bool {
             useHybridFlow = hybridFlow
-            SalesforceManager.shared.useHybridAuthentication = hybridFlow
+            SalesforceSDKManager.shared.useHybridAuthentication = hybridFlow
         }
     }
 }

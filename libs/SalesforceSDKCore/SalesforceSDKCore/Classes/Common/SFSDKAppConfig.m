@@ -24,6 +24,7 @@
 
 #import "SFSDKAppConfig.h"
 #import "SFSDKResourceUtils.h"
+#import <SalesforceSDKCore/SalesforceSDKCore-Swift.h>
 
 // Config error constants
 NSString * const SFSDKDefaultNativeAppConfigFilePath = @"/bootconfig.plist";

@@ -33,6 +33,7 @@
 #import "SFNetwork.h"
 @import SalesforceSDKCommon;
 #import "NSData+SFAdditions.h"
+#import <SalesforceSDKCore/SalesforceSDKCore-Swift.h>
 
 NSString * const  kSFOAuthErrorDomain  = @"com.salesforce.OAuth.ErrorDomain";
 const NSTimeInterval kSFOAuthDefaultTimeout  = 120.0; // seconds

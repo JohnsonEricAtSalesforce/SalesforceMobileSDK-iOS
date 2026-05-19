@@ -28,6 +28,7 @@
 #import "SFUserAccount.h"
 #import "NSString+SFAdditions.h"
 @import SalesforceSDKCommon;
+#import <SalesforceSDKCore/SalesforceSDKCore-Swift.h>
 
 static NSString * const kDefaultOrgName = @"org";
 NSString * const kDefaultCommunityName = @"internal";

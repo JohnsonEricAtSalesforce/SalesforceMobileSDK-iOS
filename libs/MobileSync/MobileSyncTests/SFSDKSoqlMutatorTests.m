@@ -23,8 +23,7 @@ WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH 
 */
 
 #import <XCTest/XCTest.h>
-#import "SFSDKSoqlMutator.h"
-#import "SFSDKSoqlTokenizer.h"
+@import MobileSync;
 
 @interface SFSDKSoqlMutatorTests : XCTestCase
 

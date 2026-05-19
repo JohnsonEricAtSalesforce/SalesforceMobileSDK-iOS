@@ -190,7 +190,7 @@ class BriefcaseSyncDownTests: SyncManagerTestCase {
         let syncResult = try syncDownFetchingTwoObjectTypes(numberAccounts: numberOfRecords, numberContacts: numberOfRecords, idsPerRetrieve: 500, numberFetches: 1)
         XCTAssertEqual(numberOfRecords, syncResult.accountIds.count)
         XCTAssertEqual(numberOfRecords, syncResult.contactIds.count)
-        let target = try XCTUnwrap(syncManager.syncStatus(forId: syncResult.syncId as NSNumber)?.target as? SyncDownTarget)
+        let target = try XCTUnwrap(syncManager.getSyncStatus(syncResult.syncId as NSNumber)?.target as? SyncDownTarget)
         
         // No dirty records
         var idsToSkip = target.getIdsToSkip(syncManager, soupName: "")
@@ -211,13 +211,13 @@ class BriefcaseSyncDownTests: SyncManagerTestCase {
     func startFetch(target: SyncDownTarget, syncManager: SyncManager, maxTimestamp: Int64) throws -> [[String: Any]] {
         let expectation = expectation(description: "fetch")
         var result: [Any]?
-        target.startFetch(syncManager: syncManager, maxTimeStamp: maxTimestamp) { error in
+        target.startFetch(syncManager, maxTimeStamp: maxTimestamp, errorBlock: { error in
             XCTFail("Fetch failed with error: \(error?.localizedDescription ?? "")")
             expectation.fulfill()
-        } onComplete: { records in
+        }, completeBlock: { records in
             result = records
             expectation.fulfill()
-        }
+        })
         waitForExpectations(timeout: 30)
         guard let records = result as? [[String: Any]] else {
             XCTFail("Unable to parse record response")

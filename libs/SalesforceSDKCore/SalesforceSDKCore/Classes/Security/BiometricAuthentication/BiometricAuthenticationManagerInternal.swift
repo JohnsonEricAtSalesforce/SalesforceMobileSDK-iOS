@@ -81,11 +81,11 @@ public class BiometricAuthenticationManagerInternal: NSObject, BiometricAuthenti
     }
     
     @objc public func storePolicy(userAccount: UserAccount, hasMobilePolicy: Bool, sessionTimeout: Int32) {
-        let existingPolicy = readBioAuthPolicy(userId: userAccount.idData.userId)
+        let existingPolicy = readBioAuthPolicy(userId: userAccount.idData?.userId ?? "")
         if let policyData = try? JSONEncoder().encode(
             BioAuthPolicy(hasPolicy: hasMobilePolicy, timeout: sessionTimeout, optIn: existingPolicy?.optIn)
         ) {
-            let result = KeychainHelper.write(service: kBioAuthPolicyIdentifier, data: policyData, account: userAccount.idData.userId)
+            let result = KeychainHelper.write(service: kBioAuthPolicyIdentifier, data: policyData, account: userAccount.idData?.userId ?? "")
             if result.success {
                 SFSDKCoreLogger.i(BiometricAuthenticationManagerInternal.self, message: "Biometric authentication policy stored for user.")
             } else {
@@ -102,7 +102,7 @@ public class BiometricAuthenticationManagerInternal: NSObject, BiometricAuthenti
         }
         
         let policyData = try! JSONEncoder().encode(policy)
-        let result = KeychainHelper.write(service: kBioAuthPolicyIdentifier, data: policyData, account: userAccount.idData.userId)
+        let result = KeychainHelper.write(service: kBioAuthPolicyIdentifier, data: policyData, account: userAccount.idData?.userId ?? "")
         if result.success {
             SFSDKCoreLogger.i(BiometricAuthenticationManagerInternal.self, message: "Biometric authentication policy stored for user.")
         } else {
@@ -115,7 +115,7 @@ public class BiometricAuthenticationManagerInternal: NSObject, BiometricAuthenti
             return nil
         }
         
-        return readBioAuthPolicy(userId: userAccount.idData.userId)
+        return readBioAuthPolicy(userId: userAccount.idData?.userId ?? "")
     }
     
     internal func readBioAuthPolicy(userId: String) -> BioAuthPolicy? {
@@ -196,7 +196,7 @@ public class BiometricAuthenticationManagerInternal: NSObject, BiometricAuthenti
     }
     
     @objc public func cleanup(user: UserAccount) {
-        _ = KeychainHelper.remove(service: kBioAuthPolicyIdentifier, account: user.idData.userId)
+        _ = KeychainHelper.remove(service: kBioAuthPolicyIdentifier, account: user.idData?.userId ?? "")
         locked = false
     }
     
@@ -238,7 +238,7 @@ public class BiometricAuthenticationManagerInternal: NSObject, BiometricAuthenti
                     unlockPostProcessing()
                     await accountManager.stopCurrentAuthentication()
                     await MainActor.run {
-                        SFSDKWindowManager.shared().authWindow(scene).viewController?.dismiss(animated: false)
+                        SFSDKWindowManager.shared.authWindow(scene).viewController?.dismiss(animated: false)
                     }
                 } catch {
                     // This just means the user chose the fallback option instead of biometric

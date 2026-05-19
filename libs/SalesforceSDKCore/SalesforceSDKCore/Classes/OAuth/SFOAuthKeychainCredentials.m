@@ -29,6 +29,7 @@
 #import "NSString+SFAdditions.h"
 @import SalesforceSDKCommon;
 #import <SalesforceSDKCore/SalesforceSDKCore-Swift.h>
+#import "SFSDKCoreLogger.h"
 
 @implementation SFOAuthKeychainCredentials
 

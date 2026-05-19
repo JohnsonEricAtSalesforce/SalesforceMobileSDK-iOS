@@ -29,6 +29,7 @@
 #import "SFSDKAuthConfigUtil.h"
 #import "SFNetwork.h"
 @import SalesforceSDKCommon;
+#import <SalesforceSDKCore/SalesforceSDKCore-Swift.h>
 
 static NSString * const kSFOAuthEndPointAuthConfiguration = @"/.well-known/auth-configuration";
 static NSString * const kSandboxLoginURL = @"test.salesforce.com";

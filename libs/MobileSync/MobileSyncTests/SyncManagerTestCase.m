@@ -22,16 +22,14 @@
  WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#import <SmartStore/SFQuerySpec.h>
-#import "SFSyncUpdateCallbackQueue.h"
+@import SmartStore;
+@import SalesforceSDKCore;
+@import MobileSync;
+#import "MobileSyncTests-Swift.h"
 #import <SalesforceSDKCore/SFSDKTestRequestListener.h>
-#import <SmartStore/SFSoupIndex.h>
-#import <SmartStore/SFSmartStore.h>
 #import <SalesforceSDKCore/TestSetupUtils.h>
-#import "TestSyncUpTarget.h"
+#import "MobileSyncTests-Swift.h"
 #import "SyncManagerTestCase.h"
-#import <MobileSync/MobileSync-Swift.h>
-#import <SalesforceSDKCore/SalesforceSDKCore-Swift.h>
 
 static NSException *authException = nil;
 

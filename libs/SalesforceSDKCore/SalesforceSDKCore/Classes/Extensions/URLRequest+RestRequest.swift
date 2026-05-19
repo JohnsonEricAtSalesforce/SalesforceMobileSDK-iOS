@@ -30,7 +30,7 @@ extension URLRequest {
     
     /// Converts a URLRequest to an SFRestRequest
     /// - Returns: A new SFRestRequest instance populated with the URLRequest's properties
-    public func toRestRequest(_ networkServiceType: RestRequest.NetWorkServiceType = RestRequest.NetWorkServiceType.SFNetworkServiceTypeDefault,
+    public func toRestRequest(_ networkServiceType: RestRequest.NetWorkServiceType = .default,
                               _ requiresAuthentication: Bool = true) -> RestRequest? {
         guard let url = self.url else { return nil }
         
@@ -43,10 +43,10 @@ extension URLRequest {
             }
         }
         
-        let method = RestRequest.sfRestMethod(fromHTTPMethod: httpMethod ?? "GET")
-        
+        let method = RestRequest.sfRestMethod(from: httpMethod ?? "GET")
+
         let baseURL = "\(url.scheme ?? "https")://\(url.host ?? "")"
-        let request = RestRequest(method: method, baseURL: baseURL, path: path, queryParams: queryParams)
+        let request = RestRequest(method: method, serviceHostType: .custom, baseURL: baseURL, path: path, queryParams: queryParams)
         
         if let headers = allHTTPHeaderFields {
             for (key, value) in headers {

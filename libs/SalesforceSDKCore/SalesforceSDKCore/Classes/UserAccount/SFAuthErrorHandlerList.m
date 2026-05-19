@@ -25,6 +25,7 @@
 
 #import "SFAuthErrorHandlerList.h"
 #import "SFAuthErrorHandler.h"
+#import <SalesforceSDKCore/SalesforceSDKCore-Swift.h>
 
 @interface SFAuthErrorHandlerList ()
 

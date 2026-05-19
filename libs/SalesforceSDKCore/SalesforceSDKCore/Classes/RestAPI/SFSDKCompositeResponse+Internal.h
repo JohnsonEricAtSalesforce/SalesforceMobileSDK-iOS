@@ -1,16 +1,5 @@
-//
-//  SFSDKCompositeResponse+Internal.h
-//  SalesforceSDKCore
-//
-//  Created by Raj Rao on 10/3/19.
-//  Copyright © 2019 salesforce.com. All rights reserved.
-//
-#import "SFSDKCompositeResponse.h"
+// SFSDKCompositeResponse+Internal.h — tombstoned (class is now in Swift)
+// Copyright (c) 2019-present, salesforce.com, inc. All rights reserved.
+// SPDX-License-Identifier: BSD-3-Clause
 
-NS_ASSUME_NONNULL_BEGIN
-
-@interface SFSDKCompositeSubResponse()
--(instancetype)initWith:(NSDictionary *)dict;
-@end
-
-NS_ASSUME_NONNULL_END
+#import <Foundation/Foundation.h>

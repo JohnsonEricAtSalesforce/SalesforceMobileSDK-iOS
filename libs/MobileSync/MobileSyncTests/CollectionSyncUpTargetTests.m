@@ -22,9 +22,9 @@
  WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#import "SFSyncUpdateCallbackQueue.h"
+#import "MobileSyncTests-Swift.h"
 #import "SyncUpTargetTests.h"
-#import "TestSyncUpTarget.h"
+#import "MobileSyncTests-Swift.h"
 
 @interface CollectionSyncUpTargetTests : SyncUpTargetTests {
 }

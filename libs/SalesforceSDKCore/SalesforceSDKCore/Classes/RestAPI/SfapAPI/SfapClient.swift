@@ -237,6 +237,7 @@ public class SfapClient : NSObject {
     ) -> RestRequest {
         let restRequest = RestRequest(
             method: .POST,
+            serviceHostType: .custom,
             baseURL: "https://\(apiHostName)/",
             path: path,
             queryParams: nil)

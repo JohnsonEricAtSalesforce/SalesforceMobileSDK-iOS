@@ -22,12 +22,11 @@
  WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+@import SalesforceSDKCore;
+@import MobileSync;
 #import "SyncManagerTestCase.h"
-#import "SFSyncUpdateCallbackQueue.h"
-#import "TestSyncUpTarget.h"
-#import "TestSyncDownTarget.h"
-#import <SalesforceSDKCore/SFSDKSoqlBuilder.h>
-#import <SalesforceSDKCore/SFSDKSoslBuilder.h>
+#import "MobileSyncTests-Swift.h"
+#import "MobileSyncTests-Swift.h"
 
 #define COUNT_TEST_ACCOUNTS 10
 

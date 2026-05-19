@@ -960,11 +960,11 @@ This map identifies every existing Swift file and its relationship to ObjC files
 | 🔶 Operator Gate 3 — report generated, awaiting review | 2026-05-18 14:30 MDT | |
 | 🔶 Operator Gate 3 — approved (with adjustments), proceeding | 2026-05-18 14:35 MDT | |
 | Phase 4 (MobileSync) — conversion started | 2026-05-18 14:35 MDT | |
-| Phase 4 — library boundary (build+test) started | | |
-| Phase 4 — library boundary complete | | |
-| 🔶 Operator Gate 4 — report generated, awaiting review | | |
-| 🔶 Operator Gate 4 — approved, proceeding | | |
-| Phase 5 (SalesforceSDKCore) — conversion started | | |
+| Phase 4 — library boundary (build+test) started | 2026-05-18 15:00 MDT | |
+| Phase 4 — library boundary complete (build only; tests blocked) | 2026-05-18 19:00 MDT | ~4h |
+| 🔶 Operator Gate 4 — report generated, awaiting review | 2026-05-18 19:00 MDT | |
+| 🔶 Operator Gate 4 — approved (tests deferred to test conversion), proceeding | 2026-05-18 19:10 MDT | |
+| Phase 5 (SalesforceSDKCore) — conversion started | 2026-05-18 19:10 MDT | |
 | Phase 5 — library boundary (build+test) started | | |
 | Phase 5 — library boundary complete | | |
 | 🔶 Operator Gate 5 — report generated, awaiting review | | |

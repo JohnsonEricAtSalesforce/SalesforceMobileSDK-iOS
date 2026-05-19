@@ -49,7 +49,7 @@ public enum PushNotificationForegroundRegistrationMode {
     case currentUser
     /// All logged-in users are re-registered on foreground. This is the default.
     ///
-    /// - Note: Apps that are billed per login (e.g. some Publisher customers) may prefer `.currentUser`
+    /// - Note: Apps that are billed per login (e.g. some Publisher customers) may prefer `.currentUserAccount`
     ///   to avoid triggering token refreshes—and thus billable login events—for background users.
     case allUsers
 }
@@ -92,7 +92,7 @@ public class PushNotificationManager: NSObject {
     /// Controls which users are re-registered for push notifications when the app returns to the foreground.
     /// Defaults to `.allUsers`.
     ///
-    /// Set to `.currentUser` to preserve the pre-14.0 behavior of only re-registering the current user,
+    /// Set to `.currentUserAccount` to preserve the pre-14.0 behavior of only re-registering the current user,
     /// or to `.none` to disable foreground re-registration entirely.
     public var foregroundRegistrationMode: PushNotificationForegroundRegistrationMode = .allUsers
 
@@ -111,7 +111,7 @@ public class PushNotificationManager: NSObject {
     
     /// Convenience initializer that sets up the PushNotificationManager with default values:
     /// - notificationRegister: DefaultRemoteNotificationRegistrar() - Handles APNS registration
-    /// - restClient: RestClient.shared - Uses the shared RestClient instance
+    /// - restClient: RestClient.sharedInstance - Uses the shared RestClient instance
     /// - preferences: SFPreferences.sharedPreferences(for: .user, user: currentUser) - Uses user-level preferences
     @objc
     public override convenience init() {
@@ -121,7 +121,7 @@ public class PushNotificationManager: NSObject {
     /// Internal initializer used for testing and dependency injection.
     /// This initializer allows for customizing the dependencies of PushNotificationManager:
     /// - Parameter notificationRegister: The registrar that handles APNS registration. Defaults to DefaultRemoteNotificationRegistrar.
-    /// - Parameter restClient: The REST client for making API calls. Defaults to RestClient.shared.
+    /// - Parameter restClient: The REST client for making API calls. Defaults to RestClient.sharedInstance.
     /// - Parameter preferences: The preferences store to use. Defaults to user-level SFPreferences.
     internal init(notificationRegister: RemoteNotificationRegistering = DefaultRemoteNotificationRegistrar()) {
         self.notificationRegister = notificationRegister
@@ -173,12 +173,12 @@ public class PushNotificationManager: NSObject {
     public func didRegisterForRemoteNotifications(withDeviceToken: Data) {
         
         SFSDKCoreLogger.i(Self.self, message: "APNS registration succeeded")
-        guard let hexString = NSString.sfsdk_string(withHexData: withDeviceToken) else {
+        guard let hexString = NSString.sfsdk_string(withHexData: withDeviceToken as NSData) else {
             SFSDKCoreLogger.e(Self.self, message: "Data was empty, got nil")
             return
         }
         self.deviceToken = hexString
-        if let prefs = SFPreferences.currentUserLevel() {
+        if let prefs = SFPreferences.currentUserLevelPreferences() {
             prefs.setObject(hexString, forKey: PushNotificationConstants.deviceToken)
             prefs.synchronize()
         }
@@ -284,7 +284,7 @@ public class PushNotificationManager: NSObject {
                 SFSDKCoreLogger.i(Self.self, message: "Registration succeeded")
                 self.deviceSalesforceId = json["id"] as? String
                 
-                let prefs = SFPreferences.currentUserLevel()
+                let prefs = SFPreferences.currentUserLevelPreferences()
                 prefs?.setObject(self.deviceSalesforceId ?? "", forKey: PushNotificationConstants.deviceSalesforceId)
                 prefs?.synchronize()
                 
@@ -384,7 +384,7 @@ public class PushNotificationManager: NSObject {
     ///   - account: The user account to associate notification types with.
     /// - Throws: An error if the types cannot be retrieved from server or cache.
     @objc(fetchAndStoreNotificationTypesWithRestClient:account:completionHandler:)
-    public func fetchAndStoreNotificationTypes(restClient: RestClient = RestClient.shared,
+    public func fetchAndStoreNotificationTypes(restClient: RestClient = RestClient.sharedInstance,
                                                account: UserAccount? = UserAccountManager.shared.currentUserAccount) async throws {
         guard let account = account else {
             throw PushNotificationManagerError.currentUserNotDetected

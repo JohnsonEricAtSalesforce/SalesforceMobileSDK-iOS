@@ -28,6 +28,7 @@
 #import <Security/Security.h>
 #import "TargetConditionals.h"
 #import <LocalAuthentication/LocalAuthentication.h>
+#import <SalesforceSDKCore/SalesforceSDKCore-Swift.h>
 
 // Public constants
 NSUInteger const kSFPBKDFDefaultNumberOfDerivationRounds = 4000;

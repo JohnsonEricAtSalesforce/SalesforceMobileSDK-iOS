@@ -83,7 +83,9 @@ public class KeyValueEncryptedFileStore: NSObject {
         let fullPath = parentDirectory + "/\(name)"
         let isNewlyCreated = !KeyValueEncryptedFileStore.directoryExists(atPath: fullPath)
         do {
-            try SFDirectoryManager.ensureDirectoryExists(fullPath)
+            var directoryError: NSError?
+            let success = SFDirectoryManager.ensureDirectoryExists(fullPath, error: &directoryError)
+            if !success, let directoryError = directoryError { throw directoryError }
         } catch {
             SFSDKCoreLogger.e(KeyValueEncryptedFileStore.self, message: "\(#function): Error ensuring directory exists: \(error)")
             return nil
@@ -452,11 +454,11 @@ public class KeyValueEncryptedFileStore: NSObject {
     }
     
     private static func storesDirectory(forUser user: UserAccount) -> String? {
-        return SFDirectoryManager.shared().directory(forUser: user, type: .documentDirectory, components: [keyValueStoresDirectory])
+        return SFDirectoryManager.sharedManager.directory(forUser: user, type: .documentDirectory, components: [keyValueStoresDirectory])
     }
 
     static func globalStoresDirectory() -> String? {
-        return SFDirectoryManager.shared().globalDirectory(ofType: .documentDirectory, components: [keyValueStoresDirectory])
+        return SFDirectoryManager.sharedManager.globalDirectory(ofType: .documentDirectory, components: [keyValueStoresDirectory])
     }
 
     private static func contentsOfDirectory(_ directory: String?, callingFunction: String = #function) -> [String] {

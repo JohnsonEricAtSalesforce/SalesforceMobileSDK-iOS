@@ -25,6 +25,7 @@
 #import "NSData+SFAdditions.h"
 #define COMMON_DIGEST_FOR_OPENSSL
 #import <CommonCrypto/CommonDigest.h>
+#import <SalesforceSDKCore/SalesforceSDKCore-Swift.h>
 #include "zlib.h"
 
 // Map 8-bit character to 6-bit byte

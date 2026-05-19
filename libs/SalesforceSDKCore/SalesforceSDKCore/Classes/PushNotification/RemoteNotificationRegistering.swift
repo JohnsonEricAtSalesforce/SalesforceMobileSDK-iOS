@@ -49,15 +49,15 @@ final class DefaultRemoteNotificationRegistrar: RemoteNotificationRegistering {
     
     public func client(for user: UserAccount?) -> RestClient? {
         guard let account = user else {
-            return RestClient.shared
+            return RestClient.sharedInstance
         }
         return RestClient.restClient(for: account)
     }
     
     func preferences(for user: UserAccount?) -> SFPreferences? {
         guard let account = user else {
-            return SFPreferences.currentUserLevel()
+            return SFPreferences.currentUserLevelPreferences()
         }
-        return SFPreferences.sharedPreferences(for: .user, user: account)
+        return SFPreferences.sharedPreferences(forScope: .user, user: account)
     }
 }

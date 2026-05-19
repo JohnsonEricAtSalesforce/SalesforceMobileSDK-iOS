@@ -23,10 +23,8 @@
  */
 
 #import <XCTest/XCTest.h>
-#import <SmartStore/SmartStore.h>
-#import "SFSoqlSyncDownTarget.h"
-#import "SFMobileSyncSyncManager.h"
-#import "SFSyncState.h"
+@import SmartStore;
+@import MobileSync;
 
 
 #define DB_NAME @"testDb"

@@ -2,9 +2,9 @@
  SalesforceSDKCore.h
  SalesforceSDKCore
 
- Created by Wolfgang Mathurin on Fri Nov  7 17:40:48 PST 2025.
+ Created by Eric C. Johnson on Tue May 19 14:04:26 MDT 2026.
 
- Copyright (c) 2025-present, salesforce.com, inc. All rights reserved.
+ Copyright (c) 2026-present, salesforce.com, inc. All rights reserved.
  
  Redistribution and use of this software in source and binary forms, with or without modification,
  are permitted provided that the following conditions are met:
@@ -28,7 +28,6 @@
  */
 
 #import <SalesforceSDKCore/SFDefaultUserManagementDetailViewController.h>
-#import <SalesforceSDKCore/SFSDKCoreLogger.h>
 #import <SalesforceSDKCore/SFFormatUtils.h>
 #import <SalesforceSDKCore/SFSDKAlertMessageBuilder.h>
 #import <SalesforceSDKCore/SFSDKSoslBuilder.h>

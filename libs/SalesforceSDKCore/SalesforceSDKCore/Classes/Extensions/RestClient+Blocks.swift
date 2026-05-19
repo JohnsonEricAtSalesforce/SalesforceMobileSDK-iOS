@@ -84,7 +84,7 @@ extension RestClient {
                     let errFunc: (String) -> NSError = RestClient.error(withDescription:)
                     throw errFunc("CompositeResponse format invalid")
                 }
-                let compositeResponse = CompositeResponse(dict)
+                let compositeResponse = CompositeResponse(dictionary: dict as? [String: Any] ?? [:])
                 successBlock(compositeResponse, rawResponse)
             } catch {
                 failureBlock(response, error, rawResponse)
@@ -109,7 +109,7 @@ extension RestClient {
                     let errFunc: (String) -> NSError = RestClient.error(withDescription:)
                     throw errFunc("BatchResponse format invalid")
                 }
-                let batchResponse = BatchResponse(dict)
+                let batchResponse = BatchResponse(dictionary: dict as? [String: Any] ?? [:])
                 successBlock(batchResponse, rawResponse)
             } catch {
                 failureBlock(response, error, rawResponse)
@@ -180,7 +180,7 @@ extension RestClient {
     ///  models to create.
     ///
     /// Given a model object - Contact, you can use this method like this:
-    ///   RestClient.shared.fetchRecords(ofModelType: ModelName.self, forRequest: request) { result in
+    ///   RestClient.sharedInstance.fetchRecords(ofModelType: ModelName.self, forRequest: request) { result in
     ///       switch result {
     ///       case .success(let records):
     ///           do something with your array of model objects
@@ -197,7 +197,7 @@ extension RestClient {
                                                 withDecoder decoder: JSONDecoder = .init(),
                                                 _ completionBlock: @escaping (Result<QueryResponse<Record>, RestClientError>) -> Void) {
         guard request.isQueryRequest else { return }
-        RestClient.shared.send(request: request) { result in
+        RestClient.sharedInstance.send(request: request) { result in
             switch result {
             case .success(let response):
                 do {
@@ -217,7 +217,7 @@ extension RestClient {
     ///  models to create.
     ///
     /// Given a model object - Account, you can use this method like this:
-    ///   RestClient.shared.fetchRecords(ofModelType: Account.self,
+    ///   RestClient.sharedInstance.fetchRecords(ofModelType: Account.self,
     ///                                  forQuery: "select id from account"
     ///                                  withApiVersion: "v48.0") { result in
     ///       switch result {
@@ -236,7 +236,7 @@ extension RestClient {
                                                 withApiVersion version: String = SFRestDefaultAPIVersion,
                                                 withDecoder decoder: JSONDecoder = .init(),
                                                 _ completionBlock: @escaping (Result<QueryResponse<Record>, RestClientError>) -> Void) {
-        let request = RestClient.shared.request(forQuery: query, apiVersion: version)
+        let request = RestClient.sharedInstance.requestForQuery(query, apiVersion: version)
         guard request.isQueryRequest else { return }
         return self.fetchRecords(ofModelType: modelType, forRequest: request, withDecoder: decoder, completionBlock)
     }

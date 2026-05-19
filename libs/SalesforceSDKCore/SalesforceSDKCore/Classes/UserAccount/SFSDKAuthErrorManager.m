@@ -31,6 +31,7 @@
 #import "SFAuthErrorHandlerList.h"
 #import "SFAuthErrorHandler.h"
 #import "SFOAuthCoordinator+Internal.h"
+#import <SalesforceSDKCore/SalesforceSDKCore-Swift.h>
 #include "SFSDKResourceUtils.h"
 #include "SFUserAccountManager.h"
 #include "SFSDKOAuth2.h"

@@ -23,7 +23,7 @@
  */
 
 #import "SyncManagerTestCase.h"
-#import "SFSyncUpdateCallbackQueue.h"
+#import "MobileSyncTests-Swift.h"
 @import SalesforceSDKCommon;
 
 #define COUNT_TEST_ACCOUNTS 10
