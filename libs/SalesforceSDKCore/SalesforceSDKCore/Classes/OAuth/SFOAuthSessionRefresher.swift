@@ -81,7 +81,7 @@ public class SFOAuthSessionRefresher: NSObject, SFOAuthCoordinatorDelegate {
             request.serverURL = serverURL
         }
 
-        let authClient = UserAccountManager.shared.authClient?() ?? SFSDKOAuth2()
+        let authClient = UserAccountManager.shared.authClient() ?? SFSDKOAuth2()
         authClient.accessToken(forRefresh: request) { [weak self] (response: SFSDKOAuthTokenEndpointResponse?) in
             guard let self = self else { return }
             guard let response = response else {

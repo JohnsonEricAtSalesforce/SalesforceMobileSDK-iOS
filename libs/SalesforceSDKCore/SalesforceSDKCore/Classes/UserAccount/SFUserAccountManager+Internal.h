@@ -41,40 +41,19 @@
 
 extern NSString * _Nonnull const kSFSDKUserAccountManagerErrorDomain;
 
+// SFUserAccountPersister protocol is now defined in Swift (SFUserAccountManager.swift).
+// ObjC .m files that conform to it must import SalesforceSDKCore-Swift.h.
+
+NS_ASSUME_NONNULL_BEGIN
+
+// The class extension and enum are only needed for ObjC compilation units (the class is now Swift).
+// When compiled as part of the Swift module, SWIFT_CLASS is defined by the Swift compiler.
+#if !defined(SWIFT_CLASS)
+
 typedef NS_ENUM(NSUInteger, SFSDKUserAccountManagerErrorCode) {
     SFSDKUserAccountManagerError = 100,
     SFSDKUserAccountManagerCannotEncrypt = 10005,
 };
-
-@protocol SFUserAccountPersister <NSObject>
-
-/**
- Called when the Account manager requires to save the state of an account.
- @param userAccount The instance of SFUserAccount making the call.
- @param  error On output, the error if the return value is NO
- @return YES if the account was saved properly, NO in case of error
- */
-- (BOOL)saveAccountForUser:(nonnull SFUserAccount *)userAccount error:(NSError * _Nonnull * _Nonnull) error;
-
-/** Fetches all the accounts.
-  @param error On output, the error if the return value is NO
-  @return NSDictionary with SFUserAccountIdentity as keys and SFUserAccount as values
-  */
-- (nonnull NSDictionary<SFUserAccountIdentity *,SFUserAccount *> *)fetchAllAccounts:(NSError * _Nonnull * _Nonnull)error;
-
-/**
- Allows you to remove the given user account.
- @param user The user account to remove.
- @param error Output error parameter, populated if there was an error deleting
- the account (likely from the filesystem operations).
- @return YES if the deletion was successful, NO otherwise.  Note: If no persisted account matching
- the user parameter is found, no action will be taken, and deletion will be reported as successful.
- */
-- (BOOL)deleteAccountForUser:(nonnull SFUserAccount *)user error:(NSError * _Nonnull * _Nonnull)error;
-
-@end
-
-NS_ASSUME_NONNULL_BEGIN
 @interface SFUserAccountManager ()<SFOAuthCoordinatorDelegate, SFIdentityCoordinatorDelegate, SFSDKLoginHostDelegate, SFSDKUserSelectionViewDelegate, SFSDKLoginFlowSelectionViewDelegate, SFLoginViewControllerDelegate>
 {
     NSRecursiveLock *_accountsLock;
@@ -224,5 +203,6 @@ Set this block to handle presentation of the Authentication View Controller.
 
 
 @end
+#endif // !SWIFT_CLASS
 
 NS_ASSUME_NONNULL_END

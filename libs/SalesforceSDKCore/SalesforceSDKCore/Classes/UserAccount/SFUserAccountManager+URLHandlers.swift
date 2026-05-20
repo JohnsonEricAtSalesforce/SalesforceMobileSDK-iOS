@@ -74,7 +74,7 @@ extension UserAccountManager {
         let request = defaultAuthRequest()
         request.userHint = userHint
         request.idpInitiatedAuth = true
-        authenticate(usingIDP: request, completion: { _, _ in }, failure: { _, _ in })
+        _ = authenticateUsingIDP(request, completion: { _, _ in }, failure: { _, _ in })
         return true
     }
 
@@ -91,12 +91,13 @@ extension UserAccountManager {
         if let userHint = userHint {
             let identity = decodeUserIdentity(userHint)
             if let identity = identity {
-                let userAccount = self.userAccount(for: identity)
-                if userAccount?.credentials.accessToken != nil {
-                    SFSDKCoreLogger.d(type(of: self), format: "handleAuthRequestFromSPApp userAccount found for userHint")
+                if let userAccount = self.userAccount(for: identity) {
+                    if userAccount.credentials.accessToken != nil {
+                        SFSDKCoreLogger.d(type(of: self), format: "handleAuthRequestFromSPApp userAccount found for userHint")
+                    }
+                    selectedUser(userAccount, spAppContext: request.allParams() as? [String: Any] ?? [:])
+                    return true
                 }
-                selectedUser(userAccount, spAppContext: request.allParams() as? [String: Any] ?? [:])
-                return true
             }
         }
 

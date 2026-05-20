@@ -80,11 +80,11 @@ public class TestSetupUtils: NSObject {
         let authListener = SFSDKTestRequestListener()
         var user: UserAccount?
 
-        _ = UserAccountManager.shared.__refreshCredentials(creds, completion: { authInfo, userAccount in
+        _ = UserAccountManager.shared.refreshCredentials(creds, completion: { authInfo, userAccount in
             authListener.returnStatus = kTestRequestStatusDidLoad
             user = userAccount
-            if userAccount.credentials.refreshToken == nil {
-                userAccount.credentials = creds
+            if userAccount?.credentials.refreshToken == nil {
+                userAccount?.credentials = creds
             }
             if postUserDidLogIn {
                 let userInfo: [String: Any] = [

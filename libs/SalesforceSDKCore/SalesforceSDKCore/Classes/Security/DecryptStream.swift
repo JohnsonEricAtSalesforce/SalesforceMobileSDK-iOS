@@ -27,6 +27,7 @@
 
 import Foundation
 import CryptoKit
+import SalesforceSDKCommon
 
 
 @objc(SFSDKDecryptStream)

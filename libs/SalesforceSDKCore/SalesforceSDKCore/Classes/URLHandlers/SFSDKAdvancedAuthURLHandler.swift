@@ -47,6 +47,6 @@ public class SFSDKAdvancedAuthURLHandler: NSObject, SFSDKURLHandler {
     }
 
     public func processRequest(_ url: URL, options: [AnyHashable: Any]?) -> Bool {
-        return UserAccountManager.shared.handleAdvancedAuthURL(url, options: options as? [AnyHashable: Any])
+        return UserAccountManager.shared.handleAdvancedAuthURL(url, options: options as? [String: Any])
     }
 }

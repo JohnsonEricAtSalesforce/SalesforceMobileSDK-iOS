@@ -27,6 +27,7 @@
 
 import Foundation
 import LocalAuthentication
+import SalesforceSDKCommon
 
 /*
  * This class is internal to the Mobile SDK - don't instantiate in your application code
@@ -236,7 +237,7 @@ public class BiometricAuthenticationManagerInternal: NSObject, BiometricAuthenti
                     }
                     
                     unlockPostProcessing()
-                    await accountManager.stopCurrentAuthentication()
+                    accountManager.stopCurrentAuthentication(nil)
                     await MainActor.run {
                         SFSDKWindowManager.shared.authWindow(scene).viewController?.dismiss(animated: false)
                     }

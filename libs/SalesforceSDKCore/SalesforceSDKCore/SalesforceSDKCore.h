@@ -2,7 +2,7 @@
  SalesforceSDKCore.h
  SalesforceSDKCore
 
- Created by Eric C. Johnson on Tue May 19 18:27:24 MDT 2026.
+ Created by Eric C. Johnson on Tue May 19 22:39:30 MDT 2026.
 
  Copyright (c) 2026-present, salesforce.com, inc. All rights reserved.
  
@@ -96,6 +96,7 @@
 #import <SalesforceSDKCore/SalesforceSDKCoreDefines.h>
 #import <SalesforceSDKCore/SFAuthErrorHandlerList.h>
 #import <SalesforceSDKCore/SFDefaultUserManagementListViewController.h>
+#import <SalesforceSDKCore/SFSDKURLHandler.h>
 #import <SalesforceSDKCore/SFSDKViewController.h>
 #import <SalesforceSDKCore/SFSDKViewControllerConfig.h>
 #import <SalesforceSDKCore/SFNetwork.h>

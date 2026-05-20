@@ -266,7 +266,7 @@ open class RestClient: NSObject {
 
         if user?.credentials.accessToken == nil && user?.credentials.refreshToken == nil && requiresAuthentication {
             SFSDKCoreLogger.i(RestClient.self, message: "No auth credentials found. Authenticating before sending request: \(request.description)")
-            UserAccountManager.shared.__login(completion: { [weak self] authInfo, userAccount in
+            UserAccountManager.shared.loginWithCompletion({ [weak self] authInfo, userAccount in
                 guard let self = self else { return }
                 self.user = userAccount
                 self.enqueueRequest(request, shouldRetry: shouldRetry)

@@ -423,7 +423,7 @@ open class SalesforceSDKManager: NSObject {
                 let configPicker = LoginOptionsViewController.makeViewController {
                     presentedViewController.dismiss(animated: true) {
                         if let loginVC = presentedViewController as? SalesforceLoginViewController {
-                            UserAccountManager.shared.restartAuthentication(for: loginVC, recreateAuthRequest: true)
+                            UserAccountManager.shared.restartAuthenticationForViewController(loginVC, recreateAuthRequest: true)
                         }
                     }
                 }

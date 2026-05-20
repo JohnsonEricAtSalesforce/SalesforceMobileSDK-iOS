@@ -341,7 +341,7 @@ public class SalesforceLoginViewController: SFSDKViewController, LoginHostDelega
 
         if UserAccountManager.shared.shouldFallbackToWebAuthentication {
             UserAccountManager.shared.shouldFallbackToWebAuthentication = false
-            _ = UserAccountManager.shared.__login(completion: nil, failure: nil)
+            _ = UserAccountManager.shared.loginWithCompletion(nil, failure: nil)
         }
 
         if !UserAccountManager.shared.isIDPEnabled {

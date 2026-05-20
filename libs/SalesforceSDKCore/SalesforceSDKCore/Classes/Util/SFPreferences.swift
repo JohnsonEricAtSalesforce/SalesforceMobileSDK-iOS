@@ -215,7 +215,7 @@ import Foundation
     }
 
     @objc private class func handleOrgDidLogout(_ notification: Notification) {
-        guard let userInfo = (notification as NSNotification).userInfo?[UserAccountManager.userInfoSfUserInfoKey] as? UserAccountManager.NotificationUserInfo else { return }
+        guard let userInfo = (notification as NSNotification).userInfo?[UserAccountManager.userInfoSfUserInfoKey] as? SFNotificationUserInfo else { return }
 
         lock.lock()
         defer { lock.unlock() }

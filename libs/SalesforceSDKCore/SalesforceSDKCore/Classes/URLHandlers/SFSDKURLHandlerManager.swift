@@ -28,6 +28,21 @@
 
 import Foundation
 
+// MARK: - SFSDKURLHandler Protocol (was in ObjC header, now defined in Swift)
+
+@objc(SFSDKURLHandler)
+public protocol SFSDKURLHandler: NSObjectProtocol {
+    @objc func canHandleRequest(_ url: URL, options: [AnyHashable: Any]?) -> Bool
+    @objc func processRequest(_ url: URL, options: [AnyHashable: Any]?) -> Bool
+    @objc optional func processRequest(_ url: URL, options: [AnyHashable: Any]?, completion: AccountManagerSuccessCallbackBlock?, failure: AccountManagerFailureCallbackBlock?) -> Bool
+}
+
+// MARK: - SFUserAccountPersister Protocol (was in +Internal.h, now defined in Swift)
+// Note: Also defined in SFUserAccountManager.swift — this forward declaration ensures visibility
+// if compilation order puts this file before the UserAccountManager file.
+
+// MARK: - SFSDKURLHandlerManager
+
 @objc(SFSDKURLHandlerManager)
 @objcMembers
 public class SFSDKURLHandlerManager: NSObject {

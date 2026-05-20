@@ -28,7 +28,12 @@
  */
 
 #import <Foundation/Foundation.h>
-#import "SFUserAccountManager.h"
+
+@class SFOAuthInfo;
+@class SFUserAccount;
+
+typedef void (^SFURLHandlerSuccessBlock)(SFOAuthInfo * _Nonnull, SFUserAccount * _Nonnull);
+typedef void (^SFURLHandlerFailureBlock)(SFOAuthInfo * _Nonnull, NSError * _Nonnull);
 
 @protocol SFSDKURLHandler<NSObject>
 
@@ -39,7 +44,7 @@
 @optional
 - (BOOL)processRequest:(nonnull NSURL *)url
                options:(nullable NSDictionary *)options
-            completion:(nullable SFUserAccountManagerSuccessCallbackBlock)completionBlock
-               failure:(nullable SFUserAccountManagerFailureCallbackBlock)failureBlock;
+            completion:(nullable SFURLHandlerSuccessBlock)completionBlock
+               failure:(nullable SFURLHandlerFailureBlock)failureBlock;
 
 @end

@@ -163,6 +163,7 @@
 		6900D804243D521C00888336 /* SFRestAPI+Notifications.h in Headers */ = {isa = PBXBuildFile; fileRef = 6900D802243D521C00888336 /* SFRestAPI+Notifications.h */; settings = {ATTRIBUTES = (Public, ); }; };
 		6924966A2444E50500D3F63B /* SFFormatUtils.h in Headers */ = {isa = PBXBuildFile; fileRef = 692496682444E50500D3F63B /* SFFormatUtils.h */; settings = {ATTRIBUTES = (Public, ); }; };
 		692BCD857AB4F23223C332B6 /* SFUserAccount.swift in Sources */ = {isa = PBXBuildFile; fileRef = 415F9348356C845E5669D22F /* SFUserAccount.swift */; };
+		ABCD12340001000000000001 /* SFUserAccountManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = ABCD12340001000000000002 /* SFUserAccountManager.swift */; };
 		6931E954248B5C7100417362 /* SFDirectoryManager+Internal.h in Headers */ = {isa = PBXBuildFile; fileRef = 6931E94E248ADD8E00417362 /* SFDirectoryManager+Internal.h */; };
 		6931EA49248F000600417362 /* SFUserIdUpgradeTests.m in Sources */ = {isa = PBXBuildFile; fileRef = 6931EA48248F000600417362 /* SFUserIdUpgradeTests.m */; };
 		69341D22266FF61700227CB0 /* Encryptor.swift in Sources */ = {isa = PBXBuildFile; fileRef = 69341D21266FF61700227CB0 /* Encryptor.swift */; };
@@ -315,7 +316,7 @@
 		B7FB26DC1F78096300FB25A2 /* SFSDKIDPLoginRequestHandler.h in Headers */ = {isa = PBXBuildFile; fileRef = B7FB26CF1F78096300FB25A2 /* SFSDKIDPLoginRequestHandler.h */; };
 		B7FB26DE1F78096300FB25A2 /* SFSDKIDPRequestHandler.h in Headers */ = {isa = PBXBuildFile; fileRef = B7FB26D11F78096300FB25A2 /* SFSDKIDPRequestHandler.h */; };
 		B7FB26E01F78096300FB25A2 /* SFSDKSPLoginResponseHandler.h in Headers */ = {isa = PBXBuildFile; fileRef = B7FB26D31F78096300FB25A2 /* SFSDKSPLoginResponseHandler.h */; };
-		B7FB26E21F78096300FB25A2 /* SFSDKURLHandler.h in Headers */ = {isa = PBXBuildFile; fileRef = B7FB26D51F78096300FB25A2 /* SFSDKURLHandler.h */; };
+		B7FB26E21F78096300FB25A2 /* SFSDKURLHandler.h in Headers */ = {isa = PBXBuildFile; fileRef = B7FB26D51F78096300FB25A2 /* SFSDKURLHandler.h */; settings = {ATTRIBUTES = (Public, ); }; };
 		B7FB26E31F78096300FB25A2 /* SFSDKURLHandlerManager.h in Headers */ = {isa = PBXBuildFile; fileRef = B7FB26D61F78096300FB25A2 /* SFSDKURLHandlerManager.h */; };
 		BB4F49B181E185332DA2A79A /* SFSDKRootController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6F54D3BFB75202497AB6C2E0 /* SFSDKRootController.swift */; };
 		BC9BFF421D5A46B6009FFA1F /* test_credentials.json in Resources */ = {isa = PBXBuildFile; fileRef = BC9BFF411D5A46B6009FFA1F /* test_credentials.json */; };
@@ -609,6 +610,7 @@
 		3FBED80941417D420975D679 /* SFSDKBatchRequest.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = SFSDKBatchRequest.swift; sourceTree = "<group>"; };
 		4067192D7AC5D03A53FDD21A /* SFLoginViewController.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = SFLoginViewController.swift; sourceTree = "<group>"; };
 		415F9348356C845E5669D22F /* SFUserAccount.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = SFUserAccount.swift; sourceTree = "<group>"; };
+		ABCD12340001000000000002 /* SFUserAccountManager.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = SFUserAccountManager.swift; sourceTree = "<group>"; };
 		42C6A97682EC0CB79A6A3A36 /* SFSDKPushNotificationDecryption.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = SFSDKPushNotificationDecryption.swift; sourceTree = "<group>"; };
 		444B95CF1E83251900908C61 /* UIColor+SFColorsTests.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = "UIColor+SFColorsTests.m"; path = "SalesforceSDKCoreTests/UIColor+SFColorsTests.m"; sourceTree = SOURCE_ROOT; };
 		457BFFA05617F8785CD2E333 /* SFSDKIDPAuthCodeLoginRequestCommand.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = SFSDKIDPAuthCodeLoginRequestCommand.swift; sourceTree = "<group>"; };
@@ -1532,6 +1534,7 @@
 				6EE235EA48278B43F8529788 /* SFDefaultUserAccountPersister.swift */,
 				C905987C308500E7407B269C /* SFSDKAuthErrorManager.swift */,
 				415F9348356C845E5669D22F /* SFUserAccount.swift */,
+				ABCD12340001000000000002 /* SFUserAccountManager.swift */,
 				99A99372889EB255516F1C87 /* SFUserAccountIdentity.swift */,
 				6376E53248A4AFF6361D77E2 /* SFUserAccountManager+URLHandlers.swift */,
 			);
@@ -2659,6 +2662,7 @@
 				51AAF719DCA90106DCB7F89C /* SFDefaultUserAccountPersister.swift in Sources */,
 				54F3CBE47CED382714D8DD34 /* SFSDKAuthErrorManager.swift in Sources */,
 				692BCD857AB4F23223C332B6 /* SFUserAccount.swift in Sources */,
+				ABCD12340001000000000001 /* SFUserAccountManager.swift in Sources */,
 				7FC35D31697908A57E91AB26 /* SFUserAccountIdentity.swift in Sources */,
 				BE4F8CBE8266FDFF02AC40BD /* SFUserAccountManager+URLHandlers.swift in Sources */,
 				7E8572CA445D7EC8DD5EECB0 /* SFDefaultUserManagementDetailViewController.swift in Sources */,

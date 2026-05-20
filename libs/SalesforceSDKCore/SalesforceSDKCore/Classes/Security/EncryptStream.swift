@@ -27,6 +27,7 @@
 
 import Foundation
 import CryptoKit
+import SalesforceSDKCommon
 
 enum CryptStream {
     static let chunkSize = 512

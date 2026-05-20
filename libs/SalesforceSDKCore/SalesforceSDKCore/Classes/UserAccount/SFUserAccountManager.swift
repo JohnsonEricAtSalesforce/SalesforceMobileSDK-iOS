@@ -144,6 +144,29 @@ public let kSFSDKUserAccountManagerErrorDomain = "com.salesforce.mobilesdk.SFUse
 @objcMembers
 open class UserAccountManager: NSObject {
 
+    // MARK: - Notification Names (static accessors matching NS_SWIFT_NAME pattern)
+
+    @objc public static let didChangeUser: NSNotification.Name = .SFUserAccountManagerDidChangeUser
+    @objc public static let didChangeUserData: NSNotification.Name = .SFUserAccountManagerDidChangeUserData
+    @objc public static let didFinishUserInit: NSNotification.Name = .SFUserAccountManagerDidFinishUserInit
+    @objc public static let willLogInUser: NSNotification.Name = .SFUserAccountManagerWillLogInUser
+    @objc public static let didLogInUser: NSNotification.Name = .SFUserAccountManagerDidLogInUser
+    @objc public static let willLogoutUser: NSNotification.Name = .SFUserAccountManagerWillLogoutUser
+    @objc public static let didLogoutUser: NSNotification.Name = .SFUserAccountManagerDidLogoutUser
+    @objc public static let willSwitchUser: NSNotification.Name = .SFUserAccountManagerWillSwitchUser
+    @objc public static let didSwitchUser: NSNotification.Name = .SFUserAccountManagerDidSwitchUser
+    @objc public static let didChangeLoginHost: NSNotification.Name = NSNotification.Name("SFNotificationDidChangeLoginHost")
+    @objc public static let didLogoutOrg: NSNotification.Name = .SFUserAccountManagerDidLogoutOrg
+    @objc public static let didRefreshToken: NSNotification.Name = .SFUserAccountManagerDidRefreshToken
+    @objc public static let didMigrateRefreshToken: NSNotification.Name = .SFUserAccountManagerDidMigrateRefreshToken
+    @objc public static let willShowAuthenticationView: NSNotification.Name = .SFUserAccountManagerWillShowAuthenticationView
+    @objc public static let userCancelledAuthentication: NSNotification.Name = .SFUserAccountManagerUserCancelledAuthentication
+    @objc public static let willSendIDPRequest: NSNotification.Name = .SFUserAccountManagerWillSendIDPRequest
+    @objc public static let willSendIDPResponse: NSNotification.Name = .SFUserAccountManagerWillSendIDPResponse
+    @objc public static let didReceiveIDPRequest: NSNotification.Name = .SFUserAccountManagerDidReceiveIDPRequest
+    @objc public static let didReceiveIDPResponse: NSNotification.Name = .SFUserAccountManagerDidReceiveIDPResponse
+    @objc public static let didLogInAfterIDPInit: NSNotification.Name = .SFUserAccountManagerDidLogInAfterIDPInit
+
     // MARK: - Notification UserInfo Keys
 
     @objc public static let changeSetKey = "change"

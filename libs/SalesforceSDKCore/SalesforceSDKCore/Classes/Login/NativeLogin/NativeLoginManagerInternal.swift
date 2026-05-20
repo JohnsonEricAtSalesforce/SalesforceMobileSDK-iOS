@@ -160,7 +160,7 @@ public class NativeLoginManagerInternal: NSObject, NativeLoginManager {
     
     public func cancelAuthentication() {
         if (shouldShowBackButton()) {
-            UserAccountManager.shared.stopCurrentAuthentication()
+            UserAccountManager.shared.stopCurrentAuthentication(nil)
             SFSDKWindowManager.shared.authWindow(nil).viewController?.presentedViewController?.dismiss(animated: false, completion: {
                 SFSDKWindowManager.shared.authWindow(nil).dismissWindow()
             })
@@ -169,11 +169,11 @@ public class NativeLoginManagerInternal: NSObject, NativeLoginManager {
     
     public func biometricAuthenticationSuccess() {
         let bioAuthMgr = BiometricAuthenticationManagerInternal.shared
-        
+
         if bioAuthMgr.enabled && bioAuthMgr.locked {
             SFSDKCoreLogger.i(classForCoder, message: "Native Login biometric authentication success.")
             bioAuthMgr.unlockPostProcessing()
-            UserAccountManager.shared.stopCurrentAuthentication()
+            UserAccountManager.shared.stopCurrentAuthentication(nil)
         }
     }
     
