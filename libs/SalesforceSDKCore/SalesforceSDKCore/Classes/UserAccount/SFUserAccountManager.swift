@@ -1212,7 +1212,7 @@ extension UserAccountManager: SFSDKUserSelectionViewDelegate {
     private func spAppCredentials(from callingAppOptions: [AnyHashable: Any]) -> OAuthCredentials {
         let clientId = (callingAppOptions[SFSDKIDPConstants.kSFOAuthClientIdParam] as? String) ?? ""
         // Force unwrap is safe here: only fails if identifier is empty (it won't be)
-        let creds = OAuthCredentials(identifier: clientId, clientId: clientId, encrypted: false)!  // swiftlint:disable:this force_unwrapping
+        let creds = OAuthCredentials.credentials(identifier: clientId, clientId: clientId, encrypted: false, storageType: .keychain)!  // swiftlint:disable:this force_unwrapping
         creds.setValue(callingAppOptions[SFSDKIDPConstants.kSFOAuthRedirectUrlParam] as? String, forKey: "redirectUri")
         creds.setValue(callingAppOptions[SFSDKIDPConstants.kSFChallengeParamName] as? String, forKey: "challengeString")
         creds.setValue(nil, forKey: "accessToken")

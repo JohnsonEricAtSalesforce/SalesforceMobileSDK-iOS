@@ -26,7 +26,7 @@
  */
 
 #import <XCTest/XCTest.h>
-#import "SFOAuthCredentials.h"
+@import SalesforceSDKCore;
 
 @interface SFOAuthCredentialsTests : XCTestCase
 
@@ -53,7 +53,7 @@
 
 - (void)tryUpdateCredentials:(BOOL)encrypted storageType:(SFOAuthCredentialsStorageType)storageType {
     // Creating SFOAuthCredentials
-    SFOAuthCredentials *creds = [[SFOAuthCredentials alloc] initWithIdentifier:@"test_auth_creds" clientId:@"test_client_id" encrypted:encrypted storageType:storageType];
+    SFOAuthCredentials *creds = [SFOAuthCredentials credentialsWithIdentifier:@"test_auth_creds" clientId:@"test_client_id" encrypted:encrypted storageType:storageType];
 
     // Prepare dictionary with credentials
     NSMutableDictionary<NSString *, NSString *> *params = [NSMutableDictionary dictionary];

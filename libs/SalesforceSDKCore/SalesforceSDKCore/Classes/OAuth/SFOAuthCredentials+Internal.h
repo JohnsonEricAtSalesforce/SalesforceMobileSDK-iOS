@@ -1,6 +1,6 @@
 /*
  Copyright (c) 2011-present, salesforce.com, inc. All rights reserved.
- 
+
  Redistribution and use of this software in source and binary forms, with or without modification,
  are permitted provided that the following conditions are met:
  * Redistributions of source code must retain the above copyright notice, this list of conditions
@@ -11,7 +11,7 @@
  * Neither the name of salesforce.com, inc. nor the names of its contributors may be used to
  endorse or promote products derived from this software without specific prior written
  permission of salesforce.com, inc.
- 
+
  THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR
  IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND
  FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR
@@ -22,75 +22,6 @@
  WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#import "SFOAuthCredentials.h"
-
-typedef NS_ENUM(NSUInteger, SFOAuthCredsEncryptionType) {
-    kSFOAuthCredsEncryptionTypeNotSet,
-    kSFOAuthCredsEncryptionTypeMac,
-    kSFOAuthCredsEncryptionTypeIdForVendor,
-    kSFOAuthCredsEncryptionTypeBaseAppId,
-    kSFOAuthCredsEncryptionTypeKeyStore
-};
-
-extern NSString * _Nonnull const kSFOAuthServiceLegacyAccess;
-extern NSString * _Nonnull const kSFOAuthServiceLegacyRefresh;
-extern NSString * _Nonnull const kSFOAuthServiceAccess;
-extern NSString * _Nonnull const kSFOAuthServiceRefresh;
-extern NSString * _Nonnull const kSFOAuthServiceLightningSid;
-extern NSString * _Nonnull const kSFOAuthServiceVfSid;
-extern NSString * _Nonnull const kSFOAuthServiceContentSid;
-extern NSString * _Nonnull const kSFOAuthServiceCsrf;
-extern NSString * _Nonnull const kSFOAuthServiceParentSid;
-extern NSString * _Nonnull const kSFOAuthServiceBeaconChildConsumerKey;
-extern NSString * _Nonnull const kSFOAuthServiceBeaconChildConsumerSecret;
-
-extern NSException * _Nullable SFOAuthInvalidIdentifierException(void);
-
-@interface SFOAuthCredentials ()
-@property (nonatomic, readwrite, nullable) NSString *protocol;
-@property (nonatomic, readwrite, nullable) NSString *domain;
-@property (nonatomic, readwrite, nonnull) NSString *identifier;
-@property (nonatomic, readwrite, nullable) NSString *clientId;
-@property (nonatomic, readwrite, nullable) NSString *redirectUri;
-@property (nonatomic, readwrite, nullable) NSString *jwt;
-@property (nonatomic, readwrite, nullable) NSString *refreshToken;
-@property (nonatomic, readwrite, nullable) NSString *accessToken;
-@property (nonatomic, readwrite, nullable) NSString *organizationId;
-@property (nonatomic, readwrite, nullable) NSURL *instanceUrl;
-@property (nonatomic, readwrite, nullable) NSURL *apiInstanceUrl;
-@property (nonatomic, readwrite, nullable) NSArray<NSString *> *scopes;
-@property (nonatomic, readwrite, nullable) NSString *communityId;
-@property (nonatomic, readwrite, nullable) NSURL *communityUrl;
-@property (nonatomic, readwrite, nullable) NSDate *issuedAt;
-@property (nonatomic, readwrite, nullable) NSURL *identityUrl;
-@property (nonatomic, readwrite, nullable) NSURL *apiUrl;
-@property (nonatomic, readwrite, nullable) NSString *userId;
-@property (nonatomic, readwrite, strong, nullable) NSDictionary *additionalOAuthFields;
-@property (nonatomic, readwrite, nullable) NSString *challengeString;
-@property (nonatomic, readwrite, nullable) NSString *authCode;
-@property (nonatomic, readwrite, nullable) NSMutableDictionary * credentialsChangeSet;
-@property (nonatomic, readwrite, nullable) NSString *lightningDomain;
-@property (nonatomic, readwrite, nullable) NSString *lightningSid;
-@property (nonatomic, readwrite, nullable) NSString *vfDomain;
-@property (nonatomic, readwrite, nullable) NSString *vfSid;
-@property (nonatomic, readwrite, nullable) NSString *contentDomain;
-@property (nonatomic, readwrite, nullable) NSString *contentSid;
-@property (nonatomic, readwrite, nullable) NSString *csrfToken;
-@property (nonatomic, readwrite, nullable) NSString *cookieClientSrc;
-@property (nonatomic, readwrite, nullable) NSString *cookieSidClient;
-@property (nonatomic, readwrite, nullable) NSString *sidCookieName;
-@property (nonatomic, readwrite, nullable) NSString *parentSid;
-@property (nonatomic, readwrite, nullable) NSString *tokenFormat;
-@property (nonatomic, readwrite, nullable) NSString *beaconChildConsumerKey;
-@property (nonatomic, readwrite, nullable) NSString *beaconChildConsumerSecret;
-
-- (void)setPropertyForKey:(NSString *_Nonnull) key withValue:(id _Nullable ) newValue;
-
-- (BOOL)hasPropertyValueChangedForKey:(NSString *_Nullable) key;
-
-/** Reset changes to credentials, called at the end of auth flow.
- */
-- (void)resetCredentialsChangeSet;
-@end
-
-
+// This class has been converted to Swift. See SFOAuthCredentials.swift.
+// All properties are now public var directly on OAuthCredentials - no +Internal header needed.
+// This header is retained as a tombstone for source compatibility with existing #import statements.

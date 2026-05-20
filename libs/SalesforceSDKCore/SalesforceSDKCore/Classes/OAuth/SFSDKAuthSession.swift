@@ -75,7 +75,7 @@ public class SFSDKAuthSession: NSObject {
 
     private static func newClientCredentials(request: SFSDKAuthRequest) -> OAuthCredentials? {
         let identifier = UserAccountManager.shared.perform(NSSelectorFromString("uniqueUserAccountIdentifier:"), with: request.oauthClientId)?.takeUnretainedValue() as? String ?? UUID().uuidString
-        guard let creds = OAuthCredentials(identifier: identifier, clientId: request.oauthClientId, encrypted: true) else { return nil }
+        guard let creds = OAuthCredentials.credentials(identifier: identifier, clientId: request.oauthClientId, encrypted: true, storageType: .keychain) else { return nil }
         creds.setValue(request.oauthClientId, forKey: "clientId")
         creds.setValue(request.oauthCompletionUrl, forKey: "redirectUri")
         creds.setValue(request.loginHost, forKey: "domain")

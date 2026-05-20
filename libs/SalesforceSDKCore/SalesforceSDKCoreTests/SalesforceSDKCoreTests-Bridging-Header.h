@@ -8,11 +8,5 @@
 #import "SFSDKAuthSession.h"
 #import "SFOAuthCoordinator+Internal.h"
 #import "SFUserAccountManager+Internal.h"
-#import "SFOAuthCredentials+Internal.h"
-#import "SFOAuthKeychainCredentials.h"
-
-// Expose internal keychain token methods for testing
-@interface SFOAuthKeychainCredentials (Testing)
-- (NSString * _Nullable)decryptedTokenForService:(NSString * _Nonnull)service;
-- (void)encryptToken:(NSString * _Nonnull)token forService:(NSString * _Nonnull)service;
-@end
+// SFOAuthCredentials and SFOAuthKeychainCredentials are now Swift classes.
+// Their internal/testing methods are directly accessible from Swift test code.

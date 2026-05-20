@@ -76,7 +76,7 @@ class SalesforceOAuthUnitTests: XCTestCase {
         let kUserId12 = "00530000004c"           // 12 characters
         let kUserId18 = "00530000004cwSi123"     // 18 characters
 
-        guard let credentials = OAuthCredentials(identifier: Self.kIdentifier, clientId: Self.kClientId, encrypted: true) else {
+        guard let credentials = OAuthCredentials.credentials(identifier: Self.kIdentifier, clientId: Self.kClientId, encrypted: true) else {
             XCTFail("Failed to create credentials")
             return
         }
@@ -120,7 +120,7 @@ class SalesforceOAuthUnitTests: XCTestCase {
     func testCredentialsCoding() {
         let archiver = NSKeyedArchiver(requiringSecureCoding: false)
 
-        guard let credsIn = SFOAuthKeychainCredentials(identifier: Self.kIdentifier, clientId: Self.kClientId, encrypted: true) else {
+        guard let credsIn = OAuthKeychainCredentials(identifier: Self.kIdentifier, clientId: Self.kClientId, encrypted: true) else {
             XCTFail("Failed to create keychain credentials")
             return
         }
@@ -146,7 +146,7 @@ class SalesforceOAuthUnitTests: XCTestCase {
         credsIn.tokenFormat = "token-format"
         credsIn.beaconChildConsumerKey = "beacon-child-consumer-key"
         credsIn.beaconChildConsumerSecret = "beacon-child-consumer-secret"
-        credsIn.additionalOAuthFields = ["abc": "def"]
+        credsIn.additionalOAuthFields = ["abc": "def"] as NSDictionary
 
         let expectedUserId = "eighteenCharUsrXYZ" // derived from identityUrl
 
@@ -219,9 +219,9 @@ class SalesforceOAuthUnitTests: XCTestCase {
         let tokenFormatToCheck = "token-format"
         let beaconChildConsumerKeyCheck = "beacon-child-consumer-key"
         let beaconChildConsumerSecretCheck = "beacon-child-consumer-secret"
-        let additionalFieldsToCheck: [String: String] = ["field1": "field1Val"]
+        let additionalFieldsToCheck: NSDictionary = ["field1": "field1Val"]
 
-        guard let origCreds = OAuthCredentials(identifier: Self.kIdentifier, clientId: Self.kClientId, encrypted: true) else {
+        guard let origCreds = OAuthCredentials.credentials(identifier: Self.kIdentifier, clientId: Self.kClientId, encrypted: true) else {
             XCTFail("Failed to create credentials")
             return
         }
@@ -387,8 +387,8 @@ class SalesforceOAuthUnitTests: XCTestCase {
         let kUserA_Identifier = "userA"
         let kUserB_Identifier = "userB"
 
-        guard let ca = OAuthCredentials(identifier: kUserA_Identifier, clientId: Self.kClientId, encrypted: true),
-              let cb = OAuthCredentials(identifier: kUserB_Identifier, clientId: Self.kClientId, encrypted: true) else {
+        guard let ca = OAuthCredentials.credentials(identifier: kUserA_Identifier, clientId: Self.kClientId, encrypted: true),
+              let cb = OAuthCredentials.credentials(identifier: kUserB_Identifier, clientId: Self.kClientId, encrypted: true) else {
             XCTFail("Failed to create credentials")
             return
         }
@@ -416,7 +416,7 @@ class SalesforceOAuthUnitTests: XCTestCase {
         let contentSid = "content-sid-test"
         let csrfToken = "csrf-test"
 
-        guard let credentials = SFOAuthKeychainCredentials(identifier: Self.kIdentifier, clientId: Self.kClientId, encrypted: true) else {
+        guard let credentials = OAuthKeychainCredentials(identifier: Self.kIdentifier, clientId: Self.kClientId, encrypted: true) else {
             XCTFail("Failed to create keychain credentials")
             return
         }

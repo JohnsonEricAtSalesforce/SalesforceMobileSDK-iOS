@@ -107,7 +107,7 @@ public class TestSetupUtils: NSObject {
     @objc public class func newClientCredentials() -> OAuthCredentials {
         let userAccountManager = UserAccountManager.shared
         let identifier = userAccountManager.perform(NSSelectorFromString("uniqueUserAccountIdentifier:"), with: userAccountManager.oauthClientID ?? "")?.takeUnretainedValue() as? String ?? UUID().uuidString
-        guard let creds = OAuthCredentials(identifier: identifier, clientId: userAccountManager.oauthClientID ?? "", encrypted: true) else {
+        guard let creds = OAuthCredentials.credentials(identifier: identifier, clientId: userAccountManager.oauthClientID ?? "", encrypted: true, storageType: .keychain) else {
             preconditionFailure("Failed to create OAuthCredentials")
         }
         creds.setValue(userAccountManager.oauthClientID, forKey: "clientId")
