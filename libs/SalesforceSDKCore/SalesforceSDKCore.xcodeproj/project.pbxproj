@@ -21,6 +21,8 @@
 /* End PBXAggregateTarget section */
 
 /* Begin PBXBuildFile section */
+		00E9C1A1B2D4F5A605D9FACA /* SalesforceSDKIdentityTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 05D9FACA946CA40D58952A17 /* SalesforceSDKIdentityTests.swift */; };
+		00E9C1A2D535E2AB61A81215 /* SalesforceSDKManagerTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = D535E2AB61A81215DE478778 /* SalesforceSDKManagerTests.swift */; };
 		00FAAA4A72DB65996DE565AE /* SFSDKAppFeatureMarkersTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = F8F575E3BAA3F1FB980CC21C /* SFSDKAppFeatureMarkersTests.swift */; };
 		010A9B551CC1A131002AF4D3 /* SFCryptoStreamTestUtils.h in Headers */ = {isa = PBXBuildFile; fileRef = 010A9B511CC1A131002AF4D3 /* SFCryptoStreamTestUtils.h */; };
 		0263D721CE2D1522B10CEEE9 /* SFUserAccountPhotoTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = F443EF8791C41A35390DFCEC /* SFUserAccountPhotoTests.swift */; };
@@ -2574,6 +2576,8 @@
 				0263D721CE2D1522B10CEEE9 /* SFUserAccountPhotoTests.swift in Sources */,
 				4F8C4FD4CC6FF121DD86E838 /* SFUserIdUpgradeTests.swift in Sources */,
 				412AE58D433C9EE9FFC636D8 /* UIColor+SFColorsTests.swift in Sources */,
+				00E9C1A1B2D4F5A605D9FACA /* SalesforceSDKIdentityTests.swift in Sources */,
+				00E9C1A2D535E2AB61A81215 /* SalesforceSDKManagerTests.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

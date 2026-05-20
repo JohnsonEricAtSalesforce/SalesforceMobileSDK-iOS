@@ -50,7 +50,7 @@ public enum SFURLCacheType: UInt {
 // MARK: - Snapshot Block Types
 
 /// Block that creates a snapshot view controller for app backgrounding.
-public typealias SFSnapshotViewControllerCreationBlock = () -> UIViewController
+public typealias SFSnapshotViewControllerCreationBlock = () -> UIViewController?
 /// Block that presents a snapshot view controller.
 public typealias SFSnapshotViewControllerPresentationBlock = (UIViewController) -> Void
 /// Block that dismisses a snapshot view controller.
@@ -283,7 +283,10 @@ open class SalesforceSDKManager: NSObject {
     }
 
     @objc public var appDisplayName: String? {
-        get { UserAccountManager.shared.appDisplayName }
+        get {
+            let name = UserAccountManager.shared.appDisplayName
+            return name.isEmpty ? nil : name
+        }
         set { UserAccountManager.shared.appDisplayName = newValue ?? "" }
     }
 

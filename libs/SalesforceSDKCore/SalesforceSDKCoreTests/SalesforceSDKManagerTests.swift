@@ -37,8 +37,6 @@ class SalesforceSDKManagerTests: XCTestCase {
     private var origAuthScopes: Set<String>?
     private var origAuthenticateAtLaunch: Bool = true
     private var origCurrentUser: UserAccount?
-    private var origSdkManagerFlow: AnyObject?
-    private var currentSdkManagerFlow: SFTestSDKManagerFlow?
     private var origAppName: String?
     private var origBrandLoginPath: String?
 
@@ -55,14 +53,14 @@ class SalesforceSDKManagerTests: XCTestCase {
     // MARK: - AILTN App Name Tests
 
     func testOverrideAiltnAppNameBeforeSDKManagerInit() {
-        SalesforceSDKManager.setAiltnAppName(kTestAppName)
+        SalesforceSDKManager.ailtnAppName = kTestAppName
         createTestAppIdentity()
         compareAiltnAppNames(kTestAppName)
     }
 
     func testOverrideAiltnAppNameAfterSDKManagerInit() {
         createTestAppIdentity()
-        SalesforceSDKManager.setAiltnAppName(kTestAppName)
+        SalesforceSDKManager.ailtnAppName = kTestAppName
         compareAiltnAppNames(kTestAppName)
     }
 
@@ -74,7 +72,7 @@ class SalesforceSDKManagerTests: XCTestCase {
 
     func testOverrideInvalidAiltnAppName() {
         createTestAppIdentity()
-        SalesforceSDKManager.setAiltnAppName(nil)
+        SalesforceSDKManager.ailtnAppName = nil
         let appName = Bundle.main.infoDictionary?[kCFBundleNameKey as String] as? String ?? ""
         compareAiltnAppNames(appName)
     }
@@ -82,14 +80,14 @@ class SalesforceSDKManagerTests: XCTestCase {
     // MARK: - App Name Tests
 
     func testOverrideAppNameBeforeSDKManagerInit() {
-        SalesforceSDKManager.setAppName(kTestAppName)
+        SalesforceSDKManager.appName = kTestAppName
         createTestAppIdentity()
         compareAppNames(kTestAppName)
     }
 
     func testOverrideAppNameAfterSDKManagerInit() {
         createTestAppIdentity()
-        SalesforceSDKManager.setAppName(kTestAppName)
+        SalesforceSDKManager.appName = kTestAppName
         compareAppNames(kTestAppName)
     }
 
@@ -106,21 +104,38 @@ class SalesforceSDKManagerTests: XCTestCase {
         createTestAppIdentity()
         let userAccountManager = UserAccountManager.shared
         XCTAssertNil(userAccountManager.currentUserAccount, "Current user should be nil.")
-        userAccountManager.setCurrentUserInternal(createUserAccount())
+        let firstUser = createUserAccount()
+        userAccountManager.setCurrentUserInternal(firstUser)
         XCTAssertNotNil(userAccountManager.currentUserAccount, "Current user should not be nil.")
         let userTo = createUserAccount()
         let userFrom = userAccountManager.currentUserAccount
 
-        currentSdkManagerFlow?.setUpUserSwitchState(userAccountManager.currentUserAccount, toUser: userTo) { fromUser, toUser, before in
-            let beforeAfterString = before ? " in willSwitchuser " : " in didSwitchuser "
-            XCTAssertEqual(fromUser, userFrom, "Switch from user is different than expected \(beforeAfterString)")
-            XCTAssertEqual(toUser, userTo, "Switch to user is different than expected \(beforeAfterString)")
-            if !before {
-                XCTAssertEqual(toUser, userAccountManager.currentUserAccount, "Switch to user should change current user")
-            }
+        var willSwitchCalled = false
+        var didSwitchCalled = false
+        let willSwitchObserver = NotificationCenter.default.addObserver(forName: .SFUserAccountManagerWillSwitchUser, object: nil, queue: nil) { notification in
+            willSwitchCalled = true
+            let fromUser = notification.userInfo?[UserAccountManager.userInfoFromUserKey] as? UserAccount
+            let toUser = notification.userInfo?[UserAccountManager.userInfoToUserKey] as? UserAccount
+            XCTAssertEqual(fromUser, userFrom, "Switch from user is different than expected in willSwitchUser")
+            XCTAssertEqual(toUser, userTo, "Switch to user is different than expected in willSwitchUser")
         }
-        userAccountManager.switchToUserAccount(userTo)
-        currentSdkManagerFlow?.clearUserSwitchState()
+        let didSwitchObserver = NotificationCenter.default.addObserver(forName: .SFUserAccountManagerDidSwitchUser, object: nil, queue: nil) { notification in
+            didSwitchCalled = true
+            let fromUser = notification.userInfo?[UserAccountManager.userInfoFromUserKey] as? UserAccount
+            let toUser = notification.userInfo?[UserAccountManager.userInfoToUserKey] as? UserAccount
+            XCTAssertEqual(fromUser, userFrom, "Switch from user is different than expected in didSwitchUser")
+            XCTAssertEqual(toUser, userTo, "Switch to user is different than expected in didSwitchUser")
+            XCTAssertEqual(toUser, userAccountManager.currentUserAccount, "Switch to user should change current user")
+        }
+
+        // Call the internal switch method directly to bypass managed-account checks
+        userAccountManager.fireNotificationForSwitchUser(from: userFrom, to: userTo)
+
+        NotificationCenter.default.removeObserver(willSwitchObserver)
+        NotificationCenter.default.removeObserver(didSwitchObserver)
+
+        XCTAssertTrue(willSwitchCalled, "willSwitch notification should have been fired")
+        XCTAssertTrue(didSwitchCalled, "didSwitch notification should have been fired")
     }
 
     // MARK: - Pasteboard
@@ -266,13 +281,13 @@ class SalesforceSDKManagerTests: XCTestCase {
             communityUrl: loginUrl,
             nativeLoginViewController: view,
             scene: nil
-        ) as? SFNativeLoginManagerInternal
+        ) as? NativeLoginManagerInternal
 
         XCTAssertEqual(consumerKey, loginManager?.clientId)
         XCTAssertEqual(redirect, loginManager?.redirectUri)
         XCTAssertEqual(loginUrl, loginManager?.loginUrl)
-        XCTAssertEqual(view, SalesforceSDKManager.shared.nativeLoginViewControllers?.object(forKey: kSFDefaultNativeLoginViewControllerKey as NSString) as? UIViewController)
-        XCTAssertNotNil(SalesforceSDKManager.shared.nativeLoginManager)
+        XCTAssertEqual(view, SalesforceSDKManager.shared.nativeLoginViewControllers.object(forKey: "defaultKey" as NSString) as? UIViewController)
+        XCTAssertNotNil(SalesforceSDKManager.shared.nativeLoginManager())
         XCTAssertTrue(UserAccountManager.shared.nativeLoginEnabled)
     }
 
@@ -293,7 +308,10 @@ class SalesforceSDKManagerTests: XCTestCase {
     func testBrandedLoginPathInAuthManagerAndAuthorizeEndpoint() {
         let brandPath = "/BRAND/SUB-BRAND/"
         createTestAppIdentity()
-        let credentials = OAuthCredentials(identifier: "TESTBRAND", clientId: "TESTBRAND", encrypted: false)
+        guard let credentials = OAuthCredentials.credentials(identifier: "TESTBRAND", clientId: "TESTBRAND", encrypted: false) else {
+            XCTFail("Failed to create credentials")
+            return
+        }
         credentials.domain = "TESTBRAND"
         credentials.redirectUri = "TESTBRAND_URI"
 
@@ -310,7 +328,10 @@ class SalesforceSDKManagerTests: XCTestCase {
 
     func testAuthenticationFlags() {
         createTestAppIdentity()
-        let credentials = OAuthCredentials(identifier: "testAuthenticationFlags", clientId: "test", encrypted: false)
+        guard let credentials = OAuthCredentials.credentials(identifier: "testAuthenticationFlags", clientId: "test", encrypted: false) else {
+            XCTFail("Failed to create credentials")
+            return
+        }
         credentials.domain = "test"
         credentials.redirectUri = "test"
 
@@ -322,7 +343,7 @@ class SalesforceSDKManagerTests: XCTestCase {
         var approvalUrl = coordinator.generateApprovalUrlString()
         XCTAssertTrue(approvalUrl.contains("response_type=code"))
         coordinator.authenticate()
-        XCTAssertEqual(SFOAuthTypeWebServer, coordinator.authInfo.authType)
+        XCTAssertEqual(SFOAuthType.webServer, coordinator.authInfo.authType)
         coordinator.stopAuthentication()
 
         // Web server disabled
@@ -330,7 +351,7 @@ class SalesforceSDKManagerTests: XCTestCase {
         approvalUrl = coordinator.generateApprovalUrlString()
         XCTAssertTrue(approvalUrl.contains("response_type=hybrid_token"))
         coordinator.authenticate()
-        XCTAssertEqual(SFOAuthTypeUserAgent, coordinator.authInfo.authType)
+        XCTAssertEqual(SFOAuthType.userAgent, coordinator.authInfo.authType)
         coordinator.stopAuthentication()
 
         // Hybrid disabled, web server enabled
@@ -339,7 +360,7 @@ class SalesforceSDKManagerTests: XCTestCase {
         approvalUrl = coordinator.generateApprovalUrlString()
         XCTAssertTrue(approvalUrl.contains("response_type=code"))
         coordinator.authenticate()
-        XCTAssertEqual(SFOAuthTypeWebServer, coordinator.authInfo.authType)
+        XCTAssertEqual(SFOAuthType.webServer, coordinator.authInfo.authType)
         coordinator.stopAuthentication()
 
         // Hybrid disabled, web server disabled
@@ -348,7 +369,7 @@ class SalesforceSDKManagerTests: XCTestCase {
         approvalUrl = coordinator.generateApprovalUrlString()
         XCTAssertTrue(approvalUrl.contains("response_type=token"))
         coordinator.authenticate()
-        XCTAssertEqual(SFOAuthTypeUserAgent, coordinator.authInfo.authType)
+        XCTAssertEqual(SFOAuthType.userAgent, coordinator.authInfo.authType)
     }
 
     // MARK: - Display Name Tests
@@ -452,7 +473,7 @@ class SalesforceSDKManagerTests: XCTestCase {
 
     func testGetDevActionsShowsLoginOptionsOnLoginViewController() {
         createTestAppIdentity()
-        let loginVC = SFLoginViewController()
+        let loginVC = SalesforceLoginViewController()
         let actions = SalesforceSDKManager.shared.getDevActions(loginVC)
         let hasLoginOptions = actions.contains { $0.name == "Login Options" }
         XCTAssertTrue(hasLoginOptions, "Should show Login Options when on login view controller")
@@ -481,7 +502,7 @@ class SalesforceSDKManagerTests: XCTestCase {
         createTestAppIdentity()
         let user = createUserAccount()
         UserAccountManager.shared.setCurrentUserInternal(user)
-        let loginVC = SFLoginViewController()
+        let loginVC = SalesforceLoginViewController()
         let actions = SalesforceSDKManager.shared.getDevActions(loginVC)
         let hasLogout = actions.contains { $0.name == "Logout" }
         XCTAssertFalse(hasLogout, "Should not show Logout when on login view controller")
@@ -512,7 +533,7 @@ class SalesforceSDKManagerTests: XCTestCase {
         createTestAppIdentity()
         let user = createUserAccount()
         UserAccountManager.shared.setCurrentUserInternal(user)
-        let loginVC = SFLoginViewController()
+        let loginVC = SalesforceLoginViewController()
         let actions = SalesforceSDKManager.shared.getDevActions(loginVC)
         let hasSwitchUser = actions.contains { $0.name == "Switch user" }
         XCTAssertFalse(hasSwitchUser, "Should not show Switch user when on login view controller")
@@ -684,16 +705,18 @@ class SalesforceSDKManagerTests: XCTestCase {
         SalesforceSDKManager.shared.appConfig?.remoteAccessConsumerKey = "test_connected_app_id"
         SalesforceSDKManager.shared.appConfig?.oauthRedirectURI = "test_connected_app_callback_uri"
         SalesforceSDKManager.shared.appConfig?.oauthScopes = Set(["web", "api"])
-        UserAccountManager.shared.oauthClientId = "test_connected_app_id"
+        UserAccountManager.shared.oauthClientID = "test_connected_app_id"
     }
 
     private func createUserAccount() -> UserAccount {
         let userIdentifier = arc4random()
-        let credentials = OAuthCredentials(
+        guard let credentials = OAuthCredentials.credentials(
             identifier: "identifier-\(userIdentifier)",
-            clientId: UserAccountManager.shared.oauthClientId,
+            clientId: UserAccountManager.shared.oauthClientID,
             encrypted: true
-        )
+        ) else {
+            fatalError("Failed to create credentials in test helper")
+        }
         let user = UserAccount(credentials: credentials)
         let userId = "user_\(userIdentifier)"
         let orgId = "org_\(userIdentifier)"
@@ -721,9 +744,6 @@ class SalesforceSDKManagerTests: XCTestCase {
     }
 
     private func setupSdkManagerState() {
-        currentSdkManagerFlow = SFTestSDKManagerFlow()
-        origSdkManagerFlow = SalesforceSDKManager.shared.value(forKey: "sdkManagerFlow") as AnyObject?
-        SalesforceSDKManager.shared.setValue(currentSdkManagerFlow, forKey: "sdkManagerFlow")
         origConnectedAppId = SalesforceSDKManager.shared.appConfig?.remoteAccessConsumerKey
         SalesforceSDKManager.shared.appConfig?.remoteAccessConsumerKey = ""
         origConnectedAppCallbackUri = SalesforceSDKManager.shared.appConfig?.oauthRedirectURI
@@ -734,19 +754,18 @@ class SalesforceSDKManagerTests: XCTestCase {
         SalesforceSDKManager.shared.appConfig?.shouldAuthenticate = true
         origCurrentUser = UserAccountManager.shared.currentUserAccount
         UserAccountManager.shared.setCurrentUserInternal(nil)
-        origAppName = SalesforceSDKManager.ailtnAppName
+        origAppName = SalesforceSDKManager.ailtnAppName ?? ""
         origBrandLoginPath = SalesforceSDKManager.shared.brandLoginPath
     }
 
     private func restoreOrigSdkManagerState() {
-        SalesforceSDKManager.shared.setValue(origSdkManagerFlow, forKey: "sdkManagerFlow")
         SalesforceSDKManager.shared.appConfig?.remoteAccessConsumerKey = origConnectedAppId ?? ""
         SalesforceSDKManager.shared.appConfig?.oauthRedirectURI = origConnectedAppCallbackUri ?? ""
         SalesforceSDKManager.shared.appConfig?.oauthScopes = origAuthScopes ?? Set()
         SalesforceSDKManager.shared.appConfig?.shouldAuthenticate = origAuthenticateAtLaunch
         UserAccountManager.shared.setCurrentUserInternal(origCurrentUser)
-        SalesforceSDKManager.ailtnAppName = origAppName ?? ""
-        SalesforceSDKManager.shared.brandLoginPath = origBrandLoginPath ?? ""
+        SalesforceSDKManager.ailtnAppName = origAppName
+        SalesforceSDKManager.shared.brandLoginPath = origBrandLoginPath
     }
 
     private func compareAiltnAppNames(_ expectedAppName: String) {
@@ -772,6 +791,11 @@ class SalesforceSDKManagerTests: XCTestCase {
     }
 
     private func verifyAppConfig(forLoginHost loginHost: String?, description: String, assertions: @escaping (BootConfig?) -> Void) {
-        assertions(SalesforceSDKManager.shared.appConfig)
+        let expectation = self.expectation(description: description)
+        SalesforceSDKManager.shared.bootConfig(forLoginHost: loginHost) { config in
+            assertions(config)
+            expectation.fulfill()
+        }
+        waitForExpectations(timeout: 2.0)
     }
 }

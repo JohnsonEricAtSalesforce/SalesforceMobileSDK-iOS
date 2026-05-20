@@ -190,7 +190,11 @@ public class SFSDKAuthPreferences: NSObject {
             return Bundle.main.object(forInfoDictionaryKey: "CFBundleName") as? String ?? ""
         }
         set {
-            UserDefaults.msdkUserDefaults().set(newValue, forKey: kOAuthAppName)
+            if newValue.isEmpty {
+                UserDefaults.msdkUserDefaults().removeObject(forKey: kOAuthAppName)
+            } else {
+                UserDefaults.msdkUserDefaults().set(newValue, forKey: kOAuthAppName)
+            }
             UserDefaults.msdkUserDefaults().synchronize()
         }
     }
