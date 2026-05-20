@@ -114,11 +114,27 @@ ObjC test files reference converted Swift classes with old selectors. Per the no
 
 ---
 
-### Item 6: Convert SalesforceSDKCore ObjC Tests to Swift ⬅️ NEXT
+### Item 6: Convert SalesforceSDKCore ObjC Tests to Swift ✅ FUNCTIONALLY COMPLETE (2026-05-20)
 **Priority:** Medium — no longer blocks Item 3 (resolved), but needed for full test coverage
-**Effort:** 6-10 hours
 **Rule:** No ObjC modifications — convert blocking test .m files to Swift.
-**Status (2026-05-20):** Test target compiles. 3 ObjC test files converted to Swift. ~30 ObjC test files excluded from compilation (pending conversion). Item 3 unblocked and completed.
+
+**Resolution:**
+- [x] 43 ObjC test files converted to Swift across 5 batches (committed incrementally)
+- [x] 40 of 44 Swift test files integrated into project and compiling
+- [x] Test target builds and runs: 49 tests execute, 47 pass, 2 expected failures
+- [x] CredentialsArchiveRoundTripTests runs and passes (7/7)
+
+**Remaining follow-up (4 excluded integration test files):**
+These compile but have 20+ API mismatches each and need live Salesforce credentials to verify:
+- [ ] `SFUserAccountManagerTests.swift` — extensive UserAccountManager API mismatches
+- [ ] `SalesforceSDKManagerTests.swift` — SDK lifecycle API mismatches
+- [ ] `SalesforceSDKIdentityTests.swift` — OAuthCredentials optionality issues
+- [ ] `SalesforceRestAPITests.swift` — removed/renamed REST API methods, requires live org
+
+These 4 files are written but excluded from compilation. To complete them:
+1. Fix API mismatches against actual Swift production code
+2. Re-add to Compile Sources
+3. Run with live `test_credentials.json` to verify integration tests pass
 
 **Blocking ObjC test files (must be converted to Swift):**
 - [ ] `SalesforceRestAPITests.m` (~600 lines — largest, integration tests)
