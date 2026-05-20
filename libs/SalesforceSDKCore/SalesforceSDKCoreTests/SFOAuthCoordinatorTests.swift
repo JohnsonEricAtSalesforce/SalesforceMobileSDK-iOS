@@ -1,4 +1,6 @@
 import XCTest
+import WebKit
+import AuthenticationServices
 @testable import SalesforceSDKCore
 
 class SFOAuthCoordinatorTests: XCTestCase {
@@ -22,7 +24,7 @@ class SFOAuthCoordinatorTests: XCTestCase {
         coordinator.credentials = credentials
         
         // When
-        coordinator.authenticate(with: credentials!)
+        coordinator.authenticate(withCredentials: credentials!)
         
         // Then
         var didCallDecisionHandlerPolicy: WKNavigationActionPolicy = .allow
@@ -39,8 +41,8 @@ class SFOAuthCoordinatorTests: XCTestCase {
 
 // MARK: - SFOAuthCoordinatorDelegate conformance for tests
 extension SFOAuthCoordinatorTests: SFOAuthCoordinatorDelegate {
-    func oauthCoordinator(_ coordinator: SFOAuthCoordinator, didBeginAuthenticationWith view: WKWebView) {}
-    func oauthCoordinator(_ coordinator: SFOAuthCoordinator, didBeginAuthenticationWith session: ASWebAuthenticationSession) {}
+    func oauthCoordinator(_ coordinator: SFOAuthCoordinator, didBeginAuthenticationWithView view: WKWebView) {}
+    func oauthCoordinator(_ coordinator: SFOAuthCoordinator, didBeginAuthenticationWithSession session: ASWebAuthenticationSession) {}
     func oauthCoordinatorDidBeginNativeAuthentication(_ coordinator: SFOAuthCoordinator) {}
     func oauthCoordinatorDidCancelBrowserAuthentication(_ coordinator: SFOAuthCoordinator) {}
 }

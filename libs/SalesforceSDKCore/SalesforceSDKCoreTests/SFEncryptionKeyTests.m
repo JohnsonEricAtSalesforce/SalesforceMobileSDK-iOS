@@ -23,7 +23,7 @@
  */
 
 #import <XCTest/XCTest.h>
-#import "SFEncryptionKey.h"
+#import <SalesforceSDKCore/SalesforceSDKCore-Swift.h>
 
 
 @interface SFEncryptionKeyTests : XCTestCase

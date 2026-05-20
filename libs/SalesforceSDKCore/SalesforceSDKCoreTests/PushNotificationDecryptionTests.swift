@@ -43,7 +43,7 @@ class PushNotificationDecryptionTests: XCTestCase {
     
     override func setUpWithError() throws {
         SFSDKCryptoUtils.createRSAKeyPair(withName: "com.salesforce.mobilesdk.notificationKey", keyLength: 2048, accessibleAttribute: kSecAttrAccessibleAfterFirstUnlockThisDeviceOnly)
-        publicKey = try XCTUnwrap(SFSDKCryptoUtils.getRSAPublicKeyRef(withName: "com.salesforce.mobilesdk.notificationKey", keyLength: 2048)).takeUnretainedValue()
+        publicKey = try XCTUnwrap(SFSDKCryptoUtils.getRSAPublicKeyRef(withName: "com.salesforce.mobilesdk.notificationKey", keyLength: 2048))
     }
     
     func testPKCS1Secret() throws {
@@ -64,7 +64,7 @@ class PushNotificationDecryptionTests: XCTestCase {
         notificationContent.userInfo[kRemoteNotificationKeyContent] = encryptedContent
         
         // Decrypt
-        try SFSDKPushNotificationDecryption.decryptNotificationContent(notificationContent)
+        _ = SFSDKPushNotificationDecryption.decryptNotificationContent(notificationContent, error: nil)
         XCTAssertEqual("Matt D updated Jane Smith (CEO, Acme)", notificationContent.body)
         XCTAssertEqual("Contact Updated", notificationContent.title)
     }
@@ -87,7 +87,7 @@ class PushNotificationDecryptionTests: XCTestCase {
         notificationContent.userInfo[kRemoteNotificationKeyContent] = encryptedContent
         
         // Decrypt
-        try SFSDKPushNotificationDecryption.decryptNotificationContent(notificationContent)
+        _ = SFSDKPushNotificationDecryption.decryptNotificationContent(notificationContent, error: nil)
         XCTAssertEqual("Matt D updated Jane Smith (CEO, Acme)", notificationContent.body)
         XCTAssertEqual("Contact Updated", notificationContent.title)
     }

@@ -84,7 +84,7 @@ static NSString * const kOrgId = @"00D000000000062EAA";
 
 - (SFUserAccount*)createNewUser {
     NSString *userID = @"005R0000000DslaIAC";
-    SFOAuthCredentials *credentials = [[SFOAuthCredentials alloc] initWithIdentifier:[NSString stringWithFormat:@"identifier-%lu", (unsigned long)userID] clientId:[SFUserAccountManager sharedInstance].oauthClientId encrypted:YES];
+    SFOAuthCredentials *credentials = [[SFOAuthCredentials alloc] initWithIdentifier:[NSString stringWithFormat:@"identifier-%lu", (unsigned long)userID] clientId:SFUserAccountManager.shared.oauthClientID encrypted:YES];
     SFUserAccount *user = [[SFUserAccount alloc] initWithCredentials:credentials];
     user.credentials.identityUrl = [NSURL URLWithString:[NSString stringWithFormat:@"https://login.salesforce.com/id/%@/%@", @"00D000000000062EAA", userID]];
     return user;

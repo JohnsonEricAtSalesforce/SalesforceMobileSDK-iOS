@@ -29,7 +29,7 @@ import XCTest
 @testable import SalesforceSDKCore
 
 final class NativeLoginManagerTests: XCTestCase {
-    let nativeLoginManager = SalesforceManager.shared.useNativeLogin(withConsumerKey: "c", callbackUrl: "r", communityUrl: "l", nativeLoginViewController: UIViewController(), scene: nil)
+    let nativeLoginManager = SalesforceSDKManager.shared.useNativeLogin(withConsumerKey: "c", callbackUrl: "r", communityUrl: "l", nativeLoginViewController: UIViewController(), scene: nil)
     
     override func setUpWithError() throws {
         _ = KeychainHelper.removeAll()
@@ -37,7 +37,7 @@ final class NativeLoginManagerTests: XCTestCase {
     }
     
     override func tearDownWithError() throws {
-        UserAccountManager.shared.stopCurrentAuthentication()
+        UserAccountManager.shared.stopCurrentAuthentication(nil)
         _ = KeychainHelper.removeAll()
         UserAccountManager.shared.clearAllAccountState()
     }
@@ -128,7 +128,7 @@ final class NativeLoginManagerTests: XCTestCase {
     private func createUser() -> UserAccount {
         let credentials = OAuthCredentials(identifier: "identifier-0", clientId: "fakeClientIdForTesting", encrypted: true)!
         let user = UserAccount(credentials: credentials)
-        user.idData = IdentityData(jsonDict: [ "user_id": "0" ])
+        user.idData = SFIdentityData(jsonDict: [ "user_id": "0" ])
         do {
             try UserAccountManager.shared.upsert(user)
         } catch { }

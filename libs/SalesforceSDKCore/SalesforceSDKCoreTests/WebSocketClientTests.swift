@@ -65,7 +65,7 @@ class MockNetwork: WebSocketNetworkProtocol {
 
 class MockUserAccountManager: UserAccountManaging {
     let mockUserAccount = UserAccount()
-    let mockInfo = AuthInfo()
+    let mockInfo = SFOAuthInfo(authType: .unknown)
     
     var shouldError = false
     
@@ -73,7 +73,7 @@ class MockUserAccountManager: UserAccountManaging {
         mockUserAccount
     }
     
-    func refresh(credentials: OAuthCredentials, _ completionBlock: @escaping (Result<(UserAccount, AuthInfo), SalesforceSDKCore.UserAccountManagerError>) -> Void) -> Bool {
+    func refresh(credentials: OAuthCredentials, _ completionBlock: @escaping (Result<(UserAccount, SFOAuthInfo), SalesforceSDKCore.UserAccountManagerError>) -> Void) -> Bool {
         if shouldError {
             let error = NSError(domain: "test", code: 1, userInfo: nil)
             let refreshError = UserAccountManagerError.refreshFailed(underlyingError: error, authInfo: mockInfo)

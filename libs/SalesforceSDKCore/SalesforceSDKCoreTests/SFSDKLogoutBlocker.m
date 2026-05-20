@@ -28,6 +28,7 @@
 #import "SFSDKCoreLogger.h"
 #import "SFUserAccountManager.h"
 #import "SFOAuthCredentials.h"
+#import "SFSDKOAuth2.h"
 
 @interface SFSDKLogoutBlocker()
 - (void)dummy_logout;

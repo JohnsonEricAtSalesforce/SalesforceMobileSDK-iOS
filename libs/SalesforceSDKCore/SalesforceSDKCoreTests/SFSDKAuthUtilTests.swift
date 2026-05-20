@@ -36,7 +36,7 @@ class SFSDKAuthUtilTests: XCTestCase {
     override class func setUp() {
         super.setUp()
         SFSDKLogoutBlocker.block()
-        TestSetupUtils.populateAuthCredentialsFromConfigFile(for: SFSDKAuthUtilTests.self)
+        TestSetupUtils.populateAuthCredentials(fromConfigFileFor: SFSDKAuthUtilTests.self)
         TestSetupUtils.synchronousAuthRefresh()
     }
 
@@ -65,7 +65,7 @@ class SFSDKAuthUtilTests: XCTestCase {
         let response = try XCTUnwrap(endpointResponse)
         XCTAssertFalse(response.hasError)
         XCTAssertNotNil(response.accessToken)
-        XCTAssertTrue(response.refreshToken.count > 0)
+        XCTAssertTrue((response.refreshToken?.count ?? 0) > 0)
         XCTAssertNotNil(response.scopes)
         XCTAssertNotNil(response.instanceUrl)
         XCTAssertNotNil(response.signature)
@@ -113,8 +113,9 @@ class SFSDKAuthUtilTests: XCTestCase {
         self.wait(for: [expectation], timeout: 10)
         let response = try XCTUnwrap(endpointResponse)
         XCTAssertTrue(response.hasError)
-        let error = try XCTUnwrap(response.error)
-        XCTAssertTrue((error.error as NSError).code == kSFOAuthErrorInvalidClientId)
+        let errorResponse = try XCTUnwrap(response.error)
+        let nsError = try XCTUnwrap(errorResponse.error)
+        XCTAssertTrue(nsError.code == kSFOAuthErrorInvalidClientId)
     }
 
     func testAccessTokenInvalidGrant() throws {
@@ -136,13 +137,14 @@ class SFSDKAuthUtilTests: XCTestCase {
         }
         self.wait(for: [expectation], timeout: 10)
         let response = try XCTUnwrap(endpointResponse)
-        let error = try XCTUnwrap(response.error)
-        XCTAssertTrue((error.error as NSError).code == kSFOAuthErrorInvalidGrant)
+        let errorResponse = try XCTUnwrap(response.error)
+        let nsError = try XCTUnwrap(errorResponse.error)
+        XCTAssertTrue(nsError.code == kSFOAuthErrorInvalidGrant)
     }
     
     func testRevokeToken() throws {
         let credentials = try XCTUnwrap(currentUser?.credentials)
-        let request = SFSDKOAuth2.request(forRevokeRefreshToken: credentials, reason: .userInitiated)
+        let request = SFSDKOAuth2.requestForRevokeRefreshToken(credentials, reason: .userInitiated)
         
         // Verify HTTP method is POST
         XCTAssertEqual(request.httpMethod, "POST")

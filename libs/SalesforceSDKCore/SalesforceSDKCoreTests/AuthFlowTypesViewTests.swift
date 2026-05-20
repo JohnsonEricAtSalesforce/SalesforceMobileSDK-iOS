@@ -35,14 +35,14 @@ class AuthFlowTypesViewTests: XCTestCase {
         super.setUp()
         
         // Save original state to restore in tearDown
-        originalUseWebServerAuth = SalesforceManager.shared.useWebServerAuthentication
-        originalUseHybridAuth = SalesforceManager.shared.useHybridAuthentication
+        originalUseWebServerAuth = SalesforceSDKManager.shared.useWebServerAuthentication
+        originalUseHybridAuth = SalesforceSDKManager.shared.useHybridAuthentication
     }
     
     override func tearDown() {
         // Restore original state
-        SalesforceManager.shared.useWebServerAuthentication = originalUseWebServerAuth
-        SalesforceManager.shared.useHybridAuthentication = originalUseHybridAuth
+        SalesforceSDKManager.shared.useWebServerAuthentication = originalUseWebServerAuth
+        SalesforceSDKManager.shared.useHybridAuthentication = originalUseHybridAuth
         
         super.tearDown()
     }
@@ -51,8 +51,8 @@ class AuthFlowTypesViewTests: XCTestCase {
         let expectation = XCTestExpectation(description: "View renders without crashing")
         
         // Set specific toggle states before creating the view
-        SalesforceManager.shared.useWebServerAuthentication = true
-        SalesforceManager.shared.useHybridAuthentication = false
+        SalesforceSDKManager.shared.useWebServerAuthentication = true
+        SalesforceSDKManager.shared.useHybridAuthentication = false
 
         let view = AuthFlowTypesView()
         let hostingController = UIHostingController(rootView: view)
@@ -71,9 +71,9 @@ class AuthFlowTypesViewTests: XCTestCase {
             XCTAssertNotNil(hostingController.view, "View should be rendered")
             
             // Verify the toggle states are still as set (view was initialized with these values)
-            XCTAssertTrue(SalesforceManager.shared.useWebServerAuthentication, 
+            XCTAssertTrue(SalesforceSDKManager.shared.useWebServerAuthentication, 
                          "Web server authentication should be enabled")
-            XCTAssertFalse(SalesforceManager.shared.useHybridAuthentication, 
+            XCTAssertFalse(SalesforceSDKManager.shared.useHybridAuthentication, 
                           "Hybrid authentication should be disabled")
             
             // Clean up
@@ -88,16 +88,16 @@ class AuthFlowTypesViewTests: XCTestCase {
 
     func testImportAuthFlowTypesFromJSON() {
         // Set initial state
-        SalesforceManager.shared.useWebServerAuthentication = true
-        SalesforceManager.shared.useHybridAuthentication = true
+        SalesforceSDKManager.shared.useWebServerAuthentication = true
+        SalesforceSDKManager.shared.useHybridAuthentication = true
 
         // Create the view
         var view = AuthFlowTypesView()
 
         // Verify initial state
-        XCTAssertTrue(SalesforceManager.shared.useWebServerAuthentication,
+        XCTAssertTrue(SalesforceSDKManager.shared.useWebServerAuthentication,
                      "Web server authentication should initially be true")
-        XCTAssertTrue(SalesforceManager.shared.useHybridAuthentication,
+        XCTAssertTrue(SalesforceSDKManager.shared.useHybridAuthentication,
                      "Hybrid authentication should initially be true")
 
         // Create JSON string
@@ -116,16 +116,16 @@ class AuthFlowTypesViewTests: XCTestCase {
         view.applyAuthFlowTypesFromJSON(jsonString)
 
         // Verify the values were updated
-        XCTAssertFalse(SalesforceManager.shared.useWebServerAuthentication,
+        XCTAssertFalse(SalesforceSDKManager.shared.useWebServerAuthentication,
                       "Web server authentication should be false after import")
-        XCTAssertFalse(SalesforceManager.shared.useHybridAuthentication,
+        XCTAssertFalse(SalesforceSDKManager.shared.useHybridAuthentication,
                       "Hybrid authentication should be false after import")
     }
 
     func testImportAuthFlowTypesFromJSONPartialUpdate() {
         // Set initial state
-        SalesforceManager.shared.useWebServerAuthentication = true
-        SalesforceManager.shared.useHybridAuthentication = true
+        SalesforceSDKManager.shared.useWebServerAuthentication = true
+        SalesforceSDKManager.shared.useHybridAuthentication = true
 
         // Create the view
         let view = AuthFlowTypesView()
@@ -146,9 +146,9 @@ class AuthFlowTypesViewTests: XCTestCase {
         view.applyAuthFlowTypesFromJSON(jsonString)
 
         // Verify only the specified value was updated
-        XCTAssertFalse(SalesforceManager.shared.useWebServerAuthentication,
+        XCTAssertFalse(SalesforceSDKManager.shared.useWebServerAuthentication,
                       "Web server authentication should be false after import")
-        XCTAssertTrue(SalesforceManager.shared.useHybridAuthentication,
+        XCTAssertTrue(SalesforceSDKManager.shared.useHybridAuthentication,
                      "Hybrid authentication should remain true (not in JSON)")
     }
 
@@ -162,8 +162,8 @@ class AuthFlowTypesViewTests: XCTestCase {
 
     func testImportAuthFlowTypesFromInvalidJSON() {
         // Set initial state
-        SalesforceManager.shared.useWebServerAuthentication = true
-        SalesforceManager.shared.useHybridAuthentication = true
+        SalesforceSDKManager.shared.useWebServerAuthentication = true
+        SalesforceSDKManager.shared.useHybridAuthentication = true
 
         // Create the view
         let view = AuthFlowTypesView()
@@ -175,16 +175,16 @@ class AuthFlowTypesViewTests: XCTestCase {
         view.applyAuthFlowTypesFromJSON(invalidJSON)
 
         // Verify nothing changed (method should handle invalid JSON gracefully)
-        XCTAssertTrue(SalesforceManager.shared.useWebServerAuthentication,
+        XCTAssertTrue(SalesforceSDKManager.shared.useWebServerAuthentication,
                      "Web server authentication should remain true after invalid JSON")
-        XCTAssertTrue(SalesforceManager.shared.useHybridAuthentication,
+        XCTAssertTrue(SalesforceSDKManager.shared.useHybridAuthentication,
                      "Hybrid authentication should remain true after invalid JSON")
     }
 
     func testImportAuthFlowTypesFromEmptyJSON() {
         // Set initial state
-        SalesforceManager.shared.useWebServerAuthentication = true
-        SalesforceManager.shared.useHybridAuthentication = false
+        SalesforceSDKManager.shared.useWebServerAuthentication = true
+        SalesforceSDKManager.shared.useHybridAuthentication = false
 
         // Create the view
         let view = AuthFlowTypesView()
@@ -196,9 +196,9 @@ class AuthFlowTypesViewTests: XCTestCase {
         view.applyAuthFlowTypesFromJSON(emptyJSON)
 
         // Verify nothing changed
-        XCTAssertTrue(SalesforceManager.shared.useWebServerAuthentication,
+        XCTAssertTrue(SalesforceSDKManager.shared.useWebServerAuthentication,
                      "Web server authentication should remain unchanged after empty JSON")
-        XCTAssertFalse(SalesforceManager.shared.useHybridAuthentication,
+        XCTAssertFalse(SalesforceSDKManager.shared.useHybridAuthentication,
                       "Hybrid authentication should remain unchanged after empty JSON")
     }
 }

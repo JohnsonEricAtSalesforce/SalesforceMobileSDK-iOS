@@ -22,7 +22,7 @@
  WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 #import <XCTest/XCTest.h>
-#import "SFSDKAuthErrorCommand.h"
+#import <SalesforceSDKCore/SalesforceSDKCore-Swift.h>
 @interface SFSDKAuthErrorCommandTest : XCTestCase
 
 @end

@@ -124,9 +124,9 @@ static NSString* const kTestAppName = @"OverridenAppName";
 
 - (void)testUserSwitching
 {
-    SalesforceSDKManager.sharedManager.appConfig.shouldAuthenticate = NO;
+    SalesforceSDKManager.shared.appConfig.shouldAuthenticateOnFirstLaunch = NO;
     [self createTestAppIdentity];
-    SFUserAccountManager *userAccountManager = SFUserAccountManager.sharedInstance;
+    SFUserAccountManager *userAccountManager = SFUserAccountManager.shared;
     XCTAssertNil(userAccountManager.currentUser, @"Current user should be nil.");
     [userAccountManager setCurrentUserInternal:[self createUserAccount]];
     XCTAssertNotNil(userAccountManager.currentUser, @"Current user should not be nil.");
@@ -140,7 +140,7 @@ static NSString* const kTestAppName = @"OverridenAppName";
             XCTAssertTrue([toUser isEqual:userAccountManager.currentUser], @"Switch to user should change current user");
         }
     }];
-    [userAccountManager switchToUser:userTo];
+    [userAccountManager switchToUserAccount:userTo];
     [_currentSdkManagerFlow clearUserSwitchState];
 }
 
@@ -155,8 +155,8 @@ static NSString* const kTestAppName = @"OverridenAppName";
 - (void)testUsesSnapshot
 {
     __block BOOL creationViewControllerCalled = NO;
-    [SalesforceSDKManager sharedManager].useSnapshotView = YES;
-    [SalesforceSDKManager sharedManager].snapshotViewControllerCreationAction = ^UIViewController*() {
+    SalesforceSDKManager.shared.useSnapshotView = YES;
+    SalesforceSDKManager.shared.snapshotViewControllerCreationAction = ^UIViewController*() {
         creationViewControllerCalled = YES;
         return nil;
     };
@@ -168,8 +168,8 @@ static NSString* const kTestAppName = @"OverridenAppName";
 - (void)testDoNotUseSnapshot
 {
     __block BOOL creationViewControllerCalled = NO;
-    [SalesforceSDKManager sharedManager].useSnapshotView = NO;
-    [SalesforceSDKManager sharedManager].snapshotViewControllerCreationAction = ^UIViewController*() {
+    SalesforceSDKManager.shared.useSnapshotView = NO;
+    SalesforceSDKManager.shared.snapshotViewControllerCreationAction = ^UIViewController*() {
         creationViewControllerCalled = YES;
         return nil;
     };
@@ -183,14 +183,14 @@ static NSString* const kTestAppName = @"OverridenAppName";
     __block BOOL presentOnBackground = NO;
     __block BOOL dismissOnDidBecomeActive = NO;
     UIView* fakeView = [UIView new];
-    [SalesforceSDKManager sharedManager].useSnapshotView = YES;
-    [SalesforceSDKManager sharedManager].snapshotPresentationAction = ^(UIViewController* snapshotViewController) {
+    SalesforceSDKManager.shared.useSnapshotView = YES;
+    SalesforceSDKManager.shared.snapshotPresentationAction = ^(UIViewController* snapshotViewController) {
         presentOnBackground = YES;
 
         // This will simulate that the snapshot view is being presented
         [fakeView addSubview:snapshotViewController.view];
     };
-    [SalesforceSDKManager sharedManager].snapshotDismissalAction = ^(UIViewController* snapshotViewController) {
+    SalesforceSDKManager.shared.snapshotDismissalAction = ^(UIViewController* snapshotViewController) {
         dismissOnDidBecomeActive = YES;
     };
     UIScene *scene = UIApplication.sharedApplication.connectedScenes.allObjects.firstObject;
@@ -205,18 +205,18 @@ static NSString* const kTestAppName = @"OverridenAppName";
 {
     __block BOOL presentationBlockCalled = NO;
     __block BOOL dismissalBlockCalled = NO;
-    [SalesforceSDKManager sharedManager].useSnapshotView = YES;
-    [SalesforceSDKManager sharedManager].snapshotPresentationAction = ^(UIViewController* snapshotViewController) {
+    SalesforceSDKManager.shared.useSnapshotView = YES;
+    SalesforceSDKManager.shared.snapshotPresentationAction = ^(UIViewController* snapshotViewController) {
         presentationBlockCalled = YES;
     };
-    [SalesforceSDKManager sharedManager].snapshotDismissalAction = NULL;
+    SalesforceSDKManager.shared.snapshotDismissalAction = NULL;
     UIScene *scene = UIApplication.sharedApplication.connectedScenes.allObjects.firstObject;
     [[NSNotificationCenter defaultCenter] postNotificationName:UISceneDidEnterBackgroundNotification object:scene];
     XCTAssertFalse(presentationBlockCalled || dismissalBlockCalled, @"Called a presentation/dismissal block without both blocks being set.");
 
     // Test inverse
-    [SalesforceSDKManager sharedManager].snapshotPresentationAction = NULL;
-    [SalesforceSDKManager sharedManager].snapshotDismissalAction = ^(UIViewController* snapshotViewController) {
+    SalesforceSDKManager.shared.snapshotPresentationAction = NULL;
+    SalesforceSDKManager.shared.snapshotDismissalAction = ^(UIViewController* snapshotViewController) {
         dismissalBlockCalled = YES;
     };
     [[NSNotificationCenter defaultCenter] postNotificationName:UISceneDidEnterBackgroundNotification object:scene];
@@ -227,12 +227,12 @@ static NSString* const kTestAppName = @"OverridenAppName";
 {
     __block UIViewController* defaultViewControllerOnPresentation = nil;
     __block UIViewController* defaultViewControllerOnDismissal = nil;
-    [SalesforceSDKManager sharedManager].useSnapshotView = YES;
-    [SalesforceSDKManager sharedManager].snapshotViewControllerCreationAction = NULL;
-    [SalesforceSDKManager sharedManager].snapshotPresentationAction = ^(UIViewController* snapshotViewController) {
+    SalesforceSDKManager.shared.useSnapshotView = YES;
+    SalesforceSDKManager.shared.snapshotViewControllerCreationAction = NULL;
+    SalesforceSDKManager.shared.snapshotPresentationAction = ^(UIViewController* snapshotViewController) {
         defaultViewControllerOnPresentation = snapshotViewController;
     };
-    [SalesforceSDKManager sharedManager].snapshotDismissalAction = ^(UIViewController* snapshotViewController) {
+    SalesforceSDKManager.shared.snapshotDismissalAction = ^(UIViewController* snapshotViewController) {
         defaultViewControllerOnDismissal = snapshotViewController;
     };
     UIScene *scene = UIApplication.sharedApplication.connectedScenes.allObjects.firstObject;
@@ -250,14 +250,14 @@ static NSString* const kTestAppName = @"OverridenAppName";
 - (void)testDefaultSnapshotViewControllerIsProvidedWhenCustomViewControllerReturnsNil
 {
     __block UIViewController* defaultViewController = nil;
-    [SalesforceSDKManager sharedManager].useSnapshotView = YES;
-    [SalesforceSDKManager sharedManager].snapshotViewControllerCreationAction = ^UIViewController*() {
+    SalesforceSDKManager.shared.useSnapshotView = YES;
+    SalesforceSDKManager.shared.snapshotViewControllerCreationAction = ^UIViewController*() {
         return nil;
     };
-    [SalesforceSDKManager sharedManager].snapshotPresentationAction = ^(UIViewController* snapshotViewController) {
+    SalesforceSDKManager.shared.snapshotPresentationAction = ^(UIViewController* snapshotViewController) {
         defaultViewController = snapshotViewController;
     };
-    [SalesforceSDKManager sharedManager].snapshotDismissalAction = ^(UIViewController* snapshotViewController) {
+    SalesforceSDKManager.shared.snapshotDismissalAction = ^(UIViewController* snapshotViewController) {
 
         // Need to set the dismissal block in order to get the presentation block called.
     };
@@ -271,14 +271,14 @@ static NSString* const kTestAppName = @"OverridenAppName";
     UIViewController* customSnapshot = [UIViewController new];
     __block UIViewController* snapshotOnPresentation = nil;
     __block UIViewController* snapshotOnDismissal = nil;
-    [SalesforceSDKManager sharedManager].useSnapshotView = YES;
-    [SalesforceSDKManager sharedManager].snapshotViewControllerCreationAction = ^UIViewController*() {
+    SalesforceSDKManager.shared.useSnapshotView = YES;
+    SalesforceSDKManager.shared.snapshotViewControllerCreationAction = ^UIViewController*() {
         return customSnapshot;
     };
-    [SalesforceSDKManager sharedManager].snapshotPresentationAction = ^(UIViewController* snapshotViewController) {
+    SalesforceSDKManager.shared.snapshotPresentationAction = ^(UIViewController* snapshotViewController) {
         snapshotOnPresentation = snapshotViewController;
     };
-    [SalesforceSDKManager sharedManager].snapshotDismissalAction = ^(UIViewController* snapshotViewController) {
+    SalesforceSDKManager.shared.snapshotDismissalAction = ^(UIViewController* snapshotViewController) {
         snapshotOnDismissal = snapshotViewController;
     };
     
@@ -300,7 +300,7 @@ static NSString* const kTestAppName = @"OverridenAppName";
     NSString *loginUrl = @"https://salesforce.com/some/test/url";
     UIViewController *view = [[UIViewController alloc] init];
     SFNativeLoginManagerInternal *loginManager = (SFNativeLoginManagerInternal *)
-        [[SalesforceSDKManager sharedManager] useNativeLoginWithConsumerKey:consumerKey
+        [SalesforceSDKManager.shared useNativeLoginWithConsumerKey:consumerKey
                                                                 callbackUrl:redirct
                                                                communityUrl:loginUrl
                                                   nativeLoginViewController:view
@@ -309,9 +309,9 @@ static NSString* const kTestAppName = @"OverridenAppName";
     XCTAssertEqual(consumerKey, loginManager.clientId);
     XCTAssertEqual(redirct, loginManager.redirectUri);
     XCTAssertEqual(loginUrl, loginManager.loginUrl);
-    XCTAssertEqual(view, [[[SalesforceSDKManager sharedManager] nativeLoginViewControllers] objectForKey:kSFDefaultNativeLoginViewControllerKey]);
-    XCTAssertEqual(loginManager, [[SalesforceSDKManager sharedManager] nativeLoginManager]);
-    XCTAssertTrue([[SFUserAccountManager sharedInstance] nativeLoginEnabled]);
+    XCTAssertEqual(view, [[SalesforceSDKManager.shared nativeLoginViewControllers] objectForKey:kSFDefaultNativeLoginViewControllerKey]);
+    XCTAssertEqual(loginManager, [SalesforceSDKManager.shared nativeLoginManager]);
+    XCTAssertTrue([SFUserAccountManager.shared nativeLoginEnabled]);
 }
 
 #pragma mark - Process Pool Tests
@@ -319,14 +319,14 @@ static NSString* const kTestAppName = @"OverridenAppName";
 - (void)testBrandedLoginPath
 {
     NSString *brandPath = @"/BRAND/";
-    [SalesforceSDKManager sharedManager].brandLoginPath = brandPath;
-    XCTAssertTrue([brandPath isEqualToString:[SalesforceSDKManager sharedManager].brandLoginPath]);
+    SalesforceSDKManager.shared.brandLoginPath = brandPath;
+    XCTAssertTrue([brandPath isEqualToString:SalesforceSDKManager.shared.brandLoginPath]);
 }
 
 - (void)testBrandedLoginPathInAuthManager
 {
     NSString *brandPath = @"/BRAND/";
-    [SalesforceSDKManager sharedManager].brandLoginPath = brandPath;
+    SalesforceSDKManager.shared.brandLoginPath = brandPath;
     XCTAssertTrue([brandPath isEqualToString:[SFUserAccountManager  sharedInstance].brandLoginPath]);
 }
 
@@ -356,7 +356,7 @@ static NSString* const kTestAppName = @"OverridenAppName";
     credentials.redirectUri = @"test";
     
     // Hybrid enabled, web server enabled
-    [SalesforceSDKManager sharedManager].useWebServerAuthentication = YES;
+    SalesforceSDKManager.shared.useWebServerAuthentication = YES;
     SFOAuthCoordinator *coordinator = [[SFOAuthCoordinator alloc] initWithCredentials:credentials];
     SFOAuthTestFlowCoordinatorDelegate *delegate = [SFOAuthTestFlowCoordinatorDelegate new];
     coordinator.delegate = delegate;
@@ -367,7 +367,7 @@ static NSString* const kTestAppName = @"OverridenAppName";
     [coordinator stopAuthentication];
     
     // Hybrid enabled, web server disabled
-    [SalesforceSDKManager sharedManager].useWebServerAuthentication = NO;
+    SalesforceSDKManager.shared.useWebServerAuthentication = NO;
     approvalUrl = [coordinator generateApprovalUrlString];
     XCTAssert([approvalUrl containsString:@"response_type=hybrid_token"]);
     [coordinator authenticate];
@@ -375,8 +375,8 @@ static NSString* const kTestAppName = @"OverridenAppName";
     [coordinator stopAuthentication];
     
     // Hybrid disabled, web server enabled
-    [SalesforceSDKManager sharedManager].useHybridAuthentication = NO;
-    [SalesforceSDKManager sharedManager].useWebServerAuthentication = YES;
+    SalesforceSDKManager.shared.useHybridAuthentication = NO;
+    SalesforceSDKManager.shared.useWebServerAuthentication = YES;
     approvalUrl = [coordinator generateApprovalUrlString];
     XCTAssert([approvalUrl containsString:@"response_type=code"]);
     [coordinator authenticate];
@@ -384,8 +384,8 @@ static NSString* const kTestAppName = @"OverridenAppName";
     [coordinator stopAuthentication];
     
     // Hybrid disabled, web server disabled
-    [SalesforceSDKManager sharedManager].useHybridAuthentication = NO;
-    [SalesforceSDKManager sharedManager].useWebServerAuthentication = NO;
+    SalesforceSDKManager.shared.useHybridAuthentication = NO;
+    SalesforceSDKManager.shared.useWebServerAuthentication = NO;
     approvalUrl = [coordinator generateApprovalUrlString];
     XCTAssert([approvalUrl containsString:@"response_type=token"]);
     [coordinator authenticate];
@@ -399,26 +399,26 @@ static NSString* const kTestAppName = @"OverridenAppName";
     NSString *bundleName = [[NSBundle mainBundle] objectForInfoDictionaryKey:@"CFBundleName"];
     NSString *bundleDisplayName = [[NSBundle mainBundle] objectForInfoDictionaryKey:@"CFBundleDisplayName"];
     NSString *matchName = (bundleDisplayName) ? bundleDisplayName : bundleName;
-    [[SalesforceSDKManager sharedManager] setAppDisplayName:nilString];
-    XCTAssertTrue([matchName isEqualToString:[[SalesforceSDKManager sharedManager] appDisplayName]], @"App names should match");
+    [SalesforceSDKManager.shared setAppDisplayName:nilString];
+    XCTAssertTrue([matchName isEqualToString:[SalesforceSDKManager.shared appDisplayName]], @"App names should match");
 }
 
 - (void)testSetDisplayName {
     NSString *appDispalyName = @"unique sdk name";
-    [[SalesforceSDKManager sharedManager] setAppDisplayName:appDispalyName];
-    XCTAssertTrue([appDispalyName isEqualToString:[[SalesforceSDKManager sharedManager] appDisplayName]], @"App names should match");
+    [SalesforceSDKManager.shared setAppDisplayName:appDispalyName];
+    XCTAssertTrue([appDispalyName isEqualToString:[SalesforceSDKManager.shared appDisplayName]], @"App names should match");
 }
 
 #pragma mark - Private helpers
 
 - (void)createTestAppIdentity
 {
-    [SalesforceSDKManager sharedManager].appConfig.remoteAccessConsumerKey = @"test_connected_app_id";
-    [SalesforceSDKManager sharedManager].appConfig.oauthRedirectURI = @"test_connected_app_callback_uri";
-    [SalesforceSDKManager sharedManager].appConfig.oauthScopes = [NSSet setWithArray:@[ @"web", @"api" ]];
+    SalesforceSDKManager.shared.appConfig.remoteAccessConsumerKey = @"test_connected_app_id";
+    SalesforceSDKManager.shared.appConfig.oauthRedirectURI = @"test_connected_app_callback_uri";
+    SalesforceSDKManager.shared.appConfig.oauthScopes = [NSSet setWithArray:@[ @"web", @"api" ]];
     
     // Set oauthClientId for SFUserAccountManager (needed for createUserAccount)
-    [SFUserAccountManager sharedInstance].oauthClientId = @"test_connected_app_id";
+    SFUserAccountManager.shared.oauthClientId = @"test_connected_app_id";
 }
 
 - (SFUserAccount *)createUserAccount
@@ -450,7 +450,7 @@ static NSString* const kTestAppName = @"OverridenAppName";
     
     [user transitionToLoginState:SFUserAccountLoginStateLoggedIn];
     NSError *error = nil;
-    [[SFUserAccountManager sharedInstance] saveAccountForUser:user error:&error];
+    [SFUserAccountManager.shared saveAccountForUser:user error:&error];
     XCTAssertNil(error, @"Should be able to create user account");
     return user;
 }
@@ -458,48 +458,48 @@ static NSString* const kTestAppName = @"OverridenAppName";
 - (void)setupSdkManagerState
 {
     _currentSdkManagerFlow = [[SFTestSDKManagerFlow alloc] init];
-    _origSdkManagerFlow = [SalesforceSDKManager sharedManager].sdkManagerFlow; [SalesforceSDKManager sharedManager].sdkManagerFlow = _currentSdkManagerFlow;
-    _origConnectedAppId = [SalesforceSDKManager sharedManager].appConfig.remoteAccessConsumerKey; [SalesforceSDKManager sharedManager].appConfig.remoteAccessConsumerKey = @"";
-    _origConnectedAppCallbackUri = [SalesforceSDKManager sharedManager].appConfig.oauthRedirectURI; [SalesforceSDKManager sharedManager].appConfig.oauthRedirectURI = @"";
-    _origAuthScopes = [SalesforceSDKManager sharedManager].appConfig.oauthScopes; [SalesforceSDKManager sharedManager].appConfig.oauthScopes = [NSSet set];
-    _origAuthenticateAtLaunch = [SalesforceSDKManager sharedManager].appConfig.shouldAuthenticate; [SalesforceSDKManager sharedManager].appConfig.shouldAuthenticate = YES;
-    _origCurrentUser = [SFUserAccountManager sharedInstance].currentUser;
-    [[SFUserAccountManager sharedInstance] setCurrentUserInternal:nil];
+    _origSdkManagerFlow = SalesforceSDKManager.shared.sdkManagerFlow; SalesforceSDKManager.shared.sdkManagerFlow = _currentSdkManagerFlow;
+    _origConnectedAppId = SalesforceSDKManager.shared.appConfig.remoteAccessConsumerKey; SalesforceSDKManager.shared.appConfig.remoteAccessConsumerKey = @"";
+    _origConnectedAppCallbackUri = SalesforceSDKManager.shared.appConfig.oauthRedirectURI; SalesforceSDKManager.shared.appConfig.oauthRedirectURI = @"";
+    _origAuthScopes = SalesforceSDKManager.shared.appConfig.oauthScopes; SalesforceSDKManager.shared.appConfig.oauthScopes = [NSSet set];
+    _origAuthenticateAtLaunch = SalesforceSDKManager.shared.appConfig.shouldAuthenticateOnFirstLaunch; SalesforceSDKManager.shared.appConfig.shouldAuthenticateOnFirstLaunch = YES;
+    _origCurrentUser = SFUserAccountManager.shared.currentUser;
+    [SFUserAccountManager.shared setCurrentUserInternal:nil];
     _origAppName = SalesforceSDKManager.ailtnAppName;
-    _origBrandLoginPath = [SalesforceSDKManager sharedManager].brandLoginPath;
+    _origBrandLoginPath = SalesforceSDKManager.shared.brandLoginPath;
 }
 
 - (void)restoreOrigSdkManagerState
 {
-    [SalesforceSDKManager sharedManager].sdkManagerFlow = _origSdkManagerFlow;
-    [SalesforceSDKManager sharedManager].appConfig.remoteAccessConsumerKey = _origConnectedAppId;
-    [SalesforceSDKManager sharedManager].appConfig.oauthRedirectURI = _origConnectedAppCallbackUri;
-    [SalesforceSDKManager sharedManager].appConfig.oauthScopes = _origAuthScopes;
-    [SalesforceSDKManager sharedManager].appConfig.shouldAuthenticate = _origAuthenticateAtLaunch;
-    [[SFUserAccountManager sharedInstance] setCurrentUserInternal:_origCurrentUser];
+    SalesforceSDKManager.shared.sdkManagerFlow = _origSdkManagerFlow;
+    SalesforceSDKManager.shared.appConfig.remoteAccessConsumerKey = _origConnectedAppId;
+    SalesforceSDKManager.shared.appConfig.oauthRedirectURI = _origConnectedAppCallbackUri;
+    SalesforceSDKManager.shared.appConfig.oauthScopes = _origAuthScopes;
+    SalesforceSDKManager.shared.appConfig.shouldAuthenticateOnFirstLaunch = _origAuthenticateAtLaunch;
+    [SFUserAccountManager.shared setCurrentUserInternal:_origCurrentUser];
     SalesforceSDKManager.ailtnAppName = _origAppName;
-    [SalesforceSDKManager sharedManager].brandLoginPath = _origBrandLoginPath;
+    SalesforceSDKManager.shared.brandLoginPath = _origBrandLoginPath;
 }
 
 - (void)compareAiltnAppNames:(NSString *)expectedAppName
 {
-    SFUserAccount *prevCurrentUser = [SFUserAccountManager sharedInstance].currentUser;
-    [[SFUserAccountManager sharedInstance] setCurrentUserInternal:[self createUserAccount]];
-    SFSDKSalesforceAnalyticsManager *analyticsManager = [SFSDKSalesforceAnalyticsManager sharedInstanceWithUser:[SFUserAccountManager sharedInstance].currentUser];
+    SFUserAccount *prevCurrentUser = SFUserAccountManager.shared.currentUser;
+    [SFUserAccountManager.shared setCurrentUserInternal:[self createUserAccount]];
+    SFSDKSalesforceAnalyticsManager *analyticsManager = [SFSDKSalesforceAnalyticsManager sharedInstanceWithUser:SFUserAccountManager.shared.currentUser];
     XCTAssertNotNil(analyticsManager, @"SFSDKSalesforceAnalyticsManager instance should not be nil");
     SFSDKDeviceAppAttributes *deviceAttributes = analyticsManager.analyticsManager.deviceAttributes;
     XCTAssertNotNil(deviceAttributes, @"SFSDKDeviceAppAttributes instance should not be nil");
     XCTAssertEqualObjects(deviceAttributes.appName, expectedAppName, @"App names should match");
-    [SFSDKSalesforceAnalyticsManager removeSharedInstanceWithUser:[SFUserAccountManager sharedInstance].currentUser];
+    [SFSDKSalesforceAnalyticsManager removeSharedInstanceWithUser:SFUserAccountManager.shared.currentUser];
     NSError *error = nil;
-    [[SFUserAccountManager sharedInstance] deleteAccountForUser:[SFUserAccountManager sharedInstance].currentUser error:&error];
+    [SFUserAccountManager.shared deleteAccountForUser:SFUserAccountManager.shared.currentUser error:&error];
     XCTAssertNil(error, @"SalesforceSDKManagerTests for AILTN could not delete created user");
-    [[SFUserAccountManager sharedInstance] setCurrentUserInternal:prevCurrentUser];
+    [SFUserAccountManager.shared setCurrentUserInternal:prevCurrentUser];
 }
 
 - (void)compareAppNames:(NSString *)expectedAppName
 {
-    NSString *userAgent = [SalesforceSDKManager sharedManager].userAgentString(@"");
+    NSString *userAgent = SalesforceSDKManager.shared.userAgentString(@"");
     XCTAssertTrue([userAgent containsString:expectedAppName], @"App names should match");
 }
 
@@ -509,7 +509,7 @@ static NSString* const kTestAppName = @"OverridenAppName";
                         description:(NSString *)description
                          assertions:(void (^)(SFSDKAppConfig *config))assertions {
     XCTestExpectation *expectation = [self expectationWithDescription:description];
-    [[SalesforceSDKManager sharedManager] appConfigForLoginHost:loginHost callback:^(SFSDKAppConfig *config) {
+    [SalesforceSDKManager.shared appConfigForLoginHost:loginHost callback:^(SFSDKAppConfig *config) {
         assertions(config);
         [expectation fulfill];
     }];
@@ -518,10 +518,10 @@ static NSString* const kTestAppName = @"OverridenAppName";
 
 - (void)testAppConfigForLoginHostReturnsDefaultWhenBlockNotSet {
     // Clear any existing block
-    [SalesforceSDKManager sharedManager].appConfigRuntimeSelectorBlock = nil;
+    SalesforceSDKManager.shared.appConfigRuntimeSelectorBlock = nil;
     
     // Get the default app config for comparison
-    SFSDKAppConfig *defaultConfig = [SalesforceSDKManager sharedManager].appConfig;
+    SFSDKAppConfig *defaultConfig = SalesforceSDKManager.shared.appConfig;
     
     // Test with nil loginHost - should return default config
     [self verifyAppConfigForLoginHost:nil
@@ -557,10 +557,10 @@ static NSString* const kTestAppName = @"OverridenAppName";
     SFSDKAppConfig *config2 = [[SFSDKAppConfig alloc] initWithDict:config2Dict];
     
     // Get the default app config for comparison
-    SFSDKAppConfig *defaultConfig = [SalesforceSDKManager sharedManager].appConfig;
+    SFSDKAppConfig *defaultConfig = SalesforceSDKManager.shared.appConfig;
     
     // Set the selector block to return different configs based on loginHost
-    [SalesforceSDKManager sharedManager].appConfigRuntimeSelectorBlock = ^(NSString *loginHost, void (^callback)(SFSDKAppConfig *)) {
+    SalesforceSDKManager.shared.appConfigRuntimeSelectorBlock = ^(NSString *loginHost, void (^callback)(SFSDKAppConfig *)) {
         if ([loginHost isEqualToString:loginHost1]) {
             callback(config1);
         } else if ([loginHost isEqualToString:loginHost2]) {
@@ -600,10 +600,10 @@ static NSString* const kTestAppName = @"OverridenAppName";
     __block BOOL blockWasCalled = NO;
     
     // Get the default app config for comparison
-    SFSDKAppConfig *defaultConfig = [SalesforceSDKManager sharedManager].appConfig;
+    SFSDKAppConfig *defaultConfig = SalesforceSDKManager.shared.appConfig;
     
     // Set the selector block to return nil via callback
-    [SalesforceSDKManager sharedManager].appConfigRuntimeSelectorBlock = ^(NSString *loginHost, void (^callback)(SFSDKAppConfig *)) {
+    SalesforceSDKManager.shared.appConfigRuntimeSelectorBlock = ^(NSString *loginHost, void (^callback)(SFSDKAppConfig *)) {
         blockWasCalled = YES;
         callback(nil);
     };
@@ -624,7 +624,7 @@ static NSString* const kTestAppName = @"OverridenAppName";
     
     // Test with a regular view controller (not login)
     UIViewController *regularVC = [[UIViewController alloc] init];
-    NSArray<SFSDKDevAction *> *actions = [[SalesforceSDKManager sharedManager] getDevActions:regularVC];
+    NSArray<SFSDKDevAction *> *actions = [SalesforceSDKManager.shared getDevActions:regularVC];
     
     XCTAssertGreaterThan(actions.count, 0, @"Should have at least one action");
     XCTAssertEqualObjects(actions[0].name, @"Show dev info", @"First action should always be dev info");
@@ -635,7 +635,7 @@ static NSString* const kTestAppName = @"OverridenAppName";
     
     // Test with SFLoginViewController
     SFLoginViewController *loginVC = [[SFLoginViewController alloc] init];
-    NSArray<SFSDKDevAction *> *actions = [[SalesforceSDKManager sharedManager] getDevActions:loginVC];
+    NSArray<SFSDKDevAction *> *actions = [SalesforceSDKManager.shared getDevActions:loginVC];
     
     // Find "Login Options" action
     BOOL hasLoginOptions = NO;
@@ -654,7 +654,7 @@ static NSString* const kTestAppName = @"OverridenAppName";
     
     // Test with a regular view controller
     UIViewController *regularVC = [[UIViewController alloc] init];
-    NSArray<SFSDKDevAction *> *actions = [[SalesforceSDKManager sharedManager] getDevActions:regularVC];
+    NSArray<SFSDKDevAction *> *actions = [SalesforceSDKManager.shared getDevActions:regularVC];
     
     // Check that "Login Options" is not present
     BOOL hasLoginOptions = NO;
@@ -673,11 +673,11 @@ static NSString* const kTestAppName = @"OverridenAppName";
     
     // Create and set a current user
     SFUserAccount *user = [self createUserAccount];
-    [[SFUserAccountManager sharedInstance] setCurrentUserInternal:user];
+    [SFUserAccountManager.shared setCurrentUserInternal:user];
     
     // Test with a regular view controller (not login)
     UIViewController *regularVC = [[UIViewController alloc] init];
-    NSArray<SFSDKDevAction *> *actions = [[SalesforceSDKManager sharedManager] getDevActions:regularVC];
+    NSArray<SFSDKDevAction *> *actions = [SalesforceSDKManager.shared getDevActions:regularVC];
     
     // Find "Logout" action
     BOOL hasLogout = NO;
@@ -691,7 +691,7 @@ static NSString* const kTestAppName = @"OverridenAppName";
     XCTAssertTrue(hasLogout, @"Should show Logout when user is logged in and not on login screen");
     
     // Clean up
-    [[SFUserAccountManager sharedInstance] setCurrentUserInternal:nil];
+    [SFUserAccountManager.shared setCurrentUserInternal:nil];
 }
 
 - (void)testGetDevActionsDoesNotShowLogoutOnLoginViewController {
@@ -699,11 +699,11 @@ static NSString* const kTestAppName = @"OverridenAppName";
     
     // Create and set a current user
     SFUserAccount *user = [self createUserAccount];
-    [[SFUserAccountManager sharedInstance] setCurrentUserInternal:user];
+    [SFUserAccountManager.shared setCurrentUserInternal:user];
     
     // Test with SFLoginViewController
     SFLoginViewController *loginVC = [[SFLoginViewController alloc] init];
-    NSArray<SFSDKDevAction *> *actions = [[SalesforceSDKManager sharedManager] getDevActions:loginVC];
+    NSArray<SFSDKDevAction *> *actions = [SalesforceSDKManager.shared getDevActions:loginVC];
     
     // Check that "Logout" is not present
     BOOL hasLogout = NO;
@@ -717,18 +717,18 @@ static NSString* const kTestAppName = @"OverridenAppName";
     XCTAssertFalse(hasLogout, @"Should not show Logout when on login view controller");
     
     // Clean up
-    [[SFUserAccountManager sharedInstance] setCurrentUserInternal:nil];
+    [SFUserAccountManager.shared setCurrentUserInternal:nil];
 }
 
 - (void)testGetDevActionsDoesNotShowLogoutWhenNoUser {
     [self createTestAppIdentity];
     
     // Ensure no current user
-    [[SFUserAccountManager sharedInstance] setCurrentUserInternal:nil];
+    [SFUserAccountManager.shared setCurrentUserInternal:nil];
     
     // Test with a regular view controller
     UIViewController *regularVC = [[UIViewController alloc] init];
-    NSArray<SFSDKDevAction *> *actions = [[SalesforceSDKManager sharedManager] getDevActions:regularVC];
+    NSArray<SFSDKDevAction *> *actions = [SalesforceSDKManager.shared getDevActions:regularVC];
     
     // Check that "Logout" is not present
     BOOL hasLogout = NO;
@@ -747,11 +747,11 @@ static NSString* const kTestAppName = @"OverridenAppName";
     
     // Create and set a current user
     SFUserAccount *user = [self createUserAccount];
-    [[SFUserAccountManager sharedInstance] setCurrentUserInternal:user];
+    [SFUserAccountManager.shared setCurrentUserInternal:user];
     
     // Test with a regular view controller (not login)
     UIViewController *regularVC = [[UIViewController alloc] init];
-    NSArray<SFSDKDevAction *> *actions = [[SalesforceSDKManager sharedManager] getDevActions:regularVC];
+    NSArray<SFSDKDevAction *> *actions = [SalesforceSDKManager.shared getDevActions:regularVC];
     
     // Find "Switch user" action
     BOOL hasSwitchUser = NO;
@@ -765,7 +765,7 @@ static NSString* const kTestAppName = @"OverridenAppName";
     XCTAssertTrue(hasSwitchUser, @"Should show Switch user when user is logged in and not on login screen");
     
     // Clean up
-    [[SFUserAccountManager sharedInstance] setCurrentUserInternal:nil];
+    [SFUserAccountManager.shared setCurrentUserInternal:nil];
 }
 
 - (void)testGetDevActionsDoesNotShowSwitchUserOnLoginViewController {
@@ -773,11 +773,11 @@ static NSString* const kTestAppName = @"OverridenAppName";
     
     // Create and set a current user
     SFUserAccount *user = [self createUserAccount];
-    [[SFUserAccountManager sharedInstance] setCurrentUserInternal:user];
+    [SFUserAccountManager.shared setCurrentUserInternal:user];
     
     // Test with SFLoginViewController
     SFLoginViewController *loginVC = [[SFLoginViewController alloc] init];
-    NSArray<SFSDKDevAction *> *actions = [[SalesforceSDKManager sharedManager] getDevActions:loginVC];
+    NSArray<SFSDKDevAction *> *actions = [SalesforceSDKManager.shared getDevActions:loginVC];
     
     // Check that "Switch user" is not present
     BOOL hasSwitchUser = NO;
@@ -791,7 +791,7 @@ static NSString* const kTestAppName = @"OverridenAppName";
     XCTAssertFalse(hasSwitchUser, @"Should not show Switch user when on login view controller");
     
     // Clean up
-    [[SFUserAccountManager sharedInstance] setCurrentUserInternal:nil];
+    [SFUserAccountManager.shared setCurrentUserInternal:nil];
 }
 
 #pragma mark - Dev Support Infos Tests
@@ -799,7 +799,7 @@ static NSString* const kTestAppName = @"OverridenAppName";
 - (void)testGetDevSupportInfosReturnsArray {
     [self createTestAppIdentity];
     
-    NSArray<NSString *> *infos = [[SalesforceSDKManager sharedManager] getDevSupportInfos];
+    NSArray<NSString *> *infos = [SalesforceSDKManager.shared getDevSupportInfos];
     
     XCTAssertNotNil(infos, @"Dev support infos should not be nil");
     XCTAssertGreaterThan(infos.count, 0, @"Should have at least some info entries");
@@ -808,7 +808,7 @@ static NSString* const kTestAppName = @"OverridenAppName";
 - (void)testGetDevSupportInfosContainsSDKVersion {
     [self createTestAppIdentity];
     
-    NSArray<NSString *> *infos = [[SalesforceSDKManager sharedManager] getDevSupportInfos];
+    NSArray<NSString *> *infos = [SalesforceSDKManager.shared getDevSupportInfos];
     
     // Find SDK Version in the array (skip section: entries)
     BOOL hasSDKVersion = NO;
@@ -830,7 +830,7 @@ static NSString* const kTestAppName = @"OverridenAppName";
 - (void)testGetDevSupportInfosContainsAppType {
     [self createTestAppIdentity];
     
-    NSArray<NSString *> *infos = [[SalesforceSDKManager sharedManager] getDevSupportInfos];
+    NSArray<NSString *> *infos = [SalesforceSDKManager.shared getDevSupportInfos];
     
     // Find App Type in the array (skip section: entries)
     BOOL hasAppType = NO;
@@ -854,9 +854,9 @@ static NSString* const kTestAppName = @"OverridenAppName";
     
     // Create and set a current user
     SFUserAccount *user = [self createUserAccount];
-    [[SFUserAccountManager sharedInstance] setCurrentUserInternal:user];
+    [SFUserAccountManager.shared setCurrentUserInternal:user];
     
-    NSArray<NSString *> *infos = [[SalesforceSDKManager sharedManager] getDevSupportInfos];
+    NSArray<NSString *> *infos = [SalesforceSDKManager.shared getDevSupportInfos];
     
     // Find Username in the array (it's in the "Current User" section, but we search for "Username" key)
     BOOL hasCurrentUser = NO;
@@ -875,16 +875,16 @@ static NSString* const kTestAppName = @"OverridenAppName";
     XCTAssertTrue(hasCurrentUser, @"Dev support infos should contain Username when logged in");
     
     // Clean up
-    [[SFUserAccountManager sharedInstance] setCurrentUserInternal:nil];
+    [SFUserAccountManager.shared setCurrentUserInternal:nil];
 }
 
 - (void)testGetDevSupportInfosDoesNotContainUserInfoWhenNotLoggedIn {
     [self createTestAppIdentity];
     
     // Ensure no current user
-    [[SFUserAccountManager sharedInstance] setCurrentUserInternal:nil];
+    [SFUserAccountManager.shared setCurrentUserInternal:nil];
     
-    NSArray<NSString *> *infos = [[SalesforceSDKManager sharedManager] getDevSupportInfos];
+    NSArray<NSString *> *infos = [SalesforceSDKManager.shared getDevSupportInfos];
     
     // Check that "section:Current User" is not in the array
     BOOL hasCurrentUserSection = NO;
@@ -901,7 +901,7 @@ static NSString* const kTestAppName = @"OverridenAppName";
 - (void)testGetDevSupportInfosContainsAuthConfigSection {
     [self createTestAppIdentity];
     
-    NSArray<NSString *> *infos = [[SalesforceSDKManager sharedManager] getDevSupportInfos];
+    NSArray<NSString *> *infos = [SalesforceSDKManager.shared getDevSupportInfos];
     
     // Check that "section:Auth Config" exists
     BOOL hasAuthConfigSection = NO;
@@ -918,7 +918,7 @@ static NSString* const kTestAppName = @"OverridenAppName";
 - (void)testGetDevSupportInfosAuthConfigContainsExpectedFields {
     [self createTestAppIdentity];
     
-    NSArray<NSString *> *infos = [[SalesforceSDKManager sharedManager] getDevSupportInfos];
+    NSArray<NSString *> *infos = [SalesforceSDKManager.shared getDevSupportInfos];
     
     // Expected fields in Auth Config section
     NSArray *expectedFields = @[
@@ -951,7 +951,7 @@ static NSString* const kTestAppName = @"OverridenAppName";
 - (void)testGetDevSupportInfosContainsBootconfigSection {
     [self createTestAppIdentity];
     
-    NSArray<NSString *> *infos = [[SalesforceSDKManager sharedManager] getDevSupportInfos];
+    NSArray<NSString *> *infos = [SalesforceSDKManager.shared getDevSupportInfos];
     
     // Check that "section:Bootconfig" exists
     BOOL hasBootconfigSection = NO;
@@ -970,9 +970,9 @@ static NSString* const kTestAppName = @"OverridenAppName";
     
     // Create and set a current user
     SFUserAccount *user = [self createUserAccount];
-    [[SFUserAccountManager sharedInstance] setCurrentUserInternal:user];
+    [SFUserAccountManager.shared setCurrentUserInternal:user];
     
-    NSArray<NSString *> *infos = [[SalesforceSDKManager sharedManager] getDevSupportInfos];
+    NSArray<NSString *> *infos = [SalesforceSDKManager.shared getDevSupportInfos];
     
     // Expected fields in Current User section
     NSArray *expectedFields = @[
@@ -1002,7 +1002,7 @@ static NSString* const kTestAppName = @"OverridenAppName";
     }
     
     // Clean up
-    [[SFUserAccountManager sharedInstance] setCurrentUserInternal:nil];
+    [SFUserAccountManager.shared setCurrentUserInternal:nil];
 }
 
 - (void)testGetDevSupportInfosCurrentUserCredentialsHaveCorrectValues {
@@ -1010,9 +1010,9 @@ static NSString* const kTestAppName = @"OverridenAppName";
     
     // Create and set a current user
     SFUserAccount *user = [self createUserAccount];
-    [[SFUserAccountManager sharedInstance] setCurrentUserInternal:user];
+    [SFUserAccountManager.shared setCurrentUserInternal:user];
     
-    NSArray<NSString *> *infos = [[SalesforceSDKManager sharedManager] getDevSupportInfos];
+    NSArray<NSString *> *infos = [SalesforceSDKManager.shared getDevSupportInfos];
     
     // Find and verify specific values
     for (NSUInteger i = 0; i < infos.count - 1; i++) {
@@ -1032,13 +1032,13 @@ static NSString* const kTestAppName = @"OverridenAppName";
     }
     
     // Clean up
-    [[SFUserAccountManager sharedInstance] setCurrentUserInternal:nil];
+    [SFUserAccountManager.shared setCurrentUserInternal:nil];
 }
 
 - (void)testGetDevSupportInfosContainsUserAgentString {
     [self createTestAppIdentity];
     
-    NSArray<NSString *> *infos = [[SalesforceSDKManager sharedManager] getDevSupportInfos];
+    NSArray<NSString *> *infos = [SalesforceSDKManager.shared getDevSupportInfos];
     
     // Find User Agent in the array
     BOOL hasUserAgent = NO;
@@ -1063,7 +1063,7 @@ static NSString* const kTestAppName = @"OverridenAppName";
     // Create and save a user (not current, just exists)
     [self createUserAccount];
     
-    NSArray<NSString *> *infos = [[SalesforceSDKManager sharedManager] getDevSupportInfos];
+    NSArray<NSString *> *infos = [SalesforceSDKManager.shared getDevSupportInfos];
     
     // Find Authenticated Users in the array
     BOOL hasAuthenticatedUsers = NO;
@@ -1081,7 +1081,7 @@ static NSString* const kTestAppName = @"OverridenAppName";
     XCTAssertTrue(hasAuthenticatedUsers, @"Dev support infos should contain Authenticated Users when users exist");
     
     // Clean up
-    [[SFUserAccountManager sharedInstance] setCurrentUserInternal:nil];
+    [SFUserAccountManager.shared setCurrentUserInternal:nil];
 }
 
 - (void)testGetDevSupportInfosSectionsAreProperlyStructured {
@@ -1089,9 +1089,9 @@ static NSString* const kTestAppName = @"OverridenAppName";
     
     // Create and set a current user
     SFUserAccount *user = [self createUserAccount];
-    [[SFUserAccountManager sharedInstance] setCurrentUserInternal:user];
+    [SFUserAccountManager.shared setCurrentUserInternal:user];
     
-    NSArray<NSString *> *infos = [[SalesforceSDKManager sharedManager] getDevSupportInfos];
+    NSArray<NSString *> *infos = [SalesforceSDKManager.shared getDevSupportInfos];
     
     // Verify that after each "section:" marker, there are key-value pairs
     for (NSUInteger i = 0; i < infos.count; i++) {
@@ -1111,7 +1111,7 @@ static NSString* const kTestAppName = @"OverridenAppName";
     }
     
     // Clean up
-    [[SFUserAccountManager sharedInstance] setCurrentUserInternal:nil];
+    [SFUserAccountManager.shared setCurrentUserInternal:nil];
 }
 
 @end

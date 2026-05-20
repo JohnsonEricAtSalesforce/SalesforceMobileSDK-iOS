@@ -127,19 +127,19 @@
 
 - (void)testSettingCacheTypes {
     // Encrypted enabled by default
-    [SalesforceSDKManager sharedManager];
+    SalesforceSDKManager.shared;
     XCTAssertTrue([NSURLCache.sharedURLCache isMemberOfClass:[SFSDKEncryptedURLCache class]]);
 
     // Set back to vanilla URL cache
-    [SalesforceSDKManager sharedManager].URLCacheType = kSFURLCacheTypeStandard;
+    SalesforceSDKManager.shared.URLCacheType = kSFURLCacheTypeStandard;
     XCTAssertTrue([NSURLCache.sharedURLCache isMemberOfClass:[NSURLCache class]]);
     
     // Set to null cache
-    [SalesforceSDKManager sharedManager].URLCacheType = kSFURLCacheTypeNull;
+    SalesforceSDKManager.shared.URLCacheType = kSFURLCacheTypeNull;
     XCTAssertTrue([NSURLCache.sharedURLCache isMemberOfClass:[SFSDKNullURLCache class]]);
     
     // Enable encrypted again
-    [SalesforceSDKManager sharedManager].URLCacheType = kSFURLCacheTypeEncrypted;
+    SalesforceSDKManager.shared.URLCacheType = kSFURLCacheTypeEncrypted;
     XCTAssertTrue([NSURLCache.sharedURLCache isMemberOfClass:[SFSDKEncryptedURLCache class]]);
 }
 
@@ -175,7 +175,7 @@
 }
 
 - (void)testEncryptedCacheEntry {
-    [SalesforceSDKManager sharedManager];
+    SalesforceSDKManager.shared;
     XCTAssertTrue([[NSURLCache sharedURLCache] isMemberOfClass:[SFSDKEncryptedURLCache class]]);
     
     NSString *contentString = @"This is my content";
@@ -264,8 +264,8 @@
     } @finally {
         // Restore original cache configuration
         // URLCacheType must be changed for the NSURLCache to be set properly
-        [SalesforceSDKManager sharedManager].URLCacheType = kSFURLCacheTypeStandard;
-        [SalesforceSDKManager sharedManager].URLCacheType = kSFURLCacheTypeEncrypted;
+        SalesforceSDKManager.shared.URLCacheType = kSFURLCacheTypeStandard;
+        SalesforceSDKManager.shared.URLCacheType = kSFURLCacheTypeEncrypted;
         
         // Clean up SFNetwork instances to prevent affecting other tests
         [SFNetwork removeSharedInstanceForIdentifier:@"com.salesforce.network.ephemeralSession"];

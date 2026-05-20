@@ -362,7 +362,7 @@ static NSString * const kTestRefreshToken = @"HowRefreshing";
  */
 - (void)testCoordinator {
     
-    SFOAuthCoordinator *coordinator = [[SFOAuthCoordinator alloc] initWithCredentials:[[SFUserAccountManager sharedInstance] currentUser].credentials];
+    SFOAuthCoordinator *coordinator = [[SFOAuthCoordinator alloc] initWithCredentials:[SFUserAccountManager.shared currentUser].credentials];
     XCTAssertNotNil(coordinator, @"coordinator should not be nil");
     SalesforceOAuthUnitTestsCoordinatorDelegate *delegate = [[SalesforceOAuthUnitTestsCoordinatorDelegate alloc] init];
     XCTAssertNotNil(delegate, @"delegate should not be nil");

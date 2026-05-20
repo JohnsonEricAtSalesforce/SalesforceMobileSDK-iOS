@@ -56,13 +56,13 @@ static SFUserAccount *origAccount;
 - (id)init {
     self = [super init];
     if (self) {
-        [[SFUserAccountManager sharedInstance] addDelegate:self];
+        [SFUserAccountManager.shared addDelegate:self];
     }
     return self;
 }
 
 - (void)dealloc {
-    [[SFUserAccountManager sharedInstance] removeDelegate:self];
+    [SFUserAccountManager.shared removeDelegate:self];
 }
 
 - (void)userAccountManager:(SFUserAccountManager *)userAccountManager
@@ -85,18 +85,18 @@ static SFUserAccount *origAccount;
 
 - (void)setUp {
     [super setUp];
-    origAccount = [[SFUserAccountManager sharedInstance] currentUser];
-    self.uam = [SFUserAccountManager sharedInstance];
+    origAccount = [SFUserAccountManager.shared currentUser];
+    self.uam = SFUserAccountManager.shared;
     _origAccountPersister = self.uam.accountPersister;
     self.uam.accountPersister = [SFUserAccountPersisterEphemeral new];
 }
 
 - (void)tearDown {
     // Put teardown code here. This method is called after the invocation of each test method in the class.
-    [SFUserAccountManager sharedInstance].accountPersister = _origAccountPersister;
+    SFUserAccountManager.shared.accountPersister = _origAccountPersister;
     [super tearDown];
-    [[SFUserAccountManager sharedInstance] setCurrentUser:origAccount];
-    [[SFUserAccountManager sharedInstance] setCurrentUserInternal:origAccount];
+    [SFUserAccountManager.shared setCurrentUser:origAccount];
+    [SFUserAccountManager.shared setCurrentUserInternal:origAccount];
     
 }
 
@@ -179,7 +179,7 @@ static SFUserAccount *origAccount;
     NSArray *accounts = [self createAndVerifyUserAccounts:2];
     SFUserAccount *origUser = accounts[0];
     SFUserAccount *newUser = accounts[1];
-    [[SFUserAccountManager sharedInstance] setCurrentUserInternal:origUser];
+    [SFUserAccountManager.shared setCurrentUserInternal:origUser];
     TestUserAccountManagerPersisterDelegate *acctDelegate = [[TestUserAccountManagerPersisterDelegate alloc] init];
     [self.uam switchToUser:newUser];
     XCTAssertEqual(acctDelegate.willSwitchOrigUserAccount, origUser, @"origUser is not equal.");
@@ -194,7 +194,7 @@ static SFUserAccount *origAccount;
 
 - (void)testSwitchToSameUser {
     SFUserAccount *newUser = [self createAndVerifyUserAccounts:1][0];
-    [[SFUserAccountManager sharedInstance] setCurrentUserInternal:newUser];
+    [SFUserAccountManager.shared setCurrentUserInternal:newUser];
     TestUserAccountManagerPersisterDelegate *acctDelegate = [[TestUserAccountManagerPersisterDelegate alloc] init];
     [self.uam switchToUser:newUser];
     XCTAssertNil(acctDelegate.willSwitchOrigUserAccount, @"No switchToUser action should be taken for same accounts.");
@@ -224,7 +224,7 @@ static SFUserAccount *origAccount;
         user.credentials.accessToken = [NSString stringWithFormat:@"accesstoken-%lu", (unsigned long)index];
         XCTAssertNotNil(user.credentials, @"User credentials shouldn't be nil");
         NSError *error = nil;
-        [[SFUserAccountManager sharedInstance] saveAccountForUser:user error:&error];
+        [SFUserAccountManager.shared saveAccountForUser:user error:&error];
         XCTAssertNil(error, @"Should be able to create user account");
         // Note: we always use index 0 because of the way the allUserIds are sorted out
         SFUserAccount *userAccount = [self.uam userAccountForUserIdentity:user.accountIdentity];

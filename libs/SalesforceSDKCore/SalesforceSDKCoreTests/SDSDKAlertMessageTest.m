@@ -23,10 +23,7 @@
  */
 
 #import <XCTest/XCTest.h>
-#import "SFSDKAlertMessageBuilder.h"
-#import "SFSDKAlertMessage.h"
-#import "SFSDKAlertView.h"
-#import "SFSDKWindowManager.h"
+#import <SalesforceSDKCore/SalesforceSDKCore-Swift.h>
 @interface SDSDKAlertMessageTest : XCTestCase
 
 @end
@@ -47,7 +44,7 @@
     NSString *buttonOneTitle = @"ButtonOne";
     NSString *buttonTwoTitle = @"ButtonTwo";
     NSString *alertMessage = @"Message for the alert";
-    SFSDKAlertMessage *message = [SFSDKAlertMessage messageWithBlock:^(SFSDKAlertMessageBuilder *builder){
+    SFSDKAlertMessage *message = [SFSDKAlertMessage messageWith:^(SFSDKAlertMessageBuilder *builder){
         builder.alertTitle = alertTitle;
         builder.actionOneTitle = buttonOneTitle;
         builder.actionTwoTitle = buttonTwoTitle;
@@ -67,7 +64,7 @@
     NSString *alertMessage = @"Message for the alert";
     XCTestExpectation *expectationOne = [self expectationWithDescription:@"messageActionOne"];
     XCTestExpectation *expectationTwo = [self expectationWithDescription:@"messageActionTwo"];
-    SFSDKAlertMessage *message = [SFSDKAlertMessage messageWithBlock:^(SFSDKAlertMessageBuilder *builder){
+    SFSDKAlertMessage *message = [SFSDKAlertMessage messageWith:^(SFSDKAlertMessageBuilder *builder){
         builder.alertTitle = alertTitle;
         builder.actionOneTitle = buttonOneTitle;
         builder.actionTwoTitle = buttonTwoTitle;
@@ -94,7 +91,7 @@
     NSString *buttonTwoTitle = @"ButtonTwo";
     NSString *alertMessage = @"Message for the alert";
     
-    SFSDKAlertMessage *message = [SFSDKAlertMessage messageWithBlock:^(SFSDKAlertMessageBuilder *builder){
+    SFSDKAlertMessage *message = [SFSDKAlertMessage messageWith:^(SFSDKAlertMessageBuilder *builder){
         builder.alertTitle = alertTitle;
         builder.actionOneTitle = buttonOneTitle;
         builder.actionTwoTitle = buttonTwoTitle;
@@ -107,11 +104,11 @@
         };
     }];
     
-    SFSDKAlertView *view = [[SFSDKAlertView alloc] initWithMessage:message window:[[SFSDKWindowManager sharedManager] authWindow:nil]];
+    SFSDKAlertView *view = [[SFSDKAlertView alloc] initWithMessage:message window:[SFSDKWindowManager.shared authWindow:nil]];
     XCTAssertNotNil(view);
     XCTAssertNotNil(view.controller);
     XCTAssertNotNil(view.window);
-    XCTAssertTrue(view.window == [[SFSDKWindowManager sharedManager] authWindow:nil]);
+    XCTAssertTrue(view.window == [SFSDKWindowManager.shared authWindow:nil]);
 }
 
 @end

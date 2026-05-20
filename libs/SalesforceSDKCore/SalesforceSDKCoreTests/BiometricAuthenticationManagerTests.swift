@@ -57,7 +57,7 @@ final class BiometricAuthenticationManagerTests: XCTestCase {
     func testStorePolciy() {
         XCTAssertFalse(bioAuthManager.enabled, "Should not be enabled by default.")
         let user = createUser(index: 0)
-        let userId = user.idData.userId
+        let userId = user.idData?.userId ?? ""
         XCTAssertFalse(bioAuthManager.checkForPolicy(userId: userId), "User should not have polciy by default.")
     
         bioAuthManager.storePolicy(userAccount: user, hasMobilePolicy: false, sessionTimeout: 1)
@@ -72,7 +72,7 @@ final class BiometricAuthenticationManagerTests: XCTestCase {
     func testUpdatePolicy() {
         XCTAssertFalse(bioAuthManager.enabled, "Should not be enabled by default.")
         let user = createUser(index: 0)
-        let userId = user.idData.userId
+        let userId = user.idData?.userId ?? ""
         XCTAssertFalse(bioAuthManager.checkForPolicy(userId: userId), "User should not have polciy by default.")
     
         bioAuthManager.storePolicy(userAccount: user, hasMobilePolicy: true, sessionTimeout: 1)
@@ -174,11 +174,11 @@ final class BiometricAuthenticationManagerTests: XCTestCase {
     func testCleanup() {
         let user = createUser(index: 0)
         bioAuthManager.storePolicy(userAccount: user, hasMobilePolicy: true, sessionTimeout: 15)
-        XCTAssertTrue(bioAuthManager.checkForPolicy(userId: user.idData.userId))
+        XCTAssertTrue(bioAuthManager.checkForPolicy(userId: user.idData?.userId ?? ""))
         bioAuthManager.locked = true
         
         bioAuthManager.cleanup(user: user)
-        XCTAssertFalse(bioAuthManager.checkForPolicy(userId: user.idData.userId))
+        XCTAssertFalse(bioAuthManager.checkForPolicy(userId: user.idData?.userId ?? ""))
         XCTAssertFalse(bioAuthManager.locked, "Locked status should be reset.")
     }
     
@@ -186,7 +186,7 @@ final class BiometricAuthenticationManagerTests: XCTestCase {
     private func createUser(index: Int) -> UserAccount {
         let credentials = OAuthCredentials(identifier: "identifier-\(index)", clientId: "fakeClientIdForTesting", encrypted: true)!
         let user = UserAccount(credentials: credentials)
-        user.idData = IdentityData(jsonDict: [ "user_id": "\(index)" ])
+        user.idData = SFIdentityData(jsonDict: [ "user_id": "\(index)" ])
         UserAccountManager.shared.currentUserAccount = user
         
         return user

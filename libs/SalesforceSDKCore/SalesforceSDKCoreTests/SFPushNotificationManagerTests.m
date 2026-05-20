@@ -54,16 +54,16 @@ static NSString* const kSFDeviceSalesforceId = @"deviceSalesforceId";
     self.manager = [[SFPushNotificationManager alloc] init];
     self.manager.isSimulator = NO;
     self.manager.deviceSalesforceId = @"pretending-we-registered";
-    SFOAuthCredentials *credentials = [[SFOAuthCredentials alloc] initWithIdentifier:@"happy-user" clientId:[SFUserAccountManager sharedInstance].oauthClientId encrypted:YES];
+    SFOAuthCredentials *credentials = [[SFOAuthCredentials alloc] initWithIdentifier:@"happy-user" clientId:SFUserAccountManager.shared.oauthClientId encrypted:YES];
     SFUserAccount *user =[[SFUserAccount alloc] initWithCredentials:credentials];
     user.credentials.identityUrl = [NSURL URLWithString:@"https://login.salesforce.com/id/00D000000000062EA0/005R0000000Dsl0"];
-    self.origCurrentUser = [SFUserAccountManager sharedInstance].currentUser;
-    [[SFUserAccountManager sharedInstance] setCurrentUserInternal:user];
+    self.origCurrentUser = SFUserAccountManager.shared.currentUser;
+    [SFUserAccountManager.shared setCurrentUserInternal:user];
     self.user = user;
 }
 
 - (void)tearDown {
-     [[SFUserAccountManager sharedInstance] setCurrentUserInternal:self.origCurrentUser];
+     [SFUserAccountManager.shared setCurrentUserInternal:self.origCurrentUser];
     [super tearDown];
 }
 

@@ -37,12 +37,12 @@
 @implementation SFSDKErrorManagerTests
 - (void)setUp {
     [super setUp];
-    _origCurrentUser =  [SFUserAccountManager sharedInstance].currentUser;
+    _origCurrentUser =  SFUserAccountManager.shared.currentUser;
 }
 
 - (void)tearDown {
     [super tearDown];
-    [[SFUserAccountManager sharedInstance] setCurrentUserInternal:_origCurrentUser];
+    [SFUserAccountManager.shared setCurrentUserInternal:_origCurrentUser];
 }
 
 - (void)testNetworkError {
@@ -55,8 +55,8 @@
     credentials.organizationId = @"ORG123";
    
     SFUserAccount *account = [[SFUserAccount alloc] initWithCredentials:credentials];
-    [[SFUserAccountManager sharedInstance] saveAccountForUser:account error:nil];
-    [[SFUserAccountManager sharedInstance] setCurrentUserInternal:account];
+    [SFUserAccountManager.shared saveAccountForUser:account error:nil];
+    [SFUserAccountManager.shared setCurrentUserInternal:account];
     SFSDKAuthRequest *request = [[SFSDKAuthRequest alloc] init];
     SFSDKAuthSession *session = [[SFSDKAuthSession alloc] initWith:request credentials:credentials spAppCredentials:nil];
     session.oauthCoordinator.authInfo = [[SFOAuthInfo alloc] initWithAuthType:SFOAuthTypeRefresh];
@@ -73,7 +73,7 @@
     XCTAssertNotNil(errorManager.networkErrorHandlerBlock);
     BOOL handled = [errorManager processAuthError:error authContext:session options:userInfo];
     XCTAssertTrue(handled,@"Network Error Should have been handled by the ErrorManager");
-    [[SFUserAccountManager sharedInstance] deleteAccountForUser:account error:nil];
+    [SFUserAccountManager.shared deleteAccountForUser:account error:nil];
     [self waitForExpectationsWithTimeout:20.0 handler:nil];
 }
 

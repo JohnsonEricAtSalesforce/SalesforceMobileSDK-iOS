@@ -149,7 +149,7 @@
     [network sendRequest:request dataResponseBlock:nil];
     
     NSString *userAgent = request.allHTTPHeaderFields[@"User-Agent"];
-    NSString *expectedUserAgent = [SalesforceSDKManager sharedManager].userAgentString(@"");
+    NSString *expectedUserAgent = SalesforceSDKManager.shared.userAgentString(@"");
     XCTAssertEqualObjects(userAgent, expectedUserAgent, @"User-Agent header should match SDK manager's user agent");
 }
 

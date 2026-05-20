@@ -39,8 +39,8 @@ static NSException *authException = nil;
 
 - (void)setUp {
     //add  Managed Properties
-    self.prevCurrentUser = [SFUserAccountManager sharedInstance].currentUser;
-    [[SFUserAccountManager sharedInstance] setCurrentUserInternal:[[SFUserAccount alloc] init]];
+    self.prevCurrentUser = SFUserAccountManager.shared.currentUser;
+    [SFUserAccountManager.shared setCurrentUserInternal:[[SFUserAccount alloc] init]];
     self.managedProps = @{@"RequireCertAuth":@YES,@"OnlyShowAuthorizedHosts":@YES,
                           @"ClearClipboardOnBackground":@YES,
                           @"ManagedAppCallbackURL": @"managed:url",
@@ -52,7 +52,7 @@ static NSException *authException = nil;
 - (void)tearDown {
     //Remove the Managed Properties
     self.managedProps = nil;
-    [[SFUserAccountManager sharedInstance] setCurrentUserInternal:self.prevCurrentUser];
+    [SFUserAccountManager.shared setCurrentUserInternal:self.prevCurrentUser];
     [[NSUserDefaults msdkUserDefaults] removeObjectForKey:@"com.apple.configuration.managed"];
 }
 
@@ -61,19 +61,19 @@ static NSException *authException = nil;
     XCTAssertNotNil(self.managedProps, @"Dictionary for managed properties should not be nil");
    
     XCTAssertTrue([SFManagedPreferences sharedPreferences].requireCertificateAuthentication, @"SFManagedPreferences should have been set");
-    XCTAssertTrue([SFUserAccountManager sharedInstance].useBrowserAuth, @"SFUserAccountManager should have been setup to use SFManagedPreferences settings for Browser");
+    XCTAssertTrue(SFUserAccountManager.shared.usesAdvancedAuthentication, @"SFUserAccountManager should have been setup to use SFManagedPreferences settings for Browser");
     
     XCTAssertTrue([SFManagedPreferences sharedPreferences].connectedAppCallbackUri, @"SFManagedPreferences connectedAppCallbackUri should have been set");
    
-    XCTAssertEqualObjects([SFManagedPreferences sharedPreferences].connectedAppCallbackUri,[SFUserAccountManager sharedInstance].oauthCompletionUrl, @"SFUserAccountManager should have been setup to use SFManagedPreferences connectedAppCallbackUri");
+    XCTAssertEqualObjects([SFManagedPreferences sharedPreferences].connectedAppCallbackUri,SFUserAccountManager.shared.oauthCompletionURL, @"SFUserAccountManager should have been setup to use SFManagedPreferences connectedAppCallbackUri");
     
     XCTAssertTrue([SFManagedPreferences sharedPreferences].connectedAppId, @"SFManagedPreferences connectedAppId should have been set");
     
-    XCTAssertEqualObjects([SFManagedPreferences sharedPreferences].connectedAppId,[SFUserAccountManager sharedInstance].oauthClientId, @"SFUserAccountManager should have been setup to use SFManagedPreferences connectedAppId");
+    XCTAssertEqualObjects([SFManagedPreferences sharedPreferences].connectedAppId,SFUserAccountManager.shared.oauthClientID, @"SFUserAccountManager should have been setup to use SFManagedPreferences connectedAppId");
     
     XCTAssertTrue([SFManagedPreferences sharedPreferences].idpAppURLScheme, @"SFManagedPreferences idpAppURLScheme should have been set");
     
-    XCTAssertEqualObjects([SFManagedPreferences sharedPreferences].idpAppURLScheme,[SFUserAccountManager sharedInstance].idpAppURIScheme, @"SFUserAccountManager should have been setup to use SFManagedPreferences connectedAppId");
+    XCTAssertEqualObjects([SFManagedPreferences sharedPreferences].idpAppURLScheme,SFUserAccountManager.shared.idpAppURIScheme, @"SFUserAccountManager should have been setup to use SFManagedPreferences connectedAppId");
 }
 
 - (void)testManagedPreferenceLoginHost {

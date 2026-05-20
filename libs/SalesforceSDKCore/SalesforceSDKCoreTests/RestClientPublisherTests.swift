@@ -33,7 +33,7 @@ class RestClientPublisherTests: XCTestCase {
     override class func setUp() {
         super.setUp()
         SFSDKLogoutBlocker.block()
-        TestSetupUtils.populateAuthCredentialsFromConfigFile(for: SFSDKAuthUtilTests.self)
+        TestSetupUtils.populateAuthCredentials(fromConfigFileFor: SFSDKAuthUtilTests.self)
         TestSetupUtils.synchronousAuthRefresh()
     }
     
@@ -42,8 +42,8 @@ class RestClientPublisherTests: XCTestCase {
     }
     
     func testQueryPublisher() {
-        let request = RestClient.shared.request(forQuery: "select name from CONTACT", apiVersion: nil)
-        let publisher = RestClient.shared.publisher(for: request)
+        let request = RestClient.sharedInstance.requestForQuery( "select name from CONTACT", apiVersion: nil)
+        let publisher = RestClient.sharedInstance.publisher(for: request)
         
         let validTest = evaluateResults(publisher: publisher)
         wait(for: validTest.expectations, timeout: 5)
@@ -51,8 +51,8 @@ class RestClientPublisherTests: XCTestCase {
     }
     
     func testRecordsPublisher() {
-        let request = RestClient.shared.request(forQuery: "select name from CONTACT", apiVersion: nil)
-        let publisher: AnyPublisher<RestClient.QueryResponse<TestContact>, Never> = RestClient.shared.records(forRequest: request)
+        let request = RestClient.sharedInstance.requestForQuery( "select name from CONTACT", apiVersion: nil)
+        let publisher: AnyPublisher<RestClient.QueryResponse<TestContact>, Never> = RestClient.sharedInstance.records(forRequest: request)
         
         let validTest = evaluateResults(publisher: publisher)
         wait(for: validTest.expectations, timeout: 5)
@@ -62,15 +62,15 @@ class RestClientPublisherTests: XCTestCase {
     func testCompositePublisher() {
         let accountName = self.generateRecordName()
         let contactName = self.generateRecordName()
-        let apiVersion = RestClient.shared.apiVersion
+        let apiVersion = RestClient.sharedInstance.apiVersion
         let requestBuilder = CompositeRequestBuilder()
-            .add(RestClient.shared.requestForCreate(withObjectType: "Account", fields: ["Name": accountName], apiVersion: apiVersion), referenceId: "refAccount")
-            .add(RestClient.shared.requestForCreate(withObjectType: "Contact", fields: ["LastName": contactName,"AccountId": "@{refAccount.id}"], apiVersion: apiVersion), referenceId: "refContact")
-            .add(RestClient.shared.request(forQuery: "select Id, AccountId from Contact where LastName =  '\(contactName)'", apiVersion: apiVersion), referenceId: "refQuery")
+            .addRequest(RestClient.sharedInstance.requestForCreate(withObjectType: "Account", fields: ["Name": accountName], apiVersion: apiVersion), referenceId: "refAccount")
+            .addRequest(RestClient.sharedInstance.requestForCreate(withObjectType: "Contact", fields: ["LastName": contactName,"AccountId": "@{refAccount.id}"], apiVersion: apiVersion), referenceId: "refContact")
+            .addRequest(RestClient.sharedInstance.requestForQuery( "select Id, AccountId from Contact where LastName =  '\(contactName)'", apiVersion: apiVersion), referenceId: "refQuery")
             .setAllOrNone(true)
         
         let compositeRequest = requestBuilder.buildCompositeRequest(apiVersion)
-        let publisher = RestClient.shared.publisher(for: compositeRequest)
+        let publisher = RestClient.sharedInstance.publisher(for: compositeRequest)
         
         let validTest = evaluateResults(publisher: publisher)
         wait(for: validTest.expectations, timeout: 10)
@@ -80,17 +80,17 @@ class RestClientPublisherTests: XCTestCase {
     func testBatchPublisher() {
         let accountName = self.generateRecordName()
         let contactName = self.generateRecordName()
-        let apiVersion = RestClient.shared.apiVersion
+        let apiVersion = RestClient.sharedInstance.apiVersion
         
         let requestBuilder = BatchRequestBuilder()
-            .add(RestClient.shared.requestForCreate(withObjectType: "Account", fields: ["Name": accountName], apiVersion: apiVersion))
-            .add(RestClient.shared.requestForCreate(withObjectType: "Contact", fields: ["LastName": contactName], apiVersion: apiVersion))
-            .add(RestClient.shared.request(forQuery: "select Id from Account where Name ", apiVersion:  apiVersion)) // bad query
-            .add(RestClient.shared.request(forQuery: "select Id from Contact where Name = '\(contactName)'", apiVersion: apiVersion))
+            .addRequest(RestClient.sharedInstance.requestForCreate(withObjectType: "Account", fields: ["Name": accountName], apiVersion: apiVersion))
+            .addRequest(RestClient.sharedInstance.requestForCreate(withObjectType: "Contact", fields: ["LastName": contactName], apiVersion: apiVersion))
+            .addRequest(RestClient.sharedInstance.requestForQuery( "select Id from Account where Name ", apiVersion:  apiVersion)) // bad query
+            .addRequest(RestClient.sharedInstance.requestForQuery( "select Id from Contact where Name = '\(contactName)'", apiVersion: apiVersion))
             .setHaltOnError(false)
         
         let batchRequest = requestBuilder.buildBatchRequest(apiVersion)
-        let publisher = RestClient.shared.publisher(for: batchRequest)
+        let publisher = RestClient.sharedInstance.publisher(for: batchRequest)
         
         let validTest = evaluateResults(publisher: publisher)
         wait(for: validTest.expectations, timeout: 10)

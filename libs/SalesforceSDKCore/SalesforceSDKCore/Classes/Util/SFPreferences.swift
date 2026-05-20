@@ -53,7 +53,7 @@ import Foundation
         NotificationCenter.default.addObserver(self, selector: #selector(handleOrgDidLogout(_:)), name: UserAccountManager.didLogoutOrg, object: nil)
     }
 
-    private init(path: String) {
+    init(path: String) {
         self.path = path
         self.attributes = NSMutableDictionary()
         super.init()

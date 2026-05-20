@@ -23,7 +23,7 @@
  */
 
 #import <XCTest/XCTest.h>
-#import "SFSDKIDPLoginRequestCommand.h"
+#import <SalesforceSDKCore/SalesforceSDKCore-Swift.h>
 @interface SFSDKIDPLoginRequestCommandTest : XCTestCase
 
 @end

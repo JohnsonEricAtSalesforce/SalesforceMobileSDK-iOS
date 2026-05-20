@@ -143,7 +143,7 @@ static NSException *authException = nil;
     }
     _dataCleanupRequired = YES;
     // Set-up code here.
-    _currentUser = [SFUserAccountManager sharedInstance].currentUser;
+    _currentUser = SFUserAccountManager.shared.currentUser;
     [super setUp];
 }
 
@@ -155,7 +155,7 @@ static NSException *authException = nil;
     }
     [[SFRestAPI sharedGlobalInstance] cleanup];
     [[SFRestAPI sharedInstance] cleanup];
-    [[SFUserAccountManager sharedInstance] setCurrentUserInternal:_currentUser];
+    [SFUserAccountManager.shared setCurrentUserInternal:_currentUser];
     [NSThread sleepForTimeInterval:0.1];  // Some test runs were failing, saying the run didn't complete.  This seems to fix that.
     [super tearDown];
 }
@@ -2992,7 +2992,7 @@ static NSException *authException = nil;
     NSString *endpoint = @"/custom/endpoint";
     NSString *path = @"/custom/endpoint";
     SFRestRequest *request =  [SFRestRequest customEndPointRequestWithMethod:SFRestMethodGET endPoint:endpoint path:path queryParams:nil];
-    NSURLRequest *urlRequest = [request prepareRequestForSend:[SFUserAccountManager sharedInstance].currentUser];
+    NSURLRequest *urlRequest = [request prepareRequestForSend:SFUserAccountManager.shared.currentUser];
     XCTAssertNotNil(urlRequest, @"UrlRequest URL should not be nil");
     NSRange range = [[[urlRequest URL] absoluteString] rangeOfString:endpoint];
     XCTAssertTrue(range.location!= NSNotFound && range.length > 0 , "The URL must have custom endpoint path");
@@ -3005,7 +3005,7 @@ static NSException *authException = nil;
 - (void)testSalesforceFullUrlPath {
     NSString *fullPathURL = @"https://some.custom.url/A/B/C";
     SFRestRequest *request =  [SFRestRequest requestWithMethod:SFRestMethodGET path:fullPathURL  queryParams:nil];
-    NSURLRequest *urlRequest = [request prepareRequestForSend:[SFUserAccountManager sharedInstance].currentUser];
+    NSURLRequest *urlRequest = [request prepareRequestForSend:SFUserAccountManager.shared.currentUser];
     XCTAssertNotNil(urlRequest, @"UrlRequest URL should not be nil");
     NSRange range = [[[urlRequest URL] absoluteString] rangeOfString:fullPathURL];
     XCTAssertTrue(range.location == 0 && range.length > 0 , "The URL must match the setting of full URL in path");
@@ -3015,7 +3015,7 @@ static NSException *authException = nil;
     NSString *pathWithParams = @"/rest/endpoint?page=10";
     SFRestRequest * request = [SFRestRequest requestWithMethod:SFRestMethodGET path:pathWithParams queryParams:@{}];
     request.endpoint = @"/services/apex";
-    NSURLRequest *urlRequest = [request prepareRequestForSend:[SFUserAccountManager sharedInstance].currentUser];
+    NSURLRequest *urlRequest = [request prepareRequestForSend:SFUserAccountManager.shared.currentUser];
     XCTAssertTrue([urlRequest.URL.absoluteString hasSuffix:pathWithParams], @"Wrong URL");
 }
 
@@ -3055,16 +3055,16 @@ static NSException *authException = nil;
     account.credentials.userId = userId;
     account.credentials.organizationId = orgId;
     
-    credentials.instanceUrl = [SFUserAccountManager sharedInstance].currentUser.credentials.instanceUrl;
+    credentials.instanceUrl = SFUserAccountManager.shared.currentUser.credentials.instanceUrl;
     NSError *error = nil;
-    BOOL result = [[SFUserAccountManager sharedInstance] saveAccountForUser:account error:&error];
+    BOOL result = [SFUserAccountManager.shared saveAccountForUser:account error:&error];
     return result?account:nil;
 }
 
 - (BOOL)deleteUser:(SFUserAccount *)user {
     NSError *error = nil;
     [SFRestAPI removeSharedInstanceWithUser:user];
-    BOOL result = [[SFUserAccountManager sharedInstance] deleteAccountForUser:user error:&error];
+    BOOL result = [SFUserAccountManager.shared deleteAccountForUser:user error:&error];
     return result;
 }
 

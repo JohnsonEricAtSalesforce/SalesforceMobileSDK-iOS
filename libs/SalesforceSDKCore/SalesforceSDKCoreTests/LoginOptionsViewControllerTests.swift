@@ -27,35 +27,41 @@ import SwiftUI
 @testable import SalesforceSDKCore
 
 class LoginOptionsViewControllerTests: XCTestCase {
-    
+
     var originalBootConfig: BootConfig?
+    #if DEBUG
     var originalRuntimeSelector: BootConfigRuntimeSelector?
+    var originalSimulatedDomainDiscoveryResult: DomainDiscoveryResult?
+    #endif
     var originalOAuthClientID: String!
     var originalOAuthCompletionURL: String!
     var originalScopes: Set<String>!
-    var originalSimulatedDomainDiscoveryResult: DomainDiscoveryResult?
-    
+
     override func setUp() {
         super.setUp()
-        
+
         // Save original state to restore in tearDown
-        originalBootConfig = SalesforceManager.shared.bootConfig
-        originalRuntimeSelector = SalesforceManager.shared.bootConfigRuntimeSelector
+        originalBootConfig = SalesforceSDKManager.shared.bootConfig
+        #if DEBUG
+        originalRuntimeSelector = SalesforceSDKManager.shared.bootConfigRuntimeSelector
+        originalSimulatedDomainDiscoveryResult = SalesforceSDKManager.shared.simulatedDomainDiscoveryResult
+        #endif
         originalOAuthClientID = UserAccountManager.shared.oauthClientID
         originalOAuthCompletionURL = UserAccountManager.shared.oauthCompletionURL
         originalScopes = UserAccountManager.shared.scopes
-        originalSimulatedDomainDiscoveryResult = SalesforceManager.shared.simulatedDomainDiscoveryResult
     }
-    
+
     override func tearDown() {
         // Restore original state
-        SalesforceManager.shared.bootConfig = originalBootConfig
-        SalesforceManager.shared.bootConfigRuntimeSelector = originalRuntimeSelector
+        SalesforceSDKManager.shared.bootConfig = originalBootConfig
+        #if DEBUG
+        SalesforceSDKManager.shared.bootConfigRuntimeSelector = originalRuntimeSelector
+        SalesforceSDKManager.shared.simulatedDomainDiscoveryResult = originalSimulatedDomainDiscoveryResult
+        #endif
         UserAccountManager.shared.oauthClientID = originalOAuthClientID
         UserAccountManager.shared.oauthCompletionURL = originalOAuthCompletionURL
         UserAccountManager.shared.scopes = originalScopes
-        SalesforceManager.shared.simulatedDomainDiscoveryResult = originalSimulatedDomainDiscoveryResult
-        
+
         super.tearDown()
     }
     
@@ -89,7 +95,7 @@ class LoginOptionsViewControllerTests: XCTestCase {
             "oauthScopes": ["api", "web", "refresh_token"],
             "shouldAuthenticate": true
         ]
-        SalesforceManager.shared.bootConfig = BootConfig(testConfig)
+        SalesforceSDKManager.shared.bootConfig = BootConfig(dict: testConfig as NSDictionary)
         
         let view = LoginOptionsView {
             // No-op callback
@@ -132,12 +138,14 @@ class LoginOptionsViewControllerTests: XCTestCase {
         // Trigger the static config handler (saves config only; does not dismiss)
         view.handleStaticConfig()
         
-        // Verify SalesforceManager was updated
-        XCTAssertNotNil(SalesforceManager.shared.bootConfig, "BootConfig should be set")
-        XCTAssertEqual(SalesforceManager.shared.bootConfig?.remoteAccessConsumerKey, "test_static_key")
-        XCTAssertEqual(SalesforceManager.shared.bootConfig?.oauthRedirectURI, "test://static/callback")
-        XCTAssertEqual(SalesforceManager.shared.bootConfig?.oauthScopes.sorted(), ["api", "refresh_token", "web"])
-        XCTAssertNil(SalesforceManager.shared.bootConfigRuntimeSelector, "Runtime selector should be nil for static config")
+        // Verify SalesforceSDKManager was updated
+        XCTAssertNotNil(SalesforceSDKManager.shared.bootConfig, "BootConfig should be set")
+        XCTAssertEqual(SalesforceSDKManager.shared.bootConfig?.remoteAccessConsumerKey, "test_static_key")
+        XCTAssertEqual(SalesforceSDKManager.shared.bootConfig?.oauthRedirectURI, "test://static/callback")
+        XCTAssertEqual(SalesforceSDKManager.shared.bootConfig?.oauthScopes.sorted(), ["api", "refresh_token", "web"])
+        #if DEBUG
+        XCTAssertNil(SalesforceSDKManager.shared.bootConfigRuntimeSelector, "Runtime selector should be nil for static config")
+        #endif
         
         // Verify UserAccountManager was updated
         XCTAssertEqual(UserAccountManager.shared.oauthClientID, "test_static_key")
@@ -145,6 +153,7 @@ class LoginOptionsViewControllerTests: XCTestCase {
         XCTAssertEqual(UserAccountManager.shared.scopes.sorted(), ["api", "refresh_token", "web"])
     }
     
+    #if DEBUG
     func testDynamicConfigButtonAction() {
         // Save dynamic config does not call onConfigurationCompleted
         let view = LoginOptionsView(
@@ -153,26 +162,28 @@ class LoginOptionsViewControllerTests: XCTestCase {
             dynamicCallbackUrl: "test://dynamic/callback",
             dynamicScopes: "api id"
         )
-        
+
         // Trigger the dynamic config handler (saves config only; does not dismiss)
         view.handleDynamicBootconfig()
-        
+
         // Verify runtime selector was set
-        XCTAssertNotNil(SalesforceManager.shared.bootConfigRuntimeSelector, "Runtime selector should be set for dynamic config")
-        
+        XCTAssertNotNil(SalesforceSDKManager.shared.bootConfigRuntimeSelector, "Runtime selector should be set for dynamic config")
+
         // Test the runtime selector
         let selectorExpectation = XCTestExpectation(description: "Runtime selector provides config")
-        SalesforceManager.shared.bootConfigRuntimeSelector?("https://loginhost.salesforce.com") { bootConfig in
+        SalesforceSDKManager.shared.bootConfigRuntimeSelector?("https://loginhost.salesforce.com") { bootConfig in
             XCTAssertNotNil(bootConfig, "BootConfig should be provided by runtime selector")
             XCTAssertEqual(bootConfig?.remoteAccessConsumerKey, "test_dynamic_key")
             XCTAssertEqual(bootConfig?.oauthRedirectURI, "test://dynamic/callback")
             XCTAssertEqual(bootConfig?.oauthScopes.sorted(), ["api", "id"])
             selectorExpectation.fulfill()
         }
-        
+
         wait(for: [selectorExpectation], timeout: 1.0)
     }
+    #endif
 
+    #if DEBUG
     func testSimulatedDomainDiscoveryButtonAction() {
         // Save simulated result does not call onConfigurationCompleted
         let view = LoginOptionsView(
@@ -180,20 +191,21 @@ class LoginOptionsViewControllerTests: XCTestCase {
             discoveryLoginHost: "test.my.salesforce.com",
             discoveryUserName: "user@example.com"
         )
-        
+
         // Trigger the simulated domain discovery handler (saves result only; does not dismiss)
         let result = DomainDiscoveryResult(loginHint: "user@example.com", myDomain: "test.my.salesforce.com")
         view.handleSimulatedDomainDiscovery(result: result)
-        
-        // Verify SalesforceManager was updated
-        XCTAssertNotNil(SalesforceManager.shared.simulatedDomainDiscoveryResult, "Simulated domain discovery result should be set")
-        XCTAssertEqual(SalesforceManager.shared.simulatedDomainDiscoveryResult?.loginHint, "user@example.com")
-        XCTAssertEqual(SalesforceManager.shared.simulatedDomainDiscoveryResult?.myDomain, "test.my.salesforce.com")
-        
+
+        // Verify SalesforceSDKManager was updated
+        XCTAssertNotNil(SalesforceSDKManager.shared.simulatedDomainDiscoveryResult, "Simulated domain discovery result should be set")
+        XCTAssertEqual(SalesforceSDKManager.shared.simulatedDomainDiscoveryResult?.loginHint, "user@example.com")
+        XCTAssertEqual(SalesforceSDKManager.shared.simulatedDomainDiscoveryResult?.myDomain, "test.my.salesforce.com")
+
         // Clearing the simulated result (e.g. empty login host in editor)
         view.handleSimulatedDomainDiscovery(result: nil)
-        XCTAssertNil(SalesforceManager.shared.simulatedDomainDiscoveryResult, "Simulated result should be cleared when passing nil")
+        XCTAssertNil(SalesforceSDKManager.shared.simulatedDomainDiscoveryResult, "Simulated result should be cleared when passing nil")
     }
+    #endif
 
     func testCompletionHandlerCalledWhenClosingSheet() {
         let expectation = XCTestExpectation(description: "Completion handler called when sheet is closed")

@@ -23,12 +23,7 @@
  */
 
 #import <XCTest/XCTest.h>
-#import "SFSDKURLHandlerManager.h"
-#import "SFSDKSPLoginRequestCommand.h"
-#import "SFSDKSPLoginResponseCommand.h"
-#import "SFSDKIDPErrorHandler.h"
-#import "SFSDKAuthErrorCommand.h"
-#import "SFSDKAdvancedAuthURLHandler.h"
+#import <SalesforceSDKCore/SalesforceSDKCore-Swift.h>
 #import "SFSDKIDPRequestHandler.h"
 #import "SFSDKSPLoginResponseHandler.h"
 

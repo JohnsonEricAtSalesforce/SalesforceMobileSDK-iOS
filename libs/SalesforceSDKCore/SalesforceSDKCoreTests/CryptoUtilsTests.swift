@@ -37,8 +37,8 @@ class CryptoUtilsTests: XCTestCase {
     
     override func setUpWithError() throws {
         SFSDKCryptoUtils.createRSAKeyPair(withName: rsaKeyPairName, keyLength: 2048, accessibleAttribute: kSecAttrAccessibleAfterFirstUnlockThisDeviceOnly)
-        publicKey = try XCTUnwrap(SFSDKCryptoUtils.getRSAPublicKeyRef(withName: rsaKeyPairName, keyLength: 2048)?.takeUnretainedValue())
-        privateKey = try XCTUnwrap(SFSDKCryptoUtils.getRSAPrivateKeyRef(withName: rsaKeyPairName, keyLength: 2048)?.takeUnretainedValue())
+        publicKey = try XCTUnwrap(SFSDKCryptoUtils.getRSAPublicKeyRef(withName: rsaKeyPairName, keyLength: 2048))
+        privateKey = try XCTUnwrap(SFSDKCryptoUtils.getRSAPrivateKeyRef(withName: rsaKeyPairName, keyLength: 2048))
     }
     
     func testEncryptDecrypt() throws {

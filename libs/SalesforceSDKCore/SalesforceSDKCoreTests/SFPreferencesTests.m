@@ -23,6 +23,7 @@
  */
 
 #import <XCTest/XCTest.h>
+#import <SalesforceSDKCore/SalesforceSDKCore-Swift.h>
 #import "SFPreferences.h"
 #import "SFUserAccount.h"
 #import "SFUserAccountManager+Internal.h"
@@ -51,16 +52,16 @@
 }
 
 - (void)testOrgLevelPreferences {
-    SFOAuthCredentials *credentials = [[SFOAuthCredentials alloc] initWithIdentifier:@"happy-user" clientId:[SFUserAccountManager  sharedInstance].oauthClientId encrypted:YES];
+    SFOAuthCredentials *credentials = [[SFOAuthCredentials alloc] initWithIdentifier:@"happy-user" clientId:[SFUserAccountManager  sharedInstance].oauthClientID encrypted:YES];
     SFUserAccount *user = [[SFUserAccount alloc] initWithCredentials:credentials];
     NSError *error = nil;
-    BOOL success = [[SFUserAccountManager sharedInstance] saveAccountForUser:user error:&error];
+    BOOL success = [SFUserAccountManager.shared saveAccountForUser:user error:&error];
     XCTAssertNil(error, @"Should be able to create user account");
         
     user.credentials.identityUrl = [NSURL URLWithString:@"https://login.salesforce.com/id/00D000000000062EA0/005R0000000Dsl0"];
-    success = [[SFUserAccountManager sharedInstance] saveAccountForUser:user error:&error];
+    success = [SFUserAccountManager.shared saveAccountForUser:user error:&error];
     XCTAssertNil(error, @"Should be able to update user account");
-    [[SFUserAccountManager sharedInstance] setCurrentUserInternal:user];
+    [SFUserAccountManager.shared setCurrentUserInternal:user];
  
     SFPreferences *prefs = [SFPreferences currentOrgLevelPreferences];
     XCTAssertNotNil(prefs, @"Preferences must exist");
@@ -74,18 +75,18 @@
     
     // Check that the other scoped instances don't match
     XCTAssertFalse(prefs == [SFPreferences globalPreferences], @"Preferences instance should be different");
-    [[SFUserAccountManager sharedInstance] deleteAccountForUser:user error:nil];
+    [SFUserAccountManager.shared deleteAccountForUser:user error:nil];
 }
 
 - (void)testUserLevelPreferences {
-    SFOAuthCredentials *credentials = [[SFOAuthCredentials alloc] initWithIdentifier:@"happy-user" clientId:[SFUserAccountManager  sharedInstance].oauthClientId encrypted:YES];
+    SFOAuthCredentials *credentials = [[SFOAuthCredentials alloc] initWithIdentifier:@"happy-user" clientId:[SFUserAccountManager  sharedInstance].oauthClientID encrypted:YES];
     SFUserAccount *user =[[SFUserAccount alloc] initWithCredentials:credentials];
     user.credentials.identityUrl = [NSURL URLWithString:@"https://login.salesforce.com/id/00D000000000062EA0/005R0000000Dsl0"];
  
     NSError *error = nil;
-    [[SFUserAccountManager sharedInstance] saveAccountForUser:user error:&error];
+    [SFUserAccountManager.shared saveAccountForUser:user error:&error];
     XCTAssertNil(error, @"Should be able to create user account");
-    [[SFUserAccountManager sharedInstance] setCurrentUserInternal:user];
+    [SFUserAccountManager.shared setCurrentUserInternal:user];
     
     SFPreferences *prefs = [SFPreferences currentUserLevelPreferences];
     XCTAssertNotNil(prefs, @"Preferences must exist");
@@ -100,17 +101,17 @@
     // Check that the other scoped instances don't match
     XCTAssertFalse(prefs == [SFPreferences currentOrgLevelPreferences], @"Preferences instance should be different");
     XCTAssertFalse(prefs == [SFPreferences globalPreferences], @"Preferences instance should be different");
-    [[SFUserAccountManager sharedInstance] deleteAccountForUser:user error:nil];
+    [SFUserAccountManager.shared deleteAccountForUser:user error:nil];
 }
 
 - (void)testCommunityLevelPreferences {
-    SFOAuthCredentials *credentials = [[SFOAuthCredentials alloc] initWithIdentifier:@"happy-user" clientId:[SFUserAccountManager  sharedInstance].oauthClientId encrypted:YES];
+    SFOAuthCredentials *credentials = [[SFOAuthCredentials alloc] initWithIdentifier:@"happy-user" clientId:[SFUserAccountManager  sharedInstance].oauthClientID encrypted:YES];
     SFUserAccount *user = [[SFUserAccount alloc] initWithCredentials:credentials];
     user.credentials.identityUrl = [NSURL URLWithString:@"https://login.salesforce.com/id/00D000000000062EA0/005R0000000Dsl0"];
     NSError *error = nil;
-    [[SFUserAccountManager sharedInstance] saveAccountForUser:user error:&error];
+    [SFUserAccountManager.shared saveAccountForUser:user error:&error];
     XCTAssertNil(error, @"Should be able to create user account");
-    [[SFUserAccountManager sharedInstance] setCurrentUserInternal:user];
+    [SFUserAccountManager.shared setCurrentUserInternal:user];
     
     SFPreferences *prefs = [SFPreferences currentCommunityLevelPreferences];
     XCTAssertNotNil(prefs, @"Preferences must exist");
@@ -127,7 +128,7 @@
     XCTAssertFalse(prefs == [SFPreferences currentUserLevelPreferences], @"Preferences instance should be different");
     XCTAssertFalse(prefs == [SFPreferences currentOrgLevelPreferences], @"Preferences instance should be different");
     XCTAssertFalse(prefs == [SFPreferences globalPreferences], @"Preferences instance should be different");
-     [[SFUserAccountManager sharedInstance] deleteAccountForUser:user error:nil];
+     [SFUserAccountManager.shared deleteAccountForUser:user error:nil];
 }
 
 @end

@@ -48,7 +48,7 @@ static NSString * const kOrgIdFormatString = @"00D000000000062EA%lu";
 - (void)setUp
 {
     [super setUp];
-    self.uam = [SFUserAccountManager sharedInstance];
+    self.uam = SFUserAccountManager.shared;
     _origAccountPersister = self.uam.accountPersister;
     _origCurrentUser = self.uam.currentUser;
     self.uam.accountPersister = [SFUserAccountPersisterEphemeral new];
@@ -59,7 +59,7 @@ static NSString * const kOrgIdFormatString = @"00D000000000062EA%lu";
 {
     [self deleteUserAndVerify:_user];
     self.uam.accountPersister = _origAccountPersister;
-    [[SFUserAccountManager sharedInstance] setCurrentUserInternal:_origCurrentUser];
+    [SFUserAccountManager.shared setCurrentUserInternal:_origCurrentUser];
     [super tearDown];
 }
 

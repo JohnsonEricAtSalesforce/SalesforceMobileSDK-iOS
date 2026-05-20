@@ -19,7 +19,7 @@ class PushNotificationManagerTests: XCTestCase {
         mockUserAccount = UserAccount()
         UserAccountManager.shared.currentUserAccount = mockUserAccount
         
-        mockRestClient = MockRestClient()
+        mockRestClient = MockRestClient(user: nil)
         mockRestClient.apiVersion = SFRestDefaultAPIVersion
         
         mockApplicationHelper = MockApplicationHelper()
@@ -33,7 +33,7 @@ class PushNotificationManagerTests: XCTestCase {
     override func tearDown() {
         // Restore original method
         if let originalMethod = originalMethod {
-            let originalSelector = #selector(SFPreferences.sharedPreferences(for:user:))
+            let originalSelector = #selector(SFPreferences.sharedPreferences(forScope:user:))
             class_replaceMethod(SFPreferences.self, originalSelector, originalMethod, "@@:@@")
         }
         
@@ -1184,10 +1184,15 @@ class MockApplicationHelper: RemoteNotificationRegistering {
 
 class MockPreferences: SFPreferences {
     var objects: [String: Any] = [:]
+
+    convenience init() {
+        self.init(path: NSTemporaryDirectory() + "MockPreferences.plist")
+    }
+
     override func string(forKey key: String) -> String? {
         return objects[key] as? String
     }
-    
+
     override func setObject(_ object: Any, forKey key: String) {
         objects[key] = object
     }

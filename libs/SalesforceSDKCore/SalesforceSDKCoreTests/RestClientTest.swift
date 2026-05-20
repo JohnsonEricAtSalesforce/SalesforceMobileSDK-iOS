@@ -39,7 +39,7 @@ class RestClientTests: XCTestCase {
     override class func setUp() {
         super.setUp()
         SFSDKLogoutBlocker.block()
-        TestSetupUtils.populateAuthCredentialsFromConfigFile(for: SFSDKAuthUtilTests.self)
+        TestSetupUtils.populateAuthCredentials(fromConfigFileFor: SFSDKAuthUtilTests.self)
         TestSetupUtils.synchronousAuthRefresh()
     }
     
@@ -50,10 +50,10 @@ class RestClientTests: XCTestCase {
     
     func testFetchRecordsNonCombine() {
         let expectation = XCTestExpectation(description: "queryTest")
-        let request = RestClient.shared.request(forQuery: "select name from CONTACT", apiVersion: nil)
+        let request = RestClient.sharedInstance.requestForQuery( "select name from CONTACT", apiVersion: nil)
         
         var erroredResult: RestClientError?
-        RestClient.shared.fetchRecords(ofModelType: TestContact.self, forRequest: request) { result in
+        RestClient.sharedInstance.fetchRecords(ofModelType: TestContact.self, forRequest: request) { result in
             switch (result) {
             case .failure(let error):
                 erroredResult = error
@@ -66,10 +66,10 @@ class RestClientTests: XCTestCase {
     }
     
     func testAsyncFetchRecordsNonCombine() async {
-        let request = RestClient.shared.request(forQuery: "select name from CONTACT", apiVersion: nil)
+        let request = RestClient.sharedInstance.requestForQuery( "select name from CONTACT", apiVersion: nil)
         
         do {
-            let result = try await RestClient.shared.fetchRecords(ofModelType: TestContact.self, forRequest: request)
+            let result = try await RestClient.sharedInstance.fetchRecords(ofModelType: TestContact.self, forRequest: request)
             XCTAssertNotNil(result, "Query call should not have failed")
         } catch {
             XCTFail("Fetch Record should not throw an error")
@@ -77,9 +77,9 @@ class RestClientTests: XCTestCase {
     }
     
     func testQuery() async {
-        let request = RestClient.shared.request(forQuery: "select name from CONTACT", apiVersion: nil)
+        let request = RestClient.sharedInstance.requestForQuery( "select name from CONTACT", apiVersion: nil)
         do {
-            let result = try await RestClient.shared.send(request: request)
+            let result = try await RestClient.sharedInstance.send(request: request)
             XCTAssertNotNil(result, "Query call should not have failed")
         } catch {
             XCTFail("Fetch Record should not throw an error")
@@ -87,14 +87,14 @@ class RestClientTests: XCTestCase {
     }
     
     func testQueryWithDefaultBatchSize() {
-        let request = RestClient.shared.request(forQuery: "select name from CONTACT", apiVersion: nil, batchSize: 2000)
+        let request = RestClient.sharedInstance.requestForQuery( "select name from CONTACT", apiVersion: nil, batchSize: 2000)
         XCTAssertNil(request.customHeaders?["@SForce-Query-Options"]);
     }
     
     func testQueryWithNonDefaultBatchSize() {
-        let request500 = RestClient.shared.request(forQuery: "select name from CONTACT", apiVersion: nil, batchSize: 500)
-        let request199 = RestClient.shared.request(forQuery: "select name from CONTACT", apiVersion: nil, batchSize: 199)
-        let request2001 = RestClient.shared.request(forQuery: "select name from CONTACT", apiVersion: nil, batchSize: 2001)
+        let request500 = RestClient.sharedInstance.requestForQuery( "select name from CONTACT", apiVersion: nil, batchSize: 500)
+        let request199 = RestClient.sharedInstance.requestForQuery( "select name from CONTACT", apiVersion: nil, batchSize: 199)
+        let request2001 = RestClient.sharedInstance.requestForQuery( "select name from CONTACT", apiVersion: nil, batchSize: 2001)
         XCTAssertTrue("batchSize=500" == request500.customHeaders?["Sforce-Query-Options"] as! String);
         XCTAssertTrue("batchSize=200" == request199.customHeaders?["Sforce-Query-Options"] as! String);
         XCTAssertNil(request2001.customHeaders?["@SForce-Query-Options"]);
@@ -103,11 +103,11 @@ class RestClientTests: XCTestCase {
     func testAsyncCompositeRequest() async throws {
         let accountName = self.generateRecordName()
         let contactName = self.generateRecordName()
-        let apiVersion = RestClient.shared.apiVersion
+        let apiVersion = RestClient.sharedInstance.apiVersion
         let requestBuilder = CompositeRequestBuilder()
-            .add(RestClient.shared.requestForCreate(withObjectType: "Account", fields: ["Name": accountName], apiVersion: apiVersion), referenceId: "refAccount")
-            .add(RestClient.shared.requestForCreate(withObjectType: "Contact", fields: ["LastName": contactName,"AccountId": "@{refAccount.id}"], apiVersion: apiVersion), referenceId: "refContact")
-            .add(RestClient.shared.request(forQuery: "select Id, AccountId from Contact where LastName =  '\(contactName)'", apiVersion: apiVersion), referenceId: "refQuery")
+            .addRequest(RestClient.sharedInstance.requestForCreate(withObjectType: "Account", fields: ["Name": accountName], apiVersion: apiVersion), referenceId: "refAccount")
+            .addRequest(RestClient.sharedInstance.requestForCreate(withObjectType: "Contact", fields: ["LastName": contactName,"AccountId": "@{refAccount.id}"], apiVersion: apiVersion), referenceId: "refContact")
+            .addRequest(RestClient.sharedInstance.requestForQuery( "select Id, AccountId from Contact where LastName =  '\(contactName)'", apiVersion: apiVersion), referenceId: "refQuery")
             .setAllOrNone(true)
         
         let compositeRequest = requestBuilder.buildCompositeRequest(apiVersion)
@@ -115,7 +115,7 @@ class RestClientTests: XCTestCase {
         XCTAssertNotNil(compositeRequest.allSubRequests.count == 3, "Composite Requests should have 3 requests")
         
         do {
-            let compositeResponse = try await RestClient.shared.send(compositeRequest: compositeRequest)
+            let compositeResponse = try await RestClient.sharedInstance.send(compositeRequest: compositeRequest)
             XCTAssertNotNil(compositeResponse.subResponses, "Composite Sub Responses should not be nil")
             XCTAssertTrue(3 == compositeResponse.subResponses.count, "Wrong number of results")
             XCTAssertEqual(compositeResponse.subResponses[0].httpStatusCode, 201, "Wrong status for first request")
@@ -151,11 +151,11 @@ class RestClientTests: XCTestCase {
     func testAsyncCompositeRequestFailure() async throws {
         let accountName = self.generateRecordName()
         let contactName = self.generateRecordName()
-        let apiVersion = RestClient.shared.apiVersion
+        let apiVersion = RestClient.sharedInstance.apiVersion
         let requestBuilder = CompositeRequestBuilder()
-            .add(RestClient.shared.requestForCreate(withObjectType: "Account", fields: ["Name": accountName], apiVersion: apiVersion), referenceId: "refAccount")
-            .add(RestClient.shared.requestForCreate(withObjectType: "Contact", fields: ["LastName": contactName,"AccountId": "@{refAccount.id}"], apiVersion: apiVersion), referenceId: "refContact")
-            .add(RestClient.shared.request(forQuery: "select Id, AccountId", apiVersion: apiVersion), referenceId: "refQuery") // bad request!
+            .addRequest(RestClient.sharedInstance.requestForCreate(withObjectType: "Account", fields: ["Name": accountName], apiVersion: apiVersion), referenceId: "refAccount")
+            .addRequest(RestClient.sharedInstance.requestForCreate(withObjectType: "Contact", fields: ["LastName": contactName,"AccountId": "@{refAccount.id}"], apiVersion: apiVersion), referenceId: "refContact")
+            .addRequest(RestClient.sharedInstance.requestForQuery( "select Id, AccountId", apiVersion: apiVersion), referenceId: "refQuery") // bad request!
             .setAllOrNone(true)
         
         let compositeRequest = requestBuilder.buildCompositeRequest(apiVersion)
@@ -163,7 +163,7 @@ class RestClientTests: XCTestCase {
         XCTAssertNotNil(compositeRequest.allSubRequests.count == 3, "Composite Requests should have 3 requests")
         
         do {
-            let compositeResponse = try await RestClient.shared.send(compositeRequest: compositeRequest)
+            let compositeResponse = try await RestClient.sharedInstance.send(compositeRequest: compositeRequest)
             XCTAssertNotNil(compositeResponse.subResponses, "Composite Sub Responses should not be nil")
             XCTAssertTrue(3 == compositeResponse.subResponses.count, "Wrong number of results")
             XCTAssertEqual(compositeResponse.subResponses[0].httpStatusCode, 400, "Wrong status for first request")
@@ -177,11 +177,11 @@ class RestClientTests: XCTestCase {
     func testAsyncCompositeRequestPartialSuccess() async throws {
         let accountName = self.generateRecordName()
         let contactName = self.generateRecordName()
-        let apiVersion = RestClient.shared.apiVersion
+        let apiVersion = RestClient.sharedInstance.apiVersion
         let requestBuilder = CompositeRequestBuilder()
-            .add(RestClient.shared.requestForCreate(withObjectType: "Account", fields: ["Name": accountName], apiVersion: apiVersion), referenceId: "refAccount")
-            .add(RestClient.shared.requestForCreate(withObjectType: "Contact", fields: ["LastName": contactName,"AccountId": "@{refAccount.id}"], apiVersion: apiVersion), referenceId: "refContact")
-            .add(RestClient.shared.request(forQuery: "select Id, AccountId", apiVersion: apiVersion), referenceId: "refQuery") // bad request!
+            .addRequest(RestClient.sharedInstance.requestForCreate(withObjectType: "Account", fields: ["Name": accountName], apiVersion: apiVersion), referenceId: "refAccount")
+            .addRequest(RestClient.sharedInstance.requestForCreate(withObjectType: "Contact", fields: ["LastName": contactName,"AccountId": "@{refAccount.id}"], apiVersion: apiVersion), referenceId: "refContact")
+            .addRequest(RestClient.sharedInstance.requestForQuery( "select Id, AccountId", apiVersion: apiVersion), referenceId: "refQuery") // bad request!
             .setAllOrNone(false)
         
         let compositeRequest = requestBuilder.buildCompositeRequest(apiVersion)
@@ -189,7 +189,7 @@ class RestClientTests: XCTestCase {
         XCTAssertNotNil(compositeRequest.allSubRequests.count == 3, "Composite Requests should have 3 requests")
         
         do {
-            let compositeResponse = try await RestClient.shared.send(compositeRequest: compositeRequest)
+            let compositeResponse = try await RestClient.sharedInstance.send(compositeRequest: compositeRequest)
             XCTAssertNotNil(compositeResponse.subResponses, "Composite Sub Responses should not be nil")
             XCTAssertTrue(3 == compositeResponse.subResponses.count, "Wrong number of results")
             XCTAssertEqual(compositeResponse.subResponses[0].httpStatusCode, 201, "Wrong status for first request")
@@ -204,13 +204,13 @@ class RestClientTests: XCTestCase {
         // Create account
         let accountName = self.generateRecordName()
         let contactName = self.generateRecordName()
-        let apiVersion = RestClient.shared.apiVersion
+        let apiVersion = RestClient.sharedInstance.apiVersion
         
         let requestBuilder = BatchRequestBuilder()
-            .add(RestClient.shared.requestForCreate(withObjectType: "Account", fields: ["Name": accountName], apiVersion: apiVersion))
-            .add(RestClient.shared.requestForCreate(withObjectType: "Contact", fields: ["LastName": contactName], apiVersion: apiVersion))
-            .add(RestClient.shared.request(forQuery: "select Id from Account where Name = '\(accountName)'", apiVersion: apiVersion))
-            .add(RestClient.shared.request(forQuery: "select Id from Contact where Name = '\(contactName)'", apiVersion: apiVersion))
+            .addRequest(RestClient.sharedInstance.requestForCreate(withObjectType: "Account", fields: ["Name": accountName], apiVersion: apiVersion))
+            .addRequest(RestClient.sharedInstance.requestForCreate(withObjectType: "Contact", fields: ["LastName": contactName], apiVersion: apiVersion))
+            .addRequest(RestClient.sharedInstance.requestForQuery( "select Id from Account where Name = '\(accountName)'", apiVersion: apiVersion))
+            .addRequest(RestClient.sharedInstance.requestForQuery( "select Id from Contact where Name = '\(contactName)'", apiVersion: apiVersion))
             .setHaltOnError(true)
         
         let batchRequest = requestBuilder.buildBatchRequest(apiVersion)
@@ -219,7 +219,7 @@ class RestClientTests: XCTestCase {
         
         
         do {
-            let batchResponse = try await RestClient.shared.send(batchRequest: batchRequest)
+            let batchResponse = try await RestClient.sharedInstance.send(batchRequest: batchRequest)
             XCTAssertFalse(batchResponse.hasErrors, "BatchResponse results should not have any errors")
             XCTAssertNotNil(batchResponse.results, "BatchResponse results should not be nil")
             XCTAssertTrue(4 == batchResponse.results.count, "Wrong number of results")
@@ -268,20 +268,20 @@ class RestClientTests: XCTestCase {
             // Create account
             let accountName = self.generateRecordName()
             let contactName = self.generateRecordName()
-            let apiVersion = RestClient.shared.apiVersion
+            let apiVersion = RestClient.sharedInstance.apiVersion
             
             let requestBuilder = BatchRequestBuilder()
-                .add(RestClient.shared.requestForCreate(withObjectType: "Account", fields: ["Name": accountName], apiVersion: apiVersion))
-                .add(RestClient.shared.requestForCreate(withObjectType: "Contact", fields: ["LastName": contactName], apiVersion: apiVersion))
-                .add(RestClient.shared.request(forQuery: "select Id from Account where Name ", apiVersion:  apiVersion)) // bad query
-                .add(RestClient.shared.request(forQuery: "select Id from Contact where Name = '\(contactName)'", apiVersion: apiVersion))
+                .addRequest(RestClient.sharedInstance.requestForCreate(withObjectType: "Account", fields: ["Name": accountName], apiVersion: apiVersion))
+                .addRequest(RestClient.sharedInstance.requestForCreate(withObjectType: "Contact", fields: ["LastName": contactName], apiVersion: apiVersion))
+                .addRequest(RestClient.sharedInstance.requestForQuery( "select Id from Account where Name ", apiVersion:  apiVersion)) // bad query
+                .addRequest(RestClient.sharedInstance.requestForQuery( "select Id from Contact where Name = '\(contactName)'", apiVersion: apiVersion))
                 .setHaltOnError(true)
             
             let batchRequest = requestBuilder.buildBatchRequest(apiVersion)
             XCTAssertNotNil(batchRequest, "Batch Request should not be nil")
             XCTAssertTrue(batchRequest.batchRequests.count == 4, "Batch Requests should have 4 requests")
             
-            let batchResponse = try await RestClient.shared.send(batchRequest: batchRequest)
+            let batchResponse = try await RestClient.sharedInstance.send(batchRequest: batchRequest)
             XCTAssertTrue(batchResponse.hasErrors, "BatchResponse results should not have any errors")
             XCTAssertNotNil(batchResponse.results, "BatchResponse results should not be nil")
             XCTAssertTrue(4 == batchResponse.results.count, "Wrong number of results")
@@ -310,11 +310,11 @@ class RestClientTests: XCTestCase {
         let expectation = XCTestExpectation(description: "compositeTest")
         let accountName = self.generateRecordName()
         let contactName = self.generateRecordName()
-        let apiVersion = RestClient.shared.apiVersion
+        let apiVersion = RestClient.sharedInstance.apiVersion
         let requestBuilder = CompositeRequestBuilder()
-            .add(RestClient.shared.requestForCreate(withObjectType: "Account", fields: ["Name": accountName], apiVersion: apiVersion), referenceId: "refAccount")
-            .add(RestClient.shared.requestForCreate(withObjectType: "Contact", fields: ["LastName": contactName,"AccountId": "@{refAccount.id}"], apiVersion: apiVersion), referenceId: "refContact")
-            .add(RestClient.shared.request(forQuery: "select Id, AccountId from Contact where LastName =  '\(contactName)'", apiVersion: apiVersion), referenceId: "refQuery")
+            .addRequest(RestClient.sharedInstance.requestForCreate(withObjectType: "Account", fields: ["Name": accountName], apiVersion: apiVersion), referenceId: "refAccount")
+            .addRequest(RestClient.sharedInstance.requestForCreate(withObjectType: "Contact", fields: ["LastName": contactName,"AccountId": "@{refAccount.id}"], apiVersion: apiVersion), referenceId: "refContact")
+            .addRequest(RestClient.sharedInstance.requestForQuery( "select Id, AccountId from Contact where LastName =  '\(contactName)'", apiVersion: apiVersion), referenceId: "refQuery")
             .setAllOrNone(true)
         
         let compositeRequest = requestBuilder.buildCompositeRequest(apiVersion)
@@ -324,7 +324,7 @@ class RestClientTests: XCTestCase {
         var response: CompositeResponse?
         var restClientError: Error?
         
-        RestClient.shared.send(compositeRequest: compositeRequest) { result in
+        RestClient.sharedInstance.send(compositeRequest: compositeRequest) { result in
             defer { expectation.fulfill() }
             switch (result) {
             case .success(let resp):
@@ -369,11 +369,11 @@ class RestClientTests: XCTestCase {
         let expectation = XCTestExpectation(description: "compositeTest")
         let accountName = self.generateRecordName()
         let contactName = self.generateRecordName()
-        let apiVersion = RestClient.shared.apiVersion
+        let apiVersion = RestClient.sharedInstance.apiVersion
         let requestBuilder = CompositeRequestBuilder()
-            .add(RestClient.shared.requestForCreate(withObjectType: "Account", fields: ["Name": accountName], apiVersion: apiVersion), referenceId: "refAccount")
-            .add(RestClient.shared.requestForCreate(withObjectType: "Contact", fields: ["LastName": contactName,"AccountId": "@{refAccount.id}"], apiVersion: apiVersion), referenceId: "refContact")
-            .add(RestClient.shared.request(forQuery: "select Id, AccountId", apiVersion: apiVersion), referenceId: "refQuery") // bad request!
+            .addRequest(RestClient.sharedInstance.requestForCreate(withObjectType: "Account", fields: ["Name": accountName], apiVersion: apiVersion), referenceId: "refAccount")
+            .addRequest(RestClient.sharedInstance.requestForCreate(withObjectType: "Contact", fields: ["LastName": contactName,"AccountId": "@{refAccount.id}"], apiVersion: apiVersion), referenceId: "refContact")
+            .addRequest(RestClient.sharedInstance.requestForQuery( "select Id, AccountId", apiVersion: apiVersion), referenceId: "refQuery") // bad request!
             .setAllOrNone(true)
         
         let compositeRequest = requestBuilder.buildCompositeRequest(apiVersion)
@@ -383,7 +383,7 @@ class RestClientTests: XCTestCase {
         var response: CompositeResponse?
         var restClientError: Error?
         
-        RestClient.shared.send(compositeRequest: compositeRequest) { result in
+        RestClient.sharedInstance.send(compositeRequest: compositeRequest) { result in
             defer { expectation.fulfill() }
             switch (result) {
             case .success(let resp):
@@ -406,11 +406,11 @@ class RestClientTests: XCTestCase {
         let expectation = XCTestExpectation(description: "compositeRequestTest")
         let accountName = self.generateRecordName()
         let contactName = self.generateRecordName()
-        let apiVersion = RestClient.shared.apiVersion
+        let apiVersion = RestClient.sharedInstance.apiVersion
         let requestBuilder = CompositeRequestBuilder()
-            .add(RestClient.shared.requestForCreate(withObjectType: "Account", fields: ["Name": accountName], apiVersion: apiVersion), referenceId: "refAccount")
-            .add(RestClient.shared.requestForCreate(withObjectType: "Contact", fields: ["LastName": contactName,"AccountId": "@{refAccount.id}"], apiVersion: apiVersion), referenceId: "refContact")
-            .add(RestClient.shared.request(forQuery: "select Id, AccountId", apiVersion: apiVersion), referenceId: "refQuery") // bad request!
+            .addRequest(RestClient.sharedInstance.requestForCreate(withObjectType: "Account", fields: ["Name": accountName], apiVersion: apiVersion), referenceId: "refAccount")
+            .addRequest(RestClient.sharedInstance.requestForCreate(withObjectType: "Contact", fields: ["LastName": contactName,"AccountId": "@{refAccount.id}"], apiVersion: apiVersion), referenceId: "refContact")
+            .addRequest(RestClient.sharedInstance.requestForQuery( "select Id, AccountId", apiVersion: apiVersion), referenceId: "refQuery") // bad request!
             .setAllOrNone(false)
         
         let compositeRequest = requestBuilder.buildCompositeRequest(apiVersion)
@@ -420,7 +420,7 @@ class RestClientTests: XCTestCase {
         var response: CompositeResponse?
         var restClientError: Error?
         
-        RestClient.shared.send(compositeRequest: compositeRequest) { result in
+        RestClient.sharedInstance.send(compositeRequest: compositeRequest) { result in
             defer { expectation.fulfill() }
             switch (result) {
             case .success(let resp):
@@ -445,13 +445,13 @@ class RestClientTests: XCTestCase {
         // Create account
         let accountName = self.generateRecordName()
         let contactName = self.generateRecordName()
-        let apiVersion = RestClient.shared.apiVersion
+        let apiVersion = RestClient.sharedInstance.apiVersion
         
         let requestBuilder = BatchRequestBuilder()
-            .add(RestClient.shared.requestForCreate(withObjectType: "Account", fields: ["Name": accountName], apiVersion: apiVersion))
-            .add(RestClient.shared.requestForCreate(withObjectType: "Contact", fields: ["LastName": contactName], apiVersion: apiVersion))
-            .add(RestClient.shared.request(forQuery: "select Id from Account where Name = '\(accountName)'", apiVersion: apiVersion))
-            .add(RestClient.shared.request(forQuery: "select Id from Contact where Name = '\(contactName)'", apiVersion: apiVersion))
+            .addRequest(RestClient.sharedInstance.requestForCreate(withObjectType: "Account", fields: ["Name": accountName], apiVersion: apiVersion))
+            .addRequest(RestClient.sharedInstance.requestForCreate(withObjectType: "Contact", fields: ["LastName": contactName], apiVersion: apiVersion))
+            .addRequest(RestClient.sharedInstance.requestForQuery( "select Id from Account where Name = '\(accountName)'", apiVersion: apiVersion))
+            .addRequest(RestClient.sharedInstance.requestForQuery( "select Id from Contact where Name = '\(contactName)'", apiVersion: apiVersion))
             .setHaltOnError(true)
         
         let batchRequest = requestBuilder.buildBatchRequest(apiVersion)
@@ -461,7 +461,7 @@ class RestClientTests: XCTestCase {
         var response: BatchResponse?
         var restClientError: Error?
         
-        RestClient.shared.send(batchRequest: batchRequest) { result in
+        RestClient.sharedInstance.send(batchRequest: batchRequest) { result in
             defer { expectation.fulfill() }
             switch (result) {
             case .success(let resp):
@@ -520,13 +520,13 @@ class RestClientTests: XCTestCase {
         // Create account
         let accountName = self.generateRecordName()
         let contactName = self.generateRecordName()
-        let apiVersion = RestClient.shared.apiVersion
+        let apiVersion = RestClient.sharedInstance.apiVersion
         
         let requestBuilder = BatchRequestBuilder()
-            .add(RestClient.shared.requestForCreate(withObjectType: "Account", fields: ["Name": accountName], apiVersion: apiVersion))
-            .add(RestClient.shared.requestForCreate(withObjectType: "Contact", fields: ["LastName": contactName], apiVersion: apiVersion))
-            .add(RestClient.shared.request(forQuery: "select Id from Account where Name ", apiVersion:  apiVersion)) // bad query
-            .add(RestClient.shared.request(forQuery: "select Id from Contact where Name = '\(contactName)'", apiVersion: apiVersion))
+            .addRequest(RestClient.sharedInstance.requestForCreate(withObjectType: "Account", fields: ["Name": accountName], apiVersion: apiVersion))
+            .addRequest(RestClient.sharedInstance.requestForCreate(withObjectType: "Contact", fields: ["LastName": contactName], apiVersion: apiVersion))
+            .addRequest(RestClient.sharedInstance.requestForQuery( "select Id from Account where Name ", apiVersion:  apiVersion)) // bad query
+            .addRequest(RestClient.sharedInstance.requestForQuery( "select Id from Contact where Name = '\(contactName)'", apiVersion: apiVersion))
             .setHaltOnError(true)
         
         let batchRequest = requestBuilder.buildBatchRequest(apiVersion)
@@ -536,7 +536,7 @@ class RestClientTests: XCTestCase {
         var response: BatchResponse?
         var restClientError: Error?
         
-        RestClient.shared.send(batchRequest: batchRequest) { result in
+        RestClient.sharedInstance.send(batchRequest: batchRequest) { result in
             defer { expectation.fulfill() }
             switch (result) {
             case .success(let resp):
@@ -576,13 +576,13 @@ class RestClientTests: XCTestCase {
         // Create account
         let accountName = self.generateRecordName()
         let contactName = self.generateRecordName()
-        let apiVersion = RestClient.shared.apiVersion
+        let apiVersion = RestClient.sharedInstance.apiVersion
         
         let requestBuilder = BatchRequestBuilder()
-            .add(RestClient.shared.requestForCreate(withObjectType: "Account", fields: ["Name": accountName], apiVersion: apiVersion))
-            .add(RestClient.shared.requestForCreate(withObjectType: "Contact", fields: ["LastName": contactName], apiVersion: apiVersion))
-            .add(RestClient.shared.request(forQuery: "select Id from Account where Name ", apiVersion:  apiVersion)) // bad query
-            .add(RestClient.shared.request(forQuery: "select Id from Contact where Name = '\(contactName)'", apiVersion: apiVersion))
+            .addRequest(RestClient.sharedInstance.requestForCreate(withObjectType: "Account", fields: ["Name": accountName], apiVersion: apiVersion))
+            .addRequest(RestClient.sharedInstance.requestForCreate(withObjectType: "Contact", fields: ["LastName": contactName], apiVersion: apiVersion))
+            .addRequest(RestClient.sharedInstance.requestForQuery( "select Id from Account where Name ", apiVersion:  apiVersion)) // bad query
+            .addRequest(RestClient.sharedInstance.requestForQuery( "select Id from Contact where Name = '\(contactName)'", apiVersion: apiVersion))
             .setHaltOnError(false)
         
         let batchRequest = requestBuilder.buildBatchRequest(apiVersion)
@@ -592,7 +592,7 @@ class RestClientTests: XCTestCase {
         var response: BatchResponse?
         var restClientError: Error?
         
-        RestClient.shared.send(batchRequest: batchRequest) { result in
+        RestClient.sharedInstance.send(batchRequest: batchRequest) { result in
             defer { expectation.fulfill() }
             switch (result) {
             case .success(let resp):
@@ -626,13 +626,13 @@ class RestClientTests: XCTestCase {
     }
     
     func testDecodableResponse() async throws {
-        let apiVersion = RestClient.shared.apiVersion
+        let apiVersion = RestClient.sharedInstance.apiVersion
         
         let query = "select Id from Account limit 5"
-        let request = RestClient.shared.request(forQuery: query, apiVersion: apiVersion)
+        let request = RestClient.sharedInstance.requestForQuery( query, apiVersion: apiVersion)
         
         do {
-            let response = try await RestClient.shared.send(request: request)
+            let response = try await RestClient.sharedInstance.send(request: request)
             XCTAssertNotNil(response, "RestResponse should not be nil")
             
             struct Response: Decodable {
@@ -662,11 +662,11 @@ class RestClientTests: XCTestCase {
         let builder = CompositeRequestBuilder()
         let dummyRequest = RestRequest(method: .GET, path: "/dummy", queryParams: nil)
         let composite = builder
-            .add(dummyRequest, referenceId: "ref1")
+            .addRequest(dummyRequest, referenceId: "ref1")
             .buildCompositeRequest("v56.0")
 
         // Inject mock client with bad response
-        let mockClient = MockRestClient()
+        let mockClient = MockRestClient(user: nil)
         mockClient.jsonResponse = """
             [ { "shouldBe": "a dictionary" } ]
         """.data(using: .utf8)! // Invalid top-level type
@@ -695,7 +695,7 @@ class RestClientTests: XCTestCase {
         let request = URLRequest(url: URL(string: "https://test.salesforce.com")!)
         
         // When
-        let (data, response) = try await RestClient.shared.send(urlRequest: request)
+        let (data, response) = try await RestClient.sharedInstance.send(urlRequest: request)
         
         // Then
         XCTAssertNotNil(data, "Response data should not be nil")
@@ -708,7 +708,7 @@ class RestClientTests: XCTestCase {
         
         // When/Then
         do {
-            _ = try await RestClient.shared.send(urlRequest: request)
+            _ = try await RestClient.sharedInstance.send(urlRequest: request)
             XCTFail("Expected error to be thrown")
         } catch {
             // Verify it's a RestClientError
@@ -722,7 +722,7 @@ class RestClientTests: XCTestCase {
         
         // When/Then
         do {
-            _ = try await RestClient.shared.send(urlRequest: request)
+            _ = try await RestClient.sharedInstance.send(urlRequest: request)
             XCTFail("Expected error to be thrown")
         } catch let error as RestClientError {
             switch error {
@@ -743,11 +743,11 @@ class RestClientTests: XCTestCase {
         let builder = BatchRequestBuilder()
         let dummyRequest = RestRequest(method: .GET, path: "/dummy", queryParams: nil)
         let batch = builder
-            .add(dummyRequest)
+            .addRequest(dummyRequest)
             .buildBatchRequest("v56.0")
 
         // Inject mock client with bad response
-        let mockClient = MockRestClient()
+        let mockClient = MockRestClient(user: nil)
         mockClient.jsonResponse = """
             [ { "shouldBe": "a dictionary" } ]
         """.data(using: .utf8)! // Invalid top-level type
@@ -773,32 +773,32 @@ class RestClientTests: XCTestCase {
     
     func testRefreshWithSuccesfulRequests() async throws {
         // Revoke access token
-        let request = try XCTUnwrap(RestClient.shared.requestForRevokeAccessToken())
-        _ = try await RestClient.shared.send(request: request)
+        let request = try XCTUnwrap(RestClient.sharedInstance.requestForRevokeAccessToken())
+        _ = try await RestClient.sharedInstance.send(request: request)
         
         // Send multiple requests for replay and verify completion block is only called once per request
-        let resourcesRequest = RestClient.shared.request(forResources: nil)
+        let resourcesRequest = RestClient.sharedInstance.requestForResources(nil)
         let resourcesExpectation = XCTestExpectation(description: "Resources request")
         resourcesExpectation.assertForOverFulfill = true
-        RestClient.shared.send(resourcesRequest) { _, error, _  in
+        RestClient.sharedInstance.send(resourcesRequest) { _, error, _  in
             XCTFail("Request unexpectedly failed with error: \(error.debugDescription)")
         } successBlock: { _,_ in
             resourcesExpectation.fulfill()
         }
         
-        let describeRequest = RestClient.shared.request(forDescribeGlobal: nil)
+        let describeRequest = RestClient.sharedInstance.requestForDescribeGlobal(nil)
         let describeExpectation = XCTestExpectation(description: "Describe request")
         describeExpectation.assertForOverFulfill = true
-        RestClient.shared.send(describeRequest) { _, error, _  in
+        RestClient.sharedInstance.send(describeRequest) { _, error, _  in
             XCTFail("Request unexpectedly failed with error: \(error.debugDescription)")
         } successBlock: { _,_ in
             describeExpectation.fulfill()
         }
         
-        let contactRequest = RestClient.shared.requestForDescribe(withObjectType: "Contact", apiVersion: nil)
+        let contactRequest = RestClient.sharedInstance.requestForDescribe(withObjectType: "Contact", apiVersion: nil)
         let contactExpectation = XCTestExpectation(description: "Contact request")
         contactExpectation.assertForOverFulfill = true
-        RestClient.shared.send(contactRequest) { _, error, _ in
+        RestClient.sharedInstance.send(contactRequest) { _, error, _ in
             XCTFail("Request unexpectedly failed with error: \(error.debugDescription)")
         } successBlock: { _,_ in
            contactExpectation.fulfill()
@@ -820,17 +820,19 @@ final class RestClientWebSocketTests: XCTestCase {
         // Given
         let request = RestRequest(method: .GET,
                                   serviceHostType: .login,
+                                  baseURL: nil,
                                   path: "/a",
                                   queryParams: nil)
         
         
-        guard let urlRequest = request.prepare(forSend: RestClient.shared.userAccount) else {
+        guard let user = RestClient.sharedInstance.user,
+              let urlRequest = request.prepareRequestForSend(user) else {
             XCTFail("Failed to prepare URLRequest from RestRequest")
             return
         }
 
         // When
-        let socket = try await RestClient.shared.newWebSocket(from: urlRequest)
+        let socket = try await RestClient.sharedInstance.newWebSocket(from: urlRequest)
 
         // Then
         XCTAssertNotNil(socket, "WebSocket should not be nil")

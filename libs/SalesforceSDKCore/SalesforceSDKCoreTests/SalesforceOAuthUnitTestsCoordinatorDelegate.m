@@ -24,6 +24,8 @@
 
 #import "SFOAuthCoordinator.h"
 #import "SalesforceOAuthUnitTestsCoordinatorDelegate.h"
+@import WebKit;
+@import AuthenticationServices;
 
 @implementation SalesforceOAuthUnitTestsCoordinatorDelegate
 
