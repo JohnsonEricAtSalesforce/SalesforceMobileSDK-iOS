@@ -1,0 +1,114 @@
+/*
+ SFManagedPreferencesTest.swift
+ SalesforceSDKCoreTests
+
+ Created by Raj Rao on 2/28/19.
+ Copyright (c) 2019-present, salesforce.com, inc. All rights reserved.
+
+ Redistribution and use of this software in source and binary forms, with or without modification,
+ are permitted provided that the following conditions are met:
+ * Redistributions of source code must retain the above copyright notice, this list of conditions
+ and the following disclaimer.
+ * Redistributions in binary form must reproduce the above copyright notice, this list of
+ conditions and the following disclaimer in the documentation and/or other materials provided
+ with the distribution.
+ * Neither the name of salesforce.com, inc. nor the names of its contributors may be used to
+ endorse or promote products derived from this software without specific prior written
+ permission of salesforce.com, inc.
+
+ THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR
+ IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND
+ FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR
+ CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+ DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+ DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY,
+ WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY
+ WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ */
+
+import XCTest
+import SalesforceSDKCommon
+@testable import SalesforceSDKCore
+
+class SFManagedPreferencesTest: XCTestCase {
+
+    private var managedProps: [String: Any]?
+    private var prevCurrentUser: UserAccount?
+
+    override func setUp() {
+        super.setUp()
+        // Add Managed Properties
+        prevCurrentUser = UserAccountManager.shared.currentUserAccount
+        UserAccountManager.shared.setCurrentUserInternal(UserAccount())
+        managedProps = [
+            "RequireCertAuth": true,
+            "OnlyShowAuthorizedHosts": true,
+            "ClearClipboardOnBackground": true,
+            "ManagedAppCallbackURL": "managed:url",
+            "ManagedAppOAuthID": "managedappid",
+            "IDPAppURLScheme": "idp:app:url"
+        ]
+        UserDefaults.msdkUserDefaults.set(managedProps, forKey: "com.apple.configuration.managed")
+    }
+
+    override func tearDown() {
+        // Remove the Managed Properties
+        managedProps = nil
+        UserAccountManager.shared.setCurrentUserInternal(prevCurrentUser)
+        UserDefaults.msdkUserDefaults.removeObject(forKey: "com.apple.configuration.managed")
+        super.tearDown()
+    }
+
+    func testManagedPreference() {
+        XCTAssertNotNil(managedProps, "Dictionary for managed properties should not be nil")
+
+        XCTAssertTrue(SFManagedPreferences.sharedPreferences.requireCertificateAuthentication, "SFManagedPreferences should have been set")
+        XCTAssertTrue(UserAccountManager.shared.usesAdvancedAuthentication, "SFUserAccountManager should have been setup to use SFManagedPreferences settings for Browser")
+
+        XCTAssertNotNil(SFManagedPreferences.sharedPreferences.connectedAppCallbackUri, "SFManagedPreferences connectedAppCallbackUri should have been set")
+
+        XCTAssertEqual(SFManagedPreferences.sharedPreferences.connectedAppCallbackUri, UserAccountManager.shared.oauthCompletionURL, "SFUserAccountManager should have been setup to use SFManagedPreferences connectedAppCallbackUri")
+
+        XCTAssertNotNil(SFManagedPreferences.sharedPreferences.connectedAppId, "SFManagedPreferences connectedAppId should have been set")
+
+        XCTAssertEqual(SFManagedPreferences.sharedPreferences.connectedAppId, UserAccountManager.shared.oauthClientID, "SFUserAccountManager should have been setup to use SFManagedPreferences connectedAppId")
+
+        XCTAssertNotNil(SFManagedPreferences.sharedPreferences.idpAppURLScheme, "SFManagedPreferences idpAppURLScheme should have been set")
+
+        XCTAssertEqual(SFManagedPreferences.sharedPreferences.idpAppURLScheme, UserAccountManager.shared.idpAppURIScheme, "SFUserAccountManager should have been setup to use SFManagedPreferences connectedAppId")
+    }
+
+    func testManagedPreferenceLoginHost() {
+        // Empty array
+        let emptyArray: [String] = []
+        var preferences: [String: Any] = [
+            "AppServiceHosts": emptyArray,
+            "AppServiceHostLabels": emptyArray
+        ]
+        UserDefaults.msdkUserDefaults.set(preferences, forKey: "com.apple.configuration.managed")
+        XCTAssertNil(SFManagedPreferences.sharedPreferences.loginHosts)
+        XCTAssertNil(SFManagedPreferences.sharedPreferences.loginHostLabels)
+
+        // Populated array
+        let hostArray = ["host1", "host2"]
+        let labelArray = ["label1", "label2"]
+        preferences = [
+            "AppServiceHosts": hostArray,
+            "AppServiceHostLabels": labelArray
+        ]
+        UserDefaults.msdkUserDefaults.set(preferences, forKey: "com.apple.configuration.managed")
+        XCTAssertEqual(SFManagedPreferences.sharedPreferences.loginHosts as? [String], hostArray)
+        XCTAssertEqual(SFManagedPreferences.sharedPreferences.loginHostLabels as? [String], labelArray)
+
+        // String
+        let hostString = "host1"
+        let labelString = "label1"
+        preferences = [
+            "AppServiceHosts": hostString,
+            "AppServiceHostLabels": labelString
+        ]
+        UserDefaults.msdkUserDefaults.set(preferences, forKey: "com.apple.configuration.managed")
+        XCTAssertEqual(SFManagedPreferences.sharedPreferences.loginHosts as? [String], [hostString])
+        XCTAssertEqual(SFManagedPreferences.sharedPreferences.loginHostLabels as? [String], [labelString])
+    }
+}
