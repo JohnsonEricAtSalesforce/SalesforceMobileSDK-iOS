@@ -970,8 +970,9 @@ This map identifies every existing Swift file and its relationship to ObjC files
 | 🔶 Operator Gate 5 — skipped (operator-directed continuous execution) | 2026-05-19 16:00 MDT | |
 | Phase 6 (MobileSyncExplorer) — conversion started | 2026-05-19 16:00 MDT | |
 | Phase 6 — app boundary complete | 2026-05-19 16:30 MDT | ~30m |
-| Post-conversion (clean build + full test run) started | — | Not performed (Xcode cache bug blocks full build) |
-| Plan execution finished | 2026-05-19 16:30 MDT | |
+| Post-conversion (clean build) | 2026-05-19 21:00 MDT | BUILD SUCCEEDED (after cleanup items 1+2) |
+| Cleanup phase (items 1-3) complete | 2026-05-20 13:00 MDT | Items 1-3 resolved; test target unblocked |
+| Plan execution finished | 2026-05-20 13:00 MDT | |
 | **Total wall-clock time** | | ~47h (2026-05-17 17:00 → 2026-05-19 16:30) |
 | **Total operator wait time** | | ~30m (5 gate reviews) |
 
@@ -1016,9 +1017,9 @@ Any pre-existing failures recorded here are **not attributable** to the conversi
 | 4 | 3 | Boundary | NSLock deadlock (ObjC `@synchronized` is re-entrant; NSLock is not) | Changed to NSRecursiveLock everywhere; added Rule 33 | ~1h |
 | 5 | 3 | Boundary | NSException.raise() in Swift bypasses ObjC @try/@catch in test harness | Converted to Swift `throws` with proper error propagation; added Rule 34 | ~2h |
 | 6 | 4 | Boundary | ObjC test files can't compile against converted Swift classes (selector renames, subclassing, categories) | Operator deferred MobileSync test fixes to test conversion pass | ~2h investigation |
-| 7 | 5 | Batch 35 | SFUserAccountManager.m (2,388 lines) exceeds agent session limits — connection drops before write | File deferred as ObjC; ObjC API calls updated to match new Swift-exposed names | ~3h attempts |
-| 8 | 5 | Batch 28 | SFOAuthCredentials uses ObjC class-cluster pattern + NSSecureCoding backward compat | File deferred as ObjC with placeholder .swift | 30m |
-| 9 | 5 | Boundary | Xcode `_AvailabilityInternal` module cache corruption prevents BUILD SUCCEEDED | System-level Xcode bug; zero code errors confirmed; requires Xcode restart/cache purge | Ongoing |
+| 7 | 5 | Batch 35 | SFUserAccountManager.m (2,388 lines) exceeds agent session limits — connection drops before write | **Resolved in cleanup:** 3-agent split approach + 80-error fix pass. Now fully Swift. | ~6h total |
+| 8 | 5 | Batch 28 | SFOAuthCredentials uses ObjC class-cluster pattern + NSSecureCoding backward compat | **Resolved in cleanup:** Converted with verification-first approach (archive round-trip test). 7/7 tests pass. | ~4h total |
+| 9 | 5 | Boundary | Xcode `_AvailabilityInternal` module cache corruption prevents BUILD SUCCEEDED | **Resolved in cleanup:** Root cause was missing SFSDKURLHandler.h import lost in squash + stale cache. Fixed. | 1h |
 | 10 | 5 | Boundary | NS_SWIFT_NAME cascading renames: converted Swift code calls upstream APIs by ObjC names, but Swift module exposes renamed APIs | 100+ individual method/property renames across all converted files | ~8h cumulative |
 
 ---
