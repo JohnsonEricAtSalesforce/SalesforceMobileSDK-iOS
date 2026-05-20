@@ -87,28 +87,32 @@ class SFUserAccountManagerTests: XCTestCase {
 
     override func setUp() {
         super.setUp()
-        let globalLibraryDirectory = SFDirectoryManager.sharedManager.globalDirectory(ofType: .libraryDirectory, components: nil)
-        try? FileManager.default.removeItem(atPath: globalLibraryDirectory)
+        if let globalLibraryDirectory = SFDirectoryManager.sharedManager.globalDirectory(ofType: .libraryDirectory, components: nil) {
+            try? FileManager.default.removeItem(atPath: globalLibraryDirectory)
+        }
 
         origLoginHost = uam.loginHost
         origAccount = UserAccountManager.shared.currentUserAccount
 
-        let userAccounts = UserAccountManager.shared.allUserAccounts() ?? []
+        let userAccounts = UserAccountManager.shared.userAccounts() ?? []
         for account in userAccounts {
             if account != origAccount {
-                try? uam.delete(forUser: account)
+                _ = uam.delete(account)
             }
         }
         uam.clearAllAccountState()
         UserAccountManager.shared.setCurrentUserInternal(nil)
-        uam.useBrowserAuth = false
         authViewHandler = UserAccountManager.shared.authViewHandler
         config = uam.loginViewControllerConfig
     }
 
     override func tearDown() {
-        UserAccountManager.shared.authViewHandler = authViewHandler
-        uam.loginViewControllerConfig = config
+        if let handler = authViewHandler {
+            UserAccountManager.shared.authViewHandler = handler
+        }
+        if let cfg = config {
+            uam.loginViewControllerConfig = cfg
+        }
         uam.loginHost = origLoginHost ?? ""
         UserAccountManager.shared.currentUserAccount = origAccount
         UserAccountManager.shared.setCurrentUserInternal(origAccount)
@@ -166,7 +170,10 @@ class SFUserAccountManagerTests: XCTestCase {
         XCTAssertEqual(user.accountIdentity.orgId, "NewOrgId")
 
         let newCredentialsIdentifier = "\(user.credentials.identifier)_1"
-        let newCreds = OAuthCredentials(identifier: newCredentialsIdentifier, clientId: user.credentials.clientId, encrypted: true)
+        guard let newCreds = OAuthCredentials(identifier: newCredentialsIdentifier, clientId: user.credentials.clientId, encrypted: true) else {
+            XCTFail("Failed to create new credentials")
+            return
+        }
         newCreds.userId = "NewCredsUserId"
         newCreds.organizationId = "NewCredsOrgId"
         user.credentials = newCreds
@@ -175,29 +182,33 @@ class SFUserAccountManagerTests: XCTestCase {
     }
 
     func testSingleAccount() {
-        XCTAssertEqual(uam.allUserIdentities().count, 0, "There should be no accounts")
+        XCTAssertEqual(uam.userIdentities()?.count ?? 0, 0, "There should be no accounts")
 
         let accounts = createAndVerifyUserAccounts(1)
         let user = accounts[0]
 
-        let expectedLocation = SFDirectoryManager.sharedManager.directory(
+        guard let dirPath = SFDirectoryManager.sharedManager.directory(
             forOrg: user.credentials.organizationId,
             user: user.credentials.userId,
             community: nil,
             type: .libraryDirectory,
             components: nil
-        ).appending("/UserAccount.plist")
+        ) else {
+            XCTFail("Could not get directory path")
+            return
+        }
+        let expectedLocation = dirPath.appending("/UserAccount.plist")
 
         XCTAssertEqual(expectedLocation, SFDefaultUserAccountPersister.userAccountPlistFile(for: user), "Mismatching user account paths")
         XCTAssertTrue(FileManager.default.fileExists(atPath: expectedLocation), "Unable to find new UserAccount.plist")
 
         let userId = String(format: kUserIdFormatString, 0)
-        XCTAssertEqual(uam.allUserIdentities()[0].userId, userId, "User ID doesn't match after reload")
+        XCTAssertEqual(uam.userIdentities()?[0].userId, userId, "User ID doesn't match after reload")
         deleteUserAndVerify(user, userDir: expectedLocation)
     }
 
     func testMultipleAccounts() {
-        XCTAssertEqual(uam.allUserIdentities().count, 0, "There should be no accounts")
+        XCTAssertEqual(uam.userIdentities()?.count ?? 0, 0, "There should be no accounts")
 
         let accounts = createAndVerifyUserAccounts(10)
         let fm = FileManager.default
@@ -205,18 +216,20 @@ class SFUserAccountManagerTests: XCTestCase {
         for index in 0..<10 {
             let orgId = String(format: kOrgIdFormatString, index)
             let userId = String(format: kUserIdFormatString, index)
-            var location = SFDirectoryManager.sharedManager.directory(forOrg: orgId, user: userId, community: nil, type: .libraryDirectory, components: nil)
-            location.append("/UserAccount.plist")
+            guard let dirPath = SFDirectoryManager.sharedManager.directory(forOrg: orgId, user: userId, community: nil, type: .libraryDirectory, components: nil) else {
+                XCTFail("Could not get directory path for index \(index)")
+                continue
+            }
+            let location = dirPath + "/UserAccount.plist"
             XCTAssertTrue(fm.fileExists(atPath: location), "Unable to find new UserAccount.plist at \(location)")
         }
 
         uam.clearAllAccountState()
-        var error: NSError?
-        uam.loadAccounts(&error)
-        XCTAssertNil(error, "Accounts should have been loaded")
+        let loadResult = uam.loadAllUserAccounts()
+        XCTAssertTrue(loadResult, "Accounts should have been loaded")
 
         var allTokens = Set<String>()
-        let allIdentities = uam.allUserIdentities()
+        let allIdentities = uam.userIdentities() ?? []
         for index in 0..<10 {
             if let user = uam.userAccount(for: allIdentities[index]),
                let token = user.credentials.accessToken {
@@ -228,7 +241,10 @@ class SFUserAccountManagerTests: XCTestCase {
         for index in 0..<10 {
             let orgId = String(format: kOrgIdFormatString, index)
             let userId = String(format: kUserIdFormatString, index)
-            let location = SFDirectoryManager.sharedManager.directory(forOrg: orgId, user: userId, community: nil, type: .libraryDirectory, components: nil)
+            guard let location = SFDirectoryManager.sharedManager.directory(forOrg: orgId, user: userId, community: nil, type: .libraryDirectory, components: nil) else {
+                XCTFail("Could not get directory path for index \(index)")
+                continue
+            }
             let accountIdentity = UserAccountIdentity(userId: userId, orgId: orgId)
             let userAccount = uam.userAccount(for: accountIdentity)
             XCTAssertNotNil(userAccount, "User account with User ID '\(userId)' and Org ID '\(orgId)' should exist.")
@@ -567,7 +583,7 @@ class SFUserAccountManagerTests: XCTestCase {
         let newUserAccountWithDifferentToken = createNewUser(index: 2)
         newUserAccountWithDifferentToken.credentials.refreshToken = "newRefreshToken789"
 
-        newAuthSession.authSuccessCallback(testAuthInfo, newUserAccountWithDifferentToken)
+        newAuthSession.authSuccessCallback?(testAuthInfo, newUserAccountWithDifferentToken)
         XCTAssertTrue(successCallbackInvoked)
         XCTAssertTrue(capturedAuthInfo === testAuthInfo)
         XCTAssertTrue(capturedUserAccount === newUserAccountWithDifferentToken)

@@ -106,7 +106,7 @@ class SalesforceRestAPITests: XCTestCase {
     override class func setUp() {
         do {
             SFSDKLogoutBlocker.block()
-            TestSetupUtils.populateAuthCredentialsFromConfigFile(for: self)
+            TestSetupUtils.populateAuthCredentials(fromConfigFileFor: self)
             TestSetupUtils.synchronousAuthRefresh()
         } catch {
             authException = NSException(name: .genericException, reason: error.localizedDescription)
@@ -505,7 +505,7 @@ class SalesforceRestAPITests: XCTestCase {
     }
 
     func testSOQLError() {
-        let request = RestClient.sharedInstance.requestForQuery(nil, apiVersion: SFRestDefaultAPIVersion)
+        let request = RestClient.sharedInstance.requestForQuery("", apiVersion: SFRestDefaultAPIVersion)
         let response = sendSyncRequest(request)
         XCTAssertEqual(response.returnStatus, kTestRequestStatusDidFail)
         XCTAssertEqual(response.lastError?.code, 400)
@@ -584,9 +584,11 @@ class SalesforceRestAPITests: XCTestCase {
         let contactName = generateRecordName()
         let otherContactName = generateRecordName()
 
-        let contactTree = SFSObjectTree(objectType: kContact, objectTypePlural: "Contacts", referenceId: "refContact", fields: [kLastName: contactName], childrenTrees: nil)
-        let otherContactTree = SFSObjectTree(objectType: kContact, objectTypePlural: "Contacts", referenceId: "refOtherContact", fields: [kLastName: otherContactName], childrenTrees: nil)
-        let accountTree = SFSObjectTree(objectType: kAccount, objectTypePlural: nil, referenceId: "refAccount", fields: [kName: accountName], childrenTrees: [contactTree, otherContactTree])
+        guard let contactTree = SObjectTree(objectType: kContact, objectTypePlural: "Contacts", referenceId: "refContact", fields: [kLastName: contactName], childrenTrees: nil),
+              let otherContactTree = SObjectTree(objectType: kContact, objectTypePlural: "Contacts", referenceId: "refOtherContact", fields: [kLastName: otherContactName], childrenTrees: nil),
+              let accountTree = SObjectTree(objectType: kAccount, objectTypePlural: nil, referenceId: "refAccount", fields: [kName: accountName], childrenTrees: [contactTree, otherContactTree]) else {
+            XCTFail("Failed to create SObjectTree"); return
+        }
 
         let treeRequest = RestClient.sharedInstance.requestForSObjectTree(kAccount, objectTrees: [accountTree], apiVersion: SFRestDefaultAPIVersion)
         let response = sendSyncRequest(treeRequest)
@@ -642,13 +644,13 @@ class SalesforceRestAPITests: XCTestCase {
 
         let request = RestClient.sharedInstance.requestForCollectionCreate(true, records: records, apiVersion: SFRestDefaultAPIVersion)
         let response = sendSyncRequest(request)
-        let parsedResponse = SFSDKCollectionResponse(response.dataResponse)
+        let parsedResponse = CollectionResponse(array: response.dataResponse as? [[String: Any]] ?? [])
 
         XCTAssertEqual(parsedResponse.subResponses.count, 3)
-        XCTAssertTrue(parsedResponse.subResponses[0].objectId?.hasPrefix("001") ?? false)
+        XCTAssertTrue(parsedResponse.subResponses[0].objectId.hasPrefix("001"))
         XCTAssertTrue(parsedResponse.subResponses[0].success)
         XCTAssertTrue(parsedResponse.subResponses[1].success)
-        XCTAssertTrue(parsedResponse.subResponses[2].objectId?.hasPrefix("003") ?? false)
+        XCTAssertTrue(parsedResponse.subResponses[2].objectId.hasPrefix("003"))
         XCTAssertTrue(parsedResponse.subResponses[2].success)
     }
 
@@ -665,7 +667,7 @@ class SalesforceRestAPITests: XCTestCase {
 
         let request = RestClient.sharedInstance.requestForCollectionCreate(true, records: records, apiVersion: SFRestDefaultAPIVersion)
         let response = sendSyncRequest(request)
-        let parsedCreateResponse = SFSDKCollectionResponse(response.dataResponse)
+        let parsedCreateResponse = CollectionResponse(array: response.dataResponse as? [[String: Any]] ?? [])
         let firstAccountId = parsedCreateResponse.subResponses[0].objectId ?? ""
         let secondAccountId = parsedCreateResponse.subResponses[2].objectId ?? ""
 
@@ -690,13 +692,13 @@ class SalesforceRestAPITests: XCTestCase {
 
         let createRequest = RestClient.sharedInstance.requestForCollectionCreate(true, records: records, apiVersion: SFRestDefaultAPIVersion)
         let createResponse = sendSyncRequest(createRequest)
-        let parsedCreateResponse = SFSDKCollectionResponse(createResponse.dataResponse)
+        let parsedCreateResponse = CollectionResponse(array: createResponse.dataResponse as? [[String: Any]] ?? [])
         let firstAccountId = parsedCreateResponse.subResponses[0].objectId ?? ""
         let contactId = parsedCreateResponse.subResponses[1].objectId ?? ""
 
         let deleteRequest = RestClient.sharedInstance.requestForCollectionDelete(true, objectIds: [firstAccountId, contactId], apiVersion: SFRestDefaultAPIVersion)
         let deleteResponse = sendSyncRequest(deleteRequest)
-        let parsedDeleteResponse = SFSDKCollectionResponse(deleteResponse.dataResponse)
+        let parsedDeleteResponse = CollectionResponse(array: deleteResponse.dataResponse as? [[String: Any]] ?? [])
         XCTAssertEqual(parsedDeleteResponse.subResponses.count, 2)
         XCTAssertTrue(parsedDeleteResponse.subResponses[0].success)
         XCTAssertTrue(parsedDeleteResponse.subResponses[1].success)
@@ -730,10 +732,10 @@ class SalesforceRestAPITests: XCTestCase {
     }
 
     func testFilesSharedWithUser() {
-        var request = RestClient.sharedInstance.requestForFilesShared(withUser: nil, page: 0, apiVersion: SFRestDefaultAPIVersion)
+        var request = RestClient.sharedInstance.requestForFilesSharedWithUser(nil, page: 0, apiVersion: SFRestDefaultAPIVersion)
         var response = sendSyncRequest(request)
         XCTAssertEqual(response.returnStatus, kTestRequestStatusDidLoad)
-        request = RestClient.sharedInstance.requestForFilesShared(withUser: currentUser?.credentials.userId, page: 0, apiVersion: SFRestDefaultAPIVersion)
+        request = RestClient.sharedInstance.requestForFilesSharedWithUser(currentUser?.credentials.userId, page: 0, apiVersion: SFRestDefaultAPIVersion)
         response = sendSyncRequest(request)
         XCTAssertEqual(response.returnStatus, kTestRequestStatusDidLoad)
         dataCleanupRequired = false
@@ -804,7 +806,7 @@ class SalesforceRestAPITests: XCTestCase {
         let invalidAccessToken = "xyz"
         changeOauthTokens(accessToken: invalidAccessToken, refreshToken: nil)
 
-        let request = RestClient.sharedInstance.requestForQuery(nil, apiVersion: SFRestDefaultAPIVersion)
+        let request = RestClient.sharedInstance.requestForQuery("", apiVersion: SFRestDefaultAPIVersion)
         let response = sendSyncRequest(request)
         XCTAssertEqual(response.returnStatus, kTestRequestStatusDidFail)
 
@@ -820,8 +822,10 @@ class SalesforceRestAPITests: XCTestCase {
         fakeUser?.credentials.refreshToken = "xyz"
 
         guard let fakeUser = fakeUser else { return }
-        let restAPI = RestClient.restClient(for: fakeUser)
-        XCTAssertNotNil(restAPI)
+        guard let restAPI = RestClient.restClient(for: fakeUser) else {
+            XCTFail("Could not create RestClient for fake user")
+            return
+        }
 
         defer {
             _ = deleteUser(fakeUser)

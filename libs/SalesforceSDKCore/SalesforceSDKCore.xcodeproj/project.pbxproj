@@ -21,6 +21,8 @@
 /* End PBXAggregateTarget section */
 
 /* Begin PBXBuildFile section */
+		7C71AC6F6C172778D270B12B /* SFUserAccountManagerTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7C71AC6E6C172778D270B12B /* SFUserAccountManagerTests.swift */; };
+		BA8A419D0DA7878490FC54D1 /* SalesforceRestAPITests.swift in Sources */ = {isa = PBXBuildFile; fileRef = BA8A419C0DA7878490FC54D1 /* SalesforceRestAPITests.swift */; };
 		00E9C1A1B2D4F5A605D9FACA /* SalesforceSDKIdentityTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 05D9FACA946CA40D58952A17 /* SalesforceSDKIdentityTests.swift */; };
 		00E9C1A2D535E2AB61A81215 /* SalesforceSDKManagerTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = D535E2AB61A81215DE478778 /* SalesforceSDKManagerTests.swift */; };
 		00FAAA4A72DB65996DE565AE /* SFSDKAppFeatureMarkersTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = F8F575E3BAA3F1FB980CC21C /* SFSDKAppFeatureMarkersTests.swift */; };
@@ -2578,6 +2580,8 @@
 				412AE58D433C9EE9FFC636D8 /* UIColor+SFColorsTests.swift in Sources */,
 				00E9C1A1B2D4F5A605D9FACA /* SalesforceSDKIdentityTests.swift in Sources */,
 				00E9C1A2D535E2AB61A81215 /* SalesforceSDKManagerTests.swift in Sources */,
+				7C71AC6F6C172778D270B12B /* SFUserAccountManagerTests.swift in Sources */,
+				BA8A419D0DA7878490FC54D1 /* SalesforceRestAPITests.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
