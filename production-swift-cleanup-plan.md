@@ -3,7 +3,7 @@
 **Date:** 2026-05-19
 **Branch:** `feature/objc-to-swift-production-migration`
 **Prerequisite:** Production conversion complete. This plan addresses remaining gaps.
-**Current status (2026-05-20):** 199 of 201 production .m files converted to Swift. 3 remain as ObjC (SafeMutable* generics). Production BUILD SUCCEEDED. Test target compiles (ObjC tests excluded pending conversion).
+**Current status (2026-05-20):** 199 of 201 production .m files converted to Swift. 3 remain as ObjC (SafeMutable* generics). Production BUILD SUCCEEDED. SDKCore test target fully Swift — 200 tests run (186 pass, 14 LoginForAdmin failures from behavioral regression).
 
 ---
 
@@ -114,27 +114,19 @@ ObjC test files reference converted Swift classes with old selectors. Per the no
 
 ---
 
-### Item 6: Convert SalesforceSDKCore ObjC Tests to Swift ✅ FUNCTIONALLY COMPLETE (2026-05-20)
+### Item 6: Convert SalesforceSDKCore ObjC Tests to Swift ✅ COMPLETE (2026-05-20)
 **Priority:** Medium — no longer blocks Item 3 (resolved), but needed for full test coverage
 **Rule:** No ObjC modifications — convert blocking test .m files to Swift.
 
 **Resolution:**
 - [x] 43 ObjC test files converted to Swift across 5 batches (committed incrementally)
-- [x] 40 of 44 Swift test files integrated into project and compiling
-- [x] Test target builds and runs: 49 tests execute, 47 pass, 2 expected failures
+- [x] All 44 Swift test files integrated into project and compiling
+- [x] All 4 previously-excluded integration test files re-enabled (API fixes applied, live credentials provided)
+- [x] Test target builds and runs: **200 tests execute, 186 pass, 14 failures (3 unexpected)**
 - [x] CredentialsArchiveRoundTripTests runs and passes (7/7)
 
-**Remaining follow-up (4 excluded integration test files):**
-These compile but have 20+ API mismatches each and need live Salesforce credentials to verify:
-- [ ] `SFUserAccountManagerTests.swift` — extensive UserAccountManager API mismatches
-- [ ] `SalesforceSDKManagerTests.swift` — SDK lifecycle API mismatches
-- [ ] `SalesforceSDKIdentityTests.swift` — OAuthCredentials optionality issues
-- [ ] `SalesforceRestAPITests.swift` — removed/renamed REST API methods, requires live org
-
-These 4 files are written but excluded from compilation. To complete them:
-1. Fix API mismatches against actual Swift production code
-2. Re-add to Compile Sources
-3. Run with live `test_credentials.json` to verify integration tests pass
+**Known remaining test failures (14, all in `LoginForAdminTests`):**
+These are in a pre-existing Swift test file (not converted by us) that tests a deprecated API (`loginViewControllerDidSelectLoginForAdmin`). The underlying auth flow behavior changed when `SFUserAccountManager` was converted to Swift. This is a behavioral regression in the conversion, not a test infrastructure issue. To fix: align `UserAccountManager.loginViewControllerDidSelectLoginForAdmin(_:)` implementation with what the test expects, or update the test expectations.
 
 **Blocking ObjC test files (must be converted to Swift):**
 - [ ] `SalesforceRestAPITests.m` (~600 lines — largest, integration tests)
