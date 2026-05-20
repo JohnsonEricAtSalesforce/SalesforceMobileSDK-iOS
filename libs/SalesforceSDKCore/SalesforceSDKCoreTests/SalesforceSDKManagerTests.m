@@ -23,6 +23,7 @@
  */
 
 #import <XCTest/XCTest.h>
+#import <SalesforceSDKCore/SalesforceSDKCore-Swift.h>
 #import "SFTestSDKManagerFlow.h"
 #import "SalesforceSDKManager+Internal.h"
 #import "SFOAuthCoordinator+Internal.h"
@@ -450,7 +451,7 @@ static NSString* const kTestAppName = @"OverridenAppName";
     
     [user transitionToLoginState:SFUserAccountLoginStateLoggedIn];
     NSError *error = nil;
-    [SFUserAccountManager.shared saveAccountForUser:user error:&error];
+    [(id)SFUserAccountManager.shared saveAccountForUser:user error:&error];
     XCTAssertNil(error, @"Should be able to create user account");
     return user;
 }
@@ -485,14 +486,14 @@ static NSString* const kTestAppName = @"OverridenAppName";
 {
     SFUserAccount *prevCurrentUser = SFUserAccountManager.shared.currentUserAccount;
     [SFUserAccountManager.shared setCurrentUserInternal:[self createUserAccount]];
-    SFSDKSalesforceAnalyticsManager *analyticsManager = [SFSDKSalesforceAnalyticsManager sharedInstanceWithUser:SFUserAccountManager.shared.currentUserAccount];
+    SFSDKSalesforceAnalyticsManager *analyticsManager = [(id)[SFSDKSalesforceAnalyticsManager class] sharedInstanceWithUser:SFUserAccountManager.shared.currentUserAccount];
     XCTAssertNotNil(analyticsManager, @"SFSDKSalesforceAnalyticsManager instance should not be nil");
     SFSDKDeviceAppAttributes *deviceAttributes = analyticsManager.analyticsManager.deviceAttributes;
     XCTAssertNotNil(deviceAttributes, @"SFSDKDeviceAppAttributes instance should not be nil");
     XCTAssertEqualObjects(deviceAttributes.appName, expectedAppName, @"App names should match");
-    [SFSDKSalesforceAnalyticsManager removeSharedInstanceWithUser:SFUserAccountManager.shared.currentUserAccount];
+    [(id)[SFSDKSalesforceAnalyticsManager class] removeSharedInstanceWithUser:SFUserAccountManager.shared.currentUserAccount];
     NSError *error = nil;
-    [SFUserAccountManager.shared deleteAccountForUser:SFUserAccountManager.shared.currentUserAccount error:&error];
+    [(id)SFUserAccountManager.shared deleteAccountForUser:SFUserAccountManager.shared.currentUserAccount error:&error];
     XCTAssertNil(error, @"SalesforceSDKManagerTests for AILTN could not delete created user");
     [SFUserAccountManager.shared setCurrentUserInternal:prevCurrentUser];
 }
@@ -509,7 +510,7 @@ static NSString* const kTestAppName = @"OverridenAppName";
                         description:(NSString *)description
                          assertions:(void (^)(SFSDKAppConfig *config))assertions {
     XCTestExpectation *expectation = [self expectationWithDescription:description];
-    [SalesforceSDKManager.shared appConfigForLoginHost:loginHost callback:^(SFSDKAppConfig *config) {
+    [(id)SalesforceSDKManager.shared appConfigForLoginHost:loginHost callback:^(SFSDKAppConfig *config) {
         assertions(config);
         [expectation fulfill];
     }];
@@ -547,14 +548,14 @@ static NSString* const kTestAppName = @"OverridenAppName";
         @"oauthRedirectURI": @"app1://oauth/done",
         @"shouldAuthenticate": @YES
     };
-    SFSDKAppConfig *config1 = [[SFSDKAppConfig alloc] initWithDict:config1Dict];
+    SFSDKAppConfig *config1 = [[SFSDKAppConfig alloc] init:config1Dict];
     
     NSDictionary *config2Dict = @{
         @"remoteAccessConsumerKey": @"clientId2",
         @"oauthRedirectURI": @"app2://oauth/done",
         @"shouldAuthenticate": @YES
     };
-    SFSDKAppConfig *config2 = [[SFSDKAppConfig alloc] initWithDict:config2Dict];
+    SFSDKAppConfig *config2 = [[SFSDKAppConfig alloc] init:config2Dict];
     
     // Get the default app config for comparison
     SFSDKAppConfig *defaultConfig = SalesforceSDKManager.shared.appConfig;

@@ -32,6 +32,7 @@
 #import "SFSDKBatchRequest.h"
 #import "TestSetupUtils.h"
 #import <XCTest/XCTest.h>
+#import <SalesforceSDKCore/SalesforceSDKCore-Swift.h>
 
  // Constants only used in the tests below
 #define ENTITY_PREFIX_NAME @"RestClientTestsiOS"

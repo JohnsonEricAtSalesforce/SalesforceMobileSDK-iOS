@@ -26,6 +26,7 @@
 //  WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #import <XCTest/XCTest.h>
+#import <SalesforceSDKCore/SalesforceSDKCore-Swift.h>
 #import "SFUserAccount.h"
 #import "SFDirectoryManager.h"
 #import "SFDirectoryManager+Internal.h"
