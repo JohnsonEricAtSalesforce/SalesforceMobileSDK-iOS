@@ -84,19 +84,22 @@ class SFSDKPushNotificationDataProvider {
     }
 
     private func encryptKey(usingRSAPublicKey key: SFEncryptionKey) -> String {
-        var fullKeyData = Data(key.key)
-        fullKeyData.append(key.initializationVector)
+        guard let keyData = key.key, let ivData = key.initializationVector else {
+            fatalError("Key or IV is nil")
+        }
+        var fullKeyData = keyData
+        fullKeyData.append(ivData)
 
         let publicKeyRef = getPublicKeyRef()
-        guard let encryptedKeyData = SFSDKCryptoUtils.encrypt(fullKeyData, key: publicKeyRef, algorithm: .rsaEncryptionOAEPSHA256, error: nil) else {
+        guard let encryptedKeyData = try? SFSDKCryptoUtils.encrypt(data: fullKeyData, key: publicKeyRef, algorithm: .rsaEncryptionOAEPSHA256) else {
             fatalError("Failed to encrypt key data")
         }
-        CFRelease(publicKeyRef)
         return encryptedKeyData.base64EncodedString()
     }
 
     private func encryptContent(usingKey key: SFEncryptionKey, data: Data) -> String {
-        guard let encryptedContentData = SFSDKCryptoUtils.aes128EncryptData(data, withKey: key.key, iv: key.initializationVector) else {
+        guard let keyData = key.key, let ivData = key.initializationVector,
+              let encryptedContentData = SFSDKCryptoUtils.aes128EncryptData(data, withKey: keyData, iv: ivData) else {
             fatalError("Failed to encrypt content data")
         }
         return encryptedContentData.base64EncodedString()

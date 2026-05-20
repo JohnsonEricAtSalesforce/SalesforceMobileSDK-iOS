@@ -8,5 +8,6 @@
 #import "SFSDKAuthSession.h"
 #import "SFOAuthCoordinator+Internal.h"
 #import "SFUserAccountManager+Internal.h"
+#import "SalesforceSDKManager+Internal.h"
 // SFOAuthCredentials and SFOAuthKeychainCredentials are now Swift classes.
 // Their internal/testing methods are directly accessible from Swift test code.

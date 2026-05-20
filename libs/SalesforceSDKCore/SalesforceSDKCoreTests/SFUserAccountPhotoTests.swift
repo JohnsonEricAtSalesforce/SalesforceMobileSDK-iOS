@@ -67,7 +67,9 @@ class SFUserAccountPhotoTests: XCTestCase {
 
     private func createNewUser() -> UserAccount {
         let userID = "005R0000000DslaIAC"
-        let credentials = OAuthCredentials(identifier: "identifier-\(userID)", clientId: UserAccountManager.shared.oauthClientID, encrypted: true)
+        guard let credentials = OAuthCredentials(identifier: "identifier-\(userID)", clientId: UserAccountManager.shared.oauthClientID, encrypted: true) else {
+            fatalError("Failed to create credentials")
+        }
         let user = UserAccount(credentials: credentials)
         user.credentials.identityUrl = URL(string: "https://login.salesforce.com/id/00D000000000062EAA/\(userID)")
         return user

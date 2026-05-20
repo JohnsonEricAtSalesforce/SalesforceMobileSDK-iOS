@@ -169,7 +169,7 @@ class SFSDKUrlCacheTests: XCTestCase {
             // Configure SFNetwork to use our test cache
             let testSessionConfig = URLSessionConfiguration.default
             testSessionConfig.urlCache = testCache
-            SFNetwork.setSessionConfiguration(testSessionConfig, identifier: "com.salesforce.network.ephemeralSession")
+            Network.setSessionConfiguration(testSessionConfig, identifier: "com.salesforce.network.ephemeralSession")
 
             // Don't need to login but want the instance URL from the config
             let credsData = TestSetupUtils.populateAuthCredentials(fromConfigFileFor: type(of: self))
@@ -198,7 +198,7 @@ class SFSDKUrlCacheTests: XCTestCase {
         SalesforceSDKManager.shared.URLCacheType = .encrypted
 
         // Clean up SFNetwork instances to prevent affecting other tests
-        SFNetwork.removeSharedInstance(forIdentifier: "com.salesforce.network.ephemeralSession")
+        Network.removeSharedInstance(forIdentifier: "com.salesforce.network.ephemeralSession")
     }
 
     func testUrlWithoutSubdomain() {

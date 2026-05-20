@@ -32,9 +32,7 @@ class SFUserAccountPersisterEphemeral: NSObject, SFUserAccountPersister {
     private var userAccountMap: [UserAccountIdentity: UserAccount] = [:]
 
     func saveAccount(forUser userAccount: UserAccount) throws {
-        guard let identity = userAccount.accountIdentity else {
-            return
-        }
+        let identity = userAccount.accountIdentity
         userAccountMap[identity] = userAccount
     }
 
@@ -43,9 +41,7 @@ class SFUserAccountPersisterEphemeral: NSObject, SFUserAccountPersister {
     }
 
     func deleteAccount(forUser user: UserAccount) throws {
-        guard let identity = user.accountIdentity else {
-            throw NSError(domain: "SFUserAccountPersisterEphemeral", code: 1, userInfo: [NSLocalizedDescriptionKey: "No account identity"])
-        }
+        let identity = user.accountIdentity
         guard userAccountMap[identity] != nil else {
             throw NSError(domain: "SFUserAccountPersisterEphemeral", code: 2, userInfo: [NSLocalizedDescriptionKey: "Account not found"])
         }

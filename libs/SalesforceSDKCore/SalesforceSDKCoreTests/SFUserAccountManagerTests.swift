@@ -34,7 +34,7 @@ private let kOrgIdFormatString = "00D000000000062EA%lu"
 
 // MARK: - TestUserAccountManagerDelegate
 
-private class TestUserAccountManagerDelegate: NSObject, SFUserAccountManagerDelegate {
+private class TestUserAccountManagerDelegate: NSObject, UserAccountManagerDelegate {
     var willSwitchOrigUserAccount: UserAccount?
     var willSwitchNewUserAccount: UserAccount?
     var didSwitchOrigUserAccount: UserAccount?
@@ -52,19 +52,19 @@ private class TestUserAccountManagerDelegate: NSObject, SFUserAccountManagerDele
         UserAccountManager.shared.removeDelegate(self)
     }
 
-    func userAccountManager(_ userAccountManager: UserAccountManager, error: Error, info: OAuthInfo) -> Bool {
+    func userAccountManager(accountManager: UserAccountManager, didFailAuthenticationWith error: Error, info: SFOAuthInfo) -> Bool {
         self.error = error as NSError
         return false
     }
 
-    func userAccountManager(_ userAccountManager: UserAccountManager, willSwitchFrom fromUser: UserAccount, to toUser: UserAccount?) {
-        willSwitchOrigUserAccount = fromUser
-        willSwitchNewUserAccount = toUser
+    func userAccountManager(accountManager: UserAccountManager, willSwitchFrom currentUser: UserAccount, to newUser: UserAccount?) {
+        willSwitchOrigUserAccount = currentUser
+        willSwitchNewUserAccount = newUser
     }
 
-    func userAccountManager(_ userAccountManager: UserAccountManager, didSwitchFrom fromUser: UserAccount, to toUser: UserAccount?) {
-        didSwitchOrigUserAccount = fromUser
-        didSwitchNewUserAccount = toUser
+    func userAccountManager(accountManager: UserAccountManager, didSwitchFrom previousUser: UserAccount, to currentUser: UserAccount?) {
+        didSwitchOrigUserAccount = previousUser
+        didSwitchNewUserAccount = currentUser
     }
 }
 
@@ -76,7 +76,7 @@ class SFUserAccountManagerTests: XCTestCase {
         UserAccountManager.shared
     }
     private var authViewHandler: SFSDKAuthViewHandler?
-    private var config: SFSDKLoginViewControllerConfig?
+    private var config: SalesforceLoginViewControllerConfig?
     private var origLoginHost: String?
     private var origAccount: UserAccount?
 
@@ -87,7 +87,7 @@ class SFUserAccountManagerTests: XCTestCase {
 
     override func setUp() {
         super.setUp()
-        let globalLibraryDirectory = SFDirectoryManager.shared().globalDirectory(ofType: .libraryDirectory, components: nil)
+        let globalLibraryDirectory = SFDirectoryManager.sharedManager.globalDirectory(ofType: .libraryDirectory, components: nil)
         try? FileManager.default.removeItem(atPath: globalLibraryDirectory)
 
         origLoginHost = uam.loginHost
@@ -180,7 +180,7 @@ class SFUserAccountManagerTests: XCTestCase {
         let accounts = createAndVerifyUserAccounts(1)
         let user = accounts[0]
 
-        let expectedLocation = SFDirectoryManager.shared().directory(
+        let expectedLocation = SFDirectoryManager.sharedManager.directory(
             forOrg: user.credentials.organizationId,
             user: user.credentials.userId,
             community: nil,
@@ -205,7 +205,7 @@ class SFUserAccountManagerTests: XCTestCase {
         for index in 0..<10 {
             let orgId = String(format: kOrgIdFormatString, index)
             let userId = String(format: kUserIdFormatString, index)
-            var location = SFDirectoryManager.shared().directory(forOrg: orgId, user: userId, community: nil, type: .libraryDirectory, components: nil)
+            var location = SFDirectoryManager.sharedManager.directory(forOrg: orgId, user: userId, community: nil, type: .libraryDirectory, components: nil)
             location.append("/UserAccount.plist")
             XCTAssertTrue(fm.fileExists(atPath: location), "Unable to find new UserAccount.plist at \(location)")
         }
@@ -228,7 +228,7 @@ class SFUserAccountManagerTests: XCTestCase {
         for index in 0..<10 {
             let orgId = String(format: kOrgIdFormatString, index)
             let userId = String(format: kUserIdFormatString, index)
-            let location = SFDirectoryManager.shared().directory(forOrg: orgId, user: userId, community: nil, type: .libraryDirectory, components: nil)
+            let location = SFDirectoryManager.sharedManager.directory(forOrg: orgId, user: userId, community: nil, type: .libraryDirectory, components: nil)
             let accountIdentity = UserAccountIdentity(userId: userId, orgId: orgId)
             let userAccount = uam.userAccount(for: accountIdentity)
             XCTAssertNotNil(userAccount, "User account with User ID '\(userId)' and Org ID '\(orgId)' should exist.")
@@ -237,7 +237,7 @@ class SFUserAccountManagerTests: XCTestCase {
                 deleteUserAndVerify(userAccount, userDir: location)
             }
         }
-        XCTAssertEqual(uam.allUserAccounts()?.count ?? 0, 0, "There should be 0 accounts after delete")
+        XCTAssertEqual(uam.userAccounts()?.count ?? 0, 0, "There should be 0 accounts after delete")
     }
 
     func testSwitchToUser() {
@@ -246,7 +246,7 @@ class SFUserAccountManagerTests: XCTestCase {
         let newUser = accounts[1]
         UserAccountManager.shared.setCurrentUserInternal(origUser)
         let acctDelegate = TestUserAccountManagerDelegate()
-        uam.switch(to: newUser)
+        uam.switchToUserAccount( newUser)
         XCTAssertEqual(acctDelegate.willSwitchOrigUserAccount, origUser)
         XCTAssertEqual(acctDelegate.willSwitchNewUserAccount, newUser)
         XCTAssertEqual(acctDelegate.didSwitchOrigUserAccount, origUser)
@@ -280,7 +280,7 @@ class SFUserAccountManagerTests: XCTestCase {
         XCTAssertNotEqual(uam.loginHost, testDomain)
         XCTAssertEqual(newUser.credentials.domain, testDomain)
 
-        uam.switch(to: newUser)
+        uam.switchToUserAccount( newUser)
         XCTAssertEqual(acctDelegate.didSwitchOrigUserAccount, origUser)
         XCTAssertEqual(acctDelegate.didSwitchNewUserAccount, newUser)
         XCTAssertEqual(uam.currentUserAccount, newUser)
@@ -293,15 +293,15 @@ class SFUserAccountManagerTests: XCTestCase {
         let addlKeys = ["A", "__B", "123", ""]
         UserAccountManager.shared.additionalOAuthParameterKeys = addlKeys
         XCTAssertNotNil(UserAccountManager.shared.additionalOAuthParameterKeys)
-        XCTAssertEqual(UserAccountManager.shared.additionalOAuthParameterKeys?.count, addlKeys.count)
+        XCTAssertEqual(UserAccountManager.shared.additionalOAuthParameterKeys.count, addlKeys.count)
         UserAccountManager.shared.additionalOAuthParameterKeys = oldAdditionalOAuthParameterKeys
 
-        let oldAdditionalTokenRefreshParams = UserAccountManager.shared.additionalTokenRefreshParams
+        let oldAdditionalTokenRefreshParams = UserAccountManager.shared.additionalTokenRefreshParameters
         let addlRefreshParams: [String: String] = ["A": "A", "B": "B", "C": "C"]
-        UserAccountManager.shared.additionalTokenRefreshParams = addlRefreshParams
-        XCTAssertNotNil(UserAccountManager.shared.additionalTokenRefreshParams)
-        XCTAssertEqual(UserAccountManager.shared.additionalTokenRefreshParams?.count, addlRefreshParams.count)
-        UserAccountManager.shared.additionalTokenRefreshParams = oldAdditionalTokenRefreshParams
+        UserAccountManager.shared.additionalTokenRefreshParameters = addlRefreshParams
+        XCTAssertNotNil(UserAccountManager.shared.additionalTokenRefreshParameters)
+        XCTAssertEqual(UserAccountManager.shared.additionalTokenRefreshParameters.count, addlRefreshParams.count)
+        UserAccountManager.shared.additionalTokenRefreshParameters = oldAdditionalTokenRefreshParams
 
         let oldLoginHost = UserAccountManager.shared.loginHost
         let newLoginHost = "https://sample.test"
@@ -309,17 +309,17 @@ class SFUserAccountManagerTests: XCTestCase {
         XCTAssertEqual(UserAccountManager.shared.loginHost, newLoginHost)
         UserAccountManager.shared.loginHost = oldLoginHost
 
-        let oldOauthCompletionUrl = UserAccountManager.shared.oauthCompletionUrl
+        let oldOauthCompletionUrl = UserAccountManager.shared.oauthCompletionURL
         let newOauthCompletionUrl = "new://new.url"
-        UserAccountManager.shared.oauthCompletionUrl = newOauthCompletionUrl
-        XCTAssertEqual(UserAccountManager.shared.oauthCompletionUrl, newOauthCompletionUrl)
-        UserAccountManager.shared.oauthCompletionUrl = oldOauthCompletionUrl
+        UserAccountManager.shared.oauthCompletionURL = newOauthCompletionUrl
+        XCTAssertEqual(UserAccountManager.shared.oauthCompletionURL, newOauthCompletionUrl)
+        UserAccountManager.shared.oauthCompletionURL = oldOauthCompletionUrl
 
-        let oldOauthClientId = UserAccountManager.shared.oauthClientId
+        let oldOauthClientId = UserAccountManager.shared.oauthClientID
         let newOauthClientId = "NEW_OAUTH_CLIENT_ID"
-        UserAccountManager.shared.oauthClientId = newOauthClientId
-        XCTAssertEqual(UserAccountManager.shared.oauthClientId, newOauthClientId)
-        UserAccountManager.shared.oauthClientId = oldOauthClientId
+        UserAccountManager.shared.oauthClientID = newOauthClientId
+        XCTAssertEqual(UserAccountManager.shared.oauthClientID, newOauthClientId)
+        UserAccountManager.shared.oauthClientID = oldOauthClientId
 
         let oldBrandLoginPath = UserAccountManager.shared.brandLoginPath
         let newBrandLoginPath = "NEW_BRAND"
@@ -339,7 +339,10 @@ class SFUserAccountManagerTests: XCTestCase {
     }
 
     func testEntityId() {
-        let userId = "ABCDE12345ABCDE".sfsdk_entityId18()
+        guard let userId = ("ABCDE12345ABCDE" as NSString).sfsdk_entityId18() else {
+            XCTFail("sfsdk_entityId18 returned nil")
+            return
+        }
         let identity = UserAccountIdentity(userId: userId, orgId: "ABCDE12345ABCDE")
         XCTAssertNotNil(identity)
         XCTAssertEqual(userId.count, 18, "EntityId18 should be 18 characters")
@@ -367,7 +370,7 @@ class SFUserAccountManagerTests: XCTestCase {
         request.oauthCompletionUrl = "DUMMY_URL"
         request.loginHost = "login.salesforce.com"
 
-        let session = SFSDKAuthSession(request, credentials: nil)
+        let session = SFSDKAuthSession(with: request, credentials: nil)
         let coordinator = SFOAuthCoordinator(authSession: session)
         coordinator.delegate = UserAccountManager.shared
         coordinator.beginWebViewFlow()
@@ -377,7 +380,7 @@ class SFUserAccountManagerTests: XCTestCase {
     }
 
     func testLoginViewControllerCustomizations() {
-        let loginConfig = SFSDKLoginViewControllerConfig()
+        let loginConfig = SalesforceLoginViewControllerConfig()
         XCTAssertNotNil(loginConfig)
         XCTAssertNil(loginConfig.navBarFont)
         XCTAssertNotNil(loginConfig.navBarColor)
@@ -410,7 +413,7 @@ class SFUserAccountManagerTests: XCTestCase {
         request.oauthCompletionUrl = "DUMMY_URL"
         request.loginHost = "login.salesforce.com"
 
-        let session = SFSDKAuthSession(request, credentials: nil)
+        let session = SFSDKAuthSession(with: request, credentials: nil)
         let coordinator = SFOAuthCoordinator(authSession: session)
         coordinator.delegate = UserAccountManager.shared
         coordinator.beginWebViewFlow()
@@ -422,13 +425,16 @@ class SFUserAccountManagerTests: XCTestCase {
     func testUserAccountEncoding() {
         let archiver = NSKeyedArchiver(requiringSecureCoding: true)
 
-        let credentials = OAuthCredentials(identifier: "identifier-0", clientId: "fakeClientIdForTesting", encrypted: true)
+        guard let credentials = OAuthCredentials(identifier: "identifier-0", clientId: "fakeClientIdForTesting", encrypted: true) else {
+            XCTFail("Failed to create credentials")
+            return
+        }
         credentials.identityUrl = URL(string: "https://test.salesforce.com/id/00DS0000000IDdtWAH/005S0000004y9JkCAF")
 
         let userIn = UserAccount(credentials: credentials)
         userIn.accessScopes = Set(["scope1", "scope2"])
         userIn.idData = sampleIdentityData()
-        userIn.setAccessRestrictions(.chatter)
+        userIn.accessRestrictions = .chatter
         let customData: [String: Any] = [
             "string": "myString",
             "number": 5,
@@ -436,7 +442,7 @@ class SFUserAccountManagerTests: XCTestCase {
             "null": NSNull(),
             "array": ["one", "two"]
         ]
-        userIn.setCustomData(customData as NSDictionary, forKey: "allTheThings")
+        userIn.setCustomDataObject(customData as NSDictionary, forKey: "allTheThings" as NSCopying)
 
         archiver.encode(userIn, forKey: "account")
         archiver.finishEncoding()
@@ -452,7 +458,7 @@ class SFUserAccountManagerTests: XCTestCase {
         XCTAssertNotNil(userOut, "couldn't unarchive user account")
         XCTAssertNotNil(userOut?.credentials, "couldn't unarchive credentials")
         XCTAssertNotNil(userOut?.idData, "couldn't unarchive idData")
-        XCTAssertEqual(userIn.customData, userOut?.customData)
+        XCTAssertEqual(userIn.customDataObject(forKey: "allTheThings") as? NSDictionary, userOut?.customDataObject(forKey: "allTheThings") as? NSDictionary)
         XCTAssertEqual(userIn.accessScopes?.count, userOut?.accessScopes?.count)
         XCTAssertEqual(userIn.accessRestrictions, userOut?.accessRestrictions)
     }
@@ -465,8 +471,10 @@ class SFUserAccountManagerTests: XCTestCase {
             "oauthRedirectURI": testRedirectURI,
             "oauthScopes": ["api", "refresh_token"]
         ]
-        let appConfig = SFSDKAppConfig(dict: configDict)
-        XCTAssertNotNil(appConfig, "Failed to create SFSDKAppConfig")
+        guard let appConfig = BootConfig(dict: configDict as NSDictionary) else {
+            XCTFail("Failed to create BootConfig")
+            return
+        }
 
         let request = uam.migrateRefreshAuthRequest(appConfig)
         XCTAssertNotNil(request)
@@ -489,15 +497,18 @@ class SFUserAccountManagerTests: XCTestCase {
             "oauthRedirectURI": testRedirectURI,
             "oauthScopes": ["api", "refresh_token"]
         ]
-        let appConfig = SFSDKAppConfig(dict: configDict)
+        guard let appConfig = BootConfig(dict: configDict as NSDictionary) else {
+            XCTFail("Failed to create BootConfig")
+            return
+        }
 
         var successCallbackInvoked = false
         var failureCallbackInvoked = false
-        var capturedAuthInfo: OAuthInfo?
+        var capturedAuthInfo: SFOAuthInfo?
         var capturedUserAccount: UserAccount?
         var capturedError: NSError?
 
-        uam.migrateRefreshToken(testUser, newAppConfig: appConfig, success: { authInfo, userAccount in
+        uam.migrateRefreshToken(for: testUser, newAppConfig: appConfig, success: { authInfo, userAccount in
             successCallbackInvoked = true
             capturedAuthInfo = authInfo
             capturedUserAccount = userAccount
@@ -508,7 +519,7 @@ class SFUserAccountManagerTests: XCTestCase {
 
         let allKeys = uam.authSessions.allKeys
         XCTAssertTrue(allKeys.count > 0, "Auth session should have been created")
-        guard let sceneId = allKeys.firstObject as? String,
+        guard let sceneId = allKeys.first as? String,
               let authSession = uam.authSessions[sceneId] as? SFSDKAuthSession else {
             XCTFail("Could not get auth session")
             return
@@ -522,11 +533,11 @@ class SFUserAccountManagerTests: XCTestCase {
         XCTAssertEqual(authSession.oauthRequest.oauthCompletionUrl, testRedirectURI)
         XCTAssertTrue(authSession.oauthCoordinator.delegate === uam)
 
-        let testAuthInfo = OAuthInfo(authType: .refresh)
+        let testAuthInfo = SFOAuthInfo(authType: .refresh)
         let newUserAccount = createNewUser(index: 1)
         newUserAccount.credentials.refreshToken = "oldRefreshToken123"
 
-        authSession.authSuccessCallback(testAuthInfo, newUserAccount)
+        authSession.authSuccessCallback?(testAuthInfo, newUserAccount)
         XCTAssertTrue(successCallbackInvoked)
         XCTAssertTrue(capturedAuthInfo === testAuthInfo)
         XCTAssertTrue(capturedUserAccount === newUserAccount)
@@ -538,7 +549,7 @@ class SFUserAccountManagerTests: XCTestCase {
 
         uam.authSessions.removeObject(forKey: sceneId)
 
-        uam.migrateRefreshToken(testUser, newAppConfig: appConfig, success: { authInfo, userAccount in
+        uam.migrateRefreshToken(for: testUser, newAppConfig: appConfig, success: { authInfo, userAccount in
             successCallbackInvoked = true
             capturedAuthInfo = authInfo
             capturedUserAccount = userAccount
@@ -547,7 +558,7 @@ class SFUserAccountManagerTests: XCTestCase {
             capturedError = error as NSError?
         })
 
-        guard let newSceneId = uam.authSessions.allKeys.firstObject as? String,
+        guard let newSceneId = uam.authSessions.allKeys.first as? String,
               let newAuthSession = uam.authSessions[newSceneId] as? SFSDKAuthSession else {
             XCTFail("Could not get new auth session")
             return
@@ -565,7 +576,7 @@ class SFUserAccountManagerTests: XCTestCase {
         successCallbackInvoked = false
 
         let testError = NSError(domain: "TestErrorDomain", code: 123, userInfo: ["message": "Test error"])
-        newAuthSession.authFailureCallback(testAuthInfo, testError)
+        newAuthSession.authFailureCallback?(testAuthInfo, testError)
 
         XCTAssertTrue(failureCallbackInvoked)
         XCTAssertEqual(capturedError, testError)
@@ -576,19 +587,19 @@ class SFUserAccountManagerTests: XCTestCase {
 
     func testNotifyLoginCompletion_PostsMigrateRefreshTokenNotification() {
         let testUser = createNewUser(index: 0)
-        let authInfo = OAuthInfo(authType: .refreshTokenMigration)
+        let authInfo = SFOAuthInfo(authType: .refreshTokenMigration)
 
         var notificationReceived = false
         var receivedUserInfo: [AnyHashable: Any]?
 
-        let observer = NotificationCenter.default.addObserver(forName: NSNotification.Name(kSFNotificationUserDidMigrateRefreshToken), object: uam, queue: nil) { notification in
+        let observer = NotificationCenter.default.addObserver(forName: .sfNotificationUserDidMigrateRefreshToken, object: uam, queue: nil) { notification in
             notificationReceived = true
             receivedUserInfo = notification.userInfo
         }
 
         uam.notifyLoginCompletion(testUser, authInfo: authInfo)
 
-        XCTAssertTrue(notificationReceived, "Should have received kSFNotificationUserDidMigrateRefreshToken notification")
+        XCTAssertTrue(notificationReceived, "Should have received .sfNotificationUserDidMigrateRefreshToken notification")
         XCTAssertNotNil(receivedUserInfo)
         XCTAssertTrue(receivedUserInfo?[kSFNotificationUserInfoAccountKey] as AnyObject === testUser)
         XCTAssertTrue(receivedUserInfo?[kSFNotificationUserInfoAuthTypeKey] as AnyObject === authInfo)
@@ -605,8 +616,8 @@ class SFUserAccountManagerTests: XCTestCase {
             let user = createNewUser(index: index)
             user.credentials.accessToken = "accesstoken-\(index)"
             XCTAssertNotNil(user.credentials)
-            var error: NSError?
-            UserAccountManager.shared.saveAccount(forUser: user, error: &error)
+            let success = UserAccountManager.shared.upsert(user)
+            let error: NSError? = success ? nil : NSError(domain: "test", code: -1)
             XCTAssertNil(error, "Should be able to create user account")
             let userAccount = uam.userAccount(for: user.accountIdentity)
             XCTAssertEqual(userAccount?.accountIdentity.userId, String(format: kUserIdFormatString, index))
@@ -618,7 +629,9 @@ class SFUserAccountManagerTests: XCTestCase {
 
     private func createNewUser(index: Int) -> UserAccount {
         XCTAssertTrue(index < 10, "Supports only index up to 9")
-        let credentials = OAuthCredentials(identifier: "identifier-\(index)", clientId: "fakeClientIdForTesting", encrypted: true)
+        guard let credentials = OAuthCredentials(identifier: "identifier-\(index)", clientId: "fakeClientIdForTesting", encrypted: true) else {
+            fatalError("Failed to create credentials for test user \(index)")
+        }
         let user = UserAccount(credentials: credentials)
         let userId = String(format: kUserIdFormatString, index)
         let orgId = String(format: kOrgIdFormatString, index)
@@ -628,11 +641,8 @@ class SFUserAccountManagerTests: XCTestCase {
 
     private func deleteUserAndVerify(_ user: UserAccount, userDir: String) {
         let identity = user.accountIdentity
-        do {
-            try uam.delete(forUser: user)
-        } catch {
-            XCTFail("Error deleting account with User ID '\(identity.userId)' and Org ID '\(identity.orgId)': \(error.localizedDescription)")
-        }
+        let deleteSuccess = uam.delete(user)
+        XCTAssertTrue(deleteSuccess, "Error deleting account with User ID '\(identity.userId)' and Org ID '\(identity.orgId)'")
         XCTAssertFalse(FileManager.default.fileExists(atPath: userDir), "User directory should be removed.")
         let inMemoryAccount = uam.userAccount(for: identity)
         XCTAssertNil(inMemoryAccount, "deleteUser should have removed user account from the list of users.")
@@ -720,15 +730,16 @@ class SFUserAccountManagerTests: XCTestCase {
                      "You need to obtain credentials for your test org and replace test_credentials.json")
 
         UserAccountManager.shared.setCurrentUserInternal(nil)
-        UserAccountManager.shared.oauthClientId = credsData.clientId
-        UserAccountManager.shared.oauthCompletionUrl = credsData.redirectUri
+        UserAccountManager.shared.oauthClientID = credsData.clientId
+        UserAccountManager.shared.oauthCompletionURL = credsData.redirectUri
         UserAccountManager.shared.scopes = Set(["web", "api"])
         UserAccountManager.shared.loginHost = credsData.loginHost
 
         let credentials = TestSetupUtils.newClientCredentials()
         credentials.instanceUrl = URL(string: credsData.instanceUrl)
         credentials.identityUrl = URL(string: credsData.identityUrl)
-        if let communityUrlString = credsData.communityUrl, communityUrlString.count > 0 {
+        let communityUrlString = credsData.communityUrl
+        if communityUrlString.count > 0 {
             credentials.communityUrl = URL(string: communityUrlString)
         }
         credentials.accessToken = credsData.accessToken

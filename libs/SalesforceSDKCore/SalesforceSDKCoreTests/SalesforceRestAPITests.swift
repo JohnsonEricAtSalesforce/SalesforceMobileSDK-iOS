@@ -63,7 +63,7 @@ private class RestAPITestResponse {
 
 // MARK: - Delegate Helper
 
-private class RestAPITestDelegate: NSObject, SFRestRequestDelegate {
+private class RestAPITestDelegate: NSObject, RestRequestDelegate {
     var request: RestRequest
     var expectation: XCTestExpectation
     var returnStatus: String = kTestRequestStatusWaiting
@@ -84,7 +84,7 @@ private class RestAPITestDelegate: NSObject, SFRestRequestDelegate {
         expectation.fulfill()
     }
 
-    func request(_ request: RestRequest, didFail dataResponse: Any?, rawResponse: URLResponse?, error: Error) {
+    func request(_ request: RestRequest, didFail dataResponse: Any, rawResponse: URLResponse, error: Error) {
         self.dataResponse = dataResponse
         self.rawResponse = rawResponse
         self.lastError = error as NSError
@@ -127,7 +127,7 @@ class SalesforceRestAPITests: XCTestCase {
         if dataCleanupRequired {
             cleanup()
         }
-        RestClient.sharedGlobal.cleanup()
+        RestClient.sharedGlobalInstance.cleanup()
         RestClient.sharedInstance.cleanup()
         UserAccountManager.shared.setCurrentUserInternal(currentUser)
         Thread.sleep(forTimeInterval: 0.1)
@@ -137,22 +137,22 @@ class SalesforceRestAPITests: XCTestCase {
     // MARK: - Helper Methods
 
     private func cleanup() {
-        let searchRequest = RestClient.sharedInstance.requestForSearch("find {\(kEntityPrefixName)}", apiVersion: kSFRestDefaultAPIVersion)
+        let searchRequest = RestClient.sharedInstance.requestForSearch("find {\(kEntityPrefixName)}", apiVersion: SFRestDefaultAPIVersion)
         let response = sendSyncRequest(searchRequest)
         guard let results = (response.dataResponse as? [String: Any])?[kSearchRecords] as? [[String: Any]] else { return }
         var requests = [RestRequest]()
         for result in results {
             guard let objectType = (result[kAttributes] as? [String: Any])?[kType] as? String,
                   let objectId = result[kId] as? String else { continue }
-            let deleteRequest = RestClient.sharedInstance.requestForDelete(withObjectType: objectType, objectId: objectId, apiVersion: kSFRestDefaultAPIVersion)
+            let deleteRequest = RestClient.sharedInstance.requestForDelete(withObjectType: objectType, objectId: objectId, apiVersion: SFRestDefaultAPIVersion)
             requests.append(deleteRequest)
             if requests.count == 25 {
-                _ = sendSyncRequest(RestClient.sharedInstance.batchRequest(requests, haltOnError: false, apiVersion: kSFRestDefaultAPIVersion))
+                _ = sendSyncRequest(RestClient.sharedInstance.batchRequest(requests, haltOnError: false, apiVersion: SFRestDefaultAPIVersion))
                 requests.removeAll()
             }
         }
         if requests.count > 0 {
-            _ = sendSyncRequest(RestClient.sharedInstance.batchRequest(requests, haltOnError: false, apiVersion: kSFRestDefaultAPIVersion))
+            _ = sendSyncRequest(RestClient.sharedInstance.batchRequest(requests, haltOnError: false, apiVersion: SFRestDefaultAPIVersion))
         }
     }
 
@@ -225,7 +225,7 @@ class SalesforceRestAPITests: XCTestCase {
     }
 
     func testFullRequestPath() {
-        let request = RestClient.sharedInstance.requestForResources(kSFRestDefaultAPIVersion)
+        let request = RestClient.sharedInstance.requestForResources(SFRestDefaultAPIVersion)
         request.path = "\(kSFDefaultRestEndpoint)\(request.path)"
         let response = sendSyncRequest(request)
         XCTAssertEqual(response.returnStatus, kTestRequestStatusDidLoad, "request failed")
@@ -233,7 +233,7 @@ class SalesforceRestAPITests: XCTestCase {
     }
 
     func testUserDefinedEndpoint() {
-        let request = RestClient.sharedInstance.requestForResources(kSFRestDefaultAPIVersion)
+        let request = RestClient.sharedInstance.requestForResources(SFRestDefaultAPIVersion)
         request.endpoint = "/my/custom/endpoint"
         let response = sendSyncRequest(request)
         XCTAssertEqual(response.returnStatus, kTestRequestStatusDidFail, "request should have failed")
@@ -258,28 +258,28 @@ class SalesforceRestAPITests: XCTestCase {
     }
 
     func testGetLimits() {
-        let request = RestClient.sharedInstance.requestForLimits(kSFRestDefaultAPIVersion)
+        let request = RestClient.sharedInstance.requestForLimits(SFRestDefaultAPIVersion)
         let response = sendSyncRequest(request)
         XCTAssertEqual(response.returnStatus, kTestRequestStatusDidLoad, "request failed")
         dataCleanupRequired = false
     }
 
     func testGetResources() {
-        let request = RestClient.sharedInstance.requestForResources(kSFRestDefaultAPIVersion)
+        let request = RestClient.sharedInstance.requestForResources(SFRestDefaultAPIVersion)
         let response = sendSyncRequest(request)
         XCTAssertEqual(response.returnStatus, kTestRequestStatusDidLoad, "request failed")
         dataCleanupRequired = false
     }
 
     func testGetDescribeGlobal() {
-        let request = RestClient.sharedInstance.requestForDescribeGlobal(kSFRestDefaultAPIVersion)
+        let request = RestClient.sharedInstance.requestForDescribeGlobal(SFRestDefaultAPIVersion)
         let response = sendSyncRequest(request)
         XCTAssertEqual(response.returnStatus, kTestRequestStatusDidLoad, "request failed")
         dataCleanupRequired = false
     }
 
     func testGetDescribeGlobal_Cancel() {
-        let request = RestClient.sharedInstance.requestForDescribeGlobal(kSFRestDefaultAPIVersion)
+        let request = RestClient.sharedInstance.requestForDescribeGlobal(SFRestDefaultAPIVersion)
         var status = kTestRequestStatusWaiting
         let exp = expectation(description: "Request cancelled")
 
@@ -297,7 +297,7 @@ class SalesforceRestAPITests: XCTestCase {
     }
 
     func testGetDescribeGlobal_Timeout() {
-        let request = RestClient.sharedInstance.requestForDescribeGlobal(kSFRestDefaultAPIVersion)
+        let request = RestClient.sharedInstance.requestForDescribeGlobal(SFRestDefaultAPIVersion)
         var status = kTestRequestStatusWaiting
         let exp = expectation(description: "Request timeout")
 
@@ -316,60 +316,60 @@ class SalesforceRestAPITests: XCTestCase {
     }
 
     func testGetMetadataWithObjectType() {
-        let request = RestClient.sharedInstance.requestForMetadata(withObjectType: kContact, apiVersion: kSFRestDefaultAPIVersion)
+        let request = RestClient.sharedInstance.requestForMetadata(withObjectType: kContact, apiVersion: SFRestDefaultAPIVersion)
         let response = sendSyncRequest(request)
         XCTAssertEqual(response.returnStatus, kTestRequestStatusDidLoad, "request failed")
         dataCleanupRequired = false
     }
 
     func testGetDescribeWithObjectType() {
-        let request = RestClient.sharedInstance.requestForDescribe(withObjectType: kContact, apiVersion: kSFRestDefaultAPIVersion)
+        let request = RestClient.sharedInstance.requestForDescribe(withObjectType: kContact, apiVersion: SFRestDefaultAPIVersion)
         let response = sendSyncRequest(request)
         XCTAssertEqual(response.returnStatus, kTestRequestStatusDidLoad, "request failed")
         dataCleanupRequired = false
     }
 
     func testGetLayoutWithObjectAPINameWithoutFormFactor() {
-        let request = RestClient.sharedInstance.requestForLayout(withObjectAPIName: kContact, formFactor: nil, layoutType: nil, mode: nil, recordTypeId: nil, apiVersion: kSFRestDefaultAPIVersion)
+        let request = RestClient.sharedInstance.requestForLayout(withObjectAPIName: kContact, formFactor: nil, layoutType: nil, mode: nil, recordTypeId: nil, apiVersion: SFRestDefaultAPIVersion)
         let response = sendSyncRequest(request)
         XCTAssertEqual(response.returnStatus, kTestRequestStatusDidLoad, "request failed")
         dataCleanupRequired = false
     }
 
     func testGetLayoutWithObjectAPINameWithFormFactor() {
-        let request = RestClient.sharedInstance.requestForLayout(withObjectAPIName: kContact, formFactor: "Medium", layoutType: nil, mode: nil, recordTypeId: nil, apiVersion: kSFRestDefaultAPIVersion)
+        let request = RestClient.sharedInstance.requestForLayout(withObjectAPIName: kContact, formFactor: "Medium", layoutType: nil, mode: nil, recordTypeId: nil, apiVersion: SFRestDefaultAPIVersion)
         let response = sendSyncRequest(request)
         XCTAssertEqual(response.returnStatus, kTestRequestStatusDidLoad, "request failed")
     }
 
     func testGetLayoutWithObjectAPINameWithLayoutType() {
-        let request = RestClient.sharedInstance.requestForLayout(withObjectAPIName: kContact, formFactor: nil, layoutType: "Compact", mode: nil, recordTypeId: nil, apiVersion: kSFRestDefaultAPIVersion)
+        let request = RestClient.sharedInstance.requestForLayout(withObjectAPIName: kContact, formFactor: nil, layoutType: "Compact", mode: nil, recordTypeId: nil, apiVersion: SFRestDefaultAPIVersion)
         let response = sendSyncRequest(request)
         XCTAssertEqual(response.returnStatus, kTestRequestStatusDidLoad, "request failed")
     }
 
     func testGetLayoutWithObjectAPINameWithMode() {
-        let request = RestClient.sharedInstance.requestForLayout(withObjectAPIName: kContact, formFactor: nil, layoutType: nil, mode: "Edit", recordTypeId: nil, apiVersion: kSFRestDefaultAPIVersion)
+        let request = RestClient.sharedInstance.requestForLayout(withObjectAPIName: kContact, formFactor: nil, layoutType: nil, mode: "Edit", recordTypeId: nil, apiVersion: SFRestDefaultAPIVersion)
         let response = sendSyncRequest(request)
         XCTAssertEqual(response.returnStatus, kTestRequestStatusDidLoad, "request failed")
     }
 
     func testGetSearchScopeAndOrder() {
-        let request = RestClient.sharedInstance.requestForSearchScopeAndOrder(kSFRestDefaultAPIVersion)
+        let request = RestClient.sharedInstance.requestForSearchScopeAndOrder(SFRestDefaultAPIVersion)
         let response = sendSyncRequest(request)
         XCTAssertEqual(response.returnStatus, kTestRequestStatusDidLoad, "request failed")
         dataCleanupRequired = false
     }
 
     func testGetSearchResultLayout() {
-        let request = RestClient.sharedInstance.requestForSearchResultLayout(kAccount, apiVersion: kSFRestDefaultAPIVersion)
+        let request = RestClient.sharedInstance.requestForSearchResultLayout(kAccount, apiVersion: SFRestDefaultAPIVersion)
         let response = sendSyncRequest(request)
         XCTAssertEqual(response.returnStatus, kTestRequestStatusDidLoad, "request failed")
         dataCleanupRequired = false
     }
 
     func testCreateBogusContact() {
-        let request = RestClient.sharedInstance.requestForCreate(withObjectType: kContact, fields: nil, apiVersion: kSFRestDefaultAPIVersion)
+        let request = RestClient.sharedInstance.requestForCreate(withObjectType: kContact, fields: nil, apiVersion: SFRestDefaultAPIVersion)
         let response = sendSyncRequest(request)
         XCTAssertEqual(response.returnStatus, kTestRequestStatusDidFail, "request should have failed")
     }
@@ -378,7 +378,7 @@ class SalesforceRestAPITests: XCTestCase {
         let lastName = generateRecordName()
         let fields: [String: String] = [kFirstName: "John", kLastName: lastName]
 
-        var request = RestClient.sharedInstance.requestForCreate(withObjectType: kContact, fields: fields, apiVersion: kSFRestDefaultAPIVersion)
+        var request = RestClient.sharedInstance.requestForCreate(withObjectType: kContact, fields: fields, apiVersion: SFRestDefaultAPIVersion)
         var response = sendSyncRequest(request)
         XCTAssertEqual(response.returnStatus, kTestRequestStatusDidLoad, "request failed")
 
@@ -387,26 +387,26 @@ class SalesforceRestAPITests: XCTestCase {
         }
 
         defer {
-            request = RestClient.sharedInstance.requestForDelete(withObjectType: kContact, objectId: contactId, apiVersion: kSFRestDefaultAPIVersion)
+            request = RestClient.sharedInstance.requestForDelete(withObjectType: kContact, objectId: contactId, apiVersion: SFRestDefaultAPIVersion)
             _ = sendSyncRequest(request)
         }
 
         // Retrieve
-        request = RestClient.sharedInstance.requestForRetrieve(withObjectType: kContact, objectId: contactId, fieldList: nil, apiVersion: kSFRestDefaultAPIVersion)
+        request = RestClient.sharedInstance.requestForRetrieve(withObjectType: kContact, objectId: contactId, fieldList: nil, apiVersion: SFRestDefaultAPIVersion)
         response = sendSyncRequest(request)
         XCTAssertEqual(response.returnStatus, kTestRequestStatusDidLoad, "request failed")
         XCTAssertEqual((response.dataResponse as? [String: Any])?[kLastName] as? String, lastName)
         XCTAssertEqual((response.dataResponse as? [String: Any])?[kFirstName] as? String, "John")
 
         // Retrieve with field list
-        request = RestClient.sharedInstance.requestForRetrieve(withObjectType: kContact, objectId: contactId, fieldList: "LastName, FirstName", apiVersion: kSFRestDefaultAPIVersion)
+        request = RestClient.sharedInstance.requestForRetrieve(withObjectType: kContact, objectId: contactId, fieldList: "LastName, FirstName", apiVersion: SFRestDefaultAPIVersion)
         response = sendSyncRequest(request)
         XCTAssertEqual(response.returnStatus, kTestRequestStatusDidLoad, "request failed")
         XCTAssertEqual((response.dataResponse as? [String: Any])?[kLastName] as? String, lastName)
         XCTAssertEqual((response.dataResponse as? [String: Any])?[kFirstName] as? String, "John")
 
         // Query
-        request = RestClient.sharedInstance.requestForQuery("select Id, FirstName from Contact where LastName='\(lastName)'", apiVersion: kSFRestDefaultAPIVersion)
+        request = RestClient.sharedInstance.requestForQuery("select Id, FirstName from Contact where LastName='\(lastName)'", apiVersion: SFRestDefaultAPIVersion)
         response = sendSyncRequest(request)
         XCTAssertEqual(response.returnStatus, kTestRequestStatusDidLoad, "request failed")
         let records = (response.dataResponse as? [String: Any])?[kRecords] as? [[String: Any]]
@@ -414,7 +414,7 @@ class SalesforceRestAPITests: XCTestCase {
 
         // Search (wait for indexing)
         Thread.sleep(forTimeInterval: 5.0)
-        request = RestClient.sharedInstance.requestForSearch("Find {\(lastName)}", apiVersion: kSFRestDefaultAPIVersion)
+        request = RestClient.sharedInstance.requestForSearch("Find {\(lastName)}", apiVersion: SFRestDefaultAPIVersion)
         response = sendSyncRequest(request)
         XCTAssertEqual(response.returnStatus, kTestRequestStatusDidLoad, "request failed")
     }
@@ -424,7 +424,7 @@ class SalesforceRestAPITests: XCTestCase {
         let updatedLastName = "\(lastName)_updated"
         let fields: [String: String] = [kFirstName: "John", kLastName: lastName]
 
-        var request = RestClient.sharedInstance.requestForCreate(withObjectType: kContact, fields: fields, apiVersion: kSFRestDefaultAPIVersion)
+        var request = RestClient.sharedInstance.requestForCreate(withObjectType: kContact, fields: fields, apiVersion: SFRestDefaultAPIVersion)
         var response = sendSyncRequest(request)
         XCTAssertEqual(response.returnStatus, kTestRequestStatusDidLoad, "request failed")
 
@@ -433,12 +433,12 @@ class SalesforceRestAPITests: XCTestCase {
         }
 
         defer {
-            request = RestClient.sharedInstance.requestForDelete(withObjectType: kContact, objectId: contactId, apiVersion: kSFRestDefaultAPIVersion)
+            request = RestClient.sharedInstance.requestForDelete(withObjectType: kContact, objectId: contactId, apiVersion: SFRestDefaultAPIVersion)
             _ = sendSyncRequest(request)
         }
 
         // Query
-        request = RestClient.sharedInstance.requestForQuery("select Id, FirstName from Contact where LastName='\(lastName)'", apiVersion: kSFRestDefaultAPIVersion)
+        request = RestClient.sharedInstance.requestForQuery("select Id, FirstName from Contact where LastName='\(lastName)'", apiVersion: SFRestDefaultAPIVersion)
         response = sendSyncRequest(request)
         XCTAssertEqual(response.returnStatus, kTestRequestStatusDidLoad)
         let queryRecords = (response.dataResponse as? [String: Any])?[kRecords] as? [[String: Any]]
@@ -446,19 +446,19 @@ class SalesforceRestAPITests: XCTestCase {
 
         // Update
         let updatedFields = [kLastName: updatedLastName]
-        request = RestClient.sharedInstance.requestForUpdate(withObjectType: kContact, objectId: contactId, fields: updatedFields, apiVersion: kSFRestDefaultAPIVersion)
+        request = RestClient.sharedInstance.requestForUpdate(withObjectType: kContact, objectId: contactId, fields: updatedFields, apiVersion: SFRestDefaultAPIVersion)
         response = sendSyncRequest(request)
         XCTAssertEqual(response.returnStatus, kTestRequestStatusDidLoad)
 
         // Query updated
-        request = RestClient.sharedInstance.requestForQuery("select Id, FirstName from Contact where LastName='\(updatedLastName)'", apiVersion: kSFRestDefaultAPIVersion)
+        request = RestClient.sharedInstance.requestForQuery("select Id, FirstName from Contact where LastName='\(updatedLastName)'", apiVersion: SFRestDefaultAPIVersion)
         response = sendSyncRequest(request)
         XCTAssertEqual(response.returnStatus, kTestRequestStatusDidLoad)
         let updatedRecords = (response.dataResponse as? [String: Any])?[kRecords] as? [[String: Any]]
         XCTAssertEqual(updatedRecords?.count, 1, "expected just one query result")
 
         // Old should be gone
-        request = RestClient.sharedInstance.requestForQuery("select Id, FirstName from Contact where LastName='\(lastName)'", apiVersion: kSFRestDefaultAPIVersion)
+        request = RestClient.sharedInstance.requestForQuery("select Id, FirstName from Contact where LastName='\(lastName)'", apiVersion: SFRestDefaultAPIVersion)
         response = sendSyncRequest(request)
         XCTAssertEqual(response.returnStatus, kTestRequestStatusDidLoad)
         let oldRecords = (response.dataResponse as? [String: Any])?[kRecords] as? [[String: Any]]
@@ -469,7 +469,7 @@ class SalesforceRestAPITests: XCTestCase {
         let acctName = generateRecordName()
         let fields = [kName: acctName]
         let uuid = UUID().uuidString
-        let request = RestClient.sharedInstance.requestForUpsert(withObjectType: kAccount, externalIdField: "bogusField__c", externalId: uuid, fields: fields, apiVersion: kSFRestDefaultAPIVersion)
+        let request = RestClient.sharedInstance.requestForUpsert(withObjectType: kAccount, externalIdField: "bogusField__c", externalId: uuid, fields: fields, apiVersion: SFRestDefaultAPIVersion)
         let response = sendSyncRequest(request)
         XCTAssertEqual(response.returnStatus, kTestRequestStatusDidFail, "request should have failed")
         XCTAssertEqual(response.lastError?.code, 404, "error code should have been 404")
@@ -479,7 +479,7 @@ class SalesforceRestAPITests: XCTestCase {
         let accountName = generateRecordName()
         var fields: [String: String] = [kName: accountName]
 
-        var request = RestClient.sharedInstance.requestForUpsert(withObjectType: kAccount, externalIdField: kId, externalId: nil, fields: fields, apiVersion: kSFRestDefaultAPIVersion)
+        var request = RestClient.sharedInstance.requestForUpsert(withObjectType: kAccount, externalIdField: kId, externalId: nil, fields: fields, apiVersion: SFRestDefaultAPIVersion)
         var response = sendSyncRequest(request)
         XCTAssertEqual(response.returnStatus, kTestRequestStatusDidLoad)
         guard let accountId = (response.dataResponse as? [String: Any])?[kLid] as? String else {
@@ -487,25 +487,25 @@ class SalesforceRestAPITests: XCTestCase {
         }
 
         // Retrieve
-        request = RestClient.sharedInstance.requestForRetrieve(withObjectType: kAccount, objectId: accountId, fieldList: kName, apiVersion: kSFRestDefaultAPIVersion)
+        request = RestClient.sharedInstance.requestForRetrieve(withObjectType: kAccount, objectId: accountId, fieldList: kName, apiVersion: SFRestDefaultAPIVersion)
         response = sendSyncRequest(request)
         XCTAssertEqual((response.dataResponse as? [String: Any])?[kName] as? String, accountName)
 
         // Update with upsert
         let accountNameUpdated = "\(accountName)_updated"
         fields = [kName: accountNameUpdated]
-        request = RestClient.sharedInstance.requestForUpsert(withObjectType: kAccount, externalIdField: kId, externalId: accountId, fields: fields, apiVersion: kSFRestDefaultAPIVersion)
+        request = RestClient.sharedInstance.requestForUpsert(withObjectType: kAccount, externalIdField: kId, externalId: accountId, fields: fields, apiVersion: SFRestDefaultAPIVersion)
         response = sendSyncRequest(request)
         XCTAssertEqual(response.returnStatus, kTestRequestStatusDidLoad)
 
         // Retrieve updated
-        request = RestClient.sharedInstance.requestForRetrieve(withObjectType: kAccount, objectId: accountId, fieldList: kName, apiVersion: kSFRestDefaultAPIVersion)
+        request = RestClient.sharedInstance.requestForRetrieve(withObjectType: kAccount, objectId: accountId, fieldList: kName, apiVersion: SFRestDefaultAPIVersion)
         response = sendSyncRequest(request)
         XCTAssertEqual((response.dataResponse as? [String: Any])?[kName] as? String, accountNameUpdated)
     }
 
     func testSOQLError() {
-        let request = RestClient.sharedInstance.requestForQuery(nil, apiVersion: kSFRestDefaultAPIVersion)
+        let request = RestClient.sharedInstance.requestForQuery(nil, apiVersion: SFRestDefaultAPIVersion)
         let response = sendSyncRequest(request)
         XCTAssertEqual(response.returnStatus, kTestRequestStatusDidFail)
         XCTAssertEqual(response.lastError?.code, 400)
@@ -513,7 +513,7 @@ class SalesforceRestAPITests: XCTestCase {
     }
 
     func testRetrieveError() {
-        let request = RestClient.sharedInstance.requestForRetrieve(withObjectType: kContact, objectId: "bogus_contact_id", fieldList: nil, apiVersion: kSFRestDefaultAPIVersion)
+        let request = RestClient.sharedInstance.requestForRetrieve(withObjectType: kContact, objectId: "bogus_contact_id", fieldList: nil, apiVersion: SFRestDefaultAPIVersion)
         let response = sendSyncRequest(request)
         XCTAssertEqual(response.returnStatus, kTestRequestStatusDidFail)
         XCTAssertEqual(response.lastError?.code, 404)
@@ -524,12 +524,12 @@ class SalesforceRestAPITests: XCTestCase {
         let accountName = generateRecordName()
         let contactName = generateRecordName()
 
-        let createAccountRequest = RestClient.sharedInstance.requestForCreate(withObjectType: kAccount, fields: [kName: accountName], apiVersion: kSFRestDefaultAPIVersion)
-        let createContactRequest = RestClient.sharedInstance.requestForCreate(withObjectType: kContact, fields: [kLastName: contactName], apiVersion: kSFRestDefaultAPIVersion)
-        let queryForAccount = RestClient.sharedInstance.requestForQuery("select Id from Account where Name = '\(accountName)'", apiVersion: kSFRestDefaultAPIVersion)
-        let queryForContact = RestClient.sharedInstance.requestForQuery("select Id from Contact where Name = '\(contactName)'", apiVersion: kSFRestDefaultAPIVersion)
+        let createAccountRequest = RestClient.sharedInstance.requestForCreate(withObjectType: kAccount, fields: [kName: accountName], apiVersion: SFRestDefaultAPIVersion)
+        let createContactRequest = RestClient.sharedInstance.requestForCreate(withObjectType: kContact, fields: [kLastName: contactName], apiVersion: SFRestDefaultAPIVersion)
+        let queryForAccount = RestClient.sharedInstance.requestForQuery("select Id from Account where Name = '\(accountName)'", apiVersion: SFRestDefaultAPIVersion)
+        let queryForContact = RestClient.sharedInstance.requestForQuery("select Id from Contact where Name = '\(contactName)'", apiVersion: SFRestDefaultAPIVersion)
 
-        let batchRequest = RestClient.sharedInstance.batchRequest([createAccountRequest, createContactRequest, queryForAccount, queryForContact], haltOnError: true, apiVersion: kSFRestDefaultAPIVersion)
+        let batchRequest = RestClient.sharedInstance.batchRequest([createAccountRequest, createContactRequest, queryForAccount, queryForContact], haltOnError: true, apiVersion: SFRestDefaultAPIVersion)
         let response = sendSyncRequest(batchRequest)
 
         guard let dataResponse = response.dataResponse as? [String: Any],
@@ -555,11 +555,11 @@ class SalesforceRestAPITests: XCTestCase {
         let accountName = generateRecordName()
         let contactName = generateRecordName()
 
-        let createAccountRequest = RestClient.sharedInstance.requestForCreate(withObjectType: kAccount, fields: [kName: accountName], apiVersion: kSFRestDefaultAPIVersion)
-        let createContactRequest = RestClient.sharedInstance.requestForCreate(withObjectType: kContact, fields: [kLastName: contactName, kAccountId: "@{refAccount.id}"], apiVersion: kSFRestDefaultAPIVersion)
-        let queryForContact = RestClient.sharedInstance.requestForQuery("select Id, AccountId from Contact where LastName = '\(contactName)'", apiVersion: kSFRestDefaultAPIVersion)
+        let createAccountRequest = RestClient.sharedInstance.requestForCreate(withObjectType: kAccount, fields: [kName: accountName], apiVersion: SFRestDefaultAPIVersion)
+        let createContactRequest = RestClient.sharedInstance.requestForCreate(withObjectType: kContact, fields: [kLastName: contactName, kAccountId: "@{refAccount.id}"], apiVersion: SFRestDefaultAPIVersion)
+        let queryForContact = RestClient.sharedInstance.requestForQuery("select Id, AccountId from Contact where LastName = '\(contactName)'", apiVersion: SFRestDefaultAPIVersion)
 
-        let compositeRequest = RestClient.sharedInstance.compositeRequest([createAccountRequest, createContactRequest, queryForContact], refIds: ["refAccount", "refContact", "refQuery"], allOrNone: true, apiVersion: kSFRestDefaultAPIVersion)
+        let compositeRequest = RestClient.sharedInstance.compositeRequest([createAccountRequest, createContactRequest, queryForContact], refIds: ["refAccount", "refContact", "refQuery"], allOrNone: true, apiVersion: SFRestDefaultAPIVersion)
         let response = sendSyncRequest(compositeRequest)
 
         guard let dataResponse = response.dataResponse as? [String: Any],
@@ -588,7 +588,7 @@ class SalesforceRestAPITests: XCTestCase {
         let otherContactTree = SFSObjectTree(objectType: kContact, objectTypePlural: "Contacts", referenceId: "refOtherContact", fields: [kLastName: otherContactName], childrenTrees: nil)
         let accountTree = SFSObjectTree(objectType: kAccount, objectTypePlural: nil, referenceId: "refAccount", fields: [kName: accountName], childrenTrees: [contactTree, otherContactTree])
 
-        let treeRequest = RestClient.sharedInstance.requestForSObjectTree(kAccount, objectTrees: [accountTree], apiVersion: kSFRestDefaultAPIVersion)
+        let treeRequest = RestClient.sharedInstance.requestForSObjectTree(kAccount, objectTrees: [accountTree], apiVersion: SFRestDefaultAPIVersion)
         let response = sendSyncRequest(treeRequest)
 
         guard let dataResponse = response.dataResponse as? [String: Any],
@@ -603,7 +603,7 @@ class SalesforceRestAPITests: XCTestCase {
         let otherContactId = results[2][kLid] as? String
 
         // Query first contact
-        var queryRequest = RestClient.sharedInstance.requestForQuery("select Id, AccountId from Contact where LastName = '\(contactName)'", apiVersion: kSFRestDefaultAPIVersion)
+        var queryRequest = RestClient.sharedInstance.requestForQuery("select Id, AccountId from Contact where LastName = '\(contactName)'", apiVersion: SFRestDefaultAPIVersion)
         var queryResponse = sendSyncRequest(queryRequest)
         var queryRecords = (queryResponse.dataResponse as? [String: Any])?[kRecords] as? [[String: Any]]
         XCTAssertEqual(queryRecords?.count, 1)
@@ -611,7 +611,7 @@ class SalesforceRestAPITests: XCTestCase {
         XCTAssertEqual(queryRecords?.first?[kId] as? String, contactId)
 
         // Query other contact
-        queryRequest = RestClient.sharedInstance.requestForQuery("select Id, AccountId from Contact where LastName = '\(otherContactName)'", apiVersion: kSFRestDefaultAPIVersion)
+        queryRequest = RestClient.sharedInstance.requestForQuery("select Id, AccountId from Contact where LastName = '\(otherContactName)'", apiVersion: SFRestDefaultAPIVersion)
         queryResponse = sendSyncRequest(queryRequest)
         queryRecords = (queryResponse.dataResponse as? [String: Any])?[kRecords] as? [[String: Any]]
         XCTAssertEqual(queryRecords?.count, 1)
@@ -620,7 +620,7 @@ class SalesforceRestAPITests: XCTestCase {
     }
 
     func testGetPrimingRecords() {
-        let request = RestClient.sharedInstance.requestForPrimingRecords(nil, changedAfterTimestamp: nil, apiVersion: kSFRestDefaultAPIVersion)
+        let request = RestClient.sharedInstance.requestForPrimingRecords(nil, changedAfterTimestamp: nil, apiVersion: SFRestDefaultAPIVersion)
         let response = sendSyncRequest(request)
         guard let dataResponse = response.dataResponse as? [String: Any] else { XCTFail("No response"); return }
         XCTAssertNotNil(dataResponse["primingRecords"])
@@ -640,7 +640,7 @@ class SalesforceRestAPITests: XCTestCase {
             ["Contact", "LastName", contactName]
         ])
 
-        let request = RestClient.sharedInstance.requestForCollectionCreate(true, records: records, apiVersion: kSFRestDefaultAPIVersion)
+        let request = RestClient.sharedInstance.requestForCollectionCreate(true, records: records, apiVersion: SFRestDefaultAPIVersion)
         let response = sendSyncRequest(request)
         let parsedResponse = SFSDKCollectionResponse(response.dataResponse)
 
@@ -663,13 +663,13 @@ class SalesforceRestAPITests: XCTestCase {
             ["Account", "Name", secondAccountName]
         ])
 
-        let request = RestClient.sharedInstance.requestForCollectionCreate(true, records: records, apiVersion: kSFRestDefaultAPIVersion)
+        let request = RestClient.sharedInstance.requestForCollectionCreate(true, records: records, apiVersion: SFRestDefaultAPIVersion)
         let response = sendSyncRequest(request)
         let parsedCreateResponse = SFSDKCollectionResponse(response.dataResponse)
         let firstAccountId = parsedCreateResponse.subResponses[0].objectId ?? ""
         let secondAccountId = parsedCreateResponse.subResponses[2].objectId ?? ""
 
-        let accountsRetrieveRequest = RestClient.sharedInstance.requestForCollectionRetrieve(kAccount, objectIds: [firstAccountId, secondAccountId], fieldList: ["Id", "Name"], apiVersion: kSFRestDefaultAPIVersion)
+        let accountsRetrieveRequest = RestClient.sharedInstance.requestForCollectionRetrieve(kAccount, objectIds: [firstAccountId, secondAccountId], fieldList: ["Id", "Name"], apiVersion: SFRestDefaultAPIVersion)
         let retrieveResponse = sendSyncRequest(accountsRetrieveRequest)
         guard let accountsRetrieved = retrieveResponse.dataResponse as? [[String: Any]] else { XCTFail("bad response"); return }
         XCTAssertEqual(accountsRetrieved.count, 2)
@@ -688,13 +688,13 @@ class SalesforceRestAPITests: XCTestCase {
             ["Account", "Name", secondAccountName]
         ])
 
-        let createRequest = RestClient.sharedInstance.requestForCollectionCreate(true, records: records, apiVersion: kSFRestDefaultAPIVersion)
+        let createRequest = RestClient.sharedInstance.requestForCollectionCreate(true, records: records, apiVersion: SFRestDefaultAPIVersion)
         let createResponse = sendSyncRequest(createRequest)
         let parsedCreateResponse = SFSDKCollectionResponse(createResponse.dataResponse)
         let firstAccountId = parsedCreateResponse.subResponses[0].objectId ?? ""
         let contactId = parsedCreateResponse.subResponses[1].objectId ?? ""
 
-        let deleteRequest = RestClient.sharedInstance.requestForCollectionDelete(true, objectIds: [firstAccountId, contactId], apiVersion: kSFRestDefaultAPIVersion)
+        let deleteRequest = RestClient.sharedInstance.requestForCollectionDelete(true, objectIds: [firstAccountId, contactId], apiVersion: SFRestDefaultAPIVersion)
         let deleteResponse = sendSyncRequest(deleteRequest)
         let parsedDeleteResponse = SFSDKCollectionResponse(deleteResponse.dataResponse)
         XCTAssertEqual(parsedDeleteResponse.subResponses.count, 2)
@@ -702,7 +702,7 @@ class SalesforceRestAPITests: XCTestCase {
         XCTAssertTrue(parsedDeleteResponse.subResponses[1].success)
 
         // Verify deleted
-        let retrieveRequest = RestClient.sharedInstance.requestForRetrieve(withObjectType: "Account", objectId: firstAccountId, fieldList: "Id,Name", apiVersion: kSFRestDefaultAPIVersion)
+        let retrieveRequest = RestClient.sharedInstance.requestForRetrieve(withObjectType: "Account", objectId: firstAccountId, fieldList: "Id,Name", apiVersion: SFRestDefaultAPIVersion)
         let retrieveResponse = sendSyncRequest(retrieveRequest)
         XCTAssertEqual(retrieveResponse.lastError?.code, 404)
     }
@@ -710,30 +710,30 @@ class SalesforceRestAPITests: XCTestCase {
     // MARK: - Files Tests
 
     func testOwnedFilesList() {
-        var request = RestClient.sharedInstance.requestForOwnedFilesList(nil, page: 0, apiVersion: kSFRestDefaultAPIVersion)
+        var request = RestClient.sharedInstance.requestForOwnedFilesList(nil, page: 0, apiVersion: SFRestDefaultAPIVersion)
         var response = sendSyncRequest(request)
         XCTAssertEqual(response.returnStatus, kTestRequestStatusDidLoad)
-        request = RestClient.sharedInstance.requestForOwnedFilesList(currentUser?.credentials.userId, page: 0, apiVersion: kSFRestDefaultAPIVersion)
+        request = RestClient.sharedInstance.requestForOwnedFilesList(currentUser?.credentials.userId, page: 0, apiVersion: SFRestDefaultAPIVersion)
         response = sendSyncRequest(request)
         XCTAssertEqual(response.returnStatus, kTestRequestStatusDidLoad)
         dataCleanupRequired = false
     }
 
     func testFilesInUsersGroups() {
-        var request = RestClient.sharedInstance.requestForFilesInUsersGroups(nil, page: 0, apiVersion: kSFRestDefaultAPIVersion)
+        var request = RestClient.sharedInstance.requestForFilesInUsersGroups(nil, page: 0, apiVersion: SFRestDefaultAPIVersion)
         var response = sendSyncRequest(request)
         XCTAssertEqual(response.returnStatus, kTestRequestStatusDidLoad)
-        request = RestClient.sharedInstance.requestForFilesInUsersGroups(currentUser?.credentials.userId, page: 0, apiVersion: kSFRestDefaultAPIVersion)
+        request = RestClient.sharedInstance.requestForFilesInUsersGroups(currentUser?.credentials.userId, page: 0, apiVersion: SFRestDefaultAPIVersion)
         response = sendSyncRequest(request)
         XCTAssertEqual(response.returnStatus, kTestRequestStatusDidLoad)
         dataCleanupRequired = false
     }
 
     func testFilesSharedWithUser() {
-        var request = RestClient.sharedInstance.requestForFilesShared(withUser: nil, page: 0, apiVersion: kSFRestDefaultAPIVersion)
+        var request = RestClient.sharedInstance.requestForFilesShared(withUser: nil, page: 0, apiVersion: SFRestDefaultAPIVersion)
         var response = sendSyncRequest(request)
         XCTAssertEqual(response.returnStatus, kTestRequestStatusDidLoad)
-        request = RestClient.sharedInstance.requestForFilesShared(withUser: currentUser?.credentials.userId, page: 0, apiVersion: kSFRestDefaultAPIVersion)
+        request = RestClient.sharedInstance.requestForFilesShared(withUser: currentUser?.credentials.userId, page: 0, apiVersion: SFRestDefaultAPIVersion)
         response = sendSyncRequest(request)
         XCTAssertEqual(response.returnStatus, kTestRequestStatusDidLoad)
         dataCleanupRequired = false
@@ -743,22 +743,22 @@ class SalesforceRestAPITests: XCTestCase {
         let fileAttrs = uploadFile()
 
         // Download content
-        var request = RestClient.sharedInstance.requestForFileContents(fileAttrs[kLid] as? String ?? "", version: nil, apiVersion: kSFRestDefaultAPIVersion)
+        var request = RestClient.sharedInstance.requestForFileContents(fileAttrs[kLid] as? String ?? "", version: nil, apiVersion: SFRestDefaultAPIVersion)
         var response = sendSyncRequest(request)
         XCTAssertEqual(response.returnStatus, kTestRequestStatusDidLoad)
 
         // Download rendition
-        request = RestClient.sharedInstance.requestForFileRendition(fileAttrs[kLid] as? String ?? "", version: nil, renditionType: "PDF", page: 0, apiVersion: kSFRestDefaultAPIVersion)
+        request = RestClient.sharedInstance.requestForFileRendition(fileAttrs[kLid] as? String ?? "", version: nil, renditionType: "PDF", page: 0, apiVersion: SFRestDefaultAPIVersion)
         response = sendSyncRequest(request)
         XCTAssertEqual(response.returnStatus, kTestRequestStatusDidLoad)
 
         // Delete
-        request = RestClient.sharedInstance.requestForDelete(withObjectType: "ContentDocument", objectId: fileAttrs[kLid] as? String ?? "", apiVersion: kSFRestDefaultAPIVersion)
+        request = RestClient.sharedInstance.requestForDelete(withObjectType: "ContentDocument", objectId: fileAttrs[kLid] as? String ?? "", apiVersion: SFRestDefaultAPIVersion)
         response = sendSyncRequest(request)
         XCTAssertEqual(response.returnStatus, kTestRequestStatusDidLoad)
 
         // Download again (expect 404)
-        request = RestClient.sharedInstance.requestForFileContents(fileAttrs[kLid] as? String ?? "", version: nil, apiVersion: kSFRestDefaultAPIVersion)
+        request = RestClient.sharedInstance.requestForFileContents(fileAttrs[kLid] as? String ?? "", version: nil, apiVersion: SFRestDefaultAPIVersion)
         response = sendSyncRequest(request)
         XCTAssertEqual(response.returnStatus, kTestRequestStatusDidFail)
         XCTAssertEqual(response.lastError?.code, 404)
@@ -770,7 +770,7 @@ class SalesforceRestAPITests: XCTestCase {
         let invalidAccessToken = "xyz"
         changeOauthTokens(accessToken: invalidAccessToken, refreshToken: nil)
 
-        let request = RestClient.sharedInstance.requestForResources(kSFRestDefaultAPIVersion)
+        let request = RestClient.sharedInstance.requestForResources(SFRestDefaultAPIVersion)
         let response = sendSyncRequest(request)
         XCTAssertEqual(response.returnStatus, kTestRequestStatusDidLoad)
 
@@ -784,7 +784,7 @@ class SalesforceRestAPITests: XCTestCase {
         changeOauthTokens(accessToken: invalidAccessToken, refreshToken: nil)
 
         let fields = [kFirstName: "John", kLastName: generateRecordName()]
-        let request = RestClient.sharedInstance.requestForCreate(withObjectType: kContact, fields: fields, apiVersion: kSFRestDefaultAPIVersion)
+        let request = RestClient.sharedInstance.requestForCreate(withObjectType: kContact, fields: fields, apiVersion: SFRestDefaultAPIVersion)
         let response = sendSyncRequest(request)
         XCTAssertEqual(response.returnStatus, kTestRequestStatusDidLoad)
         let contactId = (response.dataResponse as? [String: Any])?[kLid] as? String
@@ -794,7 +794,7 @@ class SalesforceRestAPITests: XCTestCase {
         XCTAssertNotEqual(newAccessToken, invalidAccessToken, "access token wasn't refreshed")
 
         if let contactId = contactId {
-            let deleteRequest = RestClient.sharedInstance.requestForDelete(withObjectType: kContact, objectId: contactId, apiVersion: kSFRestDefaultAPIVersion)
+            let deleteRequest = RestClient.sharedInstance.requestForDelete(withObjectType: kContact, objectId: contactId, apiVersion: SFRestDefaultAPIVersion)
             _ = sendSyncRequest(deleteRequest)
         }
         dataCleanupRequired = false
@@ -804,7 +804,7 @@ class SalesforceRestAPITests: XCTestCase {
         let invalidAccessToken = "xyz"
         changeOauthTokens(accessToken: invalidAccessToken, refreshToken: nil)
 
-        let request = RestClient.sharedInstance.requestForQuery(nil, apiVersion: kSFRestDefaultAPIVersion)
+        let request = RestClient.sharedInstance.requestForQuery(nil, apiVersion: SFRestDefaultAPIVersion)
         let response = sendSyncRequest(request)
         XCTAssertEqual(response.returnStatus, kTestRequestStatusDidFail)
 
@@ -828,7 +828,7 @@ class SalesforceRestAPITests: XCTestCase {
             dataCleanupRequired = false
         }
 
-        let request = restAPI.requestForResources(kSFRestDefaultAPIVersion)
+        let request = restAPI.requestForResources(SFRestDefaultAPIVersion)
         let response = sendSyncRequest(request, usingInstance: restAPI)
         XCTAssertEqual(response.returnStatus, kTestRequestStatusDidFail)
         XCTAssertEqual(response.lastError?.domain, kSFOAuthErrorDomain)
@@ -847,11 +847,11 @@ class SalesforceRestAPITests: XCTestCase {
             dataCleanupRequired = false
         }
 
-        let restAPI = RestClient.restClient(for: fakeUser)
+        guard let restAPI = RestClient.restClient(for: fakeUser) else { return }
         let expectations = (0..<5).map { expectation(description: "request\($0)") }
 
         for i in 0..<5 {
-            let request = restAPI.requestForDescribeGlobal(kSFRestDefaultAPIVersion)
+            let request = restAPI.requestForDescribeGlobal(SFRestDefaultAPIVersion)
             restAPI.send(request, failureBlock: { _, error, _ in
                 XCTAssertEqual((error as NSError?)?.domain, kSFOAuthErrorDomain)
                 expectations[i].fulfill()
@@ -874,14 +874,14 @@ class SalesforceRestAPITests: XCTestCase {
 
     func testSOSL() {
         let simpleSearch = "FIND {blah} IN NAME FIELDS RETURNING User"
-        let generatedSimple = RestClient.soslSearch(withSearchTerm: "blah", objectScope: ["User": NSNull()])
+        let generatedSimple = RestClient.soslSearch(withSearchTerm: "blah", objectScope: ["User": ""])
         XCTAssertEqual(simpleSearch, generatedSimple)
     }
 
     func testReallyLongSOQL() {
         let lastName = "Silver-\(Date())"
         let fields = [kFirstName: "LongJohn", kLastName: lastName]
-        var request = RestClient.sharedInstance.requestForCreate(withObjectType: kContact, fields: fields, apiVersion: kSFRestDefaultAPIVersion)
+        var request = RestClient.sharedInstance.requestForCreate(withObjectType: kContact, fields: fields, apiVersion: SFRestDefaultAPIVersion)
         var response = sendSyncRequest(request)
         XCTAssertEqual(response.returnStatus, kTestRequestStatusDidLoad)
 
@@ -890,7 +890,7 @@ class SalesforceRestAPITests: XCTestCase {
         }
 
         defer {
-            request = RestClient.sharedInstance.requestForDelete(withObjectType: kContact, objectId: contactId, apiVersion: kSFRestDefaultAPIVersion)
+            request = RestClient.sharedInstance.requestForDelete(withObjectType: kContact, objectId: contactId, apiVersion: SFRestDefaultAPIVersion)
             _ = sendSyncRequest(request)
         }
 
@@ -900,7 +900,7 @@ class SalesforceRestAPITests: XCTestCase {
         }
         queryString += "')"
 
-        request = RestClient.sharedInstance.requestForQuery(queryString, apiVersion: kSFRestDefaultAPIVersion)
+        request = RestClient.sharedInstance.requestForQuery(queryString, apiVersion: SFRestDefaultAPIVersion)
         response = sendSyncRequest(request)
         XCTAssertEqual(response.returnStatus, kTestRequestStatusDidLoad)
         let records = (response.dataResponse as? [String: Any])?[kRecords] as? [[String: Any]]
@@ -910,36 +910,39 @@ class SalesforceRestAPITests: XCTestCase {
     // MARK: - User Agent Tests
 
     func testRequestUserAgent() {
-        let request = RestClient.sharedInstance.requestForSearchResultLayout(kAccount, apiVersion: kSFRestDefaultAPIVersion)
+        let request = RestClient.sharedInstance.requestForSearchResultLayout(kAccount, apiVersion: SFRestDefaultAPIVersion)
         _ = sendSyncRequest(request)
-        let userAgent = request.request?.allHTTPHeaderFields?["User-Agent"]
+        let userAgent = request.request.allHTTPHeaderFields?["User-Agent"]
         XCTAssertEqual(userAgent, RestClient.userAgentString())
     }
 
     func testRequestUserAgentWithOverride() {
-        let request = RestClient.sharedInstance.requestForSearchResultLayout(kAccount, apiVersion: kSFRestDefaultAPIVersion)
+        let request = RestClient.sharedInstance.requestForSearchResultLayout(kAccount, apiVersion: SFRestDefaultAPIVersion)
         request.setHeaderValue(RestClient.userAgentString("MobileSync"), forHeaderName: "User-Agent")
         _ = sendSyncRequest(request)
-        let userAgent = request.request?.allHTTPHeaderFields?["User-Agent"]
+        let userAgent = request.request.allHTTPHeaderFields?["User-Agent"]
         XCTAssertEqual(userAgent, RestClient.userAgentString("MobileSync"))
     }
 
     // MARK: - Custom Request Tests
 
     func testCustomBaseURLRequest() {
-        let request = RestRequest(method: .GET, baseURL: "http://www.apple.com", path: "/test/testing", queryParams: nil)
+        let request = RestRequest(method: .GET, serviceHostType: .instance, baseURL: "http://www.apple.com", path: "/test/testing", queryParams: nil)
         XCTAssertEqual(request.baseURL, "http://www.apple.com")
         guard let currentUser = currentUser else { return }
-        let finalRequest = request.prepareRequestForSend(currentUser)
+        guard let finalRequest = request.prepareRequestForSend(currentUser) else { return }
         let expectedURL = "http://www.apple.com\(kSFDefaultRestEndpoint)/test/testing"
         XCTAssertEqual(finalRequest.url?.absoluteString, expectedURL)
     }
 
     func testCustomBaseURLRequestPOST() {
         let request = RestRequest(method: .POST, path: "https://www.apple.com/test/testing", queryParams: nil)
-        request.setCustomRequestBodyData("hello".data(using: .utf8), contentType: "application/octet-stream")
+        request.setCustomRequestBodyData("hello".data(using: .utf8) ?? Data(), contentType: "application/octet-stream")
         guard let currentUser = currentUser else { return }
-        let finalRequest = request.prepareRequestForSend(currentUser)
+        guard let finalRequest = request.prepareRequestForSend(currentUser) else {
+            XCTFail("prepareRequestForSend returned nil")
+            return
+        }
         XCTAssertEqual(finalRequest.url?.absoluteString, "https://www.apple.com/test/testing")
         XCTAssertEqual(finalRequest.value(forHTTPHeaderField: "Content-Type"), "application/octet-stream")
         XCTAssertEqual(finalRequest.value(forHTTPHeaderField: "Content-Length"), "5")
@@ -983,7 +986,7 @@ class SalesforceRestAPITests: XCTestCase {
 
     func testRestApiGlobalInstance() {
         let sharedInstance = RestClient.sharedInstance
-        let globalInstance = RestClient.sharedGlobal
+        let globalInstance = RestClient.sharedGlobalInstance
         XCTAssertNotNil(globalInstance)
         XCTAssertTrue(globalInstance !== sharedInstance)
     }
@@ -997,7 +1000,7 @@ class SalesforceRestAPITests: XCTestCase {
         let request = RestRequest.customUrlRequest(withMethod: .GET, baseURL: testBaseURL, path: testPathURL, queryParams: nil)
         XCTAssertEqual(request.baseURL, testBaseURL)
         XCTAssertEqual(request.path, testPathURL)
-        RestClient.sharedGlobal.send(request, failureBlock: { _, e, _ in
+        RestClient.sharedGlobalInstance.send(request, failureBlock: { _, e, _ in
             error = e as NSError?
             getExpectation.fulfill()
         }, successBlock: { resp, _ in
@@ -1013,42 +1016,42 @@ class SalesforceRestAPITests: XCTestCase {
     // MARK: - Notification Tests
 
     func testNotificationsStatus() {
-        let request = RestClient.sharedInstance.requestForNotificationsStatus(kSFRestDefaultAPIVersion)
+        let request = RestClient.sharedInstance.requestForNotificationsStatus(SFRestDefaultAPIVersion)
         let response = sendSyncRequest(request)
         XCTAssertEqual(response.returnStatus, kTestRequestStatusDidLoad)
     }
 
     func testGetNotifications() {
-        let builder = SFSDKFetchNotificationsRequestBuilder()
+        let builder = FetchNotificationsRequestBuilder()
         let yesterdayDate = Date().addingTimeInterval(-1 * 60 * 60 * 24)
         builder.setAfter(yesterdayDate)
         builder.setSize(10)
-        let request = builder.buildFetchNotificationsRequest(kSFRestDefaultAPIVersion)
+        let request = builder.buildFetchNotificationsRequest(SFRestDefaultAPIVersion)
         let response = sendSyncRequest(request)
         XCTAssertEqual(response.returnStatus, kTestRequestStatusDidLoad)
     }
 
     func testUpdateReadNotifications() {
-        let builder = SFSDKUpdateNotificationsRequestBuilder()
+        let builder = UpdateNotificationsRequestBuilder()
         builder.setBefore(Date())
         builder.setRead(false)
-        let request = builder.buildUpdateNotificationsRequest(kSFRestDefaultAPIVersion)
+        let request = builder.buildUpdateNotificationsRequest(SFRestDefaultAPIVersion)
         let response = sendSyncRequest(request)
         XCTAssertEqual(response.returnStatus, kTestRequestStatusDidLoad)
     }
 
     func testUpdateSeenNotifications() {
-        let builder = SFSDKUpdateNotificationsRequestBuilder()
+        let builder = UpdateNotificationsRequestBuilder()
         builder.setBefore(Date())
         builder.setSeen(true)
-        let request = builder.buildUpdateNotificationsRequest(kSFRestDefaultAPIVersion)
+        let request = builder.buildUpdateNotificationsRequest(SFRestDefaultAPIVersion)
         let response = sendSyncRequest(request)
         XCTAssertEqual(response.returnStatus, kTestRequestStatusDidLoad)
     }
 
     func testGetNotificationRequestPath() {
         let notificationId = "testID"
-        let request = RestClient.sharedInstance.requestForNotification(notificationId, apiVersion: kSFRestDefaultAPIVersion)
+        let request = RestClient.sharedInstance.requestForNotification(notificationId, apiVersion: SFRestDefaultAPIVersion)
         let expectedPath = "/connect/notifications/\(notificationId)"
         XCTAssertTrue(request.path.hasSuffix(expectedPath))
     }
@@ -1077,7 +1080,7 @@ class SalesforceRestAPITests: XCTestCase {
 
     func testRedirect() {
         let fields = [kFirstName: "John", kLastName: generateRecordName()]
-        let contactRequest = RestClient.sharedInstance.requestForCreate(withObjectType: kContact, fields: fields, apiVersion: kSFRestDefaultAPIVersion)
+        let contactRequest = RestClient.sharedInstance.requestForCreate(withObjectType: kContact, fields: fields, apiVersion: SFRestDefaultAPIVersion)
         let contactResponse = sendSyncRequest(contactRequest)
         guard let contactId = (contactResponse.dataResponse as? [String: Any])?[kLid] as? String else { return }
 
@@ -1114,7 +1117,7 @@ class SalesforceRestAPITests: XCTestCase {
         let fileMimeType = "text/plain"
         let fileSize = fileData.count
 
-        let request = RestClient.sharedInstance.requestForUploadFile(fileData, name: fileTitle, description: fileDescription, mimeType: fileMimeType, apiVersion: kSFRestDefaultAPIVersion)
+        let request = RestClient.sharedInstance.requestForUploadFile(fileData, name: fileTitle, description: fileDescription, mimeType: fileMimeType, apiVersion: SFRestDefaultAPIVersion)
         let response = sendSyncRequest(request)
         XCTAssertEqual(response.returnStatus, kTestRequestStatusDidLoad)
 
@@ -1136,7 +1139,9 @@ class SalesforceRestAPITests: XCTestCase {
 
     private func getTestCredentials(domain: String, instanceUrl: URL?, communityUrl: URL?) -> OAuthCredentials {
         let credsId = "testRestUrl_\(arc4random())"
-        let creds = OAuthCredentials(identifier: credsId, clientId: "TestClientID", encrypted: true)
+        guard let creds = OAuthCredentials(identifier: credsId, clientId: "TestClientID", encrypted: true) else {
+            fatalError("Failed to create credentials")
+        }
         creds.communityUrl = communityUrl
         creds.domain = domain
         creds.instanceUrl = instanceUrl
@@ -1153,15 +1158,13 @@ class SalesforceRestAPITests: XCTestCase {
         account.credentials.organizationId = orgId
         account.credentials.instanceUrl = UserAccountManager.shared.currentUserAccount?.credentials.instanceUrl
 
-        var error: NSError?
-        let result = UserAccountManager.shared.saveAccount(forUser: account, error: &error)
+        let result = UserAccountManager.shared.upsert(account)
         return result ? account : nil
     }
 
     private func deleteUser(_ user: UserAccount) -> Bool {
-        RestClient.removeSharedInstance(with: user)
-        var error: NSError?
-        return UserAccountManager.shared.deleteAccount(forUser: user, error: &error)
+        RestClient.removeSharedInstance(for: user)
+        return UserAccountManager.shared.delete(user)
     }
 
     private func generateRandomId(_ len: Int) -> String {

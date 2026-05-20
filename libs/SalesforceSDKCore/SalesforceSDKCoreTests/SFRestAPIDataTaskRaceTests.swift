@@ -113,7 +113,7 @@ class SFRestAPIDataTaskRaceTests: XCTestCase {
 
         let config = URLSessionConfiguration.ephemeral
         config.protocolClasses = [DeferredURLProtocol.self]
-        SFNetwork.setSessionConfiguration(config, identifier: NetworkEphemeralInstanceIdentifier)
+        Network.setSessionConfiguration(config, identifier: NetworkEphemeralInstanceIdentifier)
 
         api = RestClient(user: nil)
     }
@@ -122,7 +122,7 @@ class SFRestAPIDataTaskRaceTests: XCTestCase {
         api?.cancelAllRequests()
         api?.cleanup()
         DeferredURLProtocol.reset()
-        SFNetwork.removeSharedEphemeralInstance()
+        Network.removeSharedEphemeralInstance()
         super.tearDown()
     }
 

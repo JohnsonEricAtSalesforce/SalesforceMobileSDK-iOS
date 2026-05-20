@@ -220,13 +220,16 @@ class SFSDKCryptoUtilsTests: XCTestCase {
             XCTFail("Failed to create test data")
             return
         }
-        guard let encryptedData = SFSDKCryptoUtils.encryptData(testData, key: publicKeyRef, algorithm: .rsaEncryptionOAEPSHA256, error: nil) else {
-            XCTFail("Encryption failed")
+        let encryptedData: Data
+        do {
+            encryptedData = try SFSDKCryptoUtils.encrypt(data: testData, key: publicKeyRef, algorithm: .rsaEncryptionOAEPSHA256)
+        } catch {
+            XCTFail("Encryption failed: \(error)")
             return
         }
 
         // Decrypt data
-        let decryptedData = SFSDKCryptoUtils.decryptData(encryptedData, key: privateKeyRef, algorithm: .rsaEncryptionOAEPSHA256, error: nil)
+        let decryptedData = try? SFSDKCryptoUtils.decrypt(data: encryptedData, key: privateKeyRef, algorithm: .rsaEncryptionOAEPSHA256)
         let result = decryptedData.flatMap { String(data: $0, encoding: .utf8) }
         XCTAssertNotEqual(testString, result)
     }

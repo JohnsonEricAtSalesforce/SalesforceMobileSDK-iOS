@@ -39,7 +39,10 @@ class SFPushNotificationManagerTests: XCTestCase {
         let mgr = PushNotificationManager()
         mgr.isSimulator = false
         mgr.deviceSalesforceId = "pretending-we-registered"
-        let credentials = OAuthCredentials(identifier: "happy-user", clientId: UserAccountManager.shared.oauthClientID, encrypted: true)
+        guard let credentials = OAuthCredentials(identifier: "happy-user", clientId: UserAccountManager.shared.oauthClientID, encrypted: true) else {
+            XCTFail("Failed to create credentials")
+            return
+        }
         let account = UserAccount(credentials: credentials)
         account.credentials.identityUrl = URL(string: "https://login.salesforce.com/id/00D000000000062EA0/005R0000000Dsl0")
         origCurrentUser = UserAccountManager.shared.currentUserAccount
@@ -53,8 +56,8 @@ class SFPushNotificationManagerTests: XCTestCase {
         super.tearDown()
     }
 
-    func testRegisterSalesforceNotifications_NoUserCredentials() {
-        user?.credentials = nil
+    func testRegisterSalesforceNotifications_NoCurrentUser() {
+        UserAccountManager.shared.setCurrentUserInternal(nil)
         let result = manager?.registerSalesforceNotifications(completionBlock: nil, failBlock: nil) ?? true
         XCTAssertFalse(result)
     }
@@ -67,8 +70,8 @@ class SFPushNotificationManagerTests: XCTestCase {
         XCTAssertFalse(result)
     }
 
-    func testUnregisterSalesforceNotifications_NoUserCredentials() {
-        user?.credentials = nil
+    func testUnregisterSalesforceNotifications_NoCurrentUser() {
+        UserAccountManager.shared.setCurrentUserInternal(nil)
         let result = manager?.unregisterSalesforceNotifications(completionBlock: nil) ?? true
         XCTAssertFalse(result)
     }

@@ -425,11 +425,11 @@ class SFSDKKeyValueEncryptedFileStoreTests: XCTestCase {
     }
 
     private func globalPath() -> String {
-        return SFDirectoryManager.shared.globalDirectory(ofType: .documentDirectory, components: ["key_value_stores"]) ?? ""
+        return SFDirectoryManager.sharedManager.globalDirectory(ofType: .documentDirectory, components: ["key_value_stores"]) ?? ""
     }
 
     private func userPath(_ user: UserAccount) -> String {
-        return SFDirectoryManager.shared.directory(forUser: user, type: .documentDirectory, components: ["key_value_stores"]) ?? ""
+        return SFDirectoryManager.sharedManager.directory(forUser: user, type: .documentDirectory, components: ["key_value_stores"]) ?? ""
     }
 
     private func createStore(withName name: String) -> KeyValueEncryptedFileStore? {

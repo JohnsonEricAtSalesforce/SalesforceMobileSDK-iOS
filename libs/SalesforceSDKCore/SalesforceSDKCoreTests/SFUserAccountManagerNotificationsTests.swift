@@ -133,7 +133,7 @@ class SFUserAccountManagerNotificationsTests: XCTestCase {
         coordinator.updateCredentials(credentials)
         XCTAssertTrue(coordinator.credentials?.credentialsChangeSet != nil && (coordinator.credentials?.credentialsChangeSet?.count ?? 0) > 0, "There should be at least one change in credentials")
         XCTAssertTrue(coordinator.credentials?.hasPropertyValueChangedForKey("accessToken") ?? false, "SFUserAccountManager should detect change to accessToken")
-        XCTAssertTrue(coordinator.credentials.hasPropertyValueChangedForKey("communityId"), "SFUserAccountManager should detect change to communityId")
+        XCTAssertTrue(coordinator.credentials?.hasPropertyValueChangedForKey("communityId") ?? false, "SFUserAccountManager should detect change to communityId")
         XCTAssertTrue(coordinator.credentials?.hasPropertyValueChangedForKey("instanceUrl") ?? false, "SFUserAccountManager should detect change to instanceUrl")
         if let creds = coordinator.credentials {
             _ = uam.applyCredentials(creds)

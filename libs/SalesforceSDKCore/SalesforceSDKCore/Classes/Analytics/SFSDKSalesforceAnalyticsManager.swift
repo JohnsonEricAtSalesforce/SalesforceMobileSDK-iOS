@@ -47,7 +47,7 @@ public class SFSDKSalesforceAnalyticsManager: NSObject {
     @objc public private(set) var analyticsManager: SFSDKAnalyticsManager
     @objc public private(set) var userAccount: UserAccount?
 
-    private var remotes: [SFSDKAnalyticsTransformPublisherPair] = []
+    var remotes: [SFSDKAnalyticsTransformPublisherPair] = []
     private var task: UIBackgroundTaskIdentifier = .invalid
 
     @objc public var loggingEnabled: Bool {

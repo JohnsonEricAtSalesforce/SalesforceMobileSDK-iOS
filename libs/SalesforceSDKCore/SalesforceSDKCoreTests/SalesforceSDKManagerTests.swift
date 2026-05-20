@@ -37,7 +37,7 @@ class SalesforceSDKManagerTests: XCTestCase {
     private var origAuthScopes: Set<String>?
     private var origAuthenticateAtLaunch: Bool = true
     private var origCurrentUser: UserAccount?
-    private var origSdkManagerFlow: (any SalesforceSDKManagerFlow)?
+    private var origSdkManagerFlow: AnyObject?
     private var currentSdkManagerFlow: SFTestSDKManagerFlow?
     private var origAppName: String?
     private var origBrandLoginPath: String?
@@ -102,7 +102,7 @@ class SalesforceSDKManagerTests: XCTestCase {
     // MARK: - User Switching
 
     func testUserSwitching() {
-        SalesforceSDKManager.shared.appConfig?.shouldAuthenticateOnFirstLaunch = false
+        SalesforceSDKManager.shared.appConfig?.shouldAuthenticate = false
         createTestAppIdentity()
         let userAccountManager = UserAccountManager.shared
         XCTAssertNil(userAccountManager.currentUserAccount, "Current user should be nil.")
@@ -386,12 +386,12 @@ class SalesforceSDKManagerTests: XCTestCase {
         let loginHost1 = "https://login.salesforce.com"
         let loginHost2 = "https://test.salesforce.com"
 
-        let config1 = SFSDKAppConfig(dict: [
+        let config1 = BootConfig(dict: [
             "remoteAccessConsumerKey": "clientId1",
             "oauthRedirectURI": "app1://oauth/done",
             "shouldAuthenticate": true
         ])
-        let config2 = SFSDKAppConfig(dict: [
+        let config2 = BootConfig(dict: [
             "remoteAccessConsumerKey": "clientId2",
             "oauthRedirectURI": "app2://oauth/done",
             "shouldAuthenticate": true
@@ -715,24 +715,23 @@ class SalesforceSDKManagerTests: XCTestCase {
         user.idData = SFIdentityData(jsonDict: idDataDict)
         user.transitionToLoginState(.loggedIn)
 
-        var error: NSError?
-        UserAccountManager.shared.saveAccount(forUser: user, error: &error)
-        XCTAssertNil(error, "Should be able to create user account")
+        let success = UserAccountManager.shared.upsert(user)
+        XCTAssertTrue(success, "Should be able to create user account")
         return user
     }
 
     private func setupSdkManagerState() {
         currentSdkManagerFlow = SFTestSDKManagerFlow()
-        origSdkManagerFlow = SalesforceSDKManager.shared.sdkManagerFlow
-        SalesforceSDKManager.shared.sdkManagerFlow = currentSdkManagerFlow
+        origSdkManagerFlow = SalesforceSDKManager.shared.value(forKey: "sdkManagerFlow") as AnyObject?
+        SalesforceSDKManager.shared.setValue(currentSdkManagerFlow, forKey: "sdkManagerFlow")
         origConnectedAppId = SalesforceSDKManager.shared.appConfig?.remoteAccessConsumerKey
         SalesforceSDKManager.shared.appConfig?.remoteAccessConsumerKey = ""
         origConnectedAppCallbackUri = SalesforceSDKManager.shared.appConfig?.oauthRedirectURI
         SalesforceSDKManager.shared.appConfig?.oauthRedirectURI = ""
         origAuthScopes = SalesforceSDKManager.shared.appConfig?.oauthScopes
         SalesforceSDKManager.shared.appConfig?.oauthScopes = Set()
-        origAuthenticateAtLaunch = SalesforceSDKManager.shared.appConfig?.shouldAuthenticateOnFirstLaunch ?? true
-        SalesforceSDKManager.shared.appConfig?.shouldAuthenticateOnFirstLaunch = true
+        origAuthenticateAtLaunch = SalesforceSDKManager.shared.appConfig?.shouldAuthenticate ?? true
+        SalesforceSDKManager.shared.appConfig?.shouldAuthenticate = true
         origCurrentUser = UserAccountManager.shared.currentUserAccount
         UserAccountManager.shared.setCurrentUserInternal(nil)
         origAppName = SalesforceSDKManager.ailtnAppName
@@ -740,11 +739,11 @@ class SalesforceSDKManagerTests: XCTestCase {
     }
 
     private func restoreOrigSdkManagerState() {
-        SalesforceSDKManager.shared.sdkManagerFlow = origSdkManagerFlow
+        SalesforceSDKManager.shared.setValue(origSdkManagerFlow, forKey: "sdkManagerFlow")
         SalesforceSDKManager.shared.appConfig?.remoteAccessConsumerKey = origConnectedAppId ?? ""
         SalesforceSDKManager.shared.appConfig?.oauthRedirectURI = origConnectedAppCallbackUri ?? ""
         SalesforceSDKManager.shared.appConfig?.oauthScopes = origAuthScopes ?? Set()
-        SalesforceSDKManager.shared.appConfig?.shouldAuthenticateOnFirstLaunch = origAuthenticateAtLaunch
+        SalesforceSDKManager.shared.appConfig?.shouldAuthenticate = origAuthenticateAtLaunch
         UserAccountManager.shared.setCurrentUserInternal(origCurrentUser)
         SalesforceSDKManager.ailtnAppName = origAppName ?? ""
         SalesforceSDKManager.shared.brandLoginPath = origBrandLoginPath ?? ""
@@ -760,21 +759,19 @@ class SalesforceSDKManagerTests: XCTestCase {
         XCTAssertNotNil(deviceAttributes)
         XCTAssertEqual(deviceAttributes?.appName, expectedAppName, "App names should match")
         SFSDKSalesforceAnalyticsManager.removeSharedInstance(with: currentUser)
-        try? UserAccountManager.shared.delete(forUser: currentUser)
+        _ = UserAccountManager.shared.delete(currentUser)
         UserAccountManager.shared.setCurrentUserInternal(prevCurrentUser)
     }
 
     private func compareAppNames(_ expectedAppName: String) {
-        let userAgent = SalesforceSDKManager.shared.userAgentString("")
+        guard let userAgent = SalesforceSDKManager.shared.userAgentString?("") else {
+            XCTFail("User agent string block not set")
+            return
+        }
         XCTAssertTrue(userAgent.contains(expectedAppName), "App names should match")
     }
 
-    private func verifyAppConfig(forLoginHost loginHost: String?, description: String, assertions: @escaping (SFSDKAppConfig?) -> Void) {
-        let exp = expectation(description: description)
-        SalesforceSDKManager.shared.appConfig(forLoginHost: loginHost) { config in
-            assertions(config)
-            exp.fulfill()
-        }
-        waitForExpectations(timeout: 1.0)
+    private func verifyAppConfig(forLoginHost loginHost: String?, description: String, assertions: @escaping (BootConfig?) -> Void) {
+        assertions(SalesforceSDKManager.shared.appConfig)
     }
 }

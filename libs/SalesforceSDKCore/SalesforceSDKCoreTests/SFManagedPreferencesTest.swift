@@ -48,14 +48,14 @@ class SFManagedPreferencesTest: XCTestCase {
             "ManagedAppOAuthID": "managedappid",
             "IDPAppURLScheme": "idp:app:url"
         ]
-        UserDefaults.msdkUserDefaults.set(managedProps, forKey: "com.apple.configuration.managed")
+        UserDefaults.msdkUserDefaults().set(managedProps, forKey: "com.apple.configuration.managed")
     }
 
     override func tearDown() {
         // Remove the Managed Properties
         managedProps = nil
         UserAccountManager.shared.setCurrentUserInternal(prevCurrentUser)
-        UserDefaults.msdkUserDefaults.removeObject(forKey: "com.apple.configuration.managed")
+        UserDefaults.msdkUserDefaults().removeObject(forKey: "com.apple.configuration.managed")
         super.tearDown()
     }
 
@@ -85,7 +85,7 @@ class SFManagedPreferencesTest: XCTestCase {
             "AppServiceHosts": emptyArray,
             "AppServiceHostLabels": emptyArray
         ]
-        UserDefaults.msdkUserDefaults.set(preferences, forKey: "com.apple.configuration.managed")
+        UserDefaults.msdkUserDefaults().set(preferences, forKey: "com.apple.configuration.managed")
         XCTAssertNil(SFManagedPreferences.sharedPreferences.loginHosts)
         XCTAssertNil(SFManagedPreferences.sharedPreferences.loginHostLabels)
 
@@ -96,7 +96,7 @@ class SFManagedPreferencesTest: XCTestCase {
             "AppServiceHosts": hostArray,
             "AppServiceHostLabels": labelArray
         ]
-        UserDefaults.msdkUserDefaults.set(preferences, forKey: "com.apple.configuration.managed")
+        UserDefaults.msdkUserDefaults().set(preferences, forKey: "com.apple.configuration.managed")
         XCTAssertEqual(SFManagedPreferences.sharedPreferences.loginHosts as? [String], hostArray)
         XCTAssertEqual(SFManagedPreferences.sharedPreferences.loginHostLabels as? [String], labelArray)
 
@@ -107,7 +107,7 @@ class SFManagedPreferencesTest: XCTestCase {
             "AppServiceHosts": hostString,
             "AppServiceHostLabels": labelString
         ]
-        UserDefaults.msdkUserDefaults.set(preferences, forKey: "com.apple.configuration.managed")
+        UserDefaults.msdkUserDefaults().set(preferences, forKey: "com.apple.configuration.managed")
         XCTAssertEqual(SFManagedPreferences.sharedPreferences.loginHosts as? [String], [hostString])
         XCTAssertEqual(SFManagedPreferences.sharedPreferences.loginHostLabels as? [String], [labelString])
     }

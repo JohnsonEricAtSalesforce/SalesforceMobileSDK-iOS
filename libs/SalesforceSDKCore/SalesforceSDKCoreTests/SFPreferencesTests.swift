@@ -34,7 +34,7 @@ class SFPreferencesTests: XCTestCase {
         let prefs = SFPreferences.globalPreferences()
         XCTAssertNotNil(prefs, "Preferences must exist")
 
-        guard let basePath = SFDirectoryManager.shared.directory(forOrg: nil, user: nil, community: nil, type: .libraryDirectory, components: nil) else {
+        guard let basePath = SFDirectoryManager.sharedManager.directory(forOrg: nil, user: nil, community: nil, type: .libraryDirectory, components: nil) else {
             XCTFail("Failed to get directory path")
             return
         }
@@ -61,7 +61,7 @@ class SFPreferencesTests: XCTestCase {
         let prefs = SFPreferences.currentOrgLevelPreferences()
         XCTAssertNotNil(prefs, "Preferences must exist")
 
-        guard let basePath = SFDirectoryManager.shared.directory(forOrg: "00D000000000062EA0", user: nil, community: nil, type: .libraryDirectory, components: nil) else {
+        guard let basePath = SFDirectoryManager.sharedManager.directory(forOrg: "00D000000000062EA0", user: nil, community: nil, type: .libraryDirectory, components: nil) else {
             XCTFail("Failed to get directory path")
             return
         }
@@ -90,7 +90,7 @@ class SFPreferencesTests: XCTestCase {
         let prefs = SFPreferences.currentUserLevelPreferences()
         XCTAssertNotNil(prefs, "Preferences must exist")
 
-        guard let basePath = SFDirectoryManager.shared.directory(forOrg: "00D000000000062EA0", user: "005R0000000Dsl0", community: nil, type: .libraryDirectory, components: nil) else {
+        guard let basePath = SFDirectoryManager.sharedManager.directory(forOrg: "00D000000000062EA0", user: "005R0000000Dsl0", community: nil, type: .libraryDirectory, components: nil) else {
             XCTFail("Failed to get directory path")
             return
         }
@@ -120,7 +120,7 @@ class SFPreferencesTests: XCTestCase {
         let prefs = SFPreferences.currentCommunityLevelPreferences()
         XCTAssertNotNil(prefs, "Preferences must exist")
 
-        guard let basePath = SFDirectoryManager.shared.directory(forOrg: "00D000000000062EA0", user: "005R0000000Dsl0", community: nil, type: .libraryDirectory, components: nil) else {
+        guard let basePath = SFDirectoryManager.sharedManager.directory(forOrg: "00D000000000062EA0", user: "005R0000000Dsl0", community: nil, type: .libraryDirectory, components: nil) else {
             XCTFail("Failed to get directory path")
             return
         }

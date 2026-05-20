@@ -104,8 +104,8 @@ import ObjectiveC
     // MARK: - Swizzle Helper
 
     private static func swizzleMethod(original originalSelector: Selector, swizzled swizzledSelector: Selector, forClass clazz: AnyClass, isInstanceMethod: Bool) {
-        let originalMethod: Method?
-        let swizzledMethod: Method?
+        let originalMethod: ObjectiveC.Method?
+        let swizzledMethod: ObjectiveC.Method?
 
         if isInstanceMethod {
             originalMethod = class_getInstanceMethod(clazz, originalSelector)

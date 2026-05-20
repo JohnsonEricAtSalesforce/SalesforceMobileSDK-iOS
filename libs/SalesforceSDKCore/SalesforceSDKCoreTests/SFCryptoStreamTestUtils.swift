@@ -102,12 +102,13 @@ class SFCryptoStreamTestUtils {
         baseData.count = baseBytesMoved
 
         var finalData = Data(count: baseDataTotalSize - baseBytesMoved)
+        let finalDataCount = finalData.count
         var finalBytesMoved: size_t = 0
         let baseFinalStatus = finalData.withUnsafeMutableBytes { outBuffer in
             CCCryptorFinal(
                 crypto,
                 outBuffer.baseAddress,
-                finalData.count,
+                finalDataCount,
                 &finalBytesMoved
             )
         }
