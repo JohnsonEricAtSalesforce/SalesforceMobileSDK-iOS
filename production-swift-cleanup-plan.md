@@ -6,6 +6,20 @@
 
 ---
 
+## Rule: No ObjC Modifications in Tests (effective 2026-05-20)
+
+**From this point forward, no Objective-C test code shall be modified.** Any ObjC test file (`.m`) that blocks the test target from compiling must be **semantically converted to Swift** before proceeding. This applies to all remaining cleanup items.
+
+Rationale: Modifying ObjC test code to match new Swift API names is wasted effort — the test files themselves are being converted. Converting them to Swift eliminates the interop issues entirely and produces the final-state code directly.
+
+This rule means:
+- Broken ObjC test `.m` files → convert to `.swift` (not fix ObjC selectors)
+- ObjC test helpers/mocks → convert to Swift
+- No `sed` fixes on `.m` test files
+- Exclusion from compilation is acceptable as a temporary measure while conversion is in progress
+
+---
+
 ## Cleanup Items (ordered by priority)
 
 ### Item 1: Resolve Xcode `_AvailabilityInternal` Module Cache Bug ✅ RESOLVED
@@ -69,31 +83,61 @@ ObjC lightweight generics can't be represented in Swift @objc classes. Options:
 
 ---
 
-### Item 5: Fix MobileSync Test Compilation (ObjC tests → @import + selector updates)
+### Item 5: Convert MobileSync ObjC Tests to Swift
 **Priority:** Medium — tests don't compile for Phase 4 library
-**Effort:** 2-3 hours
+**Effort:** 4-6 hours
+**Rule:** No ObjC modifications — convert blocking test .m files to Swift.
 
-ObjC test files use old selectors and subclass converted Swift classes. Requires:
-- [ ] Replace all `#import <MobileSync/Header.h>` with `@import MobileSync;` in test files
-- [ ] Convert remaining ObjC test subclasses to Swift (TestSoqlSyncDownTarget, etc.)
-- [ ] Update selector calls to match new Swift-exposed API names
+ObjC test files reference converted Swift classes with old selectors. Per the no-ObjC-modification rule, these must be converted:
+- [ ] Convert `SyncManagerTestCase.m` → Swift (base class for all sync tests)
+- [ ] Convert `SyncManagerTests.m` → Swift
+- [ ] Convert `ParentChildrenSyncTests.m` → Swift
+- [ ] Convert remaining ObjC test helpers to Swift
 - [ ] Run full MobileSync test suite — target: 189 tests, 0 failures
 
 **Success criteria:** `xcodebuild test -scheme MobileSync` passes with baseline results.
 
 ---
 
-### Item 6: Fix SalesforceSDKCore Test Compilation
-**Priority:** Medium — tests don't compile for Phase 5 library
-**Effort:** 3-5 hours
+### Item 6: Convert SalesforceSDKCore ObjC Tests to Swift ⬅️ CURRENT PRIORITY
+**Priority:** HIGH — blocks Item 3 verification
+**Effort:** 6-10 hours
+**Rule:** No ObjC modifications — convert blocking test .m files to Swift.
+**Status:** Prefix header fixed, 42+ Swift test files already compile. ~13 ObjC .m test files block the target.
 
-Similar to MobileSync but larger scope (631 tests). The ObjC test files need:
-- [ ] `@import SalesforceSDKCore;` replacing individual header imports
-- [ ] Test classes that subclass converted Swift classes → refactor to composition or convert to Swift
-- [ ] Selector renames matching new Swift-exposed API
-- [ ] Run full test suite — target: 625 pass, ≤6 pre-existing failures
+**Blocking ObjC test files (must be converted to Swift):**
+- [ ] `SalesforceRestAPITests.m` (~600 lines — largest, integration tests)
+- [ ] `SalesforceSDKManagerTests.m` + `SFTestSDKManagerFlow.m`
+- [ ] `SFSDKErrorManagerTests.m`
+- [ ] `SalesforceOAuthUnitTests.m` + `SalesforceOAuthUnitTestsCoordinatorDelegate.m`
+- [ ] `SFOAuthCoordinatorTests.m` (ObjC version)
+- [ ] `SFOAuthSessionRefresherTests.m`
+- [ ] `SFOAuthCredentialsTests.m`
+- [ ] `SFPreferencesTests.m`
+- [ ] `SFEncryptionKeyTests.m`
+- [ ] `SFCryptoStreamTestUtils.m` (test helper)
+- [ ] `SFOAuthTestFlowCoordinatorDelegate.m` (test helper)
 
-**Success criteria:** `xcodebuild test -scheme SalesforceSDKCore` passes with baseline results.
+**Approach:**
+1. Convert each .m → .swift (semantic conversion, same rules as production)
+2. Remove .m from Compile Sources, add .swift
+3. After each batch, verify test target compiles
+4. Final: run full test suite — target: 625 pass, ≤6 pre-existing failures
+
+**Success criteria:** Test target compiles cleanly. `CredentialsArchiveRoundTripTests` can execute.
+
+---
+
+### Item 7: Verify Full-Stack Build (All 5 Libraries + Sample App)
+**Priority:** High
+**Effort:** 30 minutes
+**Status:** Production build verified clean. Full-stack (all schemes) not yet verified.
+
+- [ ] Build all schemes sequentially: SDKCommon → Analytics → SmartStore → MobileSync → SDKCore → MobileSyncExplorer
+- [ ] Verify zero errors across the full stack
+- [ ] Document any remaining warnings
+
+**Success criteria:** All 6 schemes build clean in one pass.
 
 ---
 
