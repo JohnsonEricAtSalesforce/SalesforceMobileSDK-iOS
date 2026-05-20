@@ -39,7 +39,7 @@ static NSException *authException = nil;
 
 - (void)setUp {
     //add  Managed Properties
-    self.prevCurrentUser = SFUserAccountManager.shared.currentUser;
+    self.prevCurrentUser = SFUserAccountManager.shared.currentUserAccount;
     [SFUserAccountManager.shared setCurrentUserInternal:[[SFUserAccount alloc] init]];
     self.managedProps = @{@"RequireCertAuth":@YES,@"OnlyShowAuthorizedHosts":@YES,
                           @"ClearClipboardOnBackground":@YES,

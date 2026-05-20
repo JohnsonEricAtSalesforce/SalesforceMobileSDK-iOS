@@ -62,10 +62,10 @@
     XCTAssertEqualObjects(jwtInfo.authTypeDescription, @"SFOAuthTypeJwtTokenExchange", @"JwtTokenExchange auth type should return correct description");
     XCTAssertEqual(jwtInfo.authType, SFOAuthTypeJwtTokenExchange, @"Auth type should be JwtTokenExchange");
     
-    // Test SFOAuthTypeIDP
-    SFOAuthInfo *idpInfo = [[SFOAuthInfo alloc] initWithAuthType:SFOAuthTypeIDP];
-    XCTAssertEqualObjects(idpInfo.authTypeDescription, @"SFOAuthTypeIDP", @"IDP auth type should return correct description");
-    XCTAssertEqual(idpInfo.authType, SFOAuthTypeIDP, @"Auth type should be IDP");
+    // Test SFOAuthTypeIdp
+    SFOAuthInfo *idpInfo = [[SFOAuthInfo alloc] initWithAuthType:SFOAuthTypeIdp];
+    XCTAssertEqualObjects(idpInfo.authTypeDescription, @"SFOAuthTypeIdp", @"IDP auth type should return correct description");
+    XCTAssertEqual(idpInfo.authType, SFOAuthTypeIdp, @"Auth type should be IDP");
     
     // Test SFOAuthTypeNative
     SFOAuthInfo *nativeInfo = [[SFOAuthInfo alloc] initWithAuthType:SFOAuthTypeNative];

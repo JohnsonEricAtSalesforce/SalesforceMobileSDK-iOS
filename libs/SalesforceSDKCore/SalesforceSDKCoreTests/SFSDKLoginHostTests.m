@@ -27,6 +27,7 @@
  */
 
 #import <XCTest/XCTest.h>
+#import <SalesforceSDKCore/SalesforceSDKCore-Swift.h>
 #import "SFLoginViewController.h"
 #import "SFSDKLoginHostListViewController.h"
 #import "SFSDKLoginHostStorage.h"

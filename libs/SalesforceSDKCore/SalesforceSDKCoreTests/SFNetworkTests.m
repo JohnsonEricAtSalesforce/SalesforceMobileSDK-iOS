@@ -29,6 +29,8 @@
 #import "SalesforceSDKCore/SalesforceSDKCore-Swift.h"
 #import "SalesforceSDKCore/SalesforceSDKManager.h"
 
+extern NSString * const kSFNetworkEphemeralInstanceIdentifier;
+
 @interface SFNetwork (Testing)
 
 + (NSDictionary *)sharedInstances;

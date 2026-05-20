@@ -23,6 +23,7 @@
  */
 
 #import <XCTest/XCTest.h>
+#import <SalesforceSDKCore/SalesforceSDKCore-Swift.h>
 #import "SFIdentityCoordinator.h"
 #import "SFUserAccountManager.h"
 #import "SFIdentityData.h"
@@ -47,7 +48,7 @@
     NSString *identityResponse = @"{\"id\":\"https://login.salesforce.com/id/some-org-id/some-user-id\",\"asserted_user\":true,\"user_id\":\"some-user-id\",\"organization_id\":\"some-org-id\",\"username\":\"user@example.com\",\"nick_name\":\"nickname\",\"display_name\":\"Example User\",\"email\":\"user@example.com\",\"email_verified\":true,\"first_name\":\"Example\",\"last_name\":\"User\",\"timezone\":\"America/Los_Angeles\",\"photos\":{\"picture\":\"https://example.com/profilephoto/full\",\"thumbnail\":\"https://example.com/profilephoto/thumb\"},\"addr_street\":null,\"addr_city\":null,\"addr_state\":null,\"addr_country\":null,\"addr_zip\":null,\"mobile_phone\":null,\"mobile_phone_verified\":false,\"is_lightning_login_user\":false,\"status\":{\"created_date\":null,\"body\":null},\"urls\":{\"enterprise\":\"https://example.my.salesforce.com/services/Soap/c/some-version/some-org-id\",\"metadata\":\"https://example.my.salesforce.com/services/Soap/m/some-version/some-org-id\",\"partner\":\"https://example.my.salesforce.com/services/Soap/u/some-version/some-org-id\",\"rest\":\"https://example.my.salesforce.com/services/data/vsome-version/\",\"sobjects\":\"https://example.my.salesforce.com/services/data/vsome-version/sobjects/\",\"search\":\"https://example.my.salesforce.com/services/data/vsome-version/search/\",\"query\":\"https://example.my.salesforce.com/services/data/vsome-version/query/\",\"recent\":\"https://example.my.salesforce.com/services/data/vsome-version/recent/\",\"tooling_soap\":\"https://example.my.salesforce.com/services/Soap/T/some-version/some-org-id\",\"tooling_rest\":\"https://example.my.salesforce.com/services/data/vsome-version/tooling/\",\"profile\":\"https://example.my.salesforce.com/some-user-id\",\"feeds\":\"https://example.my.salesforce.com/services/data/vsome-version/chatter/feeds\",\"groups\":\"https://example.my.salesforce.com/services/data/vsome-version/chatter/groups\",\"users\":\"https://example.my.salesforce.com/services/data/vsome-version/chatter/users\",\"feed_items\":\"https://example.my.salesforce.com/services/data/vsome-version/chatter/feed-items\",\"feed_elements\":\"https://example.my.salesforce.com/services/data/vsome-version/chatter/feed-elements\",\"custom_domain\":\"https://example.my.salesforce.com\"},\"active\":true,\"user_type\":\"STANDARD\",\"language\":\"en_US\",\"locale\":\"en_US\",\"utcOffset\":-28800000,\"last_modified_date\":\"2024-12-23T18:40:50Z\"}";
 
     
-    SFIdentityCoordinator* coordinator = [[SFIdentityCoordinator alloc] init];
+    SFIdentityCoordinator* coordinator = [[SFIdentityCoordinator alloc] initWithCredentials:[[SFOAuthCredentials alloc] initWithIdentifier:@"test" clientId:@"test" encrypted:NO]];
     NSData* identityResponseData = [identityResponse dataUsingEncoding:NSUTF8StringEncoding];
     [coordinator processResponse:identityResponseData];
     SFIdentityData *idData = coordinator.idData;
