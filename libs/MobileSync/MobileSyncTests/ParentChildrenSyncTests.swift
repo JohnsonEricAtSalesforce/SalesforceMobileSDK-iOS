@@ -661,7 +661,7 @@ class ParentChildrenSyncTests: SyncManagerTestCase {
         let localAccounts = createAccountsLocally(accountNames)
 
         var accountNameToServerId: [String: String] = [:]
-        for localAccount in localAccounts {
+        for localAccount in localAccounts as! [[String: Any]] {
             if let name = localAccount[NAME] as? String, let accountId = localAccount[ID] as? String {
                 accountNameToServerId[name] = accountId
             }
@@ -950,14 +950,14 @@ class ParentChildrenSyncTests: SyncManagerTestCase {
         // Update Id field to match existing id for account 0 and 1
         localAccounts[0][externalIdFieldName] = accountId0
         localAccounts[1][externalIdFieldName] = accountId1
-        store.upsertEntries(localAccounts, toSoup: ACCOUNTS_SOUP)
+        _ = store.upsert(entries: localAccounts as! [[String: Any]], forSoupNamed: ACCOUNTS_SOUP)
 
         // Update Id field to match existing id for contact 1 and 2
         localContacts[0][ACCOUNT_ID] = accountId0
         localContacts[1][externalIdFieldName] = contactId1
         localContacts[1][ACCOUNT_ID] = accountId1
         localContacts[2][externalIdFieldName] = contactId2
-        store.upsertEntries(localContacts, toSoup: CONTACTS_SOUP)
+        _ = store.upsert(entries: localContacts as! [[String: Any]], forSoupNamed: CONTACTS_SOUP)
 
         // Sync up
         trySyncUp(3,
@@ -1062,7 +1062,7 @@ class ParentChildrenSyncTests: SyncManagerTestCase {
                 accountIds.append(accountId)
             }
         }
-        let createdAccounts = store.upsertEntries(accounts, toSoup: ACCOUNTS_SOUP) as? [[String: Any]] ?? []
+        let createdAccounts = store.upsert(entries: accounts, forSoupNamed: ACCOUNTS_SOUP)
 
         let accountIdsToContacts = createContactsForAccountLocally(numberOfContactsPerAccount, accountIds: accountIds)
         return (accounts: createdAccounts, accountIdToContacts: accountIdsToContacts)
@@ -1086,7 +1086,7 @@ class ParentChildrenSyncTests: SyncManagerTestCase {
                 ]
                 contacts.append(contact)
             }
-            accountIdsToContacts[accountId] = (store.upsertEntries(contacts, toSoup: CONTACTS_SOUP) as? [[String: Any]]) ?? []
+            accountIdsToContacts[accountId] = store.upsert(entries: contacts, forSoupNamed: CONTACTS_SOUP)
         }
         return accountIdsToContacts
     }
@@ -1123,7 +1123,7 @@ class ParentChildrenSyncTests: SyncManagerTestCase {
             mutableRecord[kSyncTargetLocallyDeleted] = false
             cleanRecords.append(mutableRecord)
         }
-        store.upsertEntries(cleanRecords, toSoup: soupName)
+        _ = store.upsert(entries: cleanRecords as! [[String: Any]], forSoupNamed: soupName)
     }
 
     private func cleanRecord(_ soupName: String, record: [String: Any]) {

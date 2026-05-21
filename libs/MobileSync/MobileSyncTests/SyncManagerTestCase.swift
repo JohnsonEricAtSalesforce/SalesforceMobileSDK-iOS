@@ -767,6 +767,10 @@ class SyncManagerTestCase: XCTestCase {
         deleteRecords(onServer: ids, objectType: ACCOUNT_TYPE)
     }
 
+    @nonobjc func deleteRecordsOnServer(_ ids: [String], objectType: String) {
+        deleteRecords(onServer: ids, objectType: objectType)
+    }
+
     @nonobjc func createAccounts(onServer count: UInt) -> [String: String]? {
         return createRecords(onServer: count, objectType: ACCOUNT_TYPE)
     }
