@@ -1346,7 +1346,7 @@ extension UserAccountManager {
         } else {
             let nativeLoginVCs = SalesforceSDKManager.shared.nativeLoginViewControllers
             let defaultKey: NSString = "defaultKey"
-            nativeLoginScene = nativeLoginVCs[defaultKey]?.view.window?.windowScene
+            nativeLoginScene = (nativeLoginVCs[defaultKey] as? UIViewController)?.view.window?.windowScene
         }
 
         guard let sceneId = nativeLoginScene?.session.persistentIdentifier,
@@ -2726,8 +2726,8 @@ extension UserAccountManager {
 
             if self.nativeLoginEnabled && !self.shouldFallbackToWebAuthentication {
                 let sceneKey = (viewHandler.scene?.session.persistentIdentifier ?? "") as NSString
-                let multiWindowNativeLoginVC = SalesforceSDKManager.shared.nativeLoginViewControllers[sceneKey]
-                let nativeLogin = multiWindowNativeLoginVC ?? SalesforceSDKManager.shared.nativeLoginViewControllers["defaultKey" as NSString]
+                let multiWindowNativeLoginVC = SalesforceSDKManager.shared.nativeLoginViewControllers[sceneKey] as? UIViewController
+                let nativeLogin = multiWindowNativeLoginVC ?? (SalesforceSDKManager.shared.nativeLoginViewControllers["defaultKey" as NSString] as? UIViewController)
                 guard let nativeLoginVC = nativeLogin else { return }
                 let controllerToPresent = SFSDKNavigationController(rootViewController: nativeLoginVC)
                 controllerToPresent.modalPresentationStyle = .fullScreen

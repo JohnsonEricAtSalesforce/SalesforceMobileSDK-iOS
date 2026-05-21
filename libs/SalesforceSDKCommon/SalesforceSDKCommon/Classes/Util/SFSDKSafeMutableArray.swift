@@ -112,7 +112,8 @@ public class SFSDKSafeMutableArray: NSObject, NSMutableCopying {
     }
 
     /// Enumerate objects in the array safely, using a block.
-    @objc public func enumerateObjects(using block: @escaping (Any, Int, UnsafeMutablePointer<ObjCBool>) -> Void) {
+    @objc(enumerateObjectsUsingBlock:)
+    public func enumerateObjects(using block: @escaping (Any, Int, UnsafeMutablePointer<ObjCBool>) -> Void) {
         queue.sync {
             backingArray.enumerateObjects { obj, idx, stop in
                 block(obj, idx, stop)
@@ -130,21 +131,24 @@ public class SFSDKSafeMutableArray: NSObject, NSMutableCopying {
     }
 
     /// Adds the objects contained in another given array to the end of the receiving array's content.
-    @objc public func addObjects(from array: [Any]) {
+    @objc(addObjectsFromArray:)
+    public func addObjects(from array: [Any]) {
         queue.async(flags: .barrier) {
             self.backingArray.addObjects(from: array)
         }
     }
 
     /// Inserts a given object into the array's contents at a given index.
-    @objc public func insertObject(_ obj: Any, at index: Int) {
+    @objc(insertObject:atIndex:)
+    public func insertObject(_ obj: Any, at index: Int) {
         queue.async(flags: .barrier) {
             self.backingArray.insert(obj, at: index)
         }
     }
 
     /// Inserts the objects in the provided array into the receiving array at the specified indexes.
-    @objc public func insertObjects(_ objects: [Any], at indexes: IndexSet) {
+    @objc(insertObjects:atIndexes:)
+    public func insertObjects(_ objects: [Any], at indexes: IndexSet) {
         queue.async(flags: .barrier) {
             self.backingArray.insert(objects, at: indexes)
         }
@@ -172,42 +176,48 @@ public class SFSDKSafeMutableArray: NSObject, NSMutableCopying {
     }
 
     /// Removes the object at the given index.
-    @objc public func removeObject(at index: Int) {
+    @objc(removeObjectAtIndex:)
+    public func removeObject(at index: Int) {
         queue.async(flags: .barrier) {
             self.backingArray.removeObject(at: index)
         }
     }
 
     /// Removes the objects at the specified indexes from the array.
-    @objc public func removeObjects(at indexes: IndexSet) {
+    @objc(removeObjectsAtIndexes:)
+    public func removeObjects(at indexes: IndexSet) {
         queue.async(flags: .barrier) {
             self.backingArray.removeObjects(at: indexes)
         }
     }
 
     /// Removes all occurrences of a given object (by identity) in the array.
-    @objc public func removeObjectIdentical(to object: Any) {
+    @objc(removeObjectIdenticalTo:)
+    public func removeObjectIdentical(to object: Any) {
         queue.async(flags: .barrier) {
             self.backingArray.removeObject(identicalTo: object)
         }
     }
 
     /// Removes all occurrences of a given object (by identity) within the specified range.
-    @objc public func removeObjectIdentical(to object: Any, in range: NSRange) {
+    @objc(removeObjectIdenticalTo:inRange:)
+    public func removeObjectIdentical(to object: Any, in range: NSRange) {
         queue.async(flags: .barrier) {
             self.backingArray.removeObject(identicalTo: object, in: range)
         }
     }
 
     /// Removes all occurrences within a specified range in the array of a given object.
-    @objc public func removeObject(_ object: Any, in range: NSRange) {
+    @objc(removeObject:inRange:)
+    public func removeObject(_ object: Any, in range: NSRange) {
         queue.async(flags: .barrier) {
             self.backingArray.remove(object, in: range)
         }
     }
 
     /// Removes from the receiving array the objects in another given array.
-    @objc public func removeObjects(in otherArray: [Any]) {
+    @objc(removeObjectsInArray:)
+    public func removeObjects(in otherArray: [Any]) {
         queue.async(flags: .barrier) {
             self.backingArray.removeObjects(in: otherArray)
         }
@@ -236,7 +246,8 @@ public class SFSDKSafeMutableArray: NSObject, NSMutableCopying {
     }
 
     /// Filter the array using a predicate.
-    @objc public func filter(using predicate: NSPredicate) {
+    @objc(filterUsingPredicate:)
+    public func filter(using predicate: NSPredicate) {
         queue.async(flags: .barrier) {
             self.backingArray.filter(using: predicate)
         }
@@ -254,3 +265,6 @@ public class SFSDKSafeMutableArray: NSObject, NSMutableCopying {
         return SFSDKSafeMutableArray(capacity: numItems)
     }
 }
+
+/// Typealias preserving the NS_SWIFT_NAME from the original ObjC header.
+public typealias SafeMutableArray = SFSDKSafeMutableArray

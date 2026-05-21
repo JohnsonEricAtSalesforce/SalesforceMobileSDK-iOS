@@ -103,7 +103,8 @@ public class SFSDKSafeMutableSet: NSObject {
     }
 
     /// Returns true if the sets are equal.
-    @objc public func isEqual(to otherSet: SFSDKSafeMutableSet) -> Bool {
+    @objc(isEqualToSet:)
+    public func isEqual(to otherSet: SFSDKSafeMutableSet) -> Bool {
         if self === otherSet {
             return true
         }
@@ -113,7 +114,8 @@ public class SFSDKSafeMutableSet: NSObject {
     }
 
     /// Enumerate objects in the set safely, using a block.
-    @objc public func enumerateObjects(using block: @escaping (Any, UnsafeMutablePointer<ObjCBool>) -> Void) {
+    @objc(enumerateObjectsUsingBlock:)
+    public func enumerateObjects(using block: @escaping (Any, UnsafeMutablePointer<ObjCBool>) -> Void) {
         let objects = allObjects()
         queue.sync(flags: .barrier) {
             for obj in objects {
@@ -133,8 +135,14 @@ public class SFSDKSafeMutableSet: NSObject {
         }
     }
 
+    /// Swift-friendly alias for addObject(_:).
+    public func add(_ obj: Any) {
+        addObject(obj)
+    }
+
     /// Adds to the set each object contained in a given array that is not already a member.
-    @objc public func addObjects(from array: [Any]) {
+    @objc(addObjectsFromArray:)
+    public func addObjects(from array: [Any]) {
         queue.async(flags: .barrier) {
             self.backingSet.addObjects(from: array)
         }
@@ -154,36 +162,46 @@ public class SFSDKSafeMutableSet: NSObject {
         }
     }
 
+    /// Swift-friendly alias for removeObject(_:).
+    public func remove(_ object: Any) {
+        removeObject(object)
+    }
+
     /// Adds each object from another set to the receiving set.
-    @objc public func union(_ otherSet: Set<AnyHashable>) {
+    @objc(unionSet:)
+    public func union(_ otherSet: Set<AnyHashable>) {
         queue.async(flags: .barrier) {
             self.backingSet.union(otherSet as NSSet as Set)
         }
     }
 
     /// Removes each object in another given set from the receiving set.
-    @objc public func minus(_ set: Set<AnyHashable>) {
+    @objc(minusSet:)
+    public func minus(_ set: Set<AnyHashable>) {
         queue.async(flags: .barrier) {
             self.backingSet.minus(set as NSSet as Set)
         }
     }
 
     /// Removes from the set each object that is not a member of another set.
-    @objc public func intersect(_ otherSet: Set<AnyHashable>) {
+    @objc(intersectSet:)
+    public func intersect(_ otherSet: Set<AnyHashable>) {
         queue.async(flags: .barrier) {
             self.backingSet.intersect(otherSet as NSSet as Set)
         }
     }
 
     /// Empties the receiving set, then adds each object contained in another given set.
-    @objc public func setSet(_ otherSet: Set<AnyHashable>) {
+    @objc(setSet:)
+    public func setSet(_ otherSet: Set<AnyHashable>) {
         queue.async(flags: .barrier) {
             self.backingSet.setSet(otherSet as NSSet as Set)
         }
     }
 
     /// Filter the set using a predicate.
-    @objc public func filter(using predicate: NSPredicate) {
+    @objc(filterUsingPredicate:)
+    public func filter(using predicate: NSPredicate) {
         queue.async(flags: .barrier) {
             self.backingSet.filter(using: predicate)
         }
@@ -201,3 +219,6 @@ public class SFSDKSafeMutableSet: NSObject {
         return SFSDKSafeMutableSet(capacity: numItems)
     }
 }
+
+/// Typealias preserving the NS_SWIFT_NAME from the original ObjC header.
+public typealias SafeMutableSet = SFSDKSafeMutableSet

@@ -31,7 +31,6 @@
 
 #import "SFLogger.h"
 #import "SFDefaultLogger.h"
-#import "SFSDKSafeMutableDictionary.h"
 
 @protocol SFLogReceiver;
 @protocol SFLogReceiverFactory;

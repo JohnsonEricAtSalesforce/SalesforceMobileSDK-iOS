@@ -76,13 +76,10 @@ public class SFSDKSafeMutableDictionary: NSObject {
         return value
     }
 
-    /// Retrieves object for the key specified via subscript (thread safe).
-    @objc public func object(forKeyedSubscript key: Any) -> Any? {
-        return object(forKey: key)
-    }
 
     /// Retrieves all keys for the specified object (thread safe).
-    @objc public func allKeys(for anObject: Any) -> [Any] {
+    @objc(allKeysForObject:)
+    public func allKeys(for anObject: Any) -> [Any] {
         var keys: [Any] = []
         queue.sync {
             keys = backingDictionary.allKeys(for: anObject)
@@ -99,6 +96,20 @@ public class SFSDKSafeMutableDictionary: NSObject {
         return dict
     }
 
+    // MARK: - Subscript
+
+    /// Swift subscript for key access.
+    public subscript(key: NSCopying) -> Any? {
+        get { return object(forKey: key) }
+        set {
+            if let value = newValue {
+                setObject(value, forKey: key)
+            } else {
+                removeObject(key)
+            }
+        }
+    }
+
     // MARK: - Mutating Methods
 
     /// Sets object for key specified (thread safe).
@@ -108,10 +119,6 @@ public class SFSDKSafeMutableDictionary: NSObject {
         }
     }
 
-    /// Sets object for key specified via subscript (thread safe).
-    @objc public func setObject(_ object: Any, forKeyedSubscript aKey: NSCopying) {
-        setObject(object, forKey: aKey)
-    }
 
     /// Removes object for key specified (thread safe).
     @objc public func removeObject(_ aKey: Any) {

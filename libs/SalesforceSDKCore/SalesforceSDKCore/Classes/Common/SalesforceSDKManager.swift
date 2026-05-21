@@ -337,7 +337,7 @@ open class SalesforceSDKManager: NSObject {
     @objc public var customDomainInferencePattern: NSRegularExpression?
 
     private var snapshotViewControllers = SafeMutableDictionary<NSString, UIViewController>()
-    @objc var nativeLoginViewControllers = SafeMutableDictionary<NSString, UIViewController>()
+    @objc var nativeLoginViewControllers = SFSDKSafeMutableDictionary()
     private var actionSheet: UIAlertController?
     private var webView: WKWebView?
     private var _webViewUserAgent: String?
@@ -549,7 +549,7 @@ open class SalesforceSDKManager: NSObject {
     @objc public func useNativeLogin(withConsumerKey consumerKey: String, callbackUrl: String, communityUrl: String, reCaptchaSiteKeyId: String?, googleCloudProjectId: String?, isReCaptchaEnterprise: Bool, nativeLoginViewController: UIViewController, scene: UIScene?) -> NativeLoginManager {
         SFSDKAppFeatureMarkers.registerAppFeature(kSFAppFeatureNativeLogin)
         let key = scene?.session.persistentIdentifier ?? kSFDefaultNativeLoginViewControllerKey
-        nativeLoginViewControllers[key as NSString] = nativeLoginViewController
+        nativeLoginViewControllers.setObject(nativeLoginViewController, forKey: key as NSString)
 
         let login = NativeLoginManagerInternal(clientId: consumerKey, redirectUri: callbackUrl, loginUrl: communityUrl, reCaptchaSiteKeyId: reCaptchaSiteKeyId, googleCloudProjectId: googleCloudProjectId, isReCaptchaEnterprise: isReCaptchaEnterprise, scene: scene)
         SalesforceSDKManager.nativeLogin = login

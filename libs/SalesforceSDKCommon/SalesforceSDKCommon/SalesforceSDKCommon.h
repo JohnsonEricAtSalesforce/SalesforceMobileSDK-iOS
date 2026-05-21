@@ -27,6 +27,6 @@
  WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#import <SalesforceSDKCommon/SFSDKSafeMutableSet.h>
-#import <SalesforceSDKCommon/SFSDKSafeMutableDictionary.h>
-#import <SalesforceSDKCommon/SFSDKSafeMutableArray.h>
+// SFSDKSafeMutableArray, SFSDKSafeMutableDictionary, and SFSDKSafeMutableSet
+// are now implemented in Swift. They are automatically available when importing
+// this module (@import SalesforceSDKCommon) or via SalesforceSDKCommon-Swift.h.
