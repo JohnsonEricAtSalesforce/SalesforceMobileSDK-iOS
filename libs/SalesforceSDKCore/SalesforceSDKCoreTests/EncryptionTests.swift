@@ -148,7 +148,7 @@ class EncryptionTests: XCTestCase {
         let result = SafeMutableArray()
         DispatchQueue.concurrentPerform(iterations: 1000) { index in
             if let symmetricKey = try? KeyGenerator.encryptionKey(for: "singleLabel") {
-                result.add(symmetricKey.dataRepresentation as NSData)
+                result.addObject(symmetricKey.dataRepresentation as NSData)
             }
         }
         

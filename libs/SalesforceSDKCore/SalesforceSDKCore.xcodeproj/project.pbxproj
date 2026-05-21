@@ -124,7 +124,6 @@
 		4F7EB4101BFFC88200768720 /* Foundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 8220B74F16D804CA00EC3921 /* Foundation.framework */; };
 		4F8A3B012CEC202F00ECDC76 /* JwtAccessToken.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4F8A3B002CEC202F00ECDC76 /* JwtAccessToken.swift */; };
 		4F8C4FD4CC6FF121DD86E838 /* SFUserIdUpgradeTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 628FEB48B0AE5E5B2F6B37FE /* SFUserIdUpgradeTests.swift */; };
-		4F9E05342DD7BE1500548985 /* SFOAuthCredentialsTests.m in Sources */ = {isa = PBXBuildFile; fileRef = 4F9E05332DD7BE0A00548985 /* SFOAuthCredentialsTests.m */; };
 		4FA1B2C32F0E000000000001 /* LoginForAdminTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4FA1B2C32F0E000000000002 /* LoginForAdminTests.swift */; };
 		4FARCHRT001234567890ABCD /* CredentialsArchiveRoundTripTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4FARCHRT112345678901ABCD /* CredentialsArchiveRoundTripTests.swift */; };
 		4FAUTHFLOW001234567890ABC /* AuthFlowTypesViewTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4FAUTHFLOW112345678901ABC /* AuthFlowTypesViewTests.swift */; };
@@ -146,7 +145,6 @@
 		4FE0070F2EBED6C000CFD66F /* SFSDKLoginHost.h in Headers */ = {isa = PBXBuildFile; fileRef = 4FE006CB2EBEBBF300CFD66F /* SFSDKLoginHost.h */; settings = {ATTRIBUTES = (Public, ); }; };
 		4FE5332A1BFFE70600814D2A /* Main_iPad.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 4F7EB4981BFFCEF600768720 /* Main_iPad.storyboard */; };
 		4FE5332B1BFFE70600814D2A /* Main_iPhone.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 4F7EB49A1BFFCEF600768720 /* Main_iPhone.storyboard */; };
-		4FLOGBLK001234567890ABCD /* SFSDKLogoutBlocker.m in Sources */ = {isa = PBXBuildFile; fileRef = B7A901BD228E4DFA0036D749 /* SFSDKLogoutBlocker.m */; };
 		5161EFADD6178BE214B51256 /* SalesforceSDKCoreDefines.swift in Sources */ = {isa = PBXBuildFile; fileRef = 91C9516A6CBAAB3548415082 /* SalesforceSDKCoreDefines.swift */; };
 		51AAF719DCA90106DCB7F89C /* SFDefaultUserAccountPersister.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6EE235EA48278B43F8529788 /* SFDefaultUserAccountPersister.swift */; };
 		54F3CBE47CED382714D8DD34 /* SFSDKAuthErrorManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = C905987C308500E7407B269C /* SFSDKAuthErrorManager.swift */; };
@@ -303,7 +301,6 @@
 		B7E391122209E63E00D61D4D /* SFSDKViewUtils.h in Headers */ = {isa = PBXBuildFile; fileRef = B7E391102209E63E00D61D4D /* SFSDKViewUtils.h */; };
 		B7E66AE923763278005A652E /* RestClientPublisherTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = B7E66AE823763278005A652E /* RestClientPublisherTests.swift */; };
 		B7E8A2A51E7369DB007C0D92 /* SFDefaultUserAccountPersister.h in Headers */ = {isa = PBXBuildFile; fileRef = B7E8A2A31E7369DB007C0D92 /* SFDefaultUserAccountPersister.h */; };
-		B7E8A2B21E770A57007C0D92 /* SFUserAccountPersisterEphemeral.m in Sources */ = {isa = PBXBuildFile; fileRef = B7E8A2B11E770A57007C0D92 /* SFUserAccountPersisterEphemeral.m */; };
 		B7F6909022C27CEF00E52575 /* SFSDKOAuth2.h in Headers */ = {isa = PBXBuildFile; fileRef = B7F6908E22C27CEF00E52575 /* SFSDKOAuth2.h */; settings = {ATTRIBUTES = (Public, ); }; };
 		B7F6909B22C27F0B00E52575 /* SFSDKOAuthConstants.h in Headers */ = {isa = PBXBuildFile; fileRef = B7F6909A22C27ED700E52575 /* SFSDKOAuthConstants.h */; settings = {ATTRIBUTES = (Public, ); }; };
 		B7FB26C21F78094A00FB25A2 /* SFSDKLoginFlowSelectionView.h in Headers */ = {isa = PBXBuildFile; fileRef = B7FB26B81F78094A00FB25A2 /* SFSDKLoginFlowSelectionView.h */; settings = {ATTRIBUTES = (Public, ); }; };
@@ -2531,16 +2528,13 @@
 				69CEBC7E22F368CF00F16218 /* SFNetworkTests.swift in Sources */,
 				4FA1B2C32F0E000000000001 /* LoginForAdminTests.swift in Sources */,
 				237C186C2E44FCAE0008015C /* EncryptStreamTests.swift in Sources */,
-				4F9E05342DD7BE1500548985 /* SFOAuthCredentialsTests.m in Sources */,
 				4FARCHRT001234567890ABCD /* CredentialsArchiveRoundTripTests.swift in Sources */,
 				2394F4722D930C5400B9686A /* WebViewStateManagerTests.swift in Sources */,
 				B7A6ED3B236B49A100DBA451 /* RestClientTest.swift in Sources */,
-				B7E8A2B21E770A57007C0D92 /* SFUserAccountPersisterEphemeral.m in Sources */,
 				69DFE06B2B969C22000906E4 /* CryptoUtilsTests.swift in Sources */,
 				237C18732E450B710008015C /* DecryptStreamTests.swift in Sources */,
 				230834862DF8938D00C7CBF7 /* URLSessionTask+RetryPolicyTests.swift in Sources */,
 				4FDEVINFO001234567890ABCD /* DevInfoViewControllerTests.swift in Sources */,
-				4FLOGBLK001234567890ABCD /* SFSDKLogoutBlocker.m in Sources */,
 				1A03DE9E53F6777D07449A52 /* NSString+SFAdditionsTests.swift in Sources */,
 				199F826B290969DF15117345 /* NSURL+SFStringUtilsTests.swift in Sources */,
 				339FDFEB994A8855673B49DE /* SDKCommonNSDataTests.swift in Sources */,
