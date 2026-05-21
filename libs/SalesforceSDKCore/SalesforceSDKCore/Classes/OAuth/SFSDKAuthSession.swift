@@ -80,7 +80,7 @@ public class SFSDKAuthSession: NSObject {
         creds.setValue(request.oauthCompletionUrl, forKey: "redirectUri")
         creds.setValue(request.loginHost, forKey: "domain")
         creds.setValue(Array(request.scopes) as NSArray, forKey: "scopes")
-        creds.setValue(NSNull(), forKey: "accessToken")
+        creds.setValue(nil, forKey: "accessToken")
         return creds
     }
 }

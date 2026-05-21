@@ -125,8 +125,13 @@ ObjC test files reference converted Swift classes with old selectors. Per the no
 - [x] Test target builds and runs: **200 tests execute, 186 pass, 14 failures (3 unexpected)**
 - [x] CredentialsArchiveRoundTripTests runs and passes (7/7)
 
-**Known remaining test failures (14, all in `LoginForAdminTests`):**
-These are in a pre-existing Swift test file (not converted by us) that tests a deprecated API (`loginViewControllerDidSelectLoginForAdmin`). The underlying auth flow behavior changed when `SFUserAccountManager` was converted to Swift. This is a behavioral regression in the conversion, not a test infrastructure issue. To fix: align `UserAccountManager.loginViewControllerDidSelectLoginForAdmin(_:)` implementation with what the test expects, or update the test expectations.
+**Known remaining test failures (13 test cases fail, 28 listed in "Failing tests"):**
+Root cause identified and partially fixed:
+- **Fixed:** `SFSDKAuthSession.swift:83` used `NSNull()` instead of `nil` in KVC — caused `-[NSNull length]` crash. Changed to `setValue(nil, forKey:)`.
+- **Remaining:** `RestClientPublisherTests` crashes the test runner with signal trap (SIGTRAP), which cascades to prevent `BiometricAuthenticationManagerTests`, `NativeLoginManagerTests`, `PushNotificationManagerTests`, and some `LoginForAdminTests` from executing. These are not assertion failures — they're collateral from the runner crash.
+- **True assertion failures:** 3 unexpected in `LoginForAdminTests` (auth flow behavioral difference in converted code)
+
+To fully resolve: investigate the `RestClientPublisherTests` SIGTRAP crash (likely another KVC or API mismatch in the publisher extension code).
 
 **Blocking ObjC test files (must be converted to Swift):**
 - [ ] `SalesforceRestAPITests.m` (~600 lines — largest, integration tests)
