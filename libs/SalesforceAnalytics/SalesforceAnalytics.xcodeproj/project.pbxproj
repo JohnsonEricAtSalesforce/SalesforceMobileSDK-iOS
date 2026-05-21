@@ -25,9 +25,11 @@
 		4B6C4B30F4747D76F245767B /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 41EA72988E233E48DCF725FD /* AppDelegate.swift */; };
 		5DFE0C3EBFAFE14CC4B25CAD /* ViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = A2E0ECE15592AF4DF146FAD2 /* ViewController.swift */; };
 		696E91442AD0A10300205884 /* PrivacyInfo.xcprivacy in Resources */ = {isa = PBXBuildFile; fileRef = 696E91432AD0A10300205884 /* PrivacyInfo.xcprivacy */; };
+		6BB1B61B972B4806C5EA37F7 /* InstrumentationEventBuilderTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6732BF77D09E17FE676B4FCE /* InstrumentationEventBuilderTests.swift */; };
 		7E2CBEAAC683FD45CB2F2A0A /* SFSDKInstrumentationEvent.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA30E7EB0475C18AA3AA00F8 /* SFSDKInstrumentationEvent.swift */; };
 		85E22F7E0C84BAABEEC0FD6E /* SFSDKTransform.swift in Sources */ = {isa = PBXBuildFile; fileRef = 851F7A4B0BCC397CA7956E8C /* SFSDKTransform.swift */; };
 		A26AB205493C31E6237679C1 /* SFSDKAnalyticsManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = CAFAAF280E508AD804B38C88 /* SFSDKAnalyticsManager.swift */; };
+		AFC811A94CFE3383C282633F /* AnalyticsTestUtil.swift in Sources */ = {isa = PBXBuildFile; fileRef = 08A3EEBD09F0B76D27026D0C /* AnalyticsTestUtil.swift */; };
 		B716A37F218F5D9F009D407F /* SalesforceSDKCommon.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = B716A378218F5D60009D407F /* SalesforceSDKCommon.framework */; };
 		C0DBCC2ADA17A286397584E1 /* SFSDKInstrumentationEventBuilder.swift in Sources */ = {isa = PBXBuildFile; fileRef = 487E1F27723B4F7245E2BFEB /* SFSDKInstrumentationEventBuilder.swift */; };
 		CE1F09E4201A6C18006FA9D2 /* CoreTelephony.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = CE1F09D5201A6C17006FA9D2 /* CoreTelephony.framework */; platformFilters = (ios, maccatalyst, ); };
@@ -45,10 +47,8 @@
 		CEF371B01D0E582C0004A237 /* UIKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = CEF371A91D0E57F50004A237 /* UIKit.framework */; };
 		CEF371E51D10D7E60004A237 /* Main_iPad.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = CEF371E31D10D7E60004A237 /* Main_iPad.storyboard */; };
 		CEF371E61D10D7E60004A237 /* Main_iPhone.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = CEF371E41D10D7E60004A237 /* Main_iPhone.storyboard */; };
-		CEF371E81D11B76E0004A237 /* EventStoreManagerTests.m in Sources */ = {isa = PBXBuildFile; fileRef = CEF371E71D11B76E0004A237 /* EventStoreManagerTests.m */; };
-		CEF372461D12100D0004A237 /* AnalyticsTestUtil.m in Sources */ = {isa = PBXBuildFile; fileRef = CEF372451D12100D0004A237 /* AnalyticsTestUtil.m */; };
-		CEFEB55A1D05063F007D5EAE /* InstrumentationEventBuilderTests.m in Sources */ = {isa = PBXBuildFile; fileRef = CEFEB5591D05063F007D5EAE /* InstrumentationEventBuilderTests.m */; };
 		DF725AB4898BCA46BC28B4C9 /* SFSDKDeviceAppAttributes.swift in Sources */ = {isa = PBXBuildFile; fileRef = F99246DA21A607C085D2946A /* SFSDKDeviceAppAttributes.swift */; };
+		E327DA873327652C3EDED0D2 /* EventStoreManagerTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 868BC3AF27C553181A03F47E /* EventStoreManagerTests.swift */; };
 		F52AD8AA36254B08F5A3F694 /* SFSDKEventStoreManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 09B615531C13E97B415AE48E /* SFSDKEventStoreManager.swift */; };
 		F6E9D09E992333C5111F0F8F /* SFSDKAnalyticsLogger.swift in Sources */ = {isa = PBXBuildFile; fileRef = A5B336430BD9122662BDB9DF /* SFSDKAnalyticsLogger.swift */; };
 /* End PBXBuildFile section */
@@ -113,12 +113,15 @@
 /* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
+		08A3EEBD09F0B76D27026D0C /* AnalyticsTestUtil.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = AnalyticsTestUtil.swift; sourceTree = "<group>"; };
 		09B615531C13E97B415AE48E /* SFSDKEventStoreManager.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = SFSDKEventStoreManager.swift; path = Classes/Store/SFSDKEventStoreManager.swift; sourceTree = "<group>"; };
 		41EA72988E233E48DCF725FD /* AppDelegate.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = AppDelegate.swift; sourceTree = "<group>"; };
 		438803CF2DED8E325CD725E9 /* SFSDKAILTNTransform.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = SFSDKAILTNTransform.swift; path = Classes/Transform/SFSDKAILTNTransform.swift; sourceTree = "<group>"; };
 		487E1F27723B4F7245E2BFEB /* SFSDKInstrumentationEventBuilder.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = SFSDKInstrumentationEventBuilder.swift; path = Classes/Model/SFSDKInstrumentationEventBuilder.swift; sourceTree = "<group>"; };
+		6732BF77D09E17FE676B4FCE /* InstrumentationEventBuilderTests.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = InstrumentationEventBuilderTests.swift; sourceTree = "<group>"; };
 		696E91432AD0A10300205884 /* PrivacyInfo.xcprivacy */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.xml; path = PrivacyInfo.xcprivacy; sourceTree = "<group>"; };
 		851F7A4B0BCC397CA7956E8C /* SFSDKTransform.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = SFSDKTransform.swift; path = Classes/Transform/SFSDKTransform.swift; sourceTree = "<group>"; };
+		868BC3AF27C553181A03F47E /* EventStoreManagerTests.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = EventStoreManagerTests.swift; sourceTree = "<group>"; };
 		A2E0ECE15592AF4DF146FAD2 /* ViewController.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = ViewController.swift; sourceTree = "<group>"; };
 		A5B336430BD9122662BDB9DF /* SFSDKAnalyticsLogger.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = SFSDKAnalyticsLogger.swift; path = Classes/Util/SFSDKAnalyticsLogger.swift; sourceTree = "<group>"; };
 		AA30E7EB0475C18AA3AA00F8 /* SFSDKInstrumentationEvent.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = SFSDKInstrumentationEvent.swift; path = Classes/Model/SFSDKInstrumentationEvent.swift; sourceTree = "<group>"; };
@@ -257,6 +260,9 @@
 				CEF371E71D11B76E0004A237 /* EventStoreManagerTests.m */,
 				CEF372441D120FEE0004A237 /* AnalyticsTestUtil.h */,
 				CEF372451D12100D0004A237 /* AnalyticsTestUtil.m */,
+				08A3EEBD09F0B76D27026D0C /* AnalyticsTestUtil.swift */,
+				868BC3AF27C553181A03F47E /* EventStoreManagerTests.swift */,
+				6732BF77D09E17FE676B4FCE /* InstrumentationEventBuilderTests.swift */,
 			);
 			path = SalesforceAnalyticsTests;
 			sourceTree = "<group>";
@@ -643,9 +649,9 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				CEF371E81D11B76E0004A237 /* EventStoreManagerTests.m in Sources */,
-				CEF372461D12100D0004A237 /* AnalyticsTestUtil.m in Sources */,
-				CEFEB55A1D05063F007D5EAE /* InstrumentationEventBuilderTests.m in Sources */,
+				AFC811A94CFE3383C282633F /* AnalyticsTestUtil.swift in Sources */,
+				E327DA873327652C3EDED0D2 /* EventStoreManagerTests.swift in Sources */,
+				6BB1B61B972B4806C5EA37F7 /* InstrumentationEventBuilderTests.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
