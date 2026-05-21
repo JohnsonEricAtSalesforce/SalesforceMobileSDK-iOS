@@ -57,7 +57,7 @@ public class SFSDKSyncsConfig: NSObject {
 
     @objc public init?(resourceAtPath path: String) {
         super.init()
-        let config = try? SFSDKResourceUtils.loadConfig(fromFile: path) as? [AnyHashable: Any]
+        let config = SFSDKResourceUtils.loadConfig(fromFile: path, error: nil) as? [AnyHashable: Any]
         syncConfigs = config?[kSyncsConfigSyncs] as? [[String: Any]]
     }
 

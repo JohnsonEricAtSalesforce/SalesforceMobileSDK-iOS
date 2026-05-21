@@ -169,15 +169,15 @@ open class SFMobileSyncSyncManager: NSObject {
     private class func keyForUser(_ user: SFUserAccount?, storeName: String) -> String {
         let keyPrefix: String
         if let user = user {
-            keyPrefix = SFKeyForUserAndScope(user, .community) ?? ""
+            keyPrefix = SFKeyForUserAndScope(user, UserAccount.AccountScope.community) ?? ""
         } else {
-            keyPrefix = SFKeyForUserAndScope(nil, .global) ?? ""
+            keyPrefix = SFKeyForUserAndScope(nil, UserAccount.AccountScope.global) ?? ""
         }
         return "\(keyPrefix)-\(storeName)"
     }
 
     private class func isUserRelatedSync(_ key: String, user: SFUserAccount) -> Bool {
-        let userPrefix = SFKeyForUserAndScope(user, .community) ?? ""
+        let userPrefix = SFKeyForUserAndScope(user, UserAccount.AccountScope.community) ?? ""
         return key.contains(userPrefix)
     }
 

@@ -248,13 +248,12 @@ public class SmartStoreDatabaseManager: NSObject {
             return true
         }
 
-        do {
-            try SFDirectoryManager.ensureDirectoryExists(storeDir)
-            return true
-        } catch {
-            SmartStoreLogger.e(SmartStoreDatabaseManager.self, message: "Couldn't create store dir for store: \(storeName) - error:\(error)")
-            return false
+        var error: NSError?
+        let success = SFDirectoryManager.ensureDirectoryExists(storeDir, error: &error)
+        if !success {
+            SmartStoreLogger.e(SmartStoreDatabaseManager.self, message: "Couldn't create store dir for store: \(storeName) - error:\(error?.localizedDescription ?? "unknown")")
         }
+        return success
     }
 
     /// Sets filesystem protection on the store DB file, directory and ancestor directories.
@@ -332,11 +331,11 @@ public class SmartStoreDatabaseManager: NSObject {
 
     internal func rootStoreDirectory() -> String? {
         if isGlobalManager {
-            return SFDirectoryManager.shared().globalDirectory(ofType: .documentDirectory, components: [kStoresDirectory])
+            return SFDirectoryManager.sharedManager.globalDirectory(ofType: .documentDirectory, components: [kStoresDirectory])
         } else if let user = user {
-            return SFDirectoryManager.shared().directory(forUser: user, type: .documentDirectory, components: [kStoresDirectory])
+            return SFDirectoryManager.sharedManager.directory(forUser: user, type: .documentDirectory, components: [kStoresDirectory])
         } else {
-            return SFDirectoryManager.shared().globalDirectory(ofType: .documentDirectory, components: [kStoresDirectory])
+            return SFDirectoryManager.sharedManager.globalDirectory(ofType: .documentDirectory, components: [kStoresDirectory])
         }
     }
 

@@ -34,9 +34,9 @@ public class SmartStoreUtils: NSObject {
     @objc
     public class func userKey(forUser user: UserAccount?) -> String? {
         if user == nil {
-            return SFKeyForUserAndScope(nil, .global)
+            return SFKeyForUserAndScope(nil, UserAccount.AccountScope.global)
         } else {
-            return SFKeyForUserAndScope(user, .community)
+            return SFKeyForUserAndScope(user, UserAccount.AccountScope.community)
         }
     }
 }

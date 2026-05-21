@@ -204,7 +204,7 @@ open class SalesforceSDKManager: NSObject {
         instanceClass = className
     }
 
-    @objc public class func initializeSDK() {
+    @objc open class func initializeSDK() {
         initializeSDK(manager: instanceClass)
         #if DEBUG
         let arguments = ProcessInfo.processInfo.arguments
@@ -410,7 +410,7 @@ open class SalesforceSDKManager: NSObject {
         return SFSDKResourceUtils.localizedString("devInfoTitle")
     }
 
-    @objc public func getDevActions(_ presentedViewController: UIViewController) -> [DevAction] {
+    @objc open func getDevActions(_ presentedViewController: UIViewController) -> [DevAction] {
         var actions: [DevAction] = []
         let userAccountManager = UserAccountManager.shared
         let currentUser = userAccountManager.currentUserAccount
@@ -461,7 +461,7 @@ open class SalesforceSDKManager: NSObject {
         return actions
     }
 
-    @objc public func getDevSupportInfos() -> [String] {
+    @objc open func getDevSupportInfos() -> [String] {
         let userAccountManager = UserAccountManager.shared
         var devInfos: [String] = [
             "SDK Version", SALESFORCE_SDK_VERSION,

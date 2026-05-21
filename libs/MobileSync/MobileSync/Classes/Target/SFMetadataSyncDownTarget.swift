@@ -68,7 +68,7 @@ open class SFMetadataSyncDownTarget: SFSyncDownTarget {
     // MARK: - Fetching
 
     open override func startFetch(_ syncManager: SFMobileSyncSyncManager, maxTimeStamp: Int64, errorBlock: @escaping SFSyncDownTargetFetchErrorBlock, completeBlock: @escaping SFSyncDownTargetFetchCompleteBlock) {
-        let request = RestClient.shared.requestForDescribe(withObjectType: self.objectType, apiVersion: nil)
+        let request = RestClient.sharedInstance.requestForDescribe(withObjectType: self.objectType, apiVersion: nil)
         SFMobileSyncNetworkUtils.sendRequest(withMobileSyncUserAgent: request, failureBlock: { _, error, _ in
             errorBlock(error)
         }, successBlock: { [weak self] responseJson, _ in

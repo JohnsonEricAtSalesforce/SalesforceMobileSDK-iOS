@@ -26,6 +26,7 @@
 //  WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 import Foundation
+import SalesforceSDKCommon
 import SalesforceSDKCore
 import Combine
 
@@ -168,7 +169,7 @@ public class BriefcaseSyncDownTarget: SyncDownTarget {
         fieldList.insert(objectInfo.idFieldName)
         fieldList.insert(objectInfo.modificationDateFieldName)
         
-        return RestClient.shared.request(forCollectionRetrieve: objectInfo.sobjectType, objectIds: ids, fieldList: Array(fieldList), apiVersion: nil)
+        return RestClient.sharedInstance.requestForCollectionRetrieve( objectInfo.sobjectType, objectIds: ids, fieldList: Array(fieldList), apiVersion: nil)
     }
 
     private func fetchRecordsFromServer(errorBlock: @escaping SFSyncDownTargetFetchErrorBlock, completeBlock: SFSyncDownTargetFetchCompleteBlock?) {
@@ -232,14 +233,14 @@ public class BriefcaseSyncDownTarget: SyncDownTarget {
     }
     
     private func idsFromBriefcases(syncManager: SFMobileSyncSyncManager, maxTimeStamp: NSNumber?, relayToken: String?) -> AnyPublisher<(TypedIds, String?), Error> {
-        let request = RestClient.shared.request(forPrimingRecords: relayToken, changedAfterTimestamp: maxTimeStamp, apiVersion: nil)
+        let request = RestClient.sharedInstance.requestForPrimingRecords( relayToken, changedAfterTimestamp: maxTimeStamp, apiVersion: nil)
         // Setting the MobileSync user agent because this publisher isn't using SFMobileSyncNetworkUtils
         request.setHeaderValue(RestClient.userAgentString("MobileSync"), forHeaderName: "User-Agent")
-        return RestClient.shared.publisher(for: request).tryMap { response -> (TypedIds, String?) in
+        return RestClient.sharedInstance.publisher(for: request).tryMap { response -> (TypedIds, String?) in
             guard let response = try response.asJson() as? [AnyHashable: Any] else {
                 throw BriefcaseSyncDownError.unknownResponse
             }
-            let primingResponse = PrimingRecordsResponse(response)
+            let primingResponse = PrimingRecordsResponse(dict: response as NSDictionary)
             let typedIdArray = self.infosMap.values.flatMap { (objectInfo: BriefcaseObjectInfo) -> [TypedId] in
                 guard let recordLists = primingResponse.primingRecords[objectInfo.sobjectType]?.values else { return [] }
                 return recordLists.flatMap { records in

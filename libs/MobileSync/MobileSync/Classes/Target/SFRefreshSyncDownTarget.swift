@@ -237,7 +237,7 @@ open class SFRefreshSyncDownTarget: SFSyncDownTarget {
             .from(self.objectType)
             .whereClause(whereClause)
             .build() ?? ""
-        let request = RestClient.shared.request(forQuery: soql, apiVersion: nil)
+        let request = RestClient.sharedInstance.requestForQuery(soql, apiVersion: nil)
         SFMobileSyncNetworkUtils.sendRequest(withMobileSyncUserAgent: request, failureBlock: { _, error, _ in
             errorBlock(error)
         }, successBlock: { responseJson, _ in

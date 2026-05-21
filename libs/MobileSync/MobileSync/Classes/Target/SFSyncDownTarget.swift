@@ -206,7 +206,7 @@ open class SFSyncDownTarget: SFSyncTarget {
         for record in records {
             guard let recordDict = record as? [String: Any] else { continue }
             guard let timeStampStr = recordDict[modificationDateFieldName] as? String else { break }
-            let timeStamp = FormatUtils.getMillisFromIsoString( timeStampStr)
+            let timeStamp = FormatUtils.getMillis(fromIsoString: timeStampStr)
             maxTimeStamp = (timeStamp > maxTimeStamp) ? timeStamp : maxTimeStamp
         }
         return maxTimeStamp

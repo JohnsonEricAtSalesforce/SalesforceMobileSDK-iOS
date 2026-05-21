@@ -30,15 +30,15 @@ import SalesforceSDKCore
 /// By default, forceios apps use an instance of this class instead of SalesforceSDKManager.
 @objc(SmartStoreSDKManager)
 @objcMembers
-open class SmartStoreSDKManager: SalesforceManager {
+open class SmartStoreSDKManager: SalesforceSDKManager {
 
     // MARK: - Initialization
 
-    public override init() {
+    public required init() {
         super.init()
         NotificationCenter.default.addObserver(
             self,
-            selector: #selector(handleUserWillLogout(_:)),
+            selector: #selector(handleUserWillLogoutForSmartStoreManager(_:)),
             name: UserAccountManager.willLogoutUser,
             object: nil
         )
@@ -52,7 +52,7 @@ open class SmartStoreSDKManager: SalesforceManager {
 
     // MARK: - User Logout
 
-    @objc private func handleUserWillLogout(_ notification: Notification) {
+    @objc private func handleUserWillLogoutForSmartStoreManager(_ notification: Notification) {
         guard let user = notification.userInfo?[UserAccountManager.userInfoAccountKey] as? UserAccount else { return }
         SmartStore.removeAll(forUserAccount: user)
     }
@@ -95,9 +95,9 @@ open class SmartStoreSDKManager: SalesforceManager {
 
     // MARK: - Dev Support
 
-    open override func devActionsList(presentedViewController: UIViewController) -> [DevAction] {
-        var devActions = super.devActionsList(presentedViewController: presentedViewController)
-        let action = DevAction("Inspect SmartStore") {
+    open override func getDevActions(_ presentedViewController: UIViewController) -> [DevAction] {
+        var devActions = super.getDevActions(presentedViewController)
+        let action = DevAction(name: "Inspect SmartStore") {
             let devInfo = InspectorViewController()
             presentedViewController.present(devInfo, animated: false, completion: nil)
         }
@@ -105,9 +105,9 @@ open class SmartStoreSDKManager: SalesforceManager {
         return devActions
     }
 
-    open override func devSupportInfoList() -> [String] {
+    open override func getDevSupportInfos() -> [String] {
         let globalStore = SmartStore.sharedGlobal(withName: SmartStoreDefaultStoreName)
-        var devInfos = super.devSupportInfoList()
+        var devInfos = super.getDevSupportInfos()
         devInfos.append("section:SmartStore")
         devInfos.append(contentsOf: [
             "SQLCipher version", globalStore.versionOfSQLCipher(),

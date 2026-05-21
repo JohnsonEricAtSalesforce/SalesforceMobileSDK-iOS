@@ -43,7 +43,7 @@ public class SFMobileSyncNetworkUtils: NSObject {
         SFSDKMobileSyncLogger.d(self, message: "sendRequestWithMobileSyncUserAgent:request:\(request)")
         request.setHeaderValue(RestClient.userAgentString(kMobileSync), forHeaderName: kUserAgent)
         let user = UserAccountManager.shared.currentUserAccount
-        let restApiInstance: RestClient = (user == nil) ? RestClient.sharedGlobal : RestClient.shared
+        let restApiInstance: RestClient = (user == nil) ? RestClient.sharedGlobalInstance : RestClient.sharedInstance
         restApiInstance.send(request, failureBlock: { response, error, rawResponse in
             SFSDKMobileSyncLogger.e(self, message: "sendRequestWithMobileSyncUserAgent:error:\((error as NSError?)?.code ?? 0):\((error as NSError?)?.domain ?? "")")
             failureBlock(response, error, rawResponse)

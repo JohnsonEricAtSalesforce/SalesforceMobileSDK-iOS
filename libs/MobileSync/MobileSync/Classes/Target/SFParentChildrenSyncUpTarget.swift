@@ -429,6 +429,6 @@ open class SFParentChildrenSyncUpTarget: SFSyncUpTarget, SFAdvancedSyncUpTarget 
             .from(self.parentInfo.sobjectType)
             .whereClause("\(self.idFieldName) = '\(parentId)'")
 
-        return RestClient.shared.request(forQuery: builder.build() ?? "", apiVersion: nil)
+        return RestClient.sharedInstance.requestForQuery( builder.build() ?? "", apiVersion: nil)
     }
 }

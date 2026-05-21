@@ -73,7 +73,7 @@ open class SFSoslSyncDownTarget: SFSyncDownTarget {
 
     @objc
     open func startFetch(_ syncManager: SFMobileSyncSyncManager, maxTimeStamp: Int64, queryRun: String, errorBlock: @escaping SFSyncDownTargetFetchErrorBlock, completeBlock: @escaping SFSyncDownTargetFetchCompleteBlock) {
-        let request = RestClient.shared.request(forSearch: queryRun, apiVersion: nil)
+        let request = RestClient.sharedInstance.requestForSearch(queryRun, apiVersion: nil)
         SFMobileSyncNetworkUtils.sendRequest(withMobileSyncUserAgent: request, failureBlock: { _, error, _ in
             errorBlock(error)
         }, successBlock: { [weak self] responseJson, _ in

@@ -66,7 +66,7 @@ public class SFRecordModDate: NSObject {
     @objc
     public init(timestamp: String?, isDeleted: Bool) {
         super.init()
-        self.timestamp = FormatUtils.getDateFromIsoDateString( timestamp)
+        self.timestamp = FormatUtils.getDate(fromIsoDateString: timestamp)
         self.isDeleted = isDeleted
     }
 }
@@ -282,22 +282,22 @@ open class SFSyncUpTarget: SFSyncTarget {
     // MARK: - Private network methods
 
     private func createOnServer(_ objectType: String, fields: NSDictionary, completionBlock: @escaping SFSyncUpTargetCompleteBlock, failBlock: @escaping SFSyncUpTargetErrorBlock) {
-        let request = RestClient.shared.requestForCreate(withObjectType: objectType, fields: fields as? [String: Any], apiVersion: nil)
+        let request = RestClient.sharedInstance.requestForCreate(withObjectType: objectType, fields: fields as? [String: Any], apiVersion: nil)
         sendRequest(request, completionBlock: completionBlock, failBlock: failBlock)
     }
 
     private func upsertOnServer(_ objectType: String, fields: NSDictionary, externalId: String, completionBlock: @escaping SFSyncUpTargetCompleteBlock, failBlock: @escaping SFSyncUpTargetErrorBlock) {
-        let request = RestClient.shared.requestForUpsert(withObjectType: objectType, externalIdField: self.externalIdFieldName ?? "", externalId: externalId, fields: (fields as? [String: Any]) ?? [:], apiVersion: nil)
+        let request = RestClient.sharedInstance.requestForUpsert(withObjectType: objectType, externalIdField: self.externalIdFieldName ?? "", externalId: externalId, fields: (fields as? [String: Any]) ?? [:], apiVersion: nil)
         sendRequest(request, completionBlock: completionBlock, failBlock: failBlock)
     }
 
     private func updateOnServer(_ objectType: String, objectId: String, fields: NSDictionary, completionBlock: @escaping SFSyncUpTargetCompleteBlock, failBlock: @escaping SFSyncUpTargetErrorBlock) {
-        let request = RestClient.shared.requestForUpdate(withObjectType: objectType, objectId: objectId, fields: fields as? [String: Any], apiVersion: nil)
+        let request = RestClient.sharedInstance.requestForUpdate(withObjectType: objectType, objectId: objectId, fields: fields as? [String: Any], apiVersion: nil)
         sendRequest(request, completionBlock: completionBlock, failBlock: failBlock)
     }
 
     private func deleteOnServer(_ objectType: String, objectId: String, completionBlock: @escaping SFSyncUpTargetCompleteBlock, failBlock: @escaping SFSyncUpTargetErrorBlock) {
-        let request = RestClient.shared.requestForDelete(withObjectType: objectType, objectId: objectId, apiVersion: nil)
+        let request = RestClient.sharedInstance.requestForDelete(withObjectType: objectType, objectId: objectId, apiVersion: nil)
         sendRequest(request, completionBlock: completionBlock, failBlock: failBlock)
     }
 
@@ -315,7 +315,7 @@ open class SFSyncUpTarget: SFSyncTarget {
     private func fetchLastModifiedDate(_ record: NSDictionary, completeBlock: @escaping (SFRecordModDate) -> Void) {
         let objectType = SFJsonUtils.project(intoJson:record, path: kObjectTypeField) as? String ?? ""
         let objectId = record[self.idFieldName] as? String ?? ""
-        let request = RestClient.shared.requestForRetrieve(withObjectType: objectType, objectId: objectId, fieldList: self.modificationDateFieldName, apiVersion: nil)
+        let request = RestClient.sharedInstance.requestForRetrieve(withObjectType: objectType, objectId: objectId, fieldList: self.modificationDateFieldName, apiVersion: nil)
 
         SFMobileSyncNetworkUtils.sendRequest(withMobileSyncUserAgent: request, failureBlock: { _, error, _ in
             completeBlock(SFRecordModDate(timestamp: nil, isDeleted: (error as NSError?)?.code == 404))

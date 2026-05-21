@@ -128,7 +128,7 @@ open class SFParentChildrenSyncDownTarget: SFSoqlSyncDownTarget {
         let builder = SFSDKSoqlBuilder.withFieldsArray(fields)
             .from(self.parentInfo.sobjectType)
             .whereClause(parentWhere)
-            .order(by: self.parentInfo.modificationDateFieldName)
+            .orderBy(self.parentInfo.modificationDateFieldName)
 
         return builder.build() ?? ""
     }

@@ -56,7 +56,7 @@ public class StoreConfig: NSObject {
     @objc
     public init?(resourceAtPath path: String) {
         super.init()
-        let config = try? SFSDKResourceUtils.loadConfig(fromFile: path)
+        let config = SFSDKResourceUtils.loadConfig(fromFile: path, error: nil)
         if let config = config {
             self.soupsConfig = config[kStoreConfigSoups] as? [[String: Any]]
         } else {

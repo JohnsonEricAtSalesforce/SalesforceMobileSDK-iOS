@@ -89,7 +89,7 @@ open class SFLayoutSyncDownTarget: SFSyncDownTarget {
     // MARK: - Fetching
 
     open override func startFetch(_ syncManager: SFMobileSyncSyncManager, maxTimeStamp: Int64, errorBlock: @escaping SFSyncDownTargetFetchErrorBlock, completeBlock: @escaping SFSyncDownTargetFetchCompleteBlock) {
-        let request = RestClient.shared.requestForLayout(withObjectAPIName: self.objectAPIName, formFactor: self.formFactor, layoutType: self.layoutType, mode: self.mode, recordTypeId: self.recordTypeId, apiVersion: nil)
+        let request = RestClient.sharedInstance.requestForLayout(withObjectAPIName: self.objectAPIName, formFactor: self.formFactor, layoutType: self.layoutType, mode: self.mode, recordTypeId: self.recordTypeId, apiVersion: nil)
         SFMobileSyncNetworkUtils.sendRequest(withMobileSyncUserAgent: request, failureBlock: { _, error, _ in
             errorBlock(error)
         }, successBlock: { [weak self] responseJson, _ in

@@ -1,4 +1,5 @@
 // SFSDKSmartStoreLogger.h - ObjC compatibility shim (implementation moved to SFSDKSmartStoreLogger.swift)
+@import SalesforceSDKCommon;
 #import <SmartStore/SmartStore-Swift.h>
 
 // Extern constant

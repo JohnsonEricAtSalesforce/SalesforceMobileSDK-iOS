@@ -104,7 +104,7 @@ open class SFSoqlSyncDownTarget: SFSyncDownTarget {
 
     @objc
     open func buildRequest(_ queryToRun: String) -> RestRequest {
-        return RestClient.shared.request(forQuery: queryToRun, apiVersion: nil, batchSize: maxBatchSize)
+        return RestClient.sharedInstance.requestForQuery(queryToRun, apiVersion: nil, batchSize: maxBatchSize)
     }
 
     open override func continueFetch(_ syncManager: SFMobileSyncSyncManager, errorBlock: @escaping SFSyncDownTargetFetchErrorBlock, completeBlock: @escaping SFSyncDownTargetFetchCompleteBlock) {

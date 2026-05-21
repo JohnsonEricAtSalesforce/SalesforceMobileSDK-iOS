@@ -26,6 +26,7 @@
 //  WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 import Foundation
+import SalesforceSDKCommon
 import SalesforceSDKCore
 
 public typealias OnSendCompleteCallback =  ([String: RecordResponse]) -> ()
@@ -37,7 +38,7 @@ public class CompositeRequestHelper:NSObject {
     @objc
     public static func sendAsCompositeBatchRequest(_ syncManager: SyncManager, allOrNone: Bool, recordRequests: [RecordRequest], onComplete: @escaping OnSendCompleteCallback, onFail: @escaping OnFailCallback) {
         
-        let request = RestClient.shared.compositeRequest(recordRequests.map { $0.asRestRequest()! },
+        let request = RestClient.sharedInstance.compositeRequest(recordRequests.map { $0.asRestRequest()! },
                                                          refIds: recordRequests.map { $0.referenceId! },
                                                          allOrNone: allOrNone,
                                                          apiVersion: nil)
@@ -47,7 +48,7 @@ public class CompositeRequestHelper:NSObject {
         } successBlock: { response, urlResponse in
             if let response  = response as? [String:Any] {
                 var refIdToRecordResponse = [String:RecordResponse]()
-                let compositeResponse = CompositeResponse(response)
+                let compositeResponse = CompositeResponse(dictionary: response)
                 compositeResponse.subResponses.forEach {
                     refIdToRecordResponse[$0.referenceId] = RecordResponse.fromCompositeSubResponse(compositeSubResponse:$0)
                 }
@@ -72,7 +73,7 @@ public class CompositeRequestHelper:NSObject {
                     onFail(error!)
                 } successBlock: { response, urlResponse in
                     if let response  = response as? [[String:Any]] {
-                        let collectionResponse = CollectionResponse(response)
+                        let collectionResponse = CollectionResponse(array: response)
                         for (i, subResponse) in collectionResponse.subResponses.enumerated() {
                             let refId = refIds[i]
                             refIdToRecordResponse[refId] = RecordResponse.fromCollectionSubResponse(collectionSubResponse:subResponse)
@@ -213,13 +214,13 @@ public class RecordRequest: NSObject {
         
         switch (requestType) {
         case .CREATE:
-            return RestClient.shared.requestForCreate(withObjectType: objectType, fields: fields, apiVersion: nil)
+            return RestClient.sharedInstance.requestForCreate(withObjectType: objectType, fields: fields, apiVersion: nil)
         case .UPDATE:
-            return RestClient.shared.requestForUpdate(withObjectType: objectType, objectId: objectId!, fields: fields, apiVersion: nil)
+            return RestClient.sharedInstance.requestForUpdate(withObjectType: objectType, objectId: objectId!, fields: fields, apiVersion: nil)
         case .UPSERT:
-            return RestClient.shared.requestForUpsert(withObjectType: objectType, externalIdField: externalIdFieldName!, externalId: externalId, fields: fields!, apiVersion: nil)
+            return RestClient.sharedInstance.requestForUpsert(withObjectType: objectType, externalIdField: externalIdFieldName!, externalId: externalId, fields: fields!, apiVersion: nil)
         case .DELETE:
-            return RestClient.shared.requestForDelete(withObjectType: objectType, objectId: objectId!, apiVersion: nil)
+            return RestClient.sharedInstance.requestForDelete(withObjectType: objectType, objectId: objectId!, apiVersion: nil)
         }
     }
     
@@ -298,11 +299,11 @@ public class RecordRequest: NSObject {
     static func getCollectionRequest(recordRequests:[RecordRequest], requestType:RequestType, allOrNone: Bool) -> RestRequest? {
         switch (requestType) {
         case .CREATE:
-            return RestClient.shared.request(forCollectionCreate: allOrNone,
+            return RestClient.sharedInstance.requestForCollectionCreate( allOrNone,
                                              records: getArrayForCollectionRequest(recordRequests: recordRequests, requestType: .CREATE),
                                              apiVersion: nil)
         case .UPDATE:
-            return RestClient.shared.request(forCollectionUpdate: allOrNone,
+            return RestClient.sharedInstance.requestForCollectionUpdate( allOrNone,
                                              records: getArrayForCollectionRequest(recordRequests: recordRequests, requestType: .UPDATE),
                                              apiVersion: nil)
         case .UPSERT:
@@ -324,10 +325,10 @@ public class RecordRequest: NSObject {
                 let objectType = objectTypes.first!
                 let externalIdFieldName = externalIdFieldNames.first!
                 
-                return RestClient.shared.request(forCollectionUpsert: allOrNone, objectType: objectType, externalIdField: externalIdFieldName, records: records, apiVersion: nil)
+                return RestClient.sharedInstance.requestForCollectionUpsert( allOrNone, objectType: objectType, externalIdField: externalIdFieldName, records: records, apiVersion: nil)
             }
         case .DELETE:
-            return RestClient.shared.request(forCollectionDelete: false,
+            return RestClient.sharedInstance.requestForCollectionDelete( false,
                                              objectIds: getIds(recordRequests: recordRequests, requestType: .DELETE),
                                              apiVersion: nil)
         }

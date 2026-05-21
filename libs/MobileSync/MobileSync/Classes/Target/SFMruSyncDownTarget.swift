@@ -73,7 +73,7 @@ open class SFMruSyncDownTarget: SFSyncDownTarget {
     // MARK: - Fetching
 
     open override func startFetch(_ syncManager: SFMobileSyncSyncManager, maxTimeStamp: Int64, errorBlock: @escaping SFSyncDownTargetFetchErrorBlock, completeBlock: @escaping SFSyncDownTargetFetchCompleteBlock) {
-        let request = RestClient.shared.requestForMetadata(withObjectType: self.objectType, apiVersion: nil)
+        let request = RestClient.sharedInstance.requestForMetadata(withObjectType: self.objectType, apiVersion: nil)
         SFMobileSyncNetworkUtils.sendRequest(withMobileSyncUserAgent: request, failureBlock: { _, error, _ in
             errorBlock(error)
         }, successBlock: { [weak self] responseJson, _ in
@@ -90,7 +90,7 @@ open class SFMruSyncDownTarget: SFSyncDownTarget {
 
     @objc
     open func startFetch(_ syncManager: SFMobileSyncSyncManager, maxTimeStamp: Int64, queryRun: String, errorBlock: @escaping SFSyncDownTargetFetchErrorBlock, completeBlock: @escaping SFSyncDownTargetFetchCompleteBlock) {
-        let soqlRequest = RestClient.shared.request(forQuery: queryRun, apiVersion: nil)
+        let soqlRequest = RestClient.sharedInstance.requestForQuery( queryRun, apiVersion: nil)
         SFMobileSyncNetworkUtils.sendRequest(withMobileSyncUserAgent: soqlRequest, failureBlock: { _, error, _ in
             errorBlock(error)
         }, successBlock: { [weak self] responseJson, _ in

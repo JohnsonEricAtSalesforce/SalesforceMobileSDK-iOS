@@ -124,8 +124,8 @@ open class SFSyncTask: NSObject {
         }
         attributes["syncId"] = NSNumber(value: sync.syncId)
         attributes["syncTarget"] = NSStringFromClass(type(of: sync.target))
-        attributes[kSFSDKEventBuilderHelperStartTime] = NSNumber(value: sync.startTime)
-        attributes[kSFSDKEventBuilderHelperEndTime] = NSNumber(value: sync.endTime)
+        attributes[SFSDKEventBuilderHelper.startTimeKey] = NSNumber(value: sync.startTime)
+        attributes[SFSDKEventBuilderHelper.endTimeKey] = NSNumber(value: sync.endTime)
         SFSDKEventBuilderHelper.createAndStoreEvent(SFSyncState.syncTypeToString(sync.type), userAccount: nil, className: NSStringFromClass(type(of: self.syncManager)), attributes: attributes)
     }
 }

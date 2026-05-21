@@ -73,7 +73,7 @@ public class SFLayoutSyncManager: NSObject {
         lock.lock()
         defer { lock.unlock() }
 
-        let keyPrefix = SFKeyForUserAndScope(resolvedUserNonNil, .community) ?? ""
+        let keyPrefix = SFKeyForUserAndScope(resolvedUserNonNil, UserAccount.AccountScope.community) ?? ""
         let key = "\(keyPrefix)-\(syncMgr.store.name)"
 
         if let existing = syncMgrList[key] {
@@ -99,7 +99,7 @@ public class SFLayoutSyncManager: NSObject {
         lock.lock()
         defer { lock.unlock() }
         guard let user = user else { return }
-        guard let matchingKey = SFKeyForUserAndScope(user, .community) else { return }
+        guard let matchingKey = SFKeyForUserAndScope(user, UserAccount.AccountScope.community) else { return }
         let keys = syncMgrList.keys.filter { $0.hasPrefix(matchingKey) }
         for key in keys {
             syncMgrList.removeValue(forKey: key)

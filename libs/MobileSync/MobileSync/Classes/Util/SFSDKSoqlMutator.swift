@@ -108,8 +108,8 @@ public class SFSDKSoqlMutator: NSObject {
             .from(trimmedClause(kFrom))
             .whereClause(trimmedClause(kWhere))
             .having(trimmedClause(kHaving))
-            .group(by: trimmedClause(kGroupBy))
-            .order(by: trimmedClause(kOrderBy))
+            .groupBy(trimmedClause(kGroupBy))
+            .orderBy(trimmedClause(kOrderBy))
 
         let limitValue = clauseAsInteger(kLimit)
         if limitValue > 0 {

@@ -26,6 +26,7 @@
 //  WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 import Foundation
+import SalesforceSDKCommon
 import SalesforceSDKCore
 import SmartStore
 
@@ -141,7 +142,7 @@ public class CollectionSyncUpTarget: SFBatchSyncUpTarget {
             if (batchServerIds.count == SalesforceSDKCore.SFRestCollectionRetrieveMaxSize
                 || i == totalSize - 1) {
 
-                let request = RestClient.shared.request(forCollectionRetrieve: objectType, objectIds: batchServerIds, fieldList: [modificationDateFieldName], apiVersion: nil)
+                let request = RestClient.sharedInstance.requestForCollectionRetrieve( objectType, objectIds: batchServerIds, fieldList: [modificationDateFieldName], apiVersion: nil)
 
                 group.enter()
                 NetworkUtils.sendRequest(withMobileSyncUserAgent: request) { response, error, urlResponse in

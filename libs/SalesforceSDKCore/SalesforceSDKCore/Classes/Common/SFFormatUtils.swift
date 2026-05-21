@@ -27,7 +27,7 @@ import Foundation
 /// Date formatting utilities for Salesforce SDK.
 @objc(SFFormatUtils)
 @objcMembers
-public class FormatUtils: NSObject {
+open class FormatUtils: NSObject {
 
     private static let utcDateFormatter: DateFormatter = {
         let formatter = DateFormatter()
