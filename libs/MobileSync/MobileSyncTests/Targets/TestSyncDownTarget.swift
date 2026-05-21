@@ -52,7 +52,7 @@ class TestSyncDownTarget: SFSyncDownTarget {
         self.records = createRecords(numberOfRecords)
     }
 
-    override init(dict: NSDictionary) {
+    required init(dict: NSDictionary) {
         super.init(dict: dict)
         let d = dict as? [String: Any] ?? [:]
         self.prefix = d[kTestSyncDownTargetPrefix] as? String ?? ""
@@ -81,7 +81,7 @@ class TestSyncDownTarget: SFSyncDownTarget {
         for i in 0..<Int(count) {
             var record: [String: Any] = [:]
             record[kId] = idForPosition(UInt(i))
-            record[kLastModifiedDate] = SFMobileSyncObjectUtils.getIsoStringFromMillis(dateForPositionAsMillis(UInt(i)))
+            record[kLastModifiedDate] = FormatUtils.getIsoString(fromMillis: dateForPositionAsMillis(UInt(i)))
             result.append(record)
         }
         return result

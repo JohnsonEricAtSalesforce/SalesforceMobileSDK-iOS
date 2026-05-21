@@ -47,8 +47,8 @@ class BriefcaseSyncDownTests: SyncManagerTestCase {
         super.tearDown()
     }
     
-    override func createRecordName(_ objectType: String!) -> String! {
-        return "BriefcaseTest_\(objectType ?? "")_\(Date().timeIntervalSince1970)"
+    override func createRecordName(_ objectType: String) -> String {
+        return "BriefcaseTest_\(objectType)_\(Date().timeIntervalSince1970)"
     }
     
     func testStartFetchWithMaxTimestamp() throws {
@@ -121,7 +121,7 @@ class BriefcaseSyncDownTests: SyncManagerTestCase {
         
         // Create more accounts locally
         let localAccounts = try XCTUnwrap(createAccountsLocally(["local_1", "local_2"]) as? [[String: Any]])
-        let localAccountIds = localAccounts.compactMap { $0[ID] }
+        let localAccountIds = localAccounts.compactMap { $0[ID] as? String }
         XCTAssertEqual(localAccountIds.count, 2)
         
         // Clean ghosts
@@ -161,10 +161,10 @@ class BriefcaseSyncDownTests: SyncManagerTestCase {
 
         // Create more accounts locally
         let localAccounts = try XCTUnwrap(createAccountsLocally(["local_1", "local_2"]) as? [[String: Any]])
-        let localAccountIds = localAccounts.compactMap { $0[ID] }
+        let localAccountIds = localAccounts.compactMap { $0[ID] as? String }
         XCTAssertEqual(localAccountIds.count, 2)
         let localContacts = try XCTUnwrap(createContacts(forAccountsLocally: localAccountIds, numberOfContactsPerAccounts:2) as? [[String: Any]])
-        let localContactIds = localContacts.compactMap { $0[ID] }
+        let localContactIds = localContacts.compactMap { $0[ID] as? String }
         XCTAssertEqual(localContactIds.count, 4)
 
         // Clean ghosts
@@ -226,9 +226,9 @@ class BriefcaseSyncDownTests: SyncManagerTestCase {
         return records
     }
     
-    func cleanRecordsOnServer() throws {
-        try deleteRecordsByCriteriaFromServer(objectType: ACCOUNT_TYPE, criteria: "Name like 'BriefcaseTest_%' AND CreatedById = '\(RestClient.shared.userAccount.accountIdentity.userId)'")
-        try deleteRecordsByCriteriaFromServer(objectType: CONTACT_TYPE, criteria: "LastName like 'BriefcaseTest_%' AND CreatedById = '\(RestClient.shared.userAccount.accountIdentity.userId)'")
+    override func cleanRecordsOnServer() throws {
+        try deleteRecordsByCriteriaFromServer(objectType: ACCOUNT_TYPE, criteria: "Name like 'BriefcaseTest_%' AND CreatedById = '\(RestClient.sharedInstance.user!.accountIdentity.userId)'")
+        try deleteRecordsByCriteriaFromServer(objectType: CONTACT_TYPE, criteria: "LastName like 'BriefcaseTest_%' AND CreatedById = '\(RestClient.sharedInstance.user!.accountIdentity.userId)'")
     }
     
     func deleteRecordsByCriteriaFromServer(objectType: String, criteria: String) throws {
@@ -238,7 +238,7 @@ class BriefcaseSyncDownTests: SyncManagerTestCase {
     
     func idsOnServer(objectType: String, criteria: String) throws -> [String]  {
         let query = "SELECT Id FROM \(objectType) WHERE \(criteria)"
-        let request = RestClient.shared.request(forQuery: query, apiVersion: nil)
+        let request = RestClient.sharedInstance.requestForQuery( query, apiVersion: nil)
         let records = try XCTUnwrap(sendSyncRequest(request)?["records"] as? [[String: Any]])
         
         

@@ -32,7 +32,7 @@ enum TestSyncUpTargetModDateCompare: UInt {
     case remoteModDateLessThanLocal
 }
 
-@objc let kCreatedResultIdPrefix: String = "testSyncUpCreatedId_"
+let kCreatedResultIdPrefix: String = "testSyncUpCreatedId_"
 
 private let kTestSyncUpTargetErrorDomain = "com.mobilesync.test.TestServerTargetErrorDomain"
 private let kTestSyncUpDateCompareKey = "dateCompareKey"
@@ -55,7 +55,7 @@ class TestSyncUpTarget: SFSyncUpTarget {
         commonInit(dateCompare: dateCompare, sendRemoteModError: sendRemoteModError, sendSyncUpError: sendSyncUpError)
     }
 
-    override init(dict: NSDictionary) {
+    required init(dict: NSDictionary) {
         super.init(dict: dict)
         let d = dict as? [String: Any] ?? [:]
         let dc: TestSyncUpTargetModDateCompare = {
@@ -86,7 +86,7 @@ class TestSyncUpTarget: SFSyncUpTarget {
         return dict
     }
 
-    override func isNewerThanServer(_ syncManager: SFMobileSyncSyncManager, record: [String: Any], resultBlock: @escaping SFSyncUpRecordNewerThanServerBlock) {
+    override func isNewerThanServer(_ syncManager: SFMobileSyncSyncManager, record: NSDictionary, resultBlock: @escaping SFSyncUpRecordNewerThanServerBlock) {
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
             if self.sendRemoteModError {
                 resultBlock(true)
@@ -105,15 +105,15 @@ class TestSyncUpTarget: SFSyncUpTarget {
         }
     }
 
-    override func createOnServer(_ syncManager: SFMobileSyncSyncManager, record: [String: Any], fieldlist: [Any], completionBlock: @escaping SFSyncUpTargetCompleteBlock, failBlock: @escaping SFSyncUpTargetErrorBlock) {
+    override func createOnServer(syncManager: SFMobileSyncSyncManager, record: NSDictionary, fieldlist: [Any], completionBlock: @escaping SFSyncUpTargetCompleteBlock, failBlock: @escaping SFSyncUpTargetErrorBlock) {
         fakeRemoteCall(isCreate: true, completionBlock: completionBlock, failBlock: failBlock)
     }
 
-    override func updateOnServer(_ syncManager: SFMobileSyncSyncManager, record: [String: Any], fieldlist: [Any], completionBlock: @escaping SFSyncUpTargetCompleteBlock, failBlock: @escaping SFSyncUpTargetErrorBlock) {
+    override func updateOnServer(syncManager: SFMobileSyncSyncManager, record: NSDictionary, fieldlist: [Any], completionBlock: @escaping SFSyncUpTargetCompleteBlock, failBlock: @escaping SFSyncUpTargetErrorBlock) {
         fakeRemoteCall(isCreate: false, completionBlock: completionBlock, failBlock: failBlock)
     }
 
-    override func deleteOnServer(_ syncManager: SFMobileSyncSyncManager, record: [String: Any], completionBlock: @escaping SFSyncUpTargetCompleteBlock, failBlock: @escaping SFSyncUpTargetErrorBlock) {
+    override func deleteOnServer(syncManager: SFMobileSyncSyncManager, record: NSDictionary, completionBlock: @escaping SFSyncUpTargetCompleteBlock, failBlock: @escaping SFSyncUpTargetErrorBlock) {
         fakeRemoteCall(isCreate: false, completionBlock: completionBlock, failBlock: failBlock)
     }
 
