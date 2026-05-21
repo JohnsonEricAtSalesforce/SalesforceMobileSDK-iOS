@@ -21,7 +21,6 @@
 /* End PBXAggregateTarget section */
 
 /* Begin PBXBuildFile section */
-		4FC72E802E600D0000A8AA8D /* FMDB in Frameworks */ = {isa = PBXBuildFile; productRef = 4FC72E7F2E600D0000A8AA8D /* FMDB */; };
 		03AECFC490896489EAB1C29F /* SFSyncState.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5E3A9CDCD13F6E018928F831 /* SFSyncState.swift */; };
 		044A51D460E6F179EFE15A0A /* SFMetadataSyncManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5BF3C2F4E6441C3166683A74 /* SFMetadataSyncManager.swift */; };
 		0CEB5FF67724E00EF94F227D /* SFChildrenInfo.swift in Sources */ = {isa = PBXBuildFile; fileRef = EEC61AA39F85323A4ADA0B31 /* SFChildrenInfo.swift */; };
@@ -30,9 +29,6 @@
 		1DDCD79BAC98DF727C28E221 /* SFObject.swift in Sources */ = {isa = PBXBuildFile; fileRef = A034CFC3B245CE32418DDB62 /* SFObject.swift */; };
 		23EA1B1E80C3DAFF288D741D /* MobileSyncSDKManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 84E0B161229D4F156C7A8039 /* MobileSyncSDKManager.swift */; };
 		3B3050000F49DF5AC94C0100 /* SFLayout.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6437B18576479651717CD45F /* SFLayout.swift */; };
-		4F06AF321C499FD100F70798 /* main.m in Sources */ = {isa = PBXBuildFile; fileRef = 4F06AF311C499FD100F70798 /* main.m */; };
-		4F06AF351C499FD100F70798 /* AppDelegate.m in Sources */ = {isa = PBXBuildFile; fileRef = 4F06AF341C499FD100F70798 /* AppDelegate.m */; };
-		4F06AF381C499FD100F70798 /* ViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = 4F06AF371C499FD100F70798 /* ViewController.m */; };
 		4F06AF3B1C499FD100F70798 /* Main.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 4F06AF391C499FD100F70798 /* Main.storyboard */; };
 		4F06AF3D1C499FD100F70798 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 4F06AF3C1C499FD100F70798 /* Assets.xcassets */; };
 		4F06AF401C499FD100F70798 /* LaunchScreen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 4F06AF3E1C499FD100F70798 /* LaunchScreen.storyboard */; };
@@ -50,6 +46,7 @@
 		4FAA9B772255D49D0006810D /* SFSDKSoqlMutatorTests.m in Sources */ = {isa = PBXBuildFile; fileRef = 4FAA9B762255D49D0006810D /* SFSDKSoqlMutatorTests.m */; };
 		4FB685E028413A4800FB76E2 /* BatchSyncUpTarget.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4FB685DF28413A4800FB76E2 /* BatchSyncUpTarget.swift */; };
 		4FB685ED28413EBC00FB76E2 /* CollectionSyncUpTargetTests.m in Sources */ = {isa = PBXBuildFile; fileRef = 4FB685EC28413EBC00FB76E2 /* CollectionSyncUpTargetTests.m */; };
+		4FC72E802E600D0000A8AA8D /* FMDB in Frameworks */ = {isa = PBXBuildFile; productRef = 4FC72E7F2E600D0000A8AA8D /* FMDB */; };
 		4FCA4AE91FBE7D6200F081B3 /* SFSDKSyncsConfigTests.m in Sources */ = {isa = PBXBuildFile; fileRef = 4FCA4AE81FBE7D6200F081B3 /* SFSDKSyncsConfigTests.m */; };
 		4FCDFF7528402D510045CD29 /* CollectionSyncUpTarget.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4FCDFF7428402D510045CD29 /* CollectionSyncUpTarget.swift */; };
 		4FF1357C221782D600D9D25A /* SyncUpTargetTests.m in Sources */ = {isa = PBXBuildFile; fileRef = 4FF1357B221782D600D9D25A /* SyncUpTargetTests.m */; };
@@ -65,6 +62,7 @@
 		6927E23F283C3E1400A16668 /* SyncTarget.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6927E23E283C3E1400A16668 /* SyncTarget.swift */; };
 		69421D1F17E0871A6C8BD809 /* SFMetadata.swift in Sources */ = {isa = PBXBuildFile; fileRef = 91B17958F3E53E6CBFD84F5C /* SFMetadata.swift */; };
 		696E913D2AD09E7600205884 /* PrivacyInfo.xcprivacy in Resources */ = {isa = PBXBuildFile; fileRef = 696E913B2AD09E6200205884 /* PrivacyInfo.xcprivacy */; };
+		6B730C56C3D5E176C9BD46F1 /* ViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = B398E8AFDABD547D1FF7AAC0 /* ViewController.swift */; };
 		6DEF980257FD4824C7C95EDD /* SFSDKSoqlMutator.swift in Sources */ = {isa = PBXBuildFile; fileRef = E9076D4FEB66F930BC384F47 /* SFSDKSoqlMutator.swift */; };
 		726694C1389F48FA40ACBF7B /* SFParentChildrenSyncHelper.swift in Sources */ = {isa = PBXBuildFile; fileRef = C941ACD4B6ED20E1A74321A6 /* SFParentChildrenSyncHelper.swift */; };
 		750B8A7BE4AD9B87BB7AA7D4 /* SFSyncUpTarget.swift in Sources */ = {isa = PBXBuildFile; fileRef = 667792CB8A91ACF4EEE31401 /* SFSyncUpTarget.swift */; };
@@ -79,6 +77,7 @@
 		922B12E627A411C3BD2BFCCC /* SFParentChildrenSyncUpTarget.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3BC93B5834435EC0D91F9977 /* SFParentChildrenSyncUpTarget.swift */; };
 		9485E792967EB071F4DF762E /* SFMobileSyncObjectUtils.swift in Sources */ = {isa = PBXBuildFile; fileRef = CB7181620BF918839CFECE6B /* SFMobileSyncObjectUtils.swift */; };
 		A9AB6554D4A789C75B6EE066 /* MobileSyncTypeAliases.swift in Sources */ = {isa = PBXBuildFile; fileRef = 72CB3D3D95C89091EA9ED2CA /* MobileSyncTypeAliases.swift */; };
+		AB221189AF7FE90B6C2EBA48 /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 23A25535CBC6DC946FC547AD /* AppDelegate.swift */; };
 		AB22DE4C1FC40C19B685301E /* SFLayoutSyncDownTarget.swift in Sources */ = {isa = PBXBuildFile; fileRef = D72976A01AEFE10DB545CD89 /* SFLayoutSyncDownTarget.swift */; };
 		B384A7E8AF68629A6C86633B /* SFSyncTask.swift in Sources */ = {isa = PBXBuildFile; fileRef = 777F1D7142B5E663BF8CE785 /* SFSyncTask.swift */; };
 		B716A36E218F4FC5009D407F /* SalesforceAnalytics.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = B716A34B218F4F9C009D407F /* SalesforceAnalytics.framework */; };
@@ -266,6 +265,7 @@
 /* Begin PBXFileReference section */
 		083363D40838F4CC145EDAEA /* SFParentChildrenSyncDownTarget.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = Target/SFParentChildrenSyncDownTarget.swift; sourceTree = "<group>"; };
 		1C9E00C1268D79F8094688D9 /* SFSyncDownTarget.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = Target/SFSyncDownTarget.swift; sourceTree = "<group>"; };
+		23A25535CBC6DC946FC547AD /* AppDelegate.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = AppDelegate.swift; sourceTree = "<group>"; };
 		27DE3C471E3A4F5E7978DF4A /* SFSDKSyncsConfig.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = SFSDKSyncsConfig.swift; sourceTree = "<group>"; };
 		2FF36894B6F7FFFD99544FA6 /* SFMobileSyncPersistableObject.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = SFMobileSyncPersistableObject.swift; sourceTree = "<group>"; };
 		3AC973F069D3D77EA5C97B6D /* SFBatchSyncUpTarget.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = Target/SFBatchSyncUpTarget.swift; sourceTree = "<group>"; };
@@ -396,6 +396,7 @@
 		A034CFC3B245CE32418DDB62 /* SFObject.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = SFObject.swift; sourceTree = "<group>"; };
 		A3B03C0AF07703D31795FEB0 /* SFMruSyncDownTarget.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = Target/SFMruSyncDownTarget.swift; sourceTree = "<group>"; };
 		ADD3BADA952586771012569A /* SFSyncUpTask.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = Manager/SFSyncUpTask.swift; sourceTree = "<group>"; };
+		B398E8AFDABD547D1FF7AAC0 /* ViewController.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = ViewController.swift; sourceTree = "<group>"; };
 		B716A342218F4F9C009D407F /* SalesforceAnalytics.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; name = SalesforceAnalytics.xcodeproj; path = ../SalesforceAnalytics/SalesforceAnalytics.xcodeproj; sourceTree = "<group>"; };
 		B716A352218F4FA3009D407F /* SalesforceSDKCommon.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; name = SalesforceSDKCommon.xcodeproj; path = ../SalesforceSDKCommon/SalesforceSDKCommon.xcodeproj; sourceTree = "<group>"; };
 		B716A35E218F4FAA009D407F /* SalesforceSDKCore.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; name = SalesforceSDKCore.xcodeproj; path = ../SalesforceSDKCore/SalesforceSDKCore.xcodeproj; sourceTree = "<group>"; };
@@ -524,6 +525,8 @@
 				4F06AF301C499FD100F70798 /* Supporting Files */,
 				4F3D60351FBFB0AF00D1830F /* globalsyncs.json */,
 				4F3D603A1FBFB11C00D1830F /* usersyncs.json */,
+				23A25535CBC6DC946FC547AD /* AppDelegate.swift */,
+				B398E8AFDABD547D1FF7AAC0 /* ViewController.swift */,
 			);
 			path = MobileSyncTestApp;
 			sourceTree = "<group>";
@@ -1211,9 +1214,8 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				4F06AF381C499FD100F70798 /* ViewController.m in Sources */,
-				4F06AF351C499FD100F70798 /* AppDelegate.m in Sources */,
-				4F06AF321C499FD100F70798 /* main.m in Sources */,
+				AB221189AF7FE90B6C2EBA48 /* AppDelegate.swift in Sources */,
+				6B730C56C3D5E176C9BD46F1 /* ViewController.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -1379,6 +1381,7 @@
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				PROVISIONING_PROFILE_SPECIFIER = "";
 				SUPPORTS_MACCATALYST = YES;
+				SWIFT_VERSION = 5.0;
 			};
 			name = Debug;
 		};
@@ -1406,6 +1409,7 @@
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				PROVISIONING_PROFILE_SPECIFIER = "";
 				SUPPORTS_MACCATALYST = YES;
+				SWIFT_VERSION = 5.0;
 			};
 			name = Release;
 		};

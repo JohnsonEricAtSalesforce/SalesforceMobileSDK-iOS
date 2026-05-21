@@ -22,6 +22,8 @@
 
 /* Begin PBXBuildFile section */
 		41614EF0CAA053DD18CFEFAF /* SFSDKAILTNTransform.swift in Sources */ = {isa = PBXBuildFile; fileRef = 438803CF2DED8E325CD725E9 /* SFSDKAILTNTransform.swift */; };
+		4B6C4B30F4747D76F245767B /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 41EA72988E233E48DCF725FD /* AppDelegate.swift */; };
+		5DFE0C3EBFAFE14CC4B25CAD /* ViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = A2E0ECE15592AF4DF146FAD2 /* ViewController.swift */; };
 		696E91442AD0A10300205884 /* PrivacyInfo.xcprivacy in Resources */ = {isa = PBXBuildFile; fileRef = 696E91432AD0A10300205884 /* PrivacyInfo.xcprivacy */; };
 		7E2CBEAAC683FD45CB2F2A0A /* SFSDKInstrumentationEvent.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA30E7EB0475C18AA3AA00F8 /* SFSDKInstrumentationEvent.swift */; };
 		85E22F7E0C84BAABEEC0FD6E /* SFSDKTransform.swift in Sources */ = {isa = PBXBuildFile; fileRef = 851F7A4B0BCC397CA7956E8C /* SFSDKTransform.swift */; };
@@ -30,11 +32,8 @@
 		C0DBCC2ADA17A286397584E1 /* SFSDKInstrumentationEventBuilder.swift in Sources */ = {isa = PBXBuildFile; fileRef = 487E1F27723B4F7245E2BFEB /* SFSDKInstrumentationEventBuilder.swift */; };
 		CE1F09E4201A6C18006FA9D2 /* CoreTelephony.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = CE1F09D5201A6C17006FA9D2 /* CoreTelephony.framework */; platformFilters = (ios, maccatalyst, ); };
 		CE2B8BD31CE900F500C6FC6A /* SalesforceAnalytics.h in Headers */ = {isa = PBXBuildFile; fileRef = CE2B8BD21CE900F500C6FC6A /* SalesforceAnalytics.h */; settings = {ATTRIBUTES = (Public, ); }; };
-		CE2B8C2E1CE9218900C6FC6A /* main.m in Sources */ = {isa = PBXBuildFile; fileRef = CE2B8C2D1CE9218900C6FC6A /* main.m */; };
-		CE2B8C311CE9218900C6FC6A /* AppDelegate.m in Sources */ = {isa = PBXBuildFile; fileRef = CE2B8C301CE9218900C6FC6A /* AppDelegate.m */; };
 		CE2B8C441CE921E000C6FC6A /* SalesforceAnalytics.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = CE2B8BCF1CE900F500C6FC6A /* SalesforceAnalytics.framework */; };
 		CE2B8C451CE921E000C6FC6A /* SalesforceAnalytics.framework in Embed Frameworks */ = {isa = PBXBuildFile; fileRef = CE2B8BCF1CE900F500C6FC6A /* SalesforceAnalytics.framework */; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
-		CE2B8C4E1CE9243600C6FC6A /* ViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = CE2B8C4D1CE9243600C6FC6A /* ViewController.m */; };
 		CE2B8E111CE9352B00C6FC6A /* en.lproj in Resources */ = {isa = PBXBuildFile; fileRef = CE2B8C501CE9245B00C6FC6A /* en.lproj */; };
 		CE2B8E131CE9352B00C6FC6A /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = CE2B8C3B1CE9218900C6FC6A /* Assets.xcassets */; };
 		CE2B8FEB1CF5515E00C6FC6A /* SalesforceAnalytics-Prefix.pch in Headers */ = {isa = PBXBuildFile; fileRef = CE2B8FEA1CF5515E00C6FC6A /* SalesforceAnalytics-Prefix.pch */; };
@@ -115,10 +114,12 @@
 
 /* Begin PBXFileReference section */
 		09B615531C13E97B415AE48E /* SFSDKEventStoreManager.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = SFSDKEventStoreManager.swift; path = Classes/Store/SFSDKEventStoreManager.swift; sourceTree = "<group>"; };
+		41EA72988E233E48DCF725FD /* AppDelegate.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = AppDelegate.swift; sourceTree = "<group>"; };
 		438803CF2DED8E325CD725E9 /* SFSDKAILTNTransform.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = SFSDKAILTNTransform.swift; path = Classes/Transform/SFSDKAILTNTransform.swift; sourceTree = "<group>"; };
 		487E1F27723B4F7245E2BFEB /* SFSDKInstrumentationEventBuilder.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = SFSDKInstrumentationEventBuilder.swift; path = Classes/Model/SFSDKInstrumentationEventBuilder.swift; sourceTree = "<group>"; };
 		696E91432AD0A10300205884 /* PrivacyInfo.xcprivacy */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.xml; path = PrivacyInfo.xcprivacy; sourceTree = "<group>"; };
 		851F7A4B0BCC397CA7956E8C /* SFSDKTransform.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = SFSDKTransform.swift; path = Classes/Transform/SFSDKTransform.swift; sourceTree = "<group>"; };
+		A2E0ECE15592AF4DF146FAD2 /* ViewController.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = ViewController.swift; sourceTree = "<group>"; };
 		A5B336430BD9122662BDB9DF /* SFSDKAnalyticsLogger.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = SFSDKAnalyticsLogger.swift; path = Classes/Util/SFSDKAnalyticsLogger.swift; sourceTree = "<group>"; };
 		AA30E7EB0475C18AA3AA00F8 /* SFSDKInstrumentationEvent.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = SFSDKInstrumentationEvent.swift; path = Classes/Model/SFSDKInstrumentationEvent.swift; sourceTree = "<group>"; };
 		B716A371218F5D60009D407F /* SalesforceSDKCommon.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; name = SalesforceSDKCommon.xcodeproj; path = ../SalesforceSDKCommon/SalesforceSDKCommon.xcodeproj; sourceTree = "<group>"; };
@@ -275,6 +276,8 @@
 				CE2B8C301CE9218900C6FC6A /* AppDelegate.m */,
 				CE2B8C3B1CE9218900C6FC6A /* Assets.xcassets */,
 				CE2B8C2C1CE9218900C6FC6A /* Supporting Files */,
+				41EA72988E233E48DCF725FD /* AppDelegate.swift */,
+				A2E0ECE15592AF4DF146FAD2 /* ViewController.swift */,
 			);
 			path = SalesforceAnalyticsTestApp;
 			sourceTree = "<group>";
@@ -650,9 +653,8 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				CE2B8C4E1CE9243600C6FC6A /* ViewController.m in Sources */,
-				CE2B8C311CE9218900C6FC6A /* AppDelegate.m in Sources */,
-				CE2B8C2E1CE9218900C6FC6A /* main.m in Sources */,
+				4B6C4B30F4747D76F245767B /* AppDelegate.swift in Sources */,
+				5DFE0C3EBFAFE14CC4B25CAD /* ViewController.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
