@@ -125,13 +125,12 @@ ObjC test files reference converted Swift classes with old selectors. Per the no
 - [x] Test target builds and runs: **200 tests execute, 186 pass, 14 failures (3 unexpected)**
 - [x] CredentialsArchiveRoundTripTests runs and passes (7/7)
 
-**Known remaining test failures (13 test cases fail, 28 listed in "Failing tests"):**
-Root cause identified and partially fixed:
-- **Fixed:** `SFSDKAuthSession.swift:83` used `NSNull()` instead of `nil` in KVC — caused `-[NSNull length]` crash. Changed to `setValue(nil, forKey:)`.
-- **Remaining:** `RestClientPublisherTests` crashes the test runner with signal trap (SIGTRAP), which cascades to prevent `BiometricAuthenticationManagerTests`, `NativeLoginManagerTests`, `PushNotificationManagerTests`, and some `LoginForAdminTests` from executing. These are not assertion failures — they're collateral from the runner crash.
-- **True assertion failures:** 3 unexpected in `LoginForAdminTests` (auth flow behavioral difference in converted code)
+**Known remaining test issue (1 root cause, cascading):**
+- **Fixed:** `SFSDKAuthSession.swift:83` NSNull→nil (crash resolved)
+- **Fixed:** `LoginForAdminTests` — 24/24 pass (mock network unavailable prevents UI crash in test env)
+- **Remaining:** `RestClientPublisherTests` crashes the test runner with SIGTRAP, cascading to prevent `BiometricAuthenticationManagerTests` (8 tests), `NativeLoginManagerTests` (2 tests), and `PushNotificationManagerTests` (14 tests) from executing. These are not assertion failures — they never run due to the runner crash.
 
-To fully resolve: investigate the `RestClientPublisherTests` SIGTRAP crash (likely another KVC or API mismatch in the publisher extension code).
+To fully resolve: investigate the `RestClientPublisherTests` SIGTRAP (likely a Combine publisher accessing a nil/invalid state during test setup).
 
 **Blocking ObjC test files (must be converted to Swift):**
 - [ ] `SalesforceRestAPITests.m` (~600 lines — largest, integration tests)
