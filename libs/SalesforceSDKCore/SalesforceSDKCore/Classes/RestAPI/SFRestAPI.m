@@ -74,6 +74,8 @@ __strong static NSDateFormatter *httpDateFormatter = nil;
 + (void) initialize {
     if (self == [SFRestAPI class]) {
         httpDateFormatter = [NSDateFormatter new];
+        httpDateFormatter.locale = [[NSLocale alloc] initWithLocaleIdentifier:@"en_US_POSIX"];
+        httpDateFormatter.timeZone = [NSTimeZone timeZoneWithName:@"GMT"];
         httpDateFormatter.dateFormat = @"EEE',' dd MMM yyyy HH':'mm':'ss 'GMT'";
     }
 }
@@ -838,7 +840,8 @@ successBlock:(SFRestResponseBlock)successBlock
 
 + (NSString *)getHttpStringFomFromDate:(NSDate *)date {
     if (date == nil) return nil;
-    return [httpDateFormatter stringFromDate:date];
+    NSDate *roundedDate = [NSDate dateWithTimeIntervalSinceReferenceDate:ceil([date timeIntervalSinceReferenceDate])];
+    return [httpDateFormatter stringFromDate:roundedDate];
 }
 
 #pragma mark - SFUserAccountManagerDelegate
