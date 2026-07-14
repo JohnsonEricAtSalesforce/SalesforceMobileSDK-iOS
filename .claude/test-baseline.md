@@ -83,26 +83,48 @@ until P0.2d is resolved. Until then a port is verifiable against SDKCore only by
 build ✓ + the tests nearest the change pass + no failure touches the changed code (how #4043 was
 accepted).
 
-## UNRESOLVED — NOT baselined (tracker finding P0.2d) — SalesforceSDKCore assert() crash cluster
+## UNRESOLVED — NOT baselined (tracker finding P0.2d) — SalesforceSDKCore migration-artifact crashes
 
-Distinct from the (now-fixed) credentials cluster. After the P0.2c credentials fix, the SDKCore run
-still shows crashes from **debug `assert()` failures in production Swift** when tests construct
-command/URL/cache objects with empty scheme/path:
-- `SFSDKAuthCommand.swift:48` — `assert(!path.sfsdk_isEmptyOrWhitespaceAndNewlines(), "Path cannot be nil")` (dominant, ×22)
-- `SFOAuthCoordinator.swift:961` (NSAssert helper) ×4 · `SFSDKEncryptedURLCache.swift:37` ×6
-- `ContiguousArrayBuffer.swift:692` (index-out-of-range) ×4
+Distinct from the (now-fixed) credentials cluster. Root-caused 2026-07-14: **three independent
+migration artifacts** where a Swift construct crashes on input the ObjC original tolerated. All are
+production-Swift bugs (not test bugs) introduced by the ObjC→Swift migration, provable by: the ObjC
+`.m` reference tolerates the same input, and the tests are byte-equivalent to their passing `.m`
+originals.
 
-Concentrated in these test classes (crash → cascade fans out to ~71 reported failures, but the true
-crashing set is ~11 classes): `SFSDKURLHandlerManagerTest` (×7), `SFSDKUrlCacheTests` (×3),
-`SFSDKIDPLoginRequestCommandTest`, `SFSDKAuthRequestCommandTest`, `SFSDKIDPAuthCodeLoginRequestCommandTest`,
-`SFSDKSPLoginResponseCommandTest`, `SalesforceOAuthUnitTests`, `SFRestAPIDataTaskRaceTests`,
-`PushNotificationManagerTests`, `SFUserAccountManagerPersisterTests`, `BiometricAuthenticationManagerTests`
-(a different site, `:85`, not the credentials one).
+**Sub-cause A — `SFSDKAuthCommand.requestURL()` empty-string asserts (DOMINANT, ~22 crashes).**
+`SFSDKAuthCommand.swift:47-50` asserts `scheme`/`path`/`version`/`command` are non-empty. In Swift
+these properties default to `""`; `path` is never set by the SP/IDP command subclasses (and `path`
+is NOT even used to build the URL — line 52 uses scheme/host/version/command only). ObjC defaulted
+them to `nil`, and `[nil sfsdk_isEmptyOrWhitespaceAndNewlines]` returns `NO`, so `NSAssert(NO==false)`
+= `NSAssert(true)` PASSED. Swift `"".isEmpty == true` → `assert(false)` → CRASH. The migration
+translated `nil`-tolerant ObjC asserts into empty-string-fatal Swift asserts.
+- Fix candidate: remove the `path` assert (it is dead — `path` is unused in `requestURL()`), OR relax
+  the asserts to match ObjC nil-tolerance. Do NOT "fix" by making tests set a dummy path — that hides
+  a real production behavior change (fresh command now crashes where it used to build a URL).
+- Tests hit: `SFSDKURLHandlerManagerTest` (×7), `SFSDKIDPLoginRequestCommandTest`,
+  `SFSDKAuthRequestCommandTest`, `SFSDKIDPAuthCodeLoginRequestCommandTest`,
+  `SFSDKSPLoginResponseCommandTest`, `SalesforceOAuthUnitTests`.
 
-**Deliberately NOT baselined** (would be laundering, and the cascade makes the set unstable). Root
-cause is likely test setup passing empty scheme/path into command objects (or an `assert` that should
-be a graceful nil-return / precondition documented for tests). Needs a separate investigation pass —
-NOT the credentials fix. Full SDKCore gate remains provisional.
+**Sub-cause B — `SFSDKEncryptedURLCache` unimplemented designated initializer (~6 crashes).**
+Fatal: "Use of unimplemented initializer 'init(memoryCapacity:diskCapacity:diskPath:)'". The ObjC
+class implemented `initWithMemoryCapacity:diskCapacity:directoryURL:` forwarding to `super`; the Swift
+migration replaced it with a `cacheDirectory:` convenience init that calls `self.init()` and does NOT
+override URLCache's designated initializers. When `URLSession`/`URLCache.shared` instantiates the
+cache via the standard `init(memoryCapacity:diskCapacity:diskPath:)`, Swift traps.
+- Fix candidate: override the real URLCache designated initializer(s) forwarding to `super`, matching
+  the ObjC surface. Production bug (affects any consumer setting an encrypted shared cache).
+- Tests hit: `SFSDKUrlCacheTests` (testRestCalls, testSettingCacheTypes, testNilURL).
+
+**Sub-cause C — `SFRestAPIDataTaskRaceTests` index-out-of-range (~4 crashes, likely TEST-only).**
+`ContiguousArrayBuffer:692` via `DeferredURLProtocol.pendingProtocols[index]` (line 71). A test-harness
+race: `deliverResponse(at:)` indexes the pending-protocols array before the protocol has registered.
+This is the ONE sub-cause that looks like a test-infra bug, not a production migration artifact.
+- Fix candidate: guard the index / wait for registration in the test harness.
+
+**Deliberately NOT baselined** (would be laundering; A/B are real production regressions that must be
+FIXED, not accepted). The cascade inflates the reported set to ~71; the true root-crash set is the
+~11 classes above. Full SDKCore gate remains provisional until A + B (production) are fixed; C is
+test-only. All three are separate from the credentials fix.
 
 ## Provenance
 
