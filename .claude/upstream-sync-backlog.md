@@ -1,6 +1,6 @@
 # Upstream Sync Backlog Ledger
 
-Marker (done floor): 6ed0ab40  ·  origin/dev HEAD: bac017113  ·  34 behind (12 logical units)  ·  Updated: 2026-07-14 (escalation review complete)
+Marker (done floor): 6ed0ab40  ·  origin/dev HEAD: bac017113  ·  34 behind (12 logical units)  ·  Updated: 2026-07-14 (#4038 skipped — marker held: #4035 below it still pending)
 
 > Pre-mapping pass: 34 upstream commits grouped into 12 first-parent units and classified by net-diff
 > file footprint. Grouping uses first-parent history of `origin/dev` (top-level landings), not raw
@@ -17,15 +17,15 @@ Marker (done floor): 6ed0ab40  ·  origin/dev HEAD: bac017113  ·  34 behind (12
 > see "Migration order vs. original history" at the bottom.
 
 ## Migration status
-░░░░░░░░░░░░░░░░░░░░  0/12 units ported (0%)   ·   libs/-impacting: 0/8
+█████░░░░░░░░░░░░░░░░  3/12 units done (25%; ported+skipped)   ·   libs/-impacting: 1/8
 
 | Status        | Cnt | Units |
 |---------------|-----|-------|
 | ✅ ported     |  0  | — |
-| 🔬 analyzed   |  8  | #4038 #4039 #4040 #4041 #4042 #4043 #4044 #4046 |
+| 🔬 analyzed   |  7  | #4039 #4040 #4041 #4042 #4043 #4044 #4046 |
 | 🚧 in-progress|  0  | — |
 | ⏸ deferred    |  0  | — |
-| ⏭ skipped     |  2  | master-merge×2 (empty net diff) |
+| ⏭ skipped     |  3  | #4038 (buggy method not in migrated Swift surface), master-merge×2 (empty net diff) |
 | ⬜ pending    |  2  | #4035 #4047 |
 
 ## Units
@@ -40,7 +40,7 @@ Marker (done floor): 6ed0ab40  ·  origin/dev HEAD: bac017113  ·  34 behind (12
 | MASTER merge (a2d6db8ae) | a2d6db8ae | — | ⏭ skipped | — | "Merging master into dev" — empty net diff (no-op) |
 | #4040 hide nav bar on native login | 881c626eb (merge, 2) | B | 🔬 analyzed · ✅ approved | — | self-contained one-line UI flag |
 | #4039 auth-loading default + deprecate property | d4a9ce0db (merge, 2) | B | 🔬 analyzed · ✅ approved ⚠ | — | ⚠ PUBLIC-API deprecation REVERSAL — approved; keep SDK-owner flag; see detail |
-| #4038 fix hardcoded log level | 439d33e90 (merge, 1) | B | 🔬 analyzed · ✅ approved | — | non-escalation; smallest B unit |
+| #4038 fix hardcoded log level | 439d33e90 (merge, 1) | B→skip | ⏭ skipped | ref-sync only | buggy variadic `format:` method NOT in migrated Swift surface — no compiled Swift behavior to fix; SFLogger.m ref synced to upstream. See detail + ⚠ dropped-API flag. |
 | MASTER merge (9bf7b52f2 #4037) | 9bf7b52f2 | — | ⏭ skipped | — | "Merge from master" — empty net diff (no-op) |
 | #4035 RTR login UI tests + config | d340d5437 (merge, ~7) | F | ⬜ pending | — | `native/SampleApps/AuthFlowTester/*` + `shared/test/ui_test_config.json.sample`; #4035 also needs `ui_test_config.json` to gate |
 
@@ -116,11 +116,28 @@ Marker (done floor): 6ed0ab40  ·  origin/dev HEAD: bac017113  ·  34 behind (12
   raised** — this is a public-contract change that belongs in release notes / PR description, not a silent
   port. Do not treat "approved to port" as "cleared for public release without owner sign-off."
 
-### #4038 — Fix hardcoded log level  [needs-trace] · ✅ APPROVED (non-escalation)
-- **Intent:** replace a hardcoded log level in `SFLogger.m` with the configured level.
-- **Swift mapping:** `SFLogger.m` → `Classes/Logger/SFLogger.swift` (also `SFDefaultLogger.swift`
-  present). Find the hardcoded level and route through configured level.
-- **Files:** `SFLogger.m` → `SalesforceSDKCommon/Classes/Logger/SFLogger.swift`.
+### #4038 — Fix hardcoded log level  [TRACED → NO SWIFT TARGET] · ⏭ SKIPPED (operator-approved 2026-07-14)
+- **Intent:** upstream one-liner in the **C-style variadic** `+ log:cls:level:format:, ...` — it
+  passed the hardcoded `SFLogLevelDefault` to the backend instead of the caller's `level`. Fix = pass
+  `level`. (Net diff: single line in `SFLogger.m:304`.)
+- **Trace result (VERIFIED):** the buggy method **does not exist in the compiled Swift surface.**
+  - `SFLogger.m`/`SFLogger.h` are **de-referenced** (PBXFileReference only, no "in Sources" entry);
+    the compiled logger is `SFLogger.swift`.
+  - `SFLogger.swift` has **no variadic `format:` methods at all** — only `message:`-based ones. Swift
+    can't express `@objc` C-style variadics, so the entire `…format:, ...` family was dropped in the
+    Phase-1 migration (commit 015bc8c56).
+  - **No compiled caller needs it:** ObjC callers (`SalesforceRestAPITests.m`,
+    `SFSDKSalesforceSDKUpgradeManager.m`, `SFSDKCoreLogger.m`) are de-referenced; compiled
+    `SFLoggerTests.swift` exercises only `message:` methods; peer `SFSDKCoreLogger.swift` has its own
+    Swift-native `format: String, _ args: CVarArg...` (separate, unaffected).
+- **Disposition:** SKIPPED for compiled Swift (no behavior to change). Per Workflow Step 4, the
+  de-referenced `SFLogger.m` was overwritten with upstream content at `439d33e90` (now byte-identical)
+  so the audit reference stays truthful. No production Swift change ⇒ no build/test gate required.
+- **⚠ SEPARATE OWNER FLAG (not #4038):** the migration silently dropped a family of **public** API —
+  `SFLogger`'s variadic `format:, ...` convenience methods declared in the public `SFLogger.h`
+  (`+log:level:format:`, `+e:/i:/d:/w:/f:/v:/log:format:` and their instance forms). This is a
+  public-SDK surface regression introduced by the migration itself, independent of this port. Belongs
+  in a migration-parity review / release notes, NOT silently. Does not block advancing past #4038.
 
 ### #4043 — Fix trait collection warning  [needs-trace] · ✅ APPROVED (non-escalation)
 - (detail above in Units table) `SFSDKUITableViewCell.m` → `SFSDKUITableViewCell.swift` + sample app `.swift`.

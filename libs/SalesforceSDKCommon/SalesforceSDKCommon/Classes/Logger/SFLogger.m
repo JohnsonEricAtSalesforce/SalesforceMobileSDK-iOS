@@ -31,6 +31,7 @@
 
 #import "SFLogger.h"
 #import "SFDefaultLogger.h"
+#import "SFSDKSafeMutableDictionary.h"
 
 @protocol SFLogReceiver;
 @protocol SFLogReceiverFactory;
@@ -301,7 +302,7 @@ static SFSDKSafeMutableDictionary *loggerList = nil;
 + (void)log:(nonnull Class)cls level:(SFLogLevel)level format:(nonnull NSString *)format, ... {
     va_list args;
     va_start(args, format);
-    [[self defaultLogger] log:cls level:SFLogLevelDefault format:format args:args];
+    [[self defaultLogger] log:cls level:level format:format args:args];
     va_end(args);
 }
 
