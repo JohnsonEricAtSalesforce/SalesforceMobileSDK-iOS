@@ -30,6 +30,20 @@ Failure signature: `XCTAssertEqual failed … Wrong columns actual: TABLE__…` 
 - `SFSmartStoreAlterTests/testAlterSoupWithFullTextIndexesFromFts4ToFts5`
 - `SFSmartStoreAlterTests/testAlterSoupWithFullTextIndexesToGetIndexesOnCreatedAndLastModified`
 
+### `pre-existing-nonflaky` — 2 failures unmasked by the P0.2b fix (operator-approved 2026-07-14)
+
+When the P0.2b setUp crash was fixed (see below), these two tests — previously hidden behind the
+crash — began executing and failing. They are NOT credentials-related and NOT caused by the fix;
+the crash was masking them. Added to the baseline by explicit operator decision with rationale:
+
+- `SFMultipleSmartStoresTests/testGetGlobalStoreNames` — asserts exactly 3 global stores
+  (`XCTAssertTrue(array.count == 3)`); fails on global-store test-isolation/ordering sensitivity, not
+  on the code under test. Candidate for a follow-up test-isolation fix.
+- `SFSmartSqlTests/testCleanupRegexpFaster` — a **performance/timing** assertion
+  (`newRegexp × 500 < oldRegexp` and `< 25ms`); inherently load-sensitive (violates the project's
+  "no timing-based tests" standard). Candidate to rewrite or remove. NOTE: being timing-based it may
+  intermittently PASS — a shrinking-ratchet pass (fewer failures than baseline) is still a gate PASS.
+
 ### `env-skip` — MobileSync integration (verified in CI only)
 
 Per gate report: `SyncManagerTestCase` `class setUp()` blocks on `synchronousAuthRefresh()`;
@@ -38,58 +52,57 @@ the auth run-loop doesn't integrate with xcodebuild locally. Not counted as pass
 
 ---
 
-## UNRESOLVED — NOT baselined (see tracker finding P0.2b)
+## ✅ RESOLVED 2026-07-14 (tracker finding P0.2b) — SmartStore setUp crash cluster
 
-The 2026-07-05 empirical run surfaced a **crash cluster** absent from the 2026-05-25 report:
-~35 test cases in `SFSmartSqlTests` and `SFMultipleSmartStoresTests` fail because their
-`setUp` crashes (`Crash: … at SFSmartSqlTests.createUserAccount()`,
-`… at SFMultipleSmartStoresTests.setUpSmartStoreUser()`, plus "signal trap"). Because setUp
-crashes, EVERY test in those classes cascades to failed — this is why the run showed 47 failures
-vs. the report's 12.
+The 2026-07-05 run showed ~35 setUp crashes in `SFSmartSqlTests.createUserAccount()` and
+`SFMultipleSmartStoresTests.setUpSmartStoreUser()` (47 total failures). **Root cause = the
+`OAuthCredentials(identifier:clientId:encrypted:)!` convenience-init-returns-nil bug** (class-cluster
+design: keychain storage requires the `OAuthKeychainCredentials` subclass; the base convenience init
+returns nil by design). The prior fix `f11e4754f` patched `SFSmartStoreTestCase.swift` but MISSED
+these two files.
 
-These are **deliberately NOT in the baseline.** Root cause (environment drift since 2026-05-25
-vs. a real regression on the branch) is unresolved. Until diagnosed, the SmartStore scheme cannot
-produce a clean gate result; treat SmartStore gate runs as **provisional**. Do not baseline these
-to make the gate green — that is exactly the laundering this file exists to prevent.
-
-Captured crash-cluster classes (for triage, not for baselining):
-- `SFSmartSqlTests/*` (setUp `createUserAccount()` crash — ~36 cases incl. testConvertSmartSql*, testSmartQuery*)
-- `SFMultipleSmartStoresTests/*` (setUp `setUpSmartStoreUser()` crash — testGetGlobalStoreNames, testGetStoreWithStoreName, testGetUserStoreNames, testRemoveAllGlobalStores, testRemoveAllStores)
+**Fix (2026-07-14):** swapped both sites to the factory
+`OAuthCredentials.credentials(identifier:clientId:encrypted:)`. Verified: SmartStore run went
+**47 failures / ~35 crashes → 14 failures / 0 crashes**. The 14 = 12 baselined FTS executions + the
+2 `pre-existing-nonflaky` failures now listed in the baseline above. **SmartStore gate is now clean**
+(subset of baseline). See tracker P0.2b.
 
 ---
 
-## UNRESOLVED — NOT baselined (tracker finding P0.2c) — SalesforceSDKCore auth crash cluster
+## ◐ PARTIALLY RESOLVED 2026-07-14 (tracker finding P0.2c) — SalesforceSDKCore credentials crash cluster
 
-The 2026-07-14 SalesforceSDKCore run (during the #4043 gate) surfaced a **large pre-existing crash
-cluster** — ~52 failing/crashing test cases across ~20 classes, all in the auth / credentials /
-user-account / push / network space. **Root cause = the same bug already fixed once for SmartStore in
-commit `f11e4754f`:** `OAuthCredentials(identifier:clientId:encrypted:)!` (the convenience init)
-returns nil for the base class with keychain storage; the correct form is the
-`OAuthCredentials.credentials(identifier:clientId:encrypted:)` factory (returns the
-`OAuthKeychainCredentials` subclass). Test helpers here still use the crashing convenience init, so
-every auth-dependent test either crashes in setUp or fails downstream (empty user/org IDs, "1 not
-equal to 10 accounts", etc.).
+The 2026-07-14 SalesforceSDKCore run (during the #4043 gate) surfaced a large crash cluster.
+**The credentials portion — same `OAuthCredentials(...)!` root cause as P0.2b — is now FIXED:** all 10
+SDKCore test-helper sites swapped to the `.credentials(...)` factory (2026-07-14). The
+credentials-driven crashes are gone (`SFUserAccountManagerTests:649`, `SFUserAccountPhotoTests:71`,
+`SalesforceRestAPITests:1147`, `BiometricAuthenticationManagerTests:187`, `NativeLoginManagerTests:129`
+no longer crash).
 
-Representative crash sites (count in one run):
-- `SFSDKAuthCommand.swift:48` assertion ×22 · `SFUserAccountManagerTests.swift:649` ×16
-- `SalesforceRestAPITests.swift:1147` ×8 · `SFSDKEncryptedURLCache.swift:37` ×6
-- `SFUserAccountPhotoTests.swift:71` ×4 · `SFOAuthCoordinator.swift:961` assertion ×4
-- `NativeLoginManagerTests.swift:129` ×4 · `SFOAuthCoordinatorTests.swift:27` ×2
-- `BiometricAuthenticationManagerTests.swift:187` (the canonical `OAuthCredentials(...)!` site; skipped in the #4043 run to let it converge)
+**A DISTINCT second cluster remains → see P0.2d below.** SalesforceSDKCore gate stays **provisional**
+until P0.2d is resolved. Until then a port is verifiable against SDKCore only by *scoped* evidence:
+build ✓ + the tests nearest the change pass + no failure touches the changed code (how #4043 was
+accepted).
 
-Affected classes (NOT baselined): PushNotificationManagerTests, SalesforceOAuthUnitTests,
-SalesforceRestAPITests, SFNetworkTests, SFOAuthInfoTests, SFPreferencesTests,
-SFPushNotificationManagerTests, SFRestAPIDataTaskRaceTests, SFSDKAuthUtilTests,
-SFSDKEncryptedPushNotificationTests, SFSDKUrlCacheTests, SFUserAccountManagerNotificationsTests,
-SFUserAccountManagerPersisterTests, SFUserAccountManagerTests, URLRequestRestRequestTests,
-NativeLoginManagerTests, SFOAuthCoordinatorTests, SFUserAccountPhotoTests,
-BiometricAuthenticationManagerTests, SFSDKSPLoginResponseCommandTest.
+## UNRESOLVED — NOT baselined (tracker finding P0.2d) — SalesforceSDKCore assert() crash cluster
 
-These are **deliberately NOT in the baseline** (would be laundering). The **SalesforceSDKCore gate is
-provisional** until the credentials root cause is fixed (apply the `f11e4754f`-style factory fix to
-the SDKCore test helpers). A port is verifiable against SDKCore only by *scoped* evidence: build ✓ +
-the tests nearest the change pass + no failure touches the changed code. That is how #4043 was
-accepted.
+Distinct from the (now-fixed) credentials cluster. After the P0.2c credentials fix, the SDKCore run
+still shows crashes from **debug `assert()` failures in production Swift** when tests construct
+command/URL/cache objects with empty scheme/path:
+- `SFSDKAuthCommand.swift:48` — `assert(!path.sfsdk_isEmptyOrWhitespaceAndNewlines(), "Path cannot be nil")` (dominant, ×22)
+- `SFOAuthCoordinator.swift:961` (NSAssert helper) ×4 · `SFSDKEncryptedURLCache.swift:37` ×6
+- `ContiguousArrayBuffer.swift:692` (index-out-of-range) ×4
+
+Concentrated in these test classes (crash → cascade fans out to ~71 reported failures, but the true
+crashing set is ~11 classes): `SFSDKURLHandlerManagerTest` (×7), `SFSDKUrlCacheTests` (×3),
+`SFSDKIDPLoginRequestCommandTest`, `SFSDKAuthRequestCommandTest`, `SFSDKIDPAuthCodeLoginRequestCommandTest`,
+`SFSDKSPLoginResponseCommandTest`, `SalesforceOAuthUnitTests`, `SFRestAPIDataTaskRaceTests`,
+`PushNotificationManagerTests`, `SFUserAccountManagerPersisterTests`, `BiometricAuthenticationManagerTests`
+(a different site, `:85`, not the credentials one).
+
+**Deliberately NOT baselined** (would be laundering, and the cascade makes the set unstable). Root
+cause is likely test setup passing empty scheme/path into command objects (or an `assert` that should
+be a graceful nil-return / precondition documented for tests). Needs a separate investigation pass —
+NOT the credentials fix. Full SDKCore gate remains provisional.
 
 ## Provenance
 

@@ -133,7 +133,8 @@ Marker (done floor): 6ed0ab40  ·  origin/dev HEAD: bac017113  ·  34 behind (12
   raised** — this is a public-contract change that belongs in release notes / PR description, not a silent
   port. Do not treat "approved to port" as "cleared for public release without owner sign-off."
 
-### #4038 — Fix hardcoded log level  [TRACED → NO SWIFT TARGET] · ⏭ SKIPPED (operator-approved 2026-07-14)
+### #4038 — Fix hardcoded log level  [TRACED → NO SWIFT TARGET] · ⏭ SKIPPED · ✅ OPERATOR-APPROVED (2026-07-14)
+> Disposition + dropped-public-API flag acknowledged by operator 2026-07-14. Unit closed.
 - **Intent:** upstream one-liner in the **C-style variadic** `+ log:cls:level:format:, ...` — it
   passed the hardcoded `SFLogLevelDefault` to the backend instead of the caller's `level`. Fix = pass
   `level`. (Net diff: single line in `SFLogger.m:304`.)

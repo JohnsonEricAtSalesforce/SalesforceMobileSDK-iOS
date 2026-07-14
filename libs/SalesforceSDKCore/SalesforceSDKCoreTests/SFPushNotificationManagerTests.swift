@@ -39,7 +39,7 @@ class SFPushNotificationManagerTests: XCTestCase {
         let mgr = PushNotificationManager()
         mgr.isSimulator = false
         mgr.deviceSalesforceId = "pretending-we-registered"
-        guard let credentials = OAuthCredentials(identifier: "happy-user", clientId: UserAccountManager.shared.oauthClientID, encrypted: true) else {
+        guard let credentials = OAuthCredentials.credentials(identifier: "happy-user", clientId: UserAccountManager.shared.oauthClientID, encrypted: true) else {
             XCTFail("Failed to create credentials")
             return
         }

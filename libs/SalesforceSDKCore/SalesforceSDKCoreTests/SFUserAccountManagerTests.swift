@@ -170,7 +170,7 @@ class SFUserAccountManagerTests: XCTestCase {
         XCTAssertEqual(user.accountIdentity.orgId, "NewOrgId")
 
         let newCredentialsIdentifier = "\(user.credentials.identifier)_1"
-        guard let newCreds = OAuthCredentials(identifier: newCredentialsIdentifier, clientId: user.credentials.clientId, encrypted: true) else {
+        guard let newCreds = OAuthCredentials.credentials(identifier: newCredentialsIdentifier, clientId: user.credentials.clientId, encrypted: true) else {
             XCTFail("Failed to create new credentials")
             return
         }
@@ -441,7 +441,7 @@ class SFUserAccountManagerTests: XCTestCase {
     func testUserAccountEncoding() {
         let archiver = NSKeyedArchiver(requiringSecureCoding: true)
 
-        guard let credentials = OAuthCredentials(identifier: "identifier-0", clientId: "fakeClientIdForTesting", encrypted: true) else {
+        guard let credentials = OAuthCredentials.credentials(identifier: "identifier-0", clientId: "fakeClientIdForTesting", encrypted: true) else {
             XCTFail("Failed to create credentials")
             return
         }
@@ -645,7 +645,7 @@ class SFUserAccountManagerTests: XCTestCase {
 
     private func createNewUser(index: Int) -> UserAccount {
         XCTAssertTrue(index < 10, "Supports only index up to 9")
-        guard let credentials = OAuthCredentials(identifier: "identifier-\(index)", clientId: "fakeClientIdForTesting", encrypted: true) else {
+        guard let credentials = OAuthCredentials.credentials(identifier: "identifier-\(index)", clientId: "fakeClientIdForTesting", encrypted: true) else {
             fatalError("Failed to create credentials for test user \(index)")
         }
         let user = UserAccount(credentials: credentials)

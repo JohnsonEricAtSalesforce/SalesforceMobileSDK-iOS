@@ -16,9 +16,9 @@ class SFOAuthCoordinatorTests: XCTestCase {
         let mockNavigationAction = MockNavigationAction(url: callbackURL)
         let coordinator = SFOAuthCoordinator()
         coordinator.delegate = self
-        let credentials = OAuthCredentials(identifier: "test",
-                                           clientId: "client",
-                                           encrypted: false)
+        let credentials = OAuthCredentials.credentials(identifier: "test",
+                                                       clientId: "client",
+                                                       encrypted: false)
         credentials?.testDomain = "foo.bar.com/discovery"
         credentials?.testRedirectURI = "sfdc://callback"
         coordinator.credentials = credentials

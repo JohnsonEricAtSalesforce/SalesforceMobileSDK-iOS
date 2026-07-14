@@ -84,7 +84,7 @@ class ScreenLockManagerTests: XCTestCase {
     }
     
     func createNewUserAccount(index: Int) throws -> UserAccount {
-        let credentials = try XCTUnwrap(OAuthCredentials(identifier: "identifier-\(index)", clientId: "fakeClientIdForTesting", encrypted: true))
+        let credentials = try XCTUnwrap(OAuthCredentials.credentials(identifier: "identifier-\(index)", clientId: "fakeClientIdForTesting", encrypted: true))
         let idDataDict = ["user_id" : String(index)]
         let idData = SFIdentityData(jsonDict: idDataDict)
         let user = UserAccount(credentials: credentials)

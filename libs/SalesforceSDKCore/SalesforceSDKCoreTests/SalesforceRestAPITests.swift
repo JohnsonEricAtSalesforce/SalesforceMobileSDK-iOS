@@ -1143,7 +1143,7 @@ class SalesforceRestAPITests: XCTestCase {
 
     private func getTestCredentials(domain: String, instanceUrl: URL?, communityUrl: URL?) -> OAuthCredentials {
         let credsId = "testRestUrl_\(arc4random())"
-        guard let creds = OAuthCredentials(identifier: credsId, clientId: "TestClientID", encrypted: true) else {
+        guard let creds = OAuthCredentials.credentials(identifier: credsId, clientId: "TestClientID", encrypted: true) else {
             fatalError("Failed to create credentials")
         }
         creds.communityUrl = communityUrl

@@ -184,7 +184,7 @@ final class BiometricAuthenticationManagerTests: XCTestCase {
     
     
     private func createUser(index: Int) -> UserAccount {
-        let credentials = OAuthCredentials(identifier: "identifier-\(index)", clientId: "fakeClientIdForTesting", encrypted: true)!
+        let credentials = OAuthCredentials.credentials(identifier: "identifier-\(index)", clientId: "fakeClientIdForTesting", encrypted: true)!
         let user = UserAccount(credentials: credentials)
         user.idData = SFIdentityData(jsonDict: [ "user_id": "\(index)" ])
         UserAccountManager.shared.currentUserAccount = user

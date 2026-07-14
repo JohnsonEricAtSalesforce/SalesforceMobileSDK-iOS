@@ -126,7 +126,7 @@ final class NativeLoginManagerTests: XCTestCase {
     }
     
     private func createUser() -> UserAccount {
-        let credentials = OAuthCredentials(identifier: "identifier-0", clientId: "fakeClientIdForTesting", encrypted: true)!
+        let credentials = OAuthCredentials.credentials(identifier: "identifier-0", clientId: "fakeClientIdForTesting", encrypted: true)!
         let user = UserAccount(credentials: credentials)
         user.idData = SFIdentityData(jsonDict: [ "user_id": "0" ])
         do {

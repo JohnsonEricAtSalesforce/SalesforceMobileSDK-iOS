@@ -98,7 +98,7 @@ class SFSmartSqlTests: SFSmartStoreTestCase {
         let identifier = "identifier-\(userIdentifier)"
         let clientId = UserAccountManager.shared.oauthClientID
 
-        guard let credentials = OAuthCredentials(identifier: identifier, clientId: clientId, encrypted: true) else {
+        guard let credentials = OAuthCredentials.credentials(identifier: identifier, clientId: clientId, encrypted: true) else {
             fatalError("Failed to create OAuthCredentials for test user")
         }
 
