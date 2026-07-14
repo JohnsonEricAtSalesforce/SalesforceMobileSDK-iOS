@@ -58,6 +58,39 @@ Captured crash-cluster classes (for triage, not for baselining):
 
 ---
 
+## UNRESOLVED — NOT baselined (tracker finding P0.2c) — SalesforceSDKCore auth crash cluster
+
+The 2026-07-14 SalesforceSDKCore run (during the #4043 gate) surfaced a **large pre-existing crash
+cluster** — ~52 failing/crashing test cases across ~20 classes, all in the auth / credentials /
+user-account / push / network space. **Root cause = the same bug already fixed once for SmartStore in
+commit `f11e4754f`:** `OAuthCredentials(identifier:clientId:encrypted:)!` (the convenience init)
+returns nil for the base class with keychain storage; the correct form is the
+`OAuthCredentials.credentials(identifier:clientId:encrypted:)` factory (returns the
+`OAuthKeychainCredentials` subclass). Test helpers here still use the crashing convenience init, so
+every auth-dependent test either crashes in setUp or fails downstream (empty user/org IDs, "1 not
+equal to 10 accounts", etc.).
+
+Representative crash sites (count in one run):
+- `SFSDKAuthCommand.swift:48` assertion ×22 · `SFUserAccountManagerTests.swift:649` ×16
+- `SalesforceRestAPITests.swift:1147` ×8 · `SFSDKEncryptedURLCache.swift:37` ×6
+- `SFUserAccountPhotoTests.swift:71` ×4 · `SFOAuthCoordinator.swift:961` assertion ×4
+- `NativeLoginManagerTests.swift:129` ×4 · `SFOAuthCoordinatorTests.swift:27` ×2
+- `BiometricAuthenticationManagerTests.swift:187` (the canonical `OAuthCredentials(...)!` site; skipped in the #4043 run to let it converge)
+
+Affected classes (NOT baselined): PushNotificationManagerTests, SalesforceOAuthUnitTests,
+SalesforceRestAPITests, SFNetworkTests, SFOAuthInfoTests, SFPreferencesTests,
+SFPushNotificationManagerTests, SFRestAPIDataTaskRaceTests, SFSDKAuthUtilTests,
+SFSDKEncryptedPushNotificationTests, SFSDKUrlCacheTests, SFUserAccountManagerNotificationsTests,
+SFUserAccountManagerPersisterTests, SFUserAccountManagerTests, URLRequestRestRequestTests,
+NativeLoginManagerTests, SFOAuthCoordinatorTests, SFUserAccountPhotoTests,
+BiometricAuthenticationManagerTests, SFSDKSPLoginResponseCommandTest.
+
+These are **deliberately NOT in the baseline** (would be laundering). The **SalesforceSDKCore gate is
+provisional** until the credentials root cause is fixed (apply the `f11e4754f`-style factory fix to
+the SDKCore test helpers). A port is verifiable against SDKCore only by *scoped* evidence: build ✓ +
+the tests nearest the change pass + no failure touches the changed code. That is how #4043 was
+accepted.
+
 ## Provenance
 
 | Field | Value |

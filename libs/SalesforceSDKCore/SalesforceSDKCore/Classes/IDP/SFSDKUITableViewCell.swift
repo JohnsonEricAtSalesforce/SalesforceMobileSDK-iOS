@@ -86,6 +86,10 @@ public class SFSDKUITableViewCell: UITableViewCell {
         layer.borderWidth = kHorizontalSpace / 2
         updateLayerColor()
 
+        registerForTraitChanges([UITraitUserInterfaceStyle.self]) { (cell: SFSDKUITableViewCell, _: UITraitCollection) in
+            cell.updateLayerColor()
+        }
+
         profileImageView.image = image
         profileImageView.backgroundColor = .gray
         profileImageView.bounds = CGRect(x: 0, y: 0, width: kImageWidth, height: kImageHeight)
@@ -117,13 +121,6 @@ public class SFSDKUITableViewCell: UITableViewCell {
 
     private func updateLayerColor() {
         layer.borderColor = UIColor.salesforceSystemBackgroundColor.cgColor
-    }
-
-    public override func traitCollectionDidChange(_ previousTraitCollection: UITraitCollection?) {
-        super.traitCollectionDidChange(previousTraitCollection)
-        if traitCollection.hasDifferentColorAppearance(comparedTo: previousTraitCollection) {
-            updateLayerColor()
-        }
     }
 
     @objc public class func resizeImage(_ image: UIImage?, size: CGSize) -> UIImage? {

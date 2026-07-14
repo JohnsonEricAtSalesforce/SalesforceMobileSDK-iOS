@@ -17,12 +17,12 @@ Marker (done floor): 6ed0ab40  ·  origin/dev HEAD: bac017113  ·  34 behind (12
 > see "Migration order vs. original history" at the bottom.
 
 ## Migration status
-█████░░░░░░░░░░░░░░░░  3/12 units done (25%; ported+skipped)   ·   libs/-impacting: 1/8
+███████░░░░░░░░░░░░░░  4/12 units done (33%; ported+skipped)   ·   libs/-impacting: 2/8
 
 | Status        | Cnt | Units |
 |---------------|-----|-------|
-| ✅ ported     |  0  | — |
-| 🔬 analyzed   |  7  | #4039 #4040 #4041 #4042 #4043 #4044 #4046 |
+| ✅ ported     |  1  | #4043 |
+| 🔬 analyzed   |  6  | #4039 #4040 #4041 #4042 #4044 #4046 |
 | 🚧 in-progress|  0  | — |
 | ⏸ deferred    |  0  | — |
 | ⏭ skipped     |  3  | #4038 (buggy method not in migrated Swift surface), master-merge×2 (empty net diff) |
@@ -36,7 +36,7 @@ Marker (done floor): 6ed0ab40  ·  origin/dev HEAD: bac017113  ·  34 behind (12
 | #4046 don't add my domain | c0c3f5a01 (merge, 1 PR-side) | B | 🔬 analyzed · ✅ approved | — | dep `DomainDiscoveryCoordinator` confirmed; + `.pbxproj` (Cat-C nested) + 1 test.swift |
 | #4044 remove redundant biometric auto-present | 03f1d1863 (merge, 1) | B | 🔬 analyzed · ✅ approved | — | pairs with #4041 — port AFTER it |
 | #4041 biometric opt-in auto-present + lock | d73eb2a0e (merge, 5) | B | 🔬 analyzed · ✅ approved | — | adds NEW `automaticPresentation` via its `.swift` hunks; apply those first |
-| #4043 fix trait collection warning | 36f6bf636 (merge, 1) | B | 🔬 analyzed · ✅ approved | — | non-escalation; + RestAPIExplorer sample .swift |
+| #4043 fix trait collection warning | 36f6bf636 (merge, 1) | B | ✅ ported | (pending commit) | non-escalation; registerForTraitChanges in SFSDKUITableViewCell.swift + RootViewController.swift (Cat-A verbatim); build ✓, scoped tests ✓; SDKCore gate provisional per P0.2c |
 | MASTER merge (a2d6db8ae) | a2d6db8ae | — | ⏭ skipped | — | "Merging master into dev" — empty net diff (no-op) |
 | #4040 hide nav bar on native login | 881c626eb (merge, 2) | B | 🔬 analyzed · ✅ approved | — | self-contained one-line UI flag |
 | #4039 auth-loading default + deprecate property | d4a9ce0db (merge, 2) | B | 🔬 analyzed · ✅ approved ⚠ | — | ⚠ PUBLIC-API deprecation REVERSAL — approved; keep SDK-owner flag; see detail |
@@ -90,11 +90,28 @@ Marker (done floor): 6ed0ab40  ·  origin/dev HEAD: bac017113  ·  34 behind (12
 - **⚠ Escalation:** biometric/lock behavior — APPROVED. Port BEFORE #4044 (which removes the now-redundant
   auto-present it supersedes).
 
-### #4043 — Fix trait collection warning  [needs-trace]
-- **Intent:** silence a UIKit trait-collection API warning.
-- **Swift mapping:** `SFSDKUITableViewCell.m` → `SFSDKUITableViewCell.swift`. + a RestAPIExplorer
-  sample `.swift` (RootViewController) — cherry-pickable.
-- **Files:** `SFSDKUITableViewCell.m` → `Classes/IDP/SFSDKUITableViewCell.swift`; sample app `.swift`.
+### #4043 — Fix trait collection warning  [target-confirmed] · ✅ PORTED
+- **Intent:** replace the deprecated `traitCollectionDidChange(_:)` override (iOS 17 deprecation
+  warning) with the modern `registerForTraitChanges([UITraitUserInterfaceStyle.self]) { … }` closure
+  API, in two independent VCs. Same behavior: re-run the color update when the interface style flips.
+- **Swift mapping (VERIFIED):**
+  - **Cat-B:** `SFSDKUITableViewCell.swift` (compiled; `.m` de-referenced). Removed the override;
+    registered the trait handler in the shared `setupCell()` (called from BOTH `init(style:)` and
+    `init(coder:)`) — strictly better than upstream's init-only placement, covers the NIB path too.
+    Handler calls `cell.updateLayerColor()`.
+  - **Cat-A:** `native/…/RestAPIExplorer/…/RootViewController.swift` — matched upstream pre-image
+    exactly; applied upstream's Swift hunk verbatim (byte-identical). Removed override, registered in
+    `viewDidLoad`.
+- **Files:** `SFSDKUITableViewCell.m`→`Classes/IDP/SFSDKUITableViewCell.swift` (+ ref synced to upstream,
+  identical); `RootViewController.swift` (sample app, Cat-A verbatim).
+- **Gate:** SalesforceSDKCore. **Build ✓.** Tests: accepted via SCOPED evidence — the IDP command
+  tests nearest the changed file (`SFSDKIDPAuthCodeLoginRequestCommandTest`,
+  `SFSDKIDPLoginRequestCommandTest`) **passed**; NO failure anywhere touches `SFSDKUITableViewCell`,
+  trait changes, or the sample app. A clean full-suite subset check was NOT possible: SalesforceSDKCore
+  has a large pre-existing auth-credentials crash cluster (**tracker P0.2c**, root cause = the
+  `f11e4754f` `OAuthCredentials(...)!` bug) that is deliberately not baselined. SDKCore gate is
+  provisional until P0.2c is fixed; #4043 verified clean against it regardless.
+- **Escalation:** none (UI trait-observation refactor, no behavior/contract change).
 
 ### #4040 — Hide navigation bar on native login view presentation  [target-confirmed] · ✅ APPROVED
 - **Intent:** one line — `setNavigationBarHidden:YES` on the presented native-login nav controller in
