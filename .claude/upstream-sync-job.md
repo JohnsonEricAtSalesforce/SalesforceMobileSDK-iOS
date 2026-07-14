@@ -18,7 +18,7 @@ Meanwhile, `origin/dev` continues to receive commits in the mixed ObjC/Swift cod
 - **Migration strategy:** ObjC files de-referenced from `.xcodeproj` (not renamed to `.bak`); originals remain on disk at their original paths
 - **Upstream commits touching libs/:** ~16 (mix of ObjC and Swift file changes)
 
-**Last-known backlog classification (snapshot 2026-06-08 — STALE, regenerate via Steps 4–7).**
+**Last-known backlog classification (snapshot 2026-06-08 — STALE, regenerate via Steps 3–6).**
 Kept only as a starting reference; the live figures come from running the poller, not from this table.
 
 | Category | Count | Key items |
@@ -70,11 +70,11 @@ aren't fighting weekly.)
      > .claude/upstream-sync-last-run
    ```
 
-4. **Detect** — Compare `origin/dev` against a sync marker file (`.claude/upstream-sync-marker`) that stores the last-reviewed upstream commit hash. If no marker exists, uses `git merge-base HEAD origin/dev` as starting point.
+3. **Detect** — Compare `origin/dev` against a sync marker file (`.claude/upstream-sync-marker`) that stores the last-reviewed upstream commit hash. If no marker exists, uses `git merge-base HEAD origin/dev` as starting point.
 
-5. **Inventory** — List new upstream non-merge commits touching `libs/`, build files, Podspecs, or test files since the marker.
+4. **Inventory** — List new upstream non-merge commits touching `libs/`, build files, Podspecs, or test files since the marker.
 
-6. **Group** — Identify logical change units by PR, using git topology (NOT "consecutive commits" — topological log order interleaves commits from different PRs, so position is not a reliable key). `origin/dev` lands work in three styles; the grouping is a deterministic two-pass over `MB..origin/dev` where `MB = git merge-base HEAD origin/dev`:
+5. **Group** — Identify logical change units by PR, using git topology (NOT "consecutive commits" — topological log order interleaves commits from different PRs, so position is not a reliable key). `origin/dev` lands work in three styles; the grouping is a deterministic two-pass over `MB..origin/dev` where `MB = git merge-base HEAD origin/dev`:
 
    **Pass A — true merge PRs (second-parent reachability).** For each merge commit `M`, the PR's commits are exactly the second-parent side: `git rev-list M^2 ^M^1`. This is set-based, so interleaving in log order doesn't matter. Label = merge subject (`Merge pull request #NNNN …`); net diff = `git diff M^1 M`.
 
@@ -103,7 +103,7 @@ aren't fighting weekly.)
    - **Octopus merges** (>2 parents; none in the current backlog): union of the `^2 … ^N` sides.
    - **"Merge from master" commits** (e.g. `a2d6db8ae`, `725291236`): fold master→dev and can reach large unrelated history. `^M^1` bounds membership to the PR side within `MB..origin/dev`, so ancient master commits are not dragged in — verify these groups don't balloon.
 
-7. **Classify** — Categorize each group (or standalone commit):
+6. **Classify** — Categorize each group (or standalone commit):
 
    | Cat | Criteria | Translation Effort |
    |-----|----------|--------------------|
@@ -116,19 +116,38 @@ aren't fighting weekly.)
    > Category **E** is intentionally unused (the letters are stable labels, not a contiguous
    > sequence — skipping E avoids renumbering existing categories if a new one is ever inserted).
 
+7. **Ledger sync (merge, never clobber)** — Reconcile the grouped/classified units into the durable
+   backlog ledger `.claude/upstream-sync-backlog.md` (see *Backlog Ledger* below). The poller:
+   - **appends** any newly-appeared unit as a `pending` row (label, member hashes, category),
+   - **refreshes** only the header line (marker floor, `origin/dev` HEAD, last-analyzed timestamp),
+   - **flags** (`⚠ stale-ref`) any existing ledger member hash no longer reachable from `origin/dev`.
+
+   It **never** edits a row whose status is not `pending`, and **never** touches Category-B detail
+   blocks or the operator-owned columns (`Status`, `Port commit`, `Notes`). This mirrors the
+   heartbeat/marker split: the poller may record *observation* (a unit exists) but not *judgment*
+   (its analysis or disposition).
+
 8. **Report** — Present a summary table to the operator:
    - Total new commits since last check, grouped into logical units
    - Breakdown by category with commit hashes and one-line descriptions
    - Highlight any Category B groups (requiring human-guided translation)
-   - Running total of unprocessed backlog
+   - Running total of unprocessed backlog, and any `⚠ stale-ref` / ledger-vs-marker drift warnings
 
-9. **No Action** — The poller NEVER modifies the working tree, commits, or cherry-picks. It only reports (heartbeat write in step 2 is the sole exception — it records observation, not tree state). The operator invokes translation work separately.
+9. **No Action** — The poller NEVER modifies the working tree, commits, or cherry-picks. Its only
+    disk writes are *observational*: the heartbeat (step 2) and the ledger skeleton merge (step 7,
+    `pending` rows + header only). It never advances the marker, edits an analyzed/ported/deferred
+    ledger row, or writes Category-B analysis. The operator invokes translation work separately.
 
 ---
 
 ## Translation Workflow (Category B — Semantic Translation)
 
-This is the most accuracy-critical path. Each Category B group follows this procedure:
+This is the most accuracy-critical path. Each Category B group follows this procedure.
+
+> **Persist Steps 1–2 to the ledger.** The intent and Swift-mapping produced below are the expensive,
+> compaction-fragile analysis. Write them into the unit's Category-B detail block in
+> `.claude/upstream-sync-backlog.md` and set its status to `analyzed` *before* touching code — so the
+> reasoning survives a session boundary and the work can be picked up out of order.
 
 ### Step 1: Understand Intent
 
@@ -137,12 +156,18 @@ Read the upstream diff (the *net* diff for a group, not individual commits) and 
 - Why? (commit message, PR description)
 - What's the scope? (single method fix, new feature, refactor)
 
+→ Record as the **Intent** line in the ledger detail block.
+
 ### Step 2: Locate in Swift
 
 The Swift file is NOT a line-for-line mirror of the ObjC. The migration refactored names, extracted protocols, and reorganized code. For each semantic change:
 - Identify the *concept* being changed (e.g., "thread-safety added to `encodeWithCoder`")
 - Search the Swift file for where that concept lives (may be a different method name, different file location, or split across an extension)
 - If the mapping is ambiguous, examine the git history of the Swift file to trace where the ObjC logic landed during migration
+
+→ Record as the **Swift mapping** + **Files** lines in the ledger detail block. Mark the unit
+`analyzed`. (When code work begins, move it to `in-progress`; after the gate passes, `ported` with
+the port-commit hash.)
 
 ### Step 3: Apply Change in Swift
 
@@ -305,16 +330,98 @@ Contents: single commit hash of the last upstream commit the operator has acknow
 - **Gate:** marker advances only after the verification gate passes for all commits/groups up to that point
 - The poller reads it but never writes it automatically
 
-### Marker vs. heartbeat — two timestamps, never conflate
+**Marker is a linear floor, not the whole state.** The marker is a *scalar* — "everything at or
+below this commit is fully done." It cannot express out-of-order progress (port an easy Cat-A now,
+defer a hard Cat-B, skip a docs-only F). That ragged frontier lives in the **Backlog Ledger**
+(below). Composition rule:
+
+> The marker may advance to commit **X** only when **every ledger unit at or below X is `ported` or
+> `skipped`**. If a `deferred`/`pending` unit sits below a `ported` one, the marker stays put and the
+> ledger carries the real state. **Do not force-advance the marker past a non-done unit** to make
+> progress "look" linear — that discards the ledger's out-of-order truth.
+
+The marker and the ledger never duplicate information: the marker records the contiguous-done
+*prefix*; the ledger records every unit *not yet foldable into that prefix*.
+
+### The three durable artifacts — never conflate
 
 | File | Meaning | Who writes it | When |
 |------|---------|---------------|------|
-| `.claude/upstream-sync-marker` | last **processed** commit (work done, gate passed) | operator only, by hand | after verification gate |
-| `.claude/upstream-sync-last-run` | last **observation** (poller ran) | poller, autonomously | every firing (step 2) |
+| `.claude/upstream-sync-marker` | last **processed** commit — linear done-floor | operator only, by hand | after verification gate |
+| `.claude/upstream-sync-last-run` | last **observation** (poller ran) — heartbeat | poller, autonomously | every firing (step 2) |
+| `.claude/upstream-sync-backlog.md` | **per-unit** status + Cat-B analysis — ragged frontier | poller (skeleton only) + operator (status/analysis) | step 7 merge / on work |
 
 A healthy-but-idle poller advances `last-run` while `marker` stays put (nothing to process). A dead
-poller advances neither. Conflating them would make idle look like progress, or death look like
-health — which is precisely the failure this design prevents.
+poller advances neither. The ledger holds what the scalar marker can't: which units are done,
+deferred, or mid-analysis, and *why*. Conflating any two would make idle look like progress, death
+look like health, or a scalar stand in for a partial-order — the failures this design prevents.
+
+---
+
+## Backlog Ledger
+
+File: `.claude/upstream-sync-backlog.md`
+
+**Why it exists.** The backlog is high-volume and the expensive part is per-unit: mapping a squashed
+or merged PR to a single logical contribution, and — for Category B — working out *what* changed,
+*why*, and *where it lands* in the refactored Swift. That analysis is non-deterministic human
+judgment. Without a durable home it is produced in the session report and **lost on compaction**,
+forcing a costly re-derivation from raw diffs every time. The ledger makes the analysis a durable
+artifact and lets work proceed **out of order** without losing track of it — which the scalar marker
+cannot do.
+
+**Recommended flow: analyze the whole backlog first, then work it.** Do one analysis pass that
+groups + classifies + writes Category-B intent for the *entire* current backlog into the ledger
+(expensive, done once, durable). Then process units off the ledger in any order, updating status as
+you go. Do not begin porting before the ledger is populated — that is the pre-work this question was
+about.
+
+### Format (Markdown — git-diffable, operator-editable)
+
+```markdown
+# Upstream Sync Backlog Ledger
+
+Marker (done floor): <hash>  ·  origin/dev HEAD: <hash>  ·  Last analyzed: <ISO-8601 UTC>
+
+| PR / unit | Members | Cat | Status | Port commit | Notes |
+|-----------|---------|-----|--------|-------------|-------|
+| #4041 biometric opt-in | e6fcb9be9…00153e341 (5) | B | ported | <hash> | see detail |
+| #4042 SFUserAccount thread-safety | bac017113 (squash) | B | analyzed | — | see detail |
+| #4046 don't add my domain | 245954246 (1) | B | deferred | — | blocked: needs my-domain org |
+| #4047 nightly schedules | 97ab8b544 (1) | F | skipped | — | CI-only, no libs/ impact |
+
+## Category-B detail
+
+### #4042 — SFUserAccount thread-safety in encodeWithCoder
+- **Intent:** upstream guarded ivar reads in encodeWithCoder to fix a race.
+- **Swift mapping:** UserAccount.swift uses synthesized Codable (no encodeWithCoder). Race maps to
+  concurrent `credentials`/`idData` access → guard with existing OSAllocatedUnfairLock, NOT a
+  literal @synchronized translation.
+- **Files:** SFUserAccount.m → UserAccount.swift (+ ObjC reference update)
+- **Open questions:** confirm idData isn't already lock-protected elsewhere.
+```
+
+### Status vocabulary (small on purpose; every non-obvious state carries a one-line reason)
+
+`pending` → `analyzed` → `in-progress` → `ported` (gate passed) · `deferred` (understood, waiting —
+reason required) · `skipped` (no action needed — reason required).
+
+### Write authority (mirrors marker/heartbeat)
+
+- **Poller (step 7, autonomous):** append new units as `pending`; refresh the header line; flag
+  `⚠ stale-ref` on member hashes no longer reachable from `origin/dev`. **Merge, never clobber** —
+  it never edits a non-`pending` row and never touches a Category-B detail block.
+- **Operator (on work):** all status transitions, port-commit hashes, reasons, and Category-B
+  analysis. In-session analysis (often Claude-assisted) is **written here** so it survives compaction.
+
+### Invariants & edge cases
+
+- **Ledger↔marker drift check:** everything at/below the marker must be `ported`/`skipped` in the
+  ledger. The poller warns on violation; it does not auto-fix.
+- **Deferred-below-ported:** legal and expected. The marker simply cannot pass the deferred unit
+  until it resolves. This is the ragged frontier working as designed — do not "fix" it.
+- **Vanished member hash** (upstream history rewrite, e.g. a "Merge from master"): poller marks the
+  unit `⚠ stale-ref` and preserves its analysis for operator review rather than dropping it.
 
 ---
 
@@ -350,18 +457,20 @@ memory so a new session on this repo surfaces a dead poller without the operator
 
 After reviewing a report, the operator would:
 
-| Command | Category | Verification Required |
-|---------|----------|----------------------|
-| Translate group `<hashes>` | B | Build + tests + operator eyeball |
-| Cherry-pick `<hashes>` | A, F | Build (A mandatory, F advisory) |
-| Apply config change from `<hash>` | C | Build mandatory |
-| Convert and port new files from `<hash>` | D | Build + tests |
-| Advance sync marker to `<hash>` | — | All above gates passed |
+| Command | Category | Verification Required | Ledger effect |
+|---------|----------|----------------------|---------------|
+| Analyze backlog into ledger | all | — | seed intent/mapping; set units `pending`→`analyzed` |
+| Translate group `<hashes>` | B | Build + tests + operator eyeball | `analyzed`→`in-progress`→`ported` (+ port hash) |
+| Cherry-pick `<hashes>` | A, F | Build (A mandatory, F advisory) | →`ported` (+ port hash) |
+| Apply config change from `<hash>` | C | Build mandatory | →`ported` (+ port hash) |
+| Convert and port new files from `<hash>` | D | Build + tests | →`ported` (+ port hash) |
+| Defer / skip a unit | any | — | →`deferred`/`skipped` (reason required) |
+| Advance sync marker to `<hash>` | — | All ledger units at/below `<hash>` are `ported`/`skipped` | marker moves; ledger unchanged |
 
 The operator may also:
 - Ask Claude to show the ObjC diff and Swift diff side-by-side for a Category B translation (verification aid)
 - Ask Claude to identify where a specific ObjC change maps in the Swift codebase (Step 2 assistance)
-- Revert a bad port per the rollback procedure above
+- Revert a bad port per the rollback procedure above (also flip the ledger unit back to `analyzed`)
 
 ---
 
@@ -401,17 +510,25 @@ The session will create the CronCreate with:
 - `cron: "23 */4 * * 1-5"`
 - `durable: true`
 - `expiresInDays: 30` (the safety fuse — see *Job Configuration*)
-- Prompt text that implements the fetch/heartbeat/detect/inventory/group/classify/report workflow described above
+- Prompt text that implements the fetch/heartbeat/detect/inventory/group/classify/ledger/report workflow described above
 
-**On-activation bootstrap (both files, so a fresh job is distinguishable from a never-activated one):**
+**On-activation bootstrap (all three artifacts, so a fresh job is distinguishable from a never-activated one):**
 ```bash
-git fetch origin dev
+git fetch origin
 git merge-base HEAD origin/dev > .claude/upstream-sync-marker      # last processed = merge-base
 printf '%s %s\n' "$(date -u +%Y-%m-%dT%H:%M:%SZ)" "$(git rev-parse origin/dev)" \
   > .claude/upstream-sync-last-run                                  # initial heartbeat
+# Seed an empty ledger header; the first firing (step 7) populates pending rows.
+{ echo "# Upstream Sync Backlog Ledger"; echo; \
+  printf 'Marker (done floor): %s  ·  origin/dev HEAD: %s  ·  Last analyzed: %s\n' \
+    "$(cat .claude/upstream-sync-marker)" "$(git rev-parse origin/dev)" "$(date -u +%Y-%m-%dT%H:%M:%SZ)"; \
+} > .claude/upstream-sync-backlog.md
 ```
-Without this, a just-activated poller and a dead one both show "no marker, no heartbeat" until the
-first firing (up to 4h later). Bootstrapping removes that ambiguity window.
+Without this, a just-activated poller and a dead one both look identical until the first firing
+(up to 4h later). Bootstrapping removes that ambiguity window.
+
+**Then, before porting any work:** run one analysis pass to populate the ledger with intent +
+Swift-mapping for the whole backlog (see *Backlog Ledger → Recommended flow*).
 
 > **Re-activation is expected.** With a 30-day fuse, re-run this activation roughly monthly until the
 > feature branch merges or is abandoned. The session-resume staleness check will flag when it lapses.
@@ -429,3 +546,4 @@ first firing (up to 4h later). Bootstrapping removes that ambiguity window.
 | 5 | Category A too optimistic | Cherry-picks now require build-verify; renamed-reference check |
 | 6 | No rollback procedure | Added full revert + re-translate protocol |
 | 7 | Silent death (durable vs. 7-day expiry contradiction; no liveness) | Two-clock model; heartbeat `last-run` written every firing; session-resume staleness check; 30-day fuse + documented re-activation; on-activation bootstrap of marker+heartbeat |
+| 8 | Analysis not durable; scalar marker can't track out-of-order work | Added `.claude/upstream-sync-backlog.md` ledger — per-unit status + persisted Cat-B intent/mapping (survives compaction); marker reframed as linear done-floor above which the ledger holds the ragged frontier; poller merges skeleton (never clobbers analysis); analyze-whole-backlog-first as pre-work |
