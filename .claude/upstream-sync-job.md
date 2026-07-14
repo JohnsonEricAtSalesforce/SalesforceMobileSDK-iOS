@@ -119,7 +119,8 @@ aren't fighting weekly.)
 7. **Ledger sync (merge, never clobber)** — Reconcile the grouped/classified units into the durable
    backlog ledger `.claude/upstream-sync-backlog.md` (see *Backlog Ledger* below). The poller:
    - **appends** any newly-appeared unit as a `pending` row (label, member hashes, category),
-   - **refreshes** only the header line (marker floor, `origin/dev` HEAD, last-analyzed timestamp),
+   - **refreshes** the header line (marker floor, `origin/dev` HEAD, N-behind, timestamp) and
+     regenerates the *Migration status* rollup (counts + bar) as a projection of the Units table,
    - **flags** (`⚠ stale-ref`) any existing ledger member hash no longer reachable from `origin/dev`.
 
    It **never** edits a row whose status is not `pending`, and **never** touches Category-B detail
@@ -378,17 +379,35 @@ about.
 
 ### Format (Markdown — git-diffable, operator-editable)
 
+The ledger is a **reviewable migration-status dashboard**, not just a data table. Three stacked
+sections, top to bottom: (1) header line, (2) at-a-glance status rollup, (3) the per-unit table,
+(4) Category-B detail blocks. The rollup answers "where are we overall?"; the table answers "what is
+each unit doing?"; the detail blocks hold the durable Category-B analysis.
+
 ```markdown
 # Upstream Sync Backlog Ledger
 
-Marker (done floor): <hash>  ·  origin/dev HEAD: <hash>  ·  Last analyzed: <ISO-8601 UTC>
+Marker (done floor): <hash>  ·  origin/dev HEAD: <hash>  ·  <N> behind  ·  Updated: <ISO-8601 UTC>
 
+## Migration status
+████████░░░░░░░░░░░░  8/20 units (40%)   ·   libs/-impacting: 6/12
+
+| Status        | Cnt | Units |
+|---------------|-----|-------|
+| ✅ ported     |  6  | #4037 #4038 #4039 #4040 #4043 #4044 |
+| 🔬 analyzed   |  1  | #4042 |
+| 🚧 in-progress|  0  | — |
+| ⏸ deferred    |  1  | #4046 |
+| ⏭ skipped     |  0  | — |
+| ⬜ pending    | 12  | (see table) |
+
+## Units
 | PR / unit | Members | Cat | Status | Port commit | Notes |
 |-----------|---------|-----|--------|-------------|-------|
-| #4041 biometric opt-in | e6fcb9be9…00153e341 (5) | B | ported | <hash> | see detail |
-| #4042 SFUserAccount thread-safety | bac017113 (squash) | B | analyzed | — | see detail |
-| #4046 don't add my domain | 245954246 (1) | B | deferred | — | blocked: needs my-domain org |
-| #4047 nightly schedules | 97ab8b544 (1) | F | skipped | — | CI-only, no libs/ impact |
+| #4041 biometric opt-in | e6fcb9be9…00153e341 (5) | B | ✅ ported | abc1234 | see detail |
+| #4042 SFUserAccount thread-safety | bac017113 (squash) | B | 🔬 analyzed | — | see detail |
+| #4046 don't add my domain | 245954246 (1) | B | ⏸ deferred | — | blocked: needs my-domain org |
+| #4047 nightly schedules | 97ab8b544 (1) | F | ⏭ skipped | — | CI-only, no libs/ impact |
 
 ## Category-B detail
 
@@ -401,6 +420,18 @@ Marker (done floor): <hash>  ·  origin/dev HEAD: <hash>  ·  Last analyzed: <IS
 - **Open questions:** confirm idData isn't already lock-protected elsewhere.
 ```
 
+**Status glyphs** are display sugar over the status vocabulary below (✅ ported · 🔬 analyzed ·
+🚧 in-progress · ⏸ deferred · ⏭ skipped · ⬜ pending). The word is authoritative; the glyph is for
+scanning. The progress bar is 20 cells — filled = `ported`+`skipped` (i.e. units that need no further
+work), so it reads as true migration completion, not just "touched." Show a second fraction for
+`libs/`-impacting units, since docs/CI (Category F) units inflate raw completion.
+
+**Rollup accuracy is derived, never hand-maintained divergently.** The counts, unit lists, and bar
+are a *projection* of the Units table — regenerate them from it, don't edit them independently (a
+rollup that disagrees with the table is worse than no rollup). The poller refreshes the rollup during
+its step-7 merge; when the operator changes a status by hand, they regenerate the rollup in the same
+edit (or ask Claude to). Treat a table/rollup mismatch as a lint failure.
+
 ### Status vocabulary (small on purpose; every non-obvious state carries a one-line reason)
 
 `pending` → `analyzed` → `in-progress` → `ported` (gate passed) · `deferred` (understood, waiting —
@@ -408,9 +439,11 @@ reason required) · `skipped` (no action needed — reason required).
 
 ### Write authority (mirrors marker/heartbeat)
 
-- **Poller (step 7, autonomous):** append new units as `pending`; refresh the header line; flag
-  `⚠ stale-ref` on member hashes no longer reachable from `origin/dev`. **Merge, never clobber** —
-  it never edits a non-`pending` row and never touches a Category-B detail block.
+- **Poller (step 7, autonomous):** append new units as `pending`; refresh the header line; regenerate
+  the *Migration status* rollup from the Units table; flag `⚠ stale-ref` on member hashes no longer
+  reachable from `origin/dev`. **Merge, never clobber** — it never edits a non-`pending` row and never
+  touches a Category-B detail block. (Regenerating the rollup is safe: it is a pure projection of the
+  table, not operator judgment.)
 - **Operator (on work):** all status transitions, port-commit hashes, reasons, and Category-B
   analysis. In-session analysis (often Claude-assisted) is **written here** so it survives compaction.
 
@@ -422,6 +455,9 @@ reason required) · `skipped` (no action needed — reason required).
   until it resolves. This is the ragged frontier working as designed — do not "fix" it.
 - **Vanished member hash** (upstream history rewrite, e.g. a "Merge from master"): poller marks the
   unit `⚠ stale-ref` and preserves its analysis for operator review rather than dropping it.
+- **Rollup ↔ table consistency:** the *Migration status* section must always be a faithful projection
+  of the Units table (counts, unit lists, and bar all derived). Any divergence is a lint failure —
+  regenerate the rollup, never reconcile by editing it independently.
 
 ---
 
@@ -518,10 +554,13 @@ git fetch origin
 git merge-base HEAD origin/dev > .claude/upstream-sync-marker      # last processed = merge-base
 printf '%s %s\n' "$(date -u +%Y-%m-%dT%H:%M:%SZ)" "$(git rev-parse origin/dev)" \
   > .claude/upstream-sync-last-run                                  # initial heartbeat
-# Seed an empty ledger header; the first firing (step 7) populates pending rows.
+# Seed the ledger header + empty rollup; the first firing (step 7) populates pending rows and the bar.
 { echo "# Upstream Sync Backlog Ledger"; echo; \
-  printf 'Marker (done floor): %s  ·  origin/dev HEAD: %s  ·  Last analyzed: %s\n' \
+  printf 'Marker (done floor): %s  ·  origin/dev HEAD: %s  ·  Updated: %s\n\n' \
     "$(cat .claude/upstream-sync-marker)" "$(git rev-parse origin/dev)" "$(date -u +%Y-%m-%dT%H:%M:%SZ)"; \
+  echo "## Migration status"; echo "░░░░░░░░░░░░░░░░░░░░  0/0 units (—) — awaiting first firing"; echo; \
+  echo "## Units"; echo "| PR / unit | Members | Cat | Status | Port commit | Notes |"; \
+  echo "|-----------|---------|-----|--------|-------------|-------|"; \
 } > .claude/upstream-sync-backlog.md
 ```
 Without this, a just-activated poller and a dead one both look identical until the first firing
