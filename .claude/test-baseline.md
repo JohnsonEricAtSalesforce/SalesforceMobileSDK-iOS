@@ -121,6 +121,34 @@ force-unwrap `bioAuthManager.readBioAuthPolicy(...)?.optIn!` at `BiometricAuthen
 (accounts array ×2). NOT baselined — needs its own investigation/operator decision (candidates: real
 migration regressions vs. test-isolation). SDKCore gate remains **provisional** until P0.2e is triaged.
 
+### P0.2e first-pass triage (2026-07-15) — 6 root-cause clusters
+
+1. **Identity/credentials cluster (~12): SFUserAccountManagerTests (6) + Persister (4) +
+   Notifications (2).** Signature: `credentials.userId`/`organizationId` and `accountIdentity.userId`/
+   `orgId` come back as empty `""` instead of the values derived from `identityUrl`
+   (`/id/{orgId}/{userId}`). The `identityUrl` didSet parser in `SFOAuthCredentials.swift:76-92` is
+   byte-identical to the ObjC `.m` (verified) and the keychain subclass doesn't override userId/orgId —
+   so the break is downstream, in `UserAccount.accountIdentity` change-tracking / credential assignment.
+   **ESCALATION-GATED (credentials/OAuth).** Highest-value: one root cause likely clears all 12.
+2. **EncryptedPushNotification cluster (12): SFSDKEncryptedPushNotificationTests.** Uniform signature:
+   transform/validate returns `nil` where the test expects a specific error code (`Optional(-1005)`..
+   `-1012`). Single root cause likely — the error-return path in the migrated notification
+   transform/validate. Not obviously escalation-gated (push notif decode logic).
+3. **PushNotificationManager cluster (13): PushNotificationManagerTests.** REST client never called /
+   no registration request made ("REST client should have been called", counts 0 vs 1). Smells like a
+   mock/network-setup break or a real registration-path regression. Touches push registration.
+4. **User-Agent/Network cluster (~4): SFNetworkTests, SalesforceRestAPITests.** `testRequestUserAgent`
+   nil UA header; `testSessionSharing` counts 0 vs 2; `testRedirect` 401 vs 200. Network/session config.
+5. **Biometric cluster (6 + 2 crashes): BiometricAuthenticationManagerTests.** Policy assertions +
+   the `.optIn!` force-unwrap crash at :85. Likely one bioauth policy-read migration break.
+6. **Singletons (~6): SFOAuthInfoTests, SFPreferencesTests, SFSDKAuthUtilTests, URLRequestRestRequestTests,
+   SFUserAccountPhotoTests, SalesforceOAuthUnitTests/testCredentialsCoding** — one-off assertions,
+   triage individually.
+
+**Recommended order:** #2 (EncryptedPushNotif — 12, self-contained, not escalation-gated) → #5 (Biometric,
+kill the 2 remaining crashes) → #1 (identity/credentials — 12, but ESCALATION-GATED, needs approval) →
+#3 → #4 → #6. Cluster #1 requires operator escalation approval before any credentials/OAuth code change.
+
 ## (historical) P0.2d root-cause analysis — three independent migration artifacts
 
 Distinct from the (now-fixed) credentials cluster. Root-caused 2026-07-14: **three independent
