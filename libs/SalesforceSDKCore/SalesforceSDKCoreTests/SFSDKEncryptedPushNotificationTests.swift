@@ -66,8 +66,7 @@ class SFSDKEncryptedPushNotificationTests: XCTestCase {
         userInfo[kRemoteNotificationKeySecret] = nil
         let notifContent = notificationContent(withUserInfo: userInfo)
         var noSecretError: NSError?
-        let errorPointer = AutoreleasingUnsafeMutablePointer<NSError?>(&noSecretError)
-        let result = SFSDKPushNotificationDecryption.decryptNotificationContent(notifContent, error: errorPointer)
+        let result = SFSDKPushNotificationDecryption.decryptNotificationContent(notifContent, error: &noSecretError)
         XCTAssertFalse(result)
         XCTAssertEqual(noSecretError?.code, SFSDKPushNotificationErrorCode.noEncryptedSecret.rawValue)
     }
@@ -77,8 +76,7 @@ class SFSDKEncryptedPushNotificationTests: XCTestCase {
         userInfo[kRemoteNotificationKeyContent] = nil
         let notifContent = notificationContent(withUserInfo: userInfo)
         var noContentError: NSError?
-        let errorPointer = AutoreleasingUnsafeMutablePointer<NSError?>(&noContentError)
-        let result = SFSDKPushNotificationDecryption.decryptNotificationContent(notifContent, error: errorPointer)
+        let result = SFSDKPushNotificationDecryption.decryptNotificationContent(notifContent, error: &noContentError)
         XCTAssertFalse(result)
         XCTAssertEqual(noContentError?.code, SFSDKPushNotificationErrorCode.noEncryptedContent.rawValue)
     }
@@ -93,8 +91,7 @@ class SFSDKEncryptedPushNotificationTests: XCTestCase {
         }
         let notifContent = notificationContent(withUserInfo: userInfo)
         var noTitleError: NSError?
-        let errorPointer = AutoreleasingUnsafeMutablePointer<NSError?>(&noTitleError)
-        let result = SFSDKPushNotificationDecryption.decryptNotificationContent(notifContent, error: errorPointer)
+        let result = SFSDKPushNotificationDecryption.decryptNotificationContent(notifContent, error: &noTitleError)
         XCTAssertFalse(result)
         XCTAssertEqual(noTitleError?.code, SFSDKPushNotificationErrorCode.noApsAlertTitle.rawValue)
     }
@@ -109,8 +106,7 @@ class SFSDKEncryptedPushNotificationTests: XCTestCase {
         }
         let notifContent = notificationContent(withUserInfo: userInfo)
         var noBodyError: NSError?
-        let errorPointer = AutoreleasingUnsafeMutablePointer<NSError?>(&noBodyError)
-        let result = SFSDKPushNotificationDecryption.decryptNotificationContent(notifContent, error: errorPointer)
+        let result = SFSDKPushNotificationDecryption.decryptNotificationContent(notifContent, error: &noBodyError)
         XCTAssertFalse(result)
         XCTAssertEqual(noBodyError?.code, SFSDKPushNotificationErrorCode.noApsAlertBody.rawValue)
     }
@@ -120,8 +116,7 @@ class SFSDKEncryptedPushNotificationTests: XCTestCase {
         userInfo[kRemoteNotificationKeyAps] = nil
         let notifContent = notificationContent(withUserInfo: userInfo)
         var noApsDictError: NSError?
-        let errorPointer = AutoreleasingUnsafeMutablePointer<NSError?>(&noApsDictError)
-        let result = SFSDKPushNotificationDecryption.decryptNotificationContent(notifContent, error: errorPointer)
+        let result = SFSDKPushNotificationDecryption.decryptNotificationContent(notifContent, error: &noApsDictError)
         XCTAssertFalse(result)
         XCTAssertEqual(noApsDictError?.code, SFSDKPushNotificationErrorCode.noApsDictionary.rawValue)
     }
@@ -134,8 +129,7 @@ class SFSDKEncryptedPushNotificationTests: XCTestCase {
         }
         let notifContent = notificationContent(withUserInfo: userInfo)
         var noApsAlertDictError: NSError?
-        let errorPointer = AutoreleasingUnsafeMutablePointer<NSError?>(&noApsAlertDictError)
-        let result = SFSDKPushNotificationDecryption.decryptNotificationContent(notifContent, error: errorPointer)
+        let result = SFSDKPushNotificationDecryption.decryptNotificationContent(notifContent, error: &noApsAlertDictError)
         XCTAssertFalse(result)
         XCTAssertEqual(noApsAlertDictError?.code, SFSDKPushNotificationErrorCode.noApsAlertDictionary.rawValue)
     }
@@ -147,8 +141,7 @@ class SFSDKEncryptedPushNotificationTests: XCTestCase {
         userInfo[kRemoteNotificationKeyEncrypted] = nil
         var notifContent = notificationContent(withUserInfo: userInfo)
         var unexpectedError: NSError?
-        var errorPointer = AutoreleasingUnsafeMutablePointer<NSError?>(&unexpectedError)
-        var result = SFSDKPushNotificationDecryption.decryptNotificationContent(notifContent, error: errorPointer)
+        var result = SFSDKPushNotificationDecryption.decryptNotificationContent(notifContent, error: &unexpectedError)
         XCTAssertTrue(result)
         XCTAssertNil(unexpectedError)
 
@@ -156,17 +149,15 @@ class SFSDKEncryptedPushNotificationTests: XCTestCase {
         userInfo[kRemoteNotificationKeyEncrypted] = false
         notifContent = notificationContent(withUserInfo: userInfo)
         unexpectedError = nil
-        errorPointer = AutoreleasingUnsafeMutablePointer<NSError?>(&unexpectedError)
-        result = SFSDKPushNotificationDecryption.decryptNotificationContent(notifContent, error: errorPointer)
+        result = SFSDKPushNotificationDecryption.decryptNotificationContent(notifContent, error: &unexpectedError)
         XCTAssertTrue(result)
         XCTAssertNil(unexpectedError)
     }
 
     func testNotificationTransform() {
         var unexpectedError: NSError?
-        let errorPointer = AutoreleasingUnsafeMutablePointer<NSError?>(&unexpectedError)
         let contentNotif = notificationContent(withUserInfo: userInfoDict)
-        let result = SFSDKPushNotificationDecryption.decryptNotificationContent(contentNotif, error: errorPointer)
+        let result = SFSDKPushNotificationDecryption.decryptNotificationContent(contentNotif, error: &unexpectedError)
         XCTAssertTrue(result)
         XCTAssertNil(unexpectedError)
         XCTAssertNil(contentNotif.userInfo[kRemoteNotificationKeyContent])
@@ -184,8 +175,7 @@ class SFSDKEncryptedPushNotificationTests: XCTestCase {
         userInfo[kRemoteNotificationKeySecret] = "some not base64 string"
         let notifContent = notificationContent(withUserInfo: userInfo)
         var malformedSecretError: NSError?
-        let errorPointer = AutoreleasingUnsafeMutablePointer<NSError?>(&malformedSecretError)
-        let result = SFSDKPushNotificationDecryption.decryptNotificationContent(notifContent, error: errorPointer)
+        let result = SFSDKPushNotificationDecryption.decryptNotificationContent(notifContent, error: &malformedSecretError)
         XCTAssertFalse(result)
         XCTAssertEqual(malformedSecretError?.code, SFSDKPushNotificationErrorCode.malformedSecretData.rawValue)
     }
@@ -196,8 +186,7 @@ class SFSDKEncryptedPushNotificationTests: XCTestCase {
         userInfo[kRemoteNotificationKeySecret] = nonRSASecretBase64
         let notifContent = notificationContent(withUserInfo: userInfo)
         var nonRSASecretError: NSError?
-        let errorPointer = AutoreleasingUnsafeMutablePointer<NSError?>(&nonRSASecretError)
-        let result = SFSDKPushNotificationDecryption.decryptNotificationContent(notifContent, error: errorPointer)
+        let result = SFSDKPushNotificationDecryption.decryptNotificationContent(notifContent, error: &nonRSASecretError)
         XCTAssertFalse(result)
         // As of 17.4, decrypting a bad key with PKCS1 returns data instead of nil, so the secret decryption doesn't fail
         // at the same point as before but using it later to decrypt the content still fails
@@ -210,8 +199,7 @@ class SFSDKEncryptedPushNotificationTests: XCTestCase {
         userInfo[kRemoteNotificationKeyContent] = "some not base64 string"
         let notifContent = notificationContent(withUserInfo: userInfo)
         var malformedContentError: NSError?
-        let errorPointer = AutoreleasingUnsafeMutablePointer<NSError?>(&malformedContentError)
-        let result = SFSDKPushNotificationDecryption.decryptNotificationContent(notifContent, error: errorPointer)
+        let result = SFSDKPushNotificationDecryption.decryptNotificationContent(notifContent, error: &malformedContentError)
         XCTAssertFalse(result)
         XCTAssertEqual(malformedContentError?.code, SFSDKPushNotificationErrorCode.malformedContentData.rawValue)
     }
@@ -222,8 +210,7 @@ class SFSDKEncryptedPushNotificationTests: XCTestCase {
         userInfo[kRemoteNotificationKeyContent] = nonAES128ContentBase64
         let notifContent = notificationContent(withUserInfo: userInfo)
         var nonAES128ContentError: NSError?
-        let errorPointer = AutoreleasingUnsafeMutablePointer<NSError?>(&nonAES128ContentError)
-        let result = SFSDKPushNotificationDecryption.decryptNotificationContent(notifContent, error: errorPointer)
+        let result = SFSDKPushNotificationDecryption.decryptNotificationContent(notifContent, error: &nonAES128ContentError)
         XCTAssertFalse(result)
         XCTAssertEqual(nonAES128ContentError?.code, SFSDKPushNotificationErrorCode.contentDecryptionFailed.rawValue)
     }
@@ -234,8 +221,7 @@ class SFSDKEncryptedPushNotificationTests: XCTestCase {
         let userInfo = pndp.userInfoDict
         let notifContent = notificationContent(withUserInfo: userInfo)
         var nonJSONContentError: NSError?
-        let errorPointer = AutoreleasingUnsafeMutablePointer<NSError?>(&nonJSONContentError)
-        let result = SFSDKPushNotificationDecryption.decryptNotificationContent(notifContent, error: errorPointer)
+        let result = SFSDKPushNotificationDecryption.decryptNotificationContent(notifContent, error: &nonJSONContentError)
         XCTAssertFalse(result)
         XCTAssertEqual(nonJSONContentError?.code, SFSDKPushNotificationErrorCode.invalidContentFormat.rawValue)
     }
@@ -246,8 +232,7 @@ class SFSDKEncryptedPushNotificationTests: XCTestCase {
         let userInfo = pndp.userInfoDict
         let notifContent = notificationContent(withUserInfo: userInfo)
         var arrayJSONContentError: NSError?
-        let errorPointer = AutoreleasingUnsafeMutablePointer<NSError?>(&arrayJSONContentError)
-        let result = SFSDKPushNotificationDecryption.decryptNotificationContent(notifContent, error: errorPointer)
+        let result = SFSDKPushNotificationDecryption.decryptNotificationContent(notifContent, error: &arrayJSONContentError)
         XCTAssertFalse(result)
         XCTAssertEqual(arrayJSONContentError?.code, SFSDKPushNotificationErrorCode.invalidContentFormat.rawValue)
     }

@@ -130,10 +130,16 @@ migration regressions vs. test-isolation). SDKCore gate remains **provisional** 
    byte-identical to the ObjC `.m` (verified) and the keychain subclass doesn't override userId/orgId —
    so the break is downstream, in `UserAccount.accountIdentity` change-tracking / credential assignment.
    **ESCALATION-GATED (credentials/OAuth).** Highest-value: one root cause likely clears all 12.
-2. **EncryptedPushNotification cluster (12): SFSDKEncryptedPushNotificationTests.** Uniform signature:
-   transform/validate returns `nil` where the test expects a specific error code (`Optional(-1005)`..
-   `-1012`). Single root cause likely — the error-return path in the migrated notification
-   transform/validate. Not obviously escalation-gated (push notif decode logic).
+2. **EncryptedPushNotification cluster (12): SFSDKEncryptedPushNotificationTests.** ✅ RESOLVED
+   2026-07-15 (commit pending). Root cause = TEST-ONLY ObjC→Swift bridging bug, NOT production. Each
+   test built `let errorPointer = AutoreleasingUnsafeMutablePointer<NSError?>(&errVar)` then passed
+   `errorPointer`. `AutoreleasingUnsafeMutablePointer(&x)` binds `&x` to a *temporary* buffer valid only
+   for the initializer call, so the callee's `error?.pointee = ...` writes never flowed back to `errVar`
+   — `errVar` stayed nil. Tell: `XCTAssertFalse(result)` never failed (0×), only the error-code
+   `XCTAssertEqual` (11×) → production `decryptNotificationContent` was correct all along. Fix: pass
+   `&errVar` directly to the `NSErrorPointer` param (matches ObjC original `&noSecretError` and Swift
+   bridging), removed the 15 `errorPointer` intermediates. Verified: 15/15 pass, 0 crashes. Production
+   `SFSDKPushNotificationDecryption.swift` untouched; production callers were already correct.
 3. **PushNotificationManager cluster (13): PushNotificationManagerTests.** REST client never called /
    no registration request made ("REST client should have been called", counts 0 vs 1). Smells like a
    mock/network-setup break or a real registration-path regression. Touches push registration.
