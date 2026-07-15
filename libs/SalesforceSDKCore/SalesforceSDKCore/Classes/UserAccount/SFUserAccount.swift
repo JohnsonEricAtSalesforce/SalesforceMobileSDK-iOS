@@ -258,7 +258,12 @@ public func SFKeyForUserIdAndScope(_ userId: String?, _ orgId: String?, _ commun
 
     /// Initialize with OAuthCredentials credentials.
     @objc public init(credentials: OAuthCredentials) {
-        _credentials = credentials
+        // Initialize `_credentials` to a throwaway placeholder (a *distinct* object) rather than the
+        // real credentials. `setCredentialsInternal` only registers its KVO observers when the incoming
+        // credentials differ from `_credentials` (by identity). The ObjC original left `_credentials`
+        // nil here so the guard passed; assigning the real object up front (as the migration did) made
+        // the guard fail and the observer was never registered, leaving `accountIdentity` stale.
+        _credentials = OAuthCredentials()
         _observingCredentials = false
         _accountIdentity = UserAccountIdentity(userId: credentials.userId ?? "", orgId: credentials.organizationId ?? "")
         super.init()

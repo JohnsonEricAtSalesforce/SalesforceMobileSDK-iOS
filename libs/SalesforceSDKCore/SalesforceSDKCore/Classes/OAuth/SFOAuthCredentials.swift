@@ -66,7 +66,11 @@ open class OAuthCredentials: NSObject, NSSecureCoding, NSCopying {
     @objc public var jwt: String?
     @objc public var refreshToken: String?
     @objc public var accessToken: String?
-    @objc public var organizationId: String?
+    // `dynamic` is required for KVO: UserAccount observes userId/organizationId to keep its
+    // accountIdentity in sync (SFUserAccount addObserver/observeValue). In ObjC these were plain
+    // @property (KVO-compliant); a Swift `@objc var` without `dynamic` does NOT emit KVO notifications,
+    // which would leave accountIdentity stale (empty) after identityUrl/credentials updates.
+    @objc public dynamic var organizationId: String?
     @objc public var instanceUrl: URL?
     @objc public var apiInstanceUrl: URL?
     @objc public var scopes: [String]?
@@ -90,7 +94,7 @@ open class OAuthCredentials: NSObject, NSSecureCoding, NSCopying {
             }
         }
     }
-    @objc public var userId: String?
+    @objc public dynamic var userId: String?  // `dynamic` required for KVO — see organizationId note above.
     @objc public private(set) var isEncrypted: Bool
 
     @objc public var additionalOAuthFields: NSDictionary?

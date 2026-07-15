@@ -82,7 +82,7 @@ final class BiometricAuthenticationManagerTests: XCTestCase {
         bioAuthManager.storePolicy(userAccount: user, hasMobilePolicy: true, sessionTimeout: 1)
         XCTAssertTrue(bioAuthManager.checkForPolicy(userId: userId))
         XCTAssertTrue(bioAuthManager.enabled)
-        let optInStatus: Bool = ((bioAuthManager.readBioAuthPolicy(userId: userId)?.optIn!) != nil)
+        let optInStatus: Bool = (bioAuthManager.readBioAuthPolicy(userId: userId)?.optIn != nil)
         XCTAssertTrue(optInStatus, "Opt-In status should not be set back to false.")
         
         bioAuthManager.storePolicy(userAccount: user, hasMobilePolicy: false, sessionTimeout: 5)
@@ -90,7 +90,7 @@ final class BiometricAuthenticationManagerTests: XCTestCase {
         XCTAssertFalse(bioAuthManager.enabled, "New Policy should be applied.")
         let timeout = bioAuthManager.readBioAuthPolicy(userId: userId)?.timeout
         XCTAssertEqual(timeout, 5, "Session Timeout should be updated.")
-        let optInStatus2: Bool = ((bioAuthManager.readBioAuthPolicy(userId: userId)?.optIn!) != nil)
+        let optInStatus2: Bool = (bioAuthManager.readBioAuthPolicy(userId: userId)?.optIn != nil)
         XCTAssertTrue(optInStatus2, "Opt-In status should not be set back to false.")
     }
     

@@ -124,12 +124,30 @@ migration regressions vs. test-isolation). SDKCore gate remains **provisional** 
 ### P0.2e first-pass triage (2026-07-15) — 6 root-cause clusters
 
 1. **Identity/credentials cluster (~12): SFUserAccountManagerTests (6) + Persister (4) +
-   Notifications (2).** Signature: `credentials.userId`/`organizationId` and `accountIdentity.userId`/
-   `orgId` come back as empty `""` instead of the values derived from `identityUrl`
-   (`/id/{orgId}/{userId}`). The `identityUrl` didSet parser in `SFOAuthCredentials.swift:76-92` is
-   byte-identical to the ObjC `.m` (verified) and the keychain subclass doesn't override userId/orgId —
-   so the break is downstream, in `UserAccount.accountIdentity` change-tracking / credential assignment.
-   **ESCALATION-GATED (credentials/OAuth).** Highest-value: one root cause likely clears all 12.
+   Notifications (2).** ROOT-CAUSED 2026-07-15 — **shared with cluster #5** (single root cause clears
+   BOTH, ~20 tests). Signature: `accountIdentity.userId`/`orgId` empty `""`. The `identityUrl` didSet
+   parser in `SFOAuthCredentials.swift:76-92` is byte-identical to ObjC (verified); keychain subclass
+   doesn't override. Actual break: `UserAccount` keeps `_accountIdentity` in sync with its credentials
+   via **KVO** on `userId`/`organizationId` (`SFUserAccount.swift:469-470` addObserver, `observeValue`
+   :452-455 updates `_accountIdentity`). In ObjC these were plain `@property` (KVO-compliant). The Swift
+   migration declared them `@objc public var userId/organizationId` **without `dynamic`** — Swift KVO
+   requires `@objc dynamic`, so willChange/didChange never fire, observers never trigger, and
+   `_accountIdentity` stays at its empty init value. **PARTIALLY RESOLVED 2026-07-15** — required TWO
+   production fixes (both migration artifacts, both faithful to ObjC): (a) added `dynamic` to `userId`/
+   `organizationId` in `SFOAuthCredentials.swift` (KVO needs it); (b) `SFUserAccount.init(credentials:)`
+   pre-assigned `_credentials = credentials` BEFORE calling `setCredentialsInternal`, so its
+   `credentials !== _credentials` guard was false and the observer was NEVER registered — the ObjC
+   original left `_credentials` nil there. Fixed by initializing `_credentials` to a throwaway
+   `OAuthCredentials()` placeholder first (distinct identity → guard passes → observer registers). Result:
+   Persister 5/5, Notifications pass, UAM 15/16. **ESCALATION-GATED, operator-approved.**
+   **2 residuals remain (distinct root causes, NOT the KVO bug):**
+   - `SFUserAccountManagerTests.testMultipleAccounts` (:250): after `upsert`×10 → `clearAllAccountState`
+     → `loadAllUserAccounts` (disk round-trip), `userAccount(for: UserAccountIdentity(userId:orgId:))`
+     returns nil. Persistence/reload or identity-map keying (NSCopying/hash) issue — separate from KVO.
+   - Cluster #5 biometric (7) — see below; test-helper bug, not the KVO fix.
+   Also WATCH: `SFUserAccountManagerNotificationsTests.testAccessTokenChangeNotificationPosted` +
+   `testInstanceUrlChangeNotificationPosted` failed w/ 10s timeouts in the FULL suite but weren't
+   exercised in the scoped run — confirm under full suite (possible test-ordering isolation issue).
 2. **EncryptedPushNotification cluster (12): SFSDKEncryptedPushNotificationTests.** ✅ RESOLVED
    2026-07-15 (commit pending). Root cause = TEST-ONLY ObjC→Swift bridging bug, NOT production. Each
    test built `let errorPointer = AutoreleasingUnsafeMutablePointer<NSError?>(&errVar)` then passed
@@ -145,8 +163,22 @@ migration regressions vs. test-isolation). SDKCore gate remains **provisional** 
    mock/network-setup break or a real registration-path regression. Touches push registration.
 4. **User-Agent/Network cluster (~4): SFNetworkTests, SalesforceRestAPITests.** `testRequestUserAgent`
    nil UA header; `testSessionSharing` counts 0 vs 2; `testRedirect` 401 vs 200. Network/session config.
-5. **Biometric cluster (6 + 2 crashes): BiometricAuthenticationManagerTests.** Policy assertions +
-   the `.optIn!` force-unwrap crash at :85. Likely one bioauth policy-read migration break.
+5. **Biometric cluster (6 + 2 crashes): BiometricAuthenticationManagerTests.** ROOT-CAUSED 2026-07-15
+   — **SAME root cause as cluster #1** (the missing `dynamic` KVO bug). Chain: test `createUser` builds
+   a `UserAccount` then assigns `currentUserAccount = user`; the setter (`setCurrentUserInternalFull`,
+   gated identically to the ObjC original at old .m:1702-1716) only accepts a user found via
+   `userAccount(for: user.accountIdentity)`. Because `_accountIdentity` is empty (KVO never fired), the
+   lookup fails, the setter silently drops the assignment, `_currentUser` stays nil → `testNotEnabled`
+   fails at :52 and downstream `.optIn!` force-unwrap crashes at :85. Test is Swift-native (authored
+   2023, no ObjC original). **REVISED 2026-07-15:** the cluster #1 fix did NOT clear these — the helper
+   `createUser` (unchanged since origin) assigns `currentUserAccount = user` WITHOUT ever registering
+   the account (no `identityUrl`, no `upsert`), and it builds no identity URL so accountIdentity is
+   empty regardless. The correct/working pattern (now-passing SmartStore `setUpSmartStoreUser`): set
+   `credentials.identityUrl` → `upsert(user)` → `setCurrentUserInternal(user)`. This is a **test-helper
+   bug** (Swift-native test written in the transitional migration era against a not-yet-gated Swift UAM;
+   the ObjC setter always gated on managed-account membership — old .m:1702-1716). FIX: update
+   `createUser` to set identityUrl + upsert before setting current. The `.optIn!` force-unwrap hardening
+   (:85,:93) was already applied. Still open pending that helper fix.
 6. **Singletons (~6): SFOAuthInfoTests, SFPreferencesTests, SFSDKAuthUtilTests, URLRequestRestRequestTests,
    SFUserAccountPhotoTests, SalesforceOAuthUnitTests/testCredentialsCoding** — one-off assertions,
    triage individually.
