@@ -50,6 +50,19 @@ Per gate report: `SyncManagerTestCase` `class setUp()` blocks on `synchronousAut
 the auth run-loop doesn't integrate with xcodebuild locally. Not counted as pass; deferred to CI.
 (Lives in MobileSync scheme; listed here as part of the single baseline registry.)
 
+### `env/org-dependent` — SalesforceRestAPITests.testRedirect (operator-approved 2026-07-15)
+
+`SalesforceRestAPITests.testRedirect` creates a Contact, then GETs
+`/services/images/photo/{contactId}` expecting HTTP 200 (assumes a redirect to the default profile
+image). Against this test org it returns **401 with no redirect at all**. Empirically confirmed via a
+temp diagnostic: `finalURL == requestURL`, `Location` header `nil`, status 401 — the redirect handler
+is **never exercised**, so the 401 is the org's *direct* response to a photo request for a freshly
+created (photo-less) Contact. The production redirect handler (`SFNetwork.willPerformHTTPRedirection`)
+is **byte-faithful to the ObjC original** (verified against 58a0af75d~1). NOT a migration regression —
+outcome depends on the org's photo-endpoint behavior/data. 61 other SalesforceRestAPITests pass against
+the live org. Baselined by operator decision (investigate-deeper concluded env/org-dependent).
+Candidate for a CI-org-specific fixture or removal.
+
 ---
 
 ## ✅ RESOLVED 2026-07-14 (tracker finding P0.2b) — SmartStore setUp crash cluster

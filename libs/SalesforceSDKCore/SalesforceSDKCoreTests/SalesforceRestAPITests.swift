@@ -914,9 +914,21 @@ class SalesforceRestAPITests: XCTestCase {
     // MARK: - User Agent Tests
 
     func testRequestUserAgent() {
+        // The default User-Agent is applied by the network layer (SFNetwork.sendRequest), not written
+        // back onto RestRequest.request: prepareRequestForSend returns a value-type URLRequest copy, so
+        // — unlike the ObjC original, which mutated an NSMutableURLRequest in place — the header never
+        // appears on request.request. Observe it on the request the SDK actually dispatches instead.
+        guard let currentUser = currentUser else {
+            XCTFail("No current user")
+            return
+        }
         let request = RestClient.sharedInstance.requestForSearchResultLayout(kAccount, apiVersion: SFRestDefaultAPIVersion)
-        _ = sendSyncRequest(request)
-        let userAgent = request.request.allHTTPHeaderFields?["User-Agent"]
+        guard let finalRequest = request.prepareRequestForSend(currentUser) else {
+            XCTFail("prepareRequestForSend returned nil")
+            return
+        }
+        let task = Network.sharedEphemeralInstance().sendRequest(finalRequest, dataResponseBlock: nil)
+        let userAgent = task.originalRequest?.allHTTPHeaderFields?["User-Agent"]
         XCTAssertEqual(userAgent, RestClient.userAgentString())
     }
 
