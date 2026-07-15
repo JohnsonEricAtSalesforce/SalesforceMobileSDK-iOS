@@ -74,7 +74,20 @@ import Foundation
         if let key = SFKeyForUserAndScope(user, scope) {
             prefs = instances[key] as? SFPreferences
             if prefs == nil {
-                if let resolvedUser = user, let directory = SFDirectoryManager.sharedManager.directory(forUser: resolvedUser, scope: scope, type: .libraryDirectory, components: nil) {
+                // Resolve the scoped directory. The ObjC original called directoryForUser:scope: with a
+                // nil user for .global scope; the Swift directory(forUser:scope:) takes a non-optional
+                // UserAccount, so global scope (user == nil) must resolve via globalDirectory. Requiring a
+                // non-nil user here (the migration's `if let resolvedUser = user`) made globalPreferences()
+                // always return nil.
+                let directory: String?
+                if let resolvedUser = user {
+                    directory = SFDirectoryManager.sharedManager.directory(forUser: resolvedUser, scope: scope, type: .libraryDirectory, components: nil)
+                } else if scope == .global {
+                    directory = SFDirectoryManager.sharedManager.globalDirectory(ofType: .libraryDirectory, components: nil)
+                } else {
+                    directory = nil
+                }
+                if let directory = directory {
                     var error: NSError?
                     if SFDirectoryManager.ensureDirectoryExists(directory, error: &error) {
                         let filePath = (directory as NSString).appendingPathComponent(kPreferencesFileName)

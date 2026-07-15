@@ -152,7 +152,10 @@ class URLRequestRestRequestTests: XCTestCase {
         XCTAssertNotNil(restRequest)
         XCTAssertEqual(restRequest?.method, .GET)
         XCTAssertEqual(restRequest?.path, "/items/info/details")
-        XCTAssertEqual(restRequest?.endpoint, "/items/info/details")
+        // A .custom request built from a full URL carries the whole path in `path`; endpoint is empty
+        // (matching every other .custom caller). Setting endpoint to url.path duplicated the path in the
+        // final URL — see testRoundTripConversion — so toRestRequest leaves endpoint "".
+        XCTAssertEqual(restRequest?.endpoint, "")
     }
 
     func testRoundTripConversion() {

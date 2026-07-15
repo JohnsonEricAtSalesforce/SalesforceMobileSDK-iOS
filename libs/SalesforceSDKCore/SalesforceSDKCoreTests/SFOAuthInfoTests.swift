@@ -58,9 +58,11 @@ class SFOAuthInfoTests: XCTestCase {
         XCTAssertEqual(jwtInfo.authTypeDescription, "SFOAuthTypeJwtTokenExchange", "JwtTokenExchange auth type should return correct description")
         XCTAssertEqual(jwtInfo.authType, .jwtTokenExchange, "Auth type should be JwtTokenExchange")
 
-        // Test SFOAuthTypeIdp
+        // Test SFOAuthTypeIDP — production returns "SFOAuthTypeIDP" (all-caps IDP), matching the ObjC
+        // original (SFOAuthInfo.m: desc = @"SFOAuthTypeIDP"). This is a public-observable string, so the
+        // test expectation is corrected to the canonical casing rather than changing production.
         let idpInfo = SFOAuthInfo(authType: .idp)
-        XCTAssertEqual(idpInfo.authTypeDescription, "SFOAuthTypeIdp", "IDP auth type should return correct description")
+        XCTAssertEqual(idpInfo.authTypeDescription, "SFOAuthTypeIDP", "IDP auth type should return correct description")
         XCTAssertEqual(idpInfo.authType, .idp, "Auth type should be IDP")
 
         // Test SFOAuthTypeNative

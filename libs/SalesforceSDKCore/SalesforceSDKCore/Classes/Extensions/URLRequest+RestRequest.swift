@@ -60,8 +60,13 @@ extension URLRequest {
             let contentType = allHTTPHeaderFields?["Content-Type"] ?? "application/octet-stream"
             request.setCustomRequestBodyData(body, contentType: contentType)
         }
-        
-        request.endpoint = url.path
+
+        // Leave endpoint empty (as every other .custom RestRequest caller does — NativeLoginManager,
+        // RestClient). The full URL path is already carried by `path`; prepareRequestForSend builds the
+        // URL as baseURL + endpoint + path, so also setting endpoint = url.path duplicated the path
+        // (…/sobjects/Account/services/data/v57.0/sobjects/Account). The `.custom` initializer already
+        // defaults endpoint to "". (Pre-13.1 this used the default .instance host type, whose
+        // endpoint-prefix stripping masked the duplication; the migration to .custom removed that.)
         request.networkServiceType = networkServiceType
         request.requiresAuthentication = requiresAuthentication
         return request

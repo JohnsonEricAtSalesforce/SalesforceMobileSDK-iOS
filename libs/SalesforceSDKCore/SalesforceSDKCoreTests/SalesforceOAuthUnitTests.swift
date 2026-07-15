@@ -358,7 +358,16 @@ class SalesforceOAuthUnitTests: XCTestCase {
     // MARK: - testCoordinator
 
     func testCoordinator() {
-        let coordinator = SFOAuthCoordinator(credentials: UserAccountManager.shared.currentUserAccount?.credentials)
+        // authenticate() asserts credentials/clientId/identifier/domain are non-nil (debug asserts,
+        // faithful to the ObjC NSAssert originals). Build self-sufficient credentials here rather than
+        // relying on an ambient currentUserAccount, which setUp does not establish — depending on leaked
+        // cross-test current-user state made this crash when run in isolation.
+        guard let credentials = OAuthCredentials.credentials(identifier: Self.kIdentifier, clientId: Self.kClientId, encrypted: true) else {
+            XCTFail("Failed to create credentials")
+            return
+        }
+        credentials.domain = "login.salesforce.com"
+        let coordinator = SFOAuthCoordinator(credentials: credentials)
         XCTAssertNotNil(coordinator, "coordinator should not be nil")
         let delegate = OAuthUnitTestsCoordinatorDelegate()
         coordinator.delegate = delegate
