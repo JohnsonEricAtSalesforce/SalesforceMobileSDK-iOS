@@ -185,10 +185,16 @@ final class BiometricAuthenticationManagerTests: XCTestCase {
     
     private func createUser(index: Int) -> UserAccount {
         let credentials = OAuthCredentials.credentials(identifier: "identifier-\(index)", clientId: "fakeClientIdForTesting", encrypted: true)!
+        // Give the credentials an identity URL so the account has a non-empty accountIdentity, then
+        // register it via upsert. The currentUserAccount setter only accepts a user already managed by
+        // UserAccountManager (userAccount(for: accountIdentity) must resolve) — without upsert the
+        // assignment is silently dropped and currentUserAccount stays nil.
+        credentials.identityUrl = URL(string: "https://login.salesforce.com/id/00Dorg\(index)/005user\(index)")
         let user = UserAccount(credentials: credentials)
         user.idData = SFIdentityData(jsonDict: [ "user_id": "\(index)" ])
+        _ = UserAccountManager.shared.upsert(user)
         UserAccountManager.shared.currentUserAccount = user
-        
+
         return user
     }
     
