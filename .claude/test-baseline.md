@@ -83,7 +83,45 @@ until P0.2d is resolved. Until then a port is verifiable against SDKCore only by
 build ✓ + the tests nearest the change pass + no failure touches the changed code (how #4043 was
 accepted).
 
-## UNRESOLVED — NOT baselined (tracker finding P0.2d) — SalesforceSDKCore migration-artifact crashes
+## ✅ RESOLVED 2026-07-14 (tracker finding P0.2d) — SalesforceSDKCore migration-artifact crashes
+
+All three sub-causes FIXED and verified against the full SalesforceSDKCore suite (2026-07-14,
+`test-without-building`, runtime-resolved iPhone sim). Crash types eliminated: **0 auth-assert fires,
+0 unimplemented-initializer traps, 0 race-test index-out-of-range** (down from ~11 root-crashing
+classes / cascade of ~71). Fixes:
+- **A** — removed the dead `path` assert in `SFSDKAuthCommand.requestURL()` (`SFSDKAuthCommand.swift:47`).
+  The ObjC original left `path` nil so `NSAssert` was a runtime no-op; `path` is unused in the URL and
+  never set by any subclass. `scheme`/`version`/`command` asserts kept (live + populated). Verified:
+  all `SFSDKURLHandlerManagerTest`/IDP-command crashes gone.
+- **B** — `SFSDKEncryptedURLCache` now overrides URLCache's designated initializers
+  (`init(memoryCapacity:diskCapacity:diskPath:)` + the `cacheDirectory:` variant) forwarding to
+  `super`, matching the ObjC surface. Also fixed a latent bug: the prior `self.init()` convenience init
+  silently dropped the capacity args (zero-capacity cache). The test subclass
+  `TestSFSDKEncryptedURLCache` (SFSDKURLCacheTests.swift) also needed the designated init (declaring its
+  own init blocks auto-inheritance). Result: `testRestCalls`, `testSettingCacheTypes`, `testNilURL` now
+  PASS. **ESCALATION-ADJACENT** (RestAPI encrypted-cache path) — flagged for review in commit/PR.
+- **C** — `SFRestAPIDataTaskRaceTests.deliverResponse(at:)` now bounds-guards the pending-protocols
+  index (test-only), converting a host-crashing trap into a soft `XCTFail`. No more suite thrashing.
+
+**Residual (NOT P0.2d, NOT baselined):** 4 assertion-level failures remain in the touched classes —
+`SFSDKUrlCacheTests.testEncryptedCacheEntry`/`testNullCacheEntry` (URLCache.shared global-state
+test-isolation) and the 2 `SFRestAPIDataTaskRaceTests` double-invoke-guard tests. These are clean
+assertion failures (not crashes) and belong to the broader P0.2e layer below.
+
+## UNRESOLVED — NOT baselined (tracker finding P0.2e) — SalesforceSDKCore crash-unmasked failure layer
+
+Fixing the P0.2d crashes stopped the xcodebuild host-restart cascade, which **unmasked a pre-existing
+layer of 57 failing tests** (same phenomenon as P0.2b: crashes were hiding real failures behind host
+restarts). Full-suite run 2026-07-14 after P0.2d fix: **518 passed / 57 failed / 0 crashes-in-P0.2d-scope**.
+Distribution: PushNotificationManagerTests ×13, SFSDKEncryptedPushNotificationTests ×12,
+SFUserAccountManagerTests ×6, BiometricAuthenticationManagerTests ×6, SFUserAccountManagerPersisterTests
+×4, plus 16 across 11 other classes. Includes **2 NEW crashes outside P0.2d scope**: a test-code
+force-unwrap `bioAuthManager.readBioAuthPolicy(...)?.optIn!` at `BiometricAuthenticationManagerTests.swift:85`
+(nil-unwrap ×2) and an `Index out of range` in `SFUserAccountManagerPersisterTests.testMultipleAccounts`
+(accounts array ×2). NOT baselined — needs its own investigation/operator decision (candidates: real
+migration regressions vs. test-isolation). SDKCore gate remains **provisional** until P0.2e is triaged.
+
+## (historical) P0.2d root-cause analysis — three independent migration artifacts
 
 Distinct from the (now-fixed) credentials cluster. Root-caused 2026-07-14: **three independent
 migration artifacts** where a Swift construct crashes on input the ObjC original tolerated. All are

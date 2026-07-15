@@ -68,6 +68,14 @@ private class DeferredURLProtocol: URLProtocol {
     static func deliverResponse(at index: Int, statusCode: Int) {
         let proto: DeferredURLProtocol
         lock.lock()
+        // Bounds-guard the access: if the expected protocol hasn't registered yet (e.g. a
+        // preceding wait timed out but XCTAssertTrue didn't halt the test), fail softly instead
+        // of trapping on an out-of-range index — a trap crashes the host and thrashes the suite.
+        guard index >= 0 && index < pendingProtocols.count else {
+            lock.unlock()
+            XCTFail("deliverResponse(at: \(index)) called but only \(pendingProtocols.count) protocol(s) pending")
+            return
+        }
         proto = pendingProtocols[index]
         lock.unlock()
 

@@ -37,6 +37,15 @@ private class TestSFSDKEncryptedURLCache: SFSDKEncryptedURLCache {
         reset()
     }
 
+    // Because this subclass declares its own initializer, Swift does not auto-inherit the
+    // superclass designated initializers. URLSession/URLCache can instantiate the cache via
+    // `init(memoryCapacity:diskCapacity:diskPath:)`, so it must be overridden here (forwarding
+    // to super) or the runtime traps with "use of unimplemented initializer".
+    override init(memoryCapacity: Int, diskCapacity: Int, diskPath path: String?) {
+        super.init(memoryCapacity: memoryCapacity, diskCapacity: diskCapacity, diskPath: path)
+        reset()
+    }
+
     func reset() {
         storedURLs = Set<String>()
         queriedURLs = Set<String>()

@@ -39,12 +39,29 @@ public class SFSDKEncryptedURLCache: URLCache {
     private var encryptionKey: SymmetricKey?
 
     @objc(initWithMemoryCapacity:diskCapacity:cacheDirectory:)
-    public convenience init(memoryCapacity: Int, diskCapacity: Int, cacheDirectory directoryURL: URL?) {
-        self.init()
+    public init(memoryCapacity: Int, diskCapacity: Int, cacheDirectory directoryURL: URL?) {
+        // Forward to URLCache's designated initializer. The prior migration called `self.init()`
+        // here, which silently dropped the capacity arguments (creating a zero-capacity cache) and
+        // — because it left URLCache's designated initializers unimplemented — trapped when the
+        // system instantiated the cache via `init(memoryCapacity:diskCapacity:diskPath:)`. This
+        // matches the ObjC original, which forwarded to `super initWithMemoryCapacity:diskCapacity:directoryURL:`.
+        super.init(memoryCapacity: memoryCapacity, diskCapacity: diskCapacity, diskPath: directoryURL?.path)
+        loadEncryptionKey()
+    }
+
+    public override init(memoryCapacity: Int, diskCapacity: Int, diskPath path: String?) {
+        // Override URLCache's designated initializer so the runtime never hits the
+        // unimplemented-initializer trap when the system instantiates the cache this way.
+        super.init(memoryCapacity: memoryCapacity, diskCapacity: diskCapacity, diskPath: path)
+        loadEncryptionKey()
     }
 
     public override init() {
         super.init()
+        loadEncryptionKey()
+    }
+
+    private func loadEncryptionKey() {
         encryptionKey = try? KeyGenerator.encryptionKey(for: kURLCacheEncryptionKeyLabel)
     }
 

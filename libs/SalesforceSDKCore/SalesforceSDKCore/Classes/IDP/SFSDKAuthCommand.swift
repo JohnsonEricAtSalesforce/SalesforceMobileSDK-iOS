@@ -45,7 +45,11 @@ public class SFSDKAuthCommand: NSObject {
 
     public func requestURL() -> URL {
         assert(!scheme.sfsdk_isEmptyOrWhitespaceAndNewlines(), "Scheme cannot be nil")
-        assert(!path.sfsdk_isEmptyOrWhitespaceAndNewlines(), "Path cannot be nil")
+        // Note: `path` is intentionally not asserted. In the ObjC original it was declared
+        // nonnull but never initialized, so it was nil at runtime and the assert was a no-op
+        // ([nil sfsdk_isEmptyOrWhitespaceAndNewlines] returns NO). `path` is not used to build
+        // the URL below and is never set by any subclass; asserting it here (Swift defaults it
+        // to "") would crash on every call, diverging from the ObjC behavior.
         assert(!version.sfsdk_isEmptyOrWhitespaceAndNewlines(), "Version cannot be nil")
         assert(!command.sfsdk_isEmptyOrWhitespaceAndNewlines(), "Command cannot be nil")
 
