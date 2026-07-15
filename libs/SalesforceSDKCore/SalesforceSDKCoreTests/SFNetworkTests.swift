@@ -132,10 +132,14 @@ class SFNetworkTests: XCTestCase {
 
     func testRequestUserAgent() {
         let network = Network.sharedEphemeralInstance()
-        var request = URLRequest(url: URL(string: "https://www.salesforce.com")!)
-        network.sendRequest(request, dataResponseBlock: nil)
+        let request = URLRequest(url: URL(string: "https://www.salesforce.com")!)
+        // sendRequest takes URLRequest by value (Swift value semantics) and applies the default
+        // User-Agent to the copy it actually sends — unlike the ObjC original, which took an
+        // NSMutableURLRequest and mutated the caller's instance in place. Observe the header on the
+        // request the SDK actually dispatched via the returned task's originalRequest.
+        let task = network.sendRequest(request, dataResponseBlock: nil)
 
-        let userAgent = request.allHTTPHeaderFields?["User-Agent"]
+        let userAgent = task.originalRequest?.allHTTPHeaderFields?["User-Agent"]
         let expectedUserAgent = SalesforceSDKManager.shared.userAgentString?("") ?? ""
         XCTAssertEqual(userAgent, expectedUserAgent, "User-Agent header should match SDK manager's user agent")
     }

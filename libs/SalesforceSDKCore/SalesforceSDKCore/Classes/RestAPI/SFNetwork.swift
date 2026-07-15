@@ -227,6 +227,10 @@ public class Network: NSObject, URLSessionDelegate, URLSessionTaskDelegate {
 
     /// Getter for tests - returns all shared instances.
     @objc public static func allSharedInstances() -> [String: Network] {
-        return (sharedInstances.dictionary as? [String: Network]) ?? [:]
+        // `dictionary()` is a method on SafeMutableDictionary, not a property. Referencing it without
+        // the call parens yielded an unapplied function value whose `as? [String: Network]` cast always
+        // failed, so this accessor silently returned an empty dictionary (the instance store was fine —
+        // `sharedInstanceIdentifiers()`, which reads `allKeys`, worked). Call it and bridge the snapshot.
+        return (sharedInstances.dictionary() as? [String: Network]) ?? [:]
     }
 }
