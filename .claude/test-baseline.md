@@ -140,22 +140,28 @@ migration regressions vs. test-isolation). SDKCore gate remains **provisional** 
    original left `_credentials` nil there. Fixed by initializing `_credentials` to a throwaway
    `OAuthCredentials()` placeholder first (distinct identity → guard passes → observer registers). Result:
    Persister 5/5, Notifications pass, UAM 15/16. **ESCALATION-GATED, operator-approved.**
-   **2 residuals remain (distinct root causes, NOT the KVO bug):**
-   - `SFUserAccountManagerTests.testMultipleAccounts` (:250): STILL OPEN — root cause NOT yet found.
-     Symptom: after `upsert`×10 → `clearAllAccountState` → `loadAllUserAccounts` (disk round-trip),
-     `userAccount(for: UserAccountIdentity(userId: "005R0000000Dsl0", orgId: "00D000000000062EA0"))`
-     returns nil. Notably line 234 (`allIdentities[index]`, i.e. lookup by the *stored* key object)
-     PASSES and `allTokens.count == 10` passes — so reloaded accounts exist and are findable by their
-     own key objects; only a *freshly-constructed* identity misses. **DISPROVEN hypothesis:** I
-     suspected a `UserAccountIdentity` hash/isEqual contract violation (isEqual normalizes 15→18 +
-     case-insensitive via `sfsdk_isEqual(toEntityId:)`; hash uses raw string) and tried canonicalizing
-     `hash` to `(entityId18 ?? raw).lowercased()` — **it did NOT fix the failure** (identical result),
-     so that change was REVERTED. The real cause is elsewhere (candidates to investigate next: the
-     persist/reload actually stores a different userId/orgId string than the literal — dump the reloaded
-     map keys; or `NSMutableDictionary(dictionary:)` bridging of the Swift `[UserAccountIdentity:...]`
-     from `fetchAllAccounts` re-keys/copies in a way that breaks lookup; or the org ID
-     `00D000000000062EA0` is 18-char but with a checksum that `entityId18` round-trips differently).
-     NOT the KVO bug (that part is fixed). Isolation-confirmed: fails even when run alone.
+   **Residuals:**
+   - `SFUserAccountManagerTests.testMultipleAccounts`: ✅ **RESOLVED 2026-07-15** — was a THIRD
+     production migration artifact (distinct from the KVO pair). Root-caused empirically via a temp
+     diagnostic that dumped reloaded key strings: after the disk round-trip the stored
+     `UserAccountIdentity` had `orgId` populated but **`userId` EMPTY** (`userId=[] orgId=[00D…EA0]`),
+     so a freshly-built identity (userId populated) never matched — hence line 234 (lookup by the
+     broken stored key) passed while line 250 (fresh key) missed. **Real cause:**
+     `OAuthCredentials.init?(coder:)` assigns `self.identityUrl = …` *inside the initializer*, where
+     **Swift suppresses `didSet` property observers** — so the `identityUrl` `didSet` that derives
+     `userId`/`organizationId` from the URL path never ran on decode. `organizationId` survived only
+     because it is *also* decoded directly (`SFOAuthOrganizationId`); `userId` has no direct decode and
+     relied entirely on the `didSet`, so it was lost on EVERY load-from-disk (production bug, not just
+     this test — breaks user lookup/switching after any app relaunch). The ObjC original had no such
+     rule: `initWithCoder` calling `self.identityUrl = …` always invoked the setter, deriving both IDs
+     (.m:94, 287-288). **Fix (operator-approved, escalation-gated OAuth code):** extracted the URL-path
+     derivation into a private `deriveUserAndOrgId(fromIdentityUrl:)` helper called by BOTH the
+     `identityUrl` didSet AND `init?(coder:)` after `super.init()`. Archive format unchanged (userId
+     still not encoded, faithful to ObjC). **DISPROVEN earlier hypothesis (kept as a caution):** a
+     `UserAccountIdentity` hash/isEqual contract violation — canonicalizing `hash` did NOT fix it and
+     was reverted. The set-based key mismatch was a *data* bug (empty userId), not a hashing bug.
+     New bug-class swept repo-wide: no other production Swift property assigns an observed
+     state-deriving `didSet` property inside its own initializer (only `identityUrl` did).
    - Cluster #5 biometric (7) — see below; test-helper bug, not the KVO fix.
    Also WATCH: `SFUserAccountManagerNotificationsTests.testAccessTokenChangeNotificationPosted` +
    `testInstanceUrlChangeNotificationPosted` failed w/ 10s timeouts in the FULL suite but weren't

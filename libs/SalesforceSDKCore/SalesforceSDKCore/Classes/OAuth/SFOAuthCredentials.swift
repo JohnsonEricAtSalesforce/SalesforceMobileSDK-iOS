@@ -79,19 +79,29 @@ open class OAuthCredentials: NSObject, NSSecureCoding, NSCopying {
     @objc public var issuedAt: Date?
     @objc public var identityUrl: URL? {
         didSet {
-            userId = nil
-            organizationId = nil
-            if let path = identityUrl?.path {
-                let pathComps = path.components(separatedBy: "/")
-                if pathComps.count < 2 {
-                    SFSDKCoreLogger.d(type(of: self), message: "\(type(of: self)):setIdentityUrl: invalid identityUrl: \(String(describing: identityUrl))")
-                    return
-                }
-                userId = pathComps[pathComps.count - 1]
-                organizationId = pathComps[pathComps.count - 2]
-            } else {
-                SFSDKCoreLogger.d(type(of: self), message: "\(type(of: self)):setIdentityUrl: invalid or nil identityUrl: \(String(describing: identityUrl))")
+            deriveUserAndOrgId(fromIdentityUrl: identityUrl)
+        }
+    }
+
+    /// Derives `userId` and `organizationId` from the identity URL path, matching the ObjC
+    /// `-setIdentityUrl:` setter. Extracted into a helper so it can be invoked from `init?(coder:)`
+    /// AFTER `super.init()` — Swift suppresses property observers (`didSet`) during initialization,
+    /// so assigning `identityUrl` in the decoder would otherwise silently skip this derivation and
+    /// leave `userId` empty on every load-from-disk (`organizationId` masked the bug because it is
+    /// also encoded directly). The ObjC original always ran the setter, deriving both IDs.
+    private func deriveUserAndOrgId(fromIdentityUrl url: URL?) {
+        userId = nil
+        organizationId = nil
+        if let path = url?.path {
+            let pathComps = path.components(separatedBy: "/")
+            if pathComps.count < 2 {
+                SFSDKCoreLogger.d(type(of: self), message: "\(type(of: self)):setIdentityUrl: invalid identityUrl: \(String(describing: url))")
+                return
             }
+            userId = pathComps[pathComps.count - 1]
+            organizationId = pathComps[pathComps.count - 2]
+        } else {
+            SFSDKCoreLogger.d(type(of: self), message: "\(type(of: self)):setIdentityUrl: invalid or nil identityUrl: \(String(describing: url))")
         }
     }
     @objc public dynamic var userId: String?  // `dynamic` required for KVO — see organizationId note above.
@@ -250,6 +260,13 @@ open class OAuthCredentials: NSObject, NSSecureCoding, NSCopying {
         self.credentialsChangeSet = NSMutableDictionary()
 
         super.init()
+
+        // Re-derive userId/organizationId from the decoded identityUrl. The `identityUrl` assignment
+        // above happened during initialization, where Swift suppresses the `didSet` observer, so the
+        // derivation must be run explicitly here. Matches the ObjC decoder, where `self.identityUrl = …`
+        // invoked the setter and derived both IDs (the direct organizationId decode above is likewise
+        // overwritten by this derivation, exactly as in ObjC).
+        deriveUserAndOrgId(fromIdentityUrl: self.identityUrl)
 
         // For base class (non-keychain), also decode tokens from archive (backward compat)
         if Swift.type(of: self) == OAuthCredentials.self {
