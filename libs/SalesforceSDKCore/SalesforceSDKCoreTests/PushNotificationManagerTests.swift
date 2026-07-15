@@ -15,8 +15,18 @@ class PushNotificationManagerTests: XCTestCase {
         
         mockPreferences = MockPreferences()
         mockPreferences.setObject("mock-sfid", forKey: PushNotificationConstants.deviceSalesforceId)
-        
-        mockUserAccount = UserAccount()
+
+        // Build a fully-identified, registered account. The currentUserAccount setter only accepts a
+        // user already managed by UserAccountManager (userAccount(for: accountIdentity) must resolve);
+        // an empty UserAccount() has an empty accountIdentity and was never upserted, so the assignment
+        // is silently dropped and currentUserAccount stays nil — which surfaced as currentUserNotDetected
+        // and "REST client never called" across these tests.
+        let credentials = OAuthCredentials.credentials(identifier: "push-test", clientId: "fakeClientIdForTesting", encrypted: true)!
+        credentials.identityUrl = URL(string: "https://login.salesforce.com/id/00Dpushorg/005pushuser")
+        credentials.accessToken = "push-access-token"
+        mockUserAccount = UserAccount(credentials: credentials)
+        mockUserAccount.idData = SFIdentityData(jsonDict: ["user_id": "005pushuser"])
+        _ = UserAccountManager.shared.upsert(mockUserAccount)
         UserAccountManager.shared.currentUserAccount = mockUserAccount
         
         mockRestClient = MockRestClient(user: nil)
@@ -42,6 +52,9 @@ class PushNotificationManagerTests: XCTestCase {
         mockRestClient = nil
         mockApplicationHelper = nil
         UserAccountManager.shared.currentUserAccount = nil
+        // Remove the account registered in setUp so it does not leak into other test classes'
+        // UserAccountManager.shared state (shared singleton across the suite).
+        UserAccountManager.shared.clearAllAccountState()
         super.tearDown()
     }
 
