@@ -192,9 +192,9 @@ migration regressions vs. test-isolation). SDKCore gate remains **provisional** 
      New bug-class swept repo-wide: no other production Swift property assigns an observed
      state-deriving `didSet` property inside its own initializer (only `identityUrl` did).
    - Cluster #5 biometric (7) — see below; test-helper bug, not the KVO fix.
-   Also WATCH: `SFUserAccountManagerNotificationsTests.testAccessTokenChangeNotificationPosted` +
-   `testInstanceUrlChangeNotificationPosted` failed w/ 10s timeouts in the FULL suite but weren't
-   exercised in the scoped run — confirm under full suite (possible test-ordering isolation issue).
+   Also WATCH (→ RESOLVED as task #4, see "Notifications regression" section below):
+   `SFUserAccountManagerNotificationsTests` — turned out to be TWO stacked migration defects (unsafe
+   `perform()` SIGSEGV + `NS_OPTIONS`→enum), not a test-ordering issue. Fixed & verified 5/5.
 2. **EncryptedPushNotification cluster (12): SFSDKEncryptedPushNotificationTests.** ✅ RESOLVED
    2026-07-15 (commit pending). Root cause = TEST-ONLY ObjC→Swift bridging bug, NOT production. Each
    test built `let errorPointer = AutoreleasingUnsafeMutablePointer<NSError?>(&errVar)` then passed
@@ -256,6 +256,41 @@ testCoordinator, URLRequestRestRequestTests. Part 2:
   token succeeded, subsequent runs hang on the stale-token response (old flow never times out cleanly).
   → **Candidates to baseline** (env/pre-existing, like `testRedirect`) pending operator decision; must NOT
   be laundered as migration-caused. See [[premigration-oracle-clone]] for the merge-base-oracle method.
+
+### Notifications regression (task #4, the cluster #1 "WATCH" items) — RESOLVED 2026-07-16 (escalation-approved)
+`SFUserAccountManagerNotificationsTests`: 4/5 tests were failing on our branch, 5/5 pass at merge-base
+`6ed0ab40` (offline, ephemeral persister — no env confound). TWO stacked migration defects, the first
+masking the second. Both operator-approved (credential-handling code, escalation-gated). Fix in
+`SFUserAccountManager.applyCredentials` + `SFUserAccount.AccountDataChange`.
+- **Defect 1 — unsafe `perform()` bridging → SIGSEGV (unconditional crash, 4/5 tests).** The migration
+  rewrote `[credentials hasPropertyValueChangedForKey:@"..."]` (3×) and `[credentials
+  resetCredentialsChangeSet]` as `credentials.perform(NSSelectorFromString(...))?.takeUnretainedValue()
+  as? Bool`. `hasPropertyValueChangedForKey:` returns a **primitive `BOOL`**, but `perform` is typed
+  `Unmanaged<AnyObject>!` — when the property changed (`YES`/`1`) `.takeUnretainedValue()` dereferences
+  address `0x1` → **SIGSEGV with NO crash report** (the tell). Crash is on the FIRST such call
+  (`accessToken`) for ANY existing-account update, so which key changed is irrelevant — only
+  `testNewUser` survived (it takes the `else`/new-user branch and never enters the block). Proven with a
+  diagnostic: direct Swift `hasPropertyValueChangedForKey("accessToken")=true` logs fine, then the very
+  next `perform()` line crashes the host. **Fix:** call the direct public Swift methods (byte-faithful to
+  ObjC .m:1626-1647). **Repo-wide sweep done:** 6 other `perform(...).takeUnretainedValue()` sites
+  (SFLogger, SFSDKAILTNPublisher, TestSetupUtils, SFSDKAuthSession, SFMobileSyncObjectUtils,
+  SFApplicationHelper) ALL return objects (NSString/NSData/UIApplication/SFLogging) → safe. The
+  BOOL-returning one was the only latent SIGSEGV of this class.
+- **Defect 2 — `NS_OPTIONS`→plain-`enum` mis-migration → dropped multi-key notification (testMultipleChanges).**
+  Unmasked once defect 1 was fixed. ObjC `SFUserAccountDataChange` is `NS_OPTIONS` (bitmask); the
+  migration made it `enum AccountDataChange: UInt`, which represents only ONE case. `applyCredentials`
+  OR-combines flags, but `AccountDataChange(rawValue: 26)` (communityId|instanceURL|accessToken) →
+  **nil** → `.unknown` → notification suppressed → 10s timeout. Single-key tests passed only because
+  their combined value equalled one valid case. **Fix (operator chose the faithful option):** convert
+  `AccountDataChange` from `enum` to `OptionSet` (struct, raw `UInt`), mirroring `NS_OPTIONS`;
+  `applyCredentials` builds the set via `.insert(...)`; the internal-only `notifyUserDataChange` dropped
+  `@objc` (OptionSet isn't ObjC-representable; no ObjC callers; userInfo still carries the raw UInt).
+  Public Swift type shape change (enum→OptionSet) — no ObjC/archive/notification-wire change.
+- **Verified:** Notifications 5/5 pass (match oracle). Broader slice (UAMTests, PersisterTests,
+  UserAccountTests, SalesforceOAuthUnitTests) 31/32; the one failure `SFUserAccountManagerTests.testLogin`
+  is a **live-org refresh 20s timeout that reproduces IDENTICALLY at merge-base ObjC** (.m:396) — same
+  pre-existing old-refresh-flow class as `testOpenIDToken`, NOT caused by this change. MobileSync (top of
+  dep chain) builds clean against the new public type. See [[notifications-change-regression-2026-07-16]].
 
 ## (historical) P0.2d root-cause analysis — three independent migration artifacts
 

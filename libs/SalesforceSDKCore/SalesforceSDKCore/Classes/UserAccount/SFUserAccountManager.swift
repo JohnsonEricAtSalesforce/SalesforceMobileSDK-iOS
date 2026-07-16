@@ -1856,24 +1856,24 @@ extension UserAccountManager {
 
     @objc func applyCredentials(_ credentials: OAuthCredentials, withIdData identityData: SFIdentityData?) -> UserAccount? {
         var currentAccount = userAccount(for: credentials)
-        var accountDataChangeRaw: UInt = UserAccount.AccountDataChange.unknown.rawValue
+        var accountDataChange: UserAccount.AccountDataChange = .unknown
         var userAccountChange: UserAccount.AccountChange = .unknown
 
         if let existingAccount = currentAccount {
             if identityData != nil {
-                accountDataChangeRaw |= UserAccount.AccountDataChange.idData.rawValue
+                accountDataChange.insert(.idData)
             }
-            if credentials.perform(NSSelectorFromString("hasPropertyValueChangedForKey:"), with: "accessToken")?.takeUnretainedValue() as? Bool == true {
-                accountDataChangeRaw |= UserAccount.AccountDataChange.accessToken.rawValue
+            if credentials.hasPropertyValueChangedForKey("accessToken") {
+                accountDataChange.insert(.accessToken)
             }
-            if credentials.perform(NSSelectorFromString("hasPropertyValueChangedForKey:"), with: "instanceUrl")?.takeUnretainedValue() as? Bool == true {
-                accountDataChangeRaw |= UserAccount.AccountDataChange.instanceURL.rawValue
+            if credentials.hasPropertyValueChangedForKey("instanceUrl") {
+                accountDataChange.insert(.instanceURL)
             }
-            if credentials.perform(NSSelectorFromString("hasPropertyValueChangedForKey:"), with: "communityId")?.takeUnretainedValue() as? Bool == true {
-                accountDataChangeRaw |= UserAccount.AccountDataChange.communityId.rawValue
+            if credentials.hasPropertyValueChangedForKey("communityId") {
+                accountDataChange.insert(.communityId)
             }
-            if accountDataChangeRaw != UserAccount.AccountDataChange.unknown.rawValue {
-                accountDataChangeRaw &= ~UserAccount.AccountDataChange.unknown.rawValue
+            if accountDataChange != .unknown {
+                accountDataChange.remove(.unknown)
             }
             existingAccount.credentials = credentials
         } else {
@@ -1881,7 +1881,7 @@ extension UserAccountManager {
             userAccountChange = .newUser
         }
 
-        credentials.perform(NSSelectorFromString("resetCredentialsChangeSet"))
+        credentials.resetCredentialsChangeSet()
         if let idData = identityData {
             currentAccount?.idData = idData
         }
@@ -1890,7 +1890,6 @@ extension UserAccountManager {
             _ = upsert(account)
         }
 
-        let accountDataChange = UserAccount.AccountDataChange(rawValue: accountDataChangeRaw) ?? .unknown
         if accountDataChange != .unknown {
             if let account = currentAccount {
                 notifyUserDataChange(.SFUserAccountManagerDidChangeUserData, withUser: account, andChange: accountDataChange)
@@ -2622,7 +2621,9 @@ extension UserAccountManager {
 
 extension UserAccountManager {
 
-    @objc func notifyUserDataChange(_ notificationName: NSNotification.Name, withUser user: UserAccount, andChange change: UserAccount.AccountDataChange) {
+    // Not `@objc`: `AccountDataChange` is an `OptionSet` (not ObjC-representable) and this method has
+    // no ObjC callers. The notification's userInfo still carries the raw `UInt` mask for any consumer.
+    func notifyUserDataChange(_ notificationName: NSNotification.Name, withUser user: UserAccount, andChange change: UserAccount.AccountDataChange) {
         let userInfo: [String: Any] = [
             Self.changeSetKey: NSNumber(value: change.rawValue)
         ]

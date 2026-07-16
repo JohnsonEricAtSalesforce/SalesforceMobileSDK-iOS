@@ -125,13 +125,21 @@ public func SFKeyForUserIdAndScope(_ userId: String?, _ orgId: String?, _ commun
     }
 
     /// The various changes that can affect a user account's data.
-    @objc(SFUserAccountDataChange)
-    public enum AccountDataChange: UInt {
-        case unknown = 1
-        case communityId = 2
-        case idData = 4
-        case instanceURL = 8
-        case accessToken = 16
+    ///
+    /// This is a bitmask (mirroring the original ObjC `NS_OPTIONS SFUserAccountDataChange`): a single
+    /// change notification can report several simultaneous changes OR-combined together. It must be an
+    /// `OptionSet`, not a plain `enum` — a `UInt`-raw enum can only represent one case, so a combined
+    /// value such as `communityId | instanceURL | accessToken` (26) would fail `init(rawValue:)` and
+    /// silently drop the notification. Bridged to ObjC/notification userInfo as the raw `UInt`.
+    public struct AccountDataChange: OptionSet {
+        public let rawValue: UInt
+        public init(rawValue: UInt) { self.rawValue = rawValue }
+
+        public static let unknown = AccountDataChange(rawValue: 1)
+        public static let communityId = AccountDataChange(rawValue: 2)
+        public static let idData = AccountDataChange(rawValue: 4)
+        public static let instanceURL = AccountDataChange(rawValue: 8)
+        public static let accessToken = AccountDataChange(rawValue: 16)
     }
 
     /// The various changes that can affect a user account.
