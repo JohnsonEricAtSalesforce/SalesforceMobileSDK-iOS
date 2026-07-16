@@ -63,6 +63,22 @@ outcome depends on the org's photo-endpoint behavior/data. 61 other SalesforceRe
 the live org. Baselined by operator decision (investigate-deeper concluded env/org-dependent).
 Candidate for a CI-org-specific fixture or removal.
 
+### `pre-existing/old-refresh-flow` — SFSDKAuthUtilTests.testOpenIDToken (operator-approved 2026-07-16)
+
+`SFSDKAuthUtilTests.testOpenIDToken` does a live-org refresh and asserts a non-nil OpenID `id_token`
+(line 93). It fails intermittently (nil id_token), and the class `setUp` auth-refresh also HANGS
+intermittently (`SFSDKTestRequestListener` status stuck `waiting` → 30s `maxWaitTime` timeout; the
+refresh callback never fires — NOT a 429/`invalid_grant`, which would fire the failure callback →
+`didFail`). **Proven PRE-EXISTING, not a migration regression, via a 3-way oracle comparison (2026-07-16):**
+the identical hang reproduces in the **unmigrated ObjC at our merge-base `6ed0ab40`** (`git worktree`, same
+creds/org) — the exact pre-migration source our branch was converted from — while the **current-dev**
+oracle (which carries upstream's new *token refresh coordinator*, ~155 commits ahead: 997c4e09a / PR #4087
+/ 8f597c962 "Improve error handling at token refresh") runs 9/9 green in the same window. So this is an
+old-refresh-flow defect upstream already fixed, independent of the ObjC→Swift migration. Likely
+refresh-token rotation (first run w/ a fresh token succeeded; later runs hang on the stale-token response).
+Baselined by operator decision. Will be superseded when the refresh-coordinator work is pulled in via the
+upstream port queue. See memory [[premigration-oracle-clone]] for the merge-base-oracle method.
+
 ---
 
 ## ✅ RESOLVED 2026-07-14 (tracker finding P0.2b) — SmartStore setUp crash cluster
@@ -217,6 +233,29 @@ migration regressions vs. test-isolation). SDKCore gate remains **provisional** 
 **Recommended order:** #2 (EncryptedPushNotif — 12, self-contained, not escalation-gated) → #5 (Biometric,
 kill the 2 remaining crashes) → #1 (identity/credentials — 12, but ESCALATION-GATED, needs approval) →
 #3 → #4 → #6. Cluster #1 requires operator escalation approval before any credentials/OAuth code change.
+
+### Cluster #6 resolution (2026-07-16) — part 1 committed, part 2 via the pre-migration oracle
+Part 1 (commit 280f13d39): SFPreferences global-pref, URLRequest doubled-path, SFOAuthInfo IDP casing,
+testCoordinator, URLRequestRestRequestTests. Part 2:
+- **SalesforceOAuthUnitTests/testCredentialsCoding** — already GREEN (resolved by cluster #1 decode fix
+  deae6b04b). Confirmed by run.
+- **SFUserAccountPhotoTests.testPhotoWithoutCompletionBlock** — FIXED (test-only). Migration changed the
+  assertion from ObjC `XCTAssertNotNil(user.photo)` to `XCTAssertTrue(<ref-equality poll>)`; the `photo`
+  getter re-decodes from disk into a new UIImage (byte-faithful to ObjC .m:170-185), so ref-equality never
+  converges. Restored ObjC assertion. Both photo tests pass. (Uncommitted at time of writing.)
+- **SFSDKAuthUtilTests.testOpenIDToken** + a **setUp auth-refresh HANG** — determined PRE-EXISTING, NOT a
+  migration regression, via a 3-way oracle comparison (documented for the ratchet):
+    * Current-dev oracle (has upstream's NEW token refresh coordinator, ~155 commits ahead): 9/9 green.
+    * **Merge-base `6ed0ab40` UNMIGRATED ObjC** (the exact pre-migration source our branch was converted
+      from, via `git worktree`): setUp **HANGS** identically (`'didLoad'`→`'waiting'`, 30s timeout,
+      Executed 0 tests). Same failure as our migrated branch.
+    * Our migrated Swift branch: setUp hangs identically.
+  Since the hang reproduces in the pre-migration ObjC, it is an **old-refresh-flow defect that upstream
+  fixed via the token refresh coordinator** (997c4e09a / PR #4087 / 8f597c962 "Improve error handling at
+  token refresh"), NOT introduced by the migration. Likely refresh-token rotation: first run w/ a fresh
+  token succeeded, subsequent runs hang on the stale-token response (old flow never times out cleanly).
+  → **Candidates to baseline** (env/pre-existing, like `testRedirect`) pending operator decision; must NOT
+  be laundered as migration-caused. See [[premigration-oracle-clone]] for the merge-base-oracle method.
 
 ## (historical) P0.2d root-cause analysis — three independent migration artifacts
 
