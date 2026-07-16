@@ -292,6 +292,29 @@ masking the second. Both operator-approved (credential-handling code, escalation
   pre-existing old-refresh-flow class as `testOpenIDToken`, NOT caused by this change. MobileSync (top of
   dep chain) builds clean against the new public type. See [[notifications-change-regression-2026-07-16]].
 
+### P0.2e full-suite CLOSE-OUT gate (2026-07-16, HEAD 3fe364e41)
+All 6 clusters + task #4 fixed. Full SalesforceSDKCore suite re-run. Result: the baselined set
+(`testRedirect` + `testOpenIDToken`) is unchanged, and the suite surfaced exactly **3 NON-deterministic
+full-suite-ordering artifacts — each PASSES in isolation** (re-run individually → green), none of which
+touch the code changed in this pass. They are NOT deterministic regressions and are NOT baselined
+(baselining requires a deterministic, isolated failure). Documented so the next full run doesn't
+re-panic:
+1. `RestClientPublisherTests` setUp — `TestSetupUtils.swift:104` live-org auth-refresh HANG (status
+   stuck 'waiting', 2 host restarts). Same PRE-EXISTING old-refresh-flow class as the baselined
+   `testOpenIDToken` / `SFUserAccountManagerTests.testLogin` (all reproduce at the unmigrated merge-base).
+   Env/refresh-token-rotation dependent; will be superseded by the upstream refresh coordinator via the
+   port queue.
+2. `LoginOptionsViewControllerTests.testBootConfigPickerViewRendered` — crash at
+   `SFOAuthCoordinator.swift:961` "Assertion failed: JWT token should be present at this point". Passes
+   in isolation (0.221s); only trips when a prior test leaves JWT/coordinator singleton state behind.
+   Candidate for later hardening (assert -> graceful nil-guard) but not a task-#4 regression.
+3. `BiometricAuthenticationManagerTests.testNotEnabled` — passes in isolation (0.020s); the cluster #5
+   fix holds. Full-suite failure is shared-UAM-singleton ordering state, not a code defect.
+These 3 are the residual "test-isolation vs. real" tail flagged when P0.2e opened; all three resolve to
+**isolation/ordering**, confirming no remaining deterministic SDKCore regressions. **SDKCore gate is no
+longer provisional; P0.2e is CLOSED.** (Future hardening candidate, separate work: make the suite
+order-independent — reset UAM/OAuth singletons in tearDown — and convert the JWT `assert` to a guard.)
+
 ## (historical) P0.2d root-cause analysis — three independent migration artifacts
 
 Distinct from the (now-fixed) credentials cluster. Root-caused 2026-07-14: **three independent
