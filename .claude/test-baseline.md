@@ -49,12 +49,27 @@ crash — began executing and failing. They are NOT credentials-related and NOT 
 the crash was masking them. Added to the baseline by explicit operator decision with rationale:
 
 - `SFMultipleSmartStoresTests/testGetGlobalStoreNames` — asserts exactly 3 global stores
-  (`XCTAssertTrue(array.count == 3)`); fails on global-store test-isolation/ordering sensitivity, not
-  on the code under test. Candidate for a follow-up test-isolation fix.
+  (`XCTAssertTrue(array.count == 3)`, line 68). **Re-confirmed 2026-07-17: fails DETERMINISTICALLY in
+  isolation** (`-only-testing`, 0.48s, single test) — so it is NOT an ordering/interleave artifact
+  (earlier "test-isolation/ordering" wording was imprecise). Real cause: `SmartStore.allGlobalStoreNames`
+  → `SFSmartStoreDatabaseManager.allStoreNames()` enumerates the global-stores directory **on the
+  simulator filesystem** (`FileManager.contentsOfDirectory`, SFSmartStoreDatabaseManager.swift:286-304),
+  so the count reflects every global-store dir physically present, not just the 3 created in `setUp`.
+  The hard `== 3` is only correct on a pristine dir; residue left by a prior/crashed run (tearDown
+  skipped) makes the count exceed 3. **NOT a migration regression** — the ObjC original
+  (`SFMultipleSmartStoresTests.m:83-86`) is byte-identical (same `== 3` vs. same filesystem-enumerating
+  `allGlobalStoreNames`). Genuine fix is test-isolation (assert `>= 3` / scope to a unique temp global
+  dir / filter to setUp-created names) — a P1 test-hygiene follow-up orthogonal to the migration.
 - `SFSmartSqlTests/testCleanupRegexpFaster` — a **performance/timing** assertion
   (`newRegexp × 500 < oldRegexp` and `< 25ms`); inherently load-sensitive (violates the project's
-  "no timing-based tests" standard). Candidate to rewrite or remove. NOTE: being timing-based it may
-  intermittently PASS — a shrinking-ratchet pass (fewer failures than baseline) is still a gate PASS.
+  "no timing-based tests" standard). **Re-confirmed 2026-07-17: fails in isolation at line 613** — the
+  `newRegexp × 500 < oldRegexp` speed-RATIO assertion (a single un-warmed wall-clock
+  `CACurrentMediaTime` measurement over a ~25k-char string, demanding ≥500× on sub-ms ops → hostage to
+  scheduler jitter / first-call regex setup / CPU contention), not the 25ms bound. **NOT a migration
+  regression** — the ObjC original (`SFSmartSqlTests.m:504-512`) is byte-identical (same 2 patterns,
+  same `× 500` ratio, same helper). Candidate to rewrite (assert cleanup-regexp CORRECTNESS, not
+  relative speed) or remove. NOTE: being timing-based it may intermittently PASS — a shrinking-ratchet
+  pass (fewer failures than baseline) is still a gate PASS.
 
 ### `env-skip` — MobileSync integration (verified in CI only)
 
@@ -379,6 +394,43 @@ expectation for fts5, not touch production.
 **MobileSync: not locally runnable in either clone** — every sync class does live `synchronousAuthRefresh` in
 `SyncManagerTestCase.setUp()`; the stale live-org refresh token crashes setUp identically in ObjC and Swift.
 Matches the `env-skip` baseline entry; needs a live sandbox org (CI).
+
+### Live-auth abort hardening (2026-07-17) — removed the full-suite ABORT/masking mechanism
+
+**Problem:** 5 live-org classes (`RestClientPublisherTests`, `RestClientTest`, `SalesforceRestAPITests`,
+`SFSDKAuthUtilTests`, MobileSync `SyncManagerTestCase`) call `TestSetupUtils.synchronousAuthRefresh()` in
+`class func setUp()`. The pre-token-refresh-coordinator OAuth flow HANGS in the sim (callback never fires,
+30s timeout, `returnStatus`='waiting'); the old fatal `assert(returnStatus==didLoad)` then trapped the host
+before any test ran → xcodebuild restart → re-trap → max-restart → **whole-run ABORT**, masking every class
+after `RestClientPublisherTests` alphabetically. THIS is the masking that hid the 3 regressions found in the
+revalidation above. A FRESH, independently-curl-verified-valid refresh token does NOT fix the hang (defect is
+the old flow, fixed upstream by the token refresh coordinator 997c4e09a / PR #4087 / 8f597c962), so the only
+local remedy is to degrade the abort into a clean skip.
+
+**Fix (test-harness only; DELIBERATE divergence from merge-base oracle — intended to conflict with the future
+coordinator port as a "revisit me" marker):**
+- `TestSetupUtils.swift`: new `@objc public private(set) static var authRefreshDidSucceed`; the fatal `assert`
+  replaced with `authRefreshDidSucceed = (returnStatus == didLoad)` + warning log.
+- 5 classes: `override func setUpWithError() throws { try XCTSkipUnless(TestSetupUtils.authRefreshDidSucceed, …) }`.
+- `SalesforceRestAPITests.tearDown`: guarded on `authRefreshDidSucceed` — tearDown runs even after a skip, and
+  its `cleanup()` sent a live REST request with no session → tripped a SEPARATE assert `SFRestAPI.swift:262
+  "Use RestClient sharedInstance for authenticated requests"` → crash-restart-looped. Now no-ops when skipped.
+
+**Verified:** full SDKCore suite now runs to the ALPHABETICAL END (`WebViewStateManagerTests` executes) with
+only 2 self-recovering restarts, no abort. Aggregate 481 passed / 95 skipped / 4 distinct failing / 0 aborts.
+Live classes still burn ~30s each in the hung class-setUp before skipping (underlying flow; only the
+coordinator port fixes the hang — we removed only the ABORT). See memory [[live-auth-abort-harden-2026-07-17]].
+
+**Newly-UNMASKED failure — NOT yet baselined, pending triage (operator: Option-A, triage after this commit):**
+- `SFNetworkTests.testSessionSharing` — DETERMINISTIC `XCTAssertEqual` fails (`3` vs `1` at
+  `SFNetworkTests.swift:36`, `4` vs `2`, etc. across lines 36/46/56/64/75 — session-sharing counts). Was hidden
+  behind the abort; predicted in P0.2e cluster #4 ("testSessionSharing counts 0 vs 2") but never confirmed until
+  now. NEEDS the merge-base-oracle treatment (pre-existing vs migration regression) before any baseline/fix.
+- Also seen (self-recovering host-crash asserts, not new): `SFOAuthCoordinator.swift:961` "JWT token should be
+  present" (same singleton-leak as `testBootConfigPickerViewRendered`) and "credentials.redirectUri is required".
+- Ordering artifacts unchanged (pass in isolation, NOT baselined): `BiometricAuthenticationManagerTests.testNotEnabled`,
+  `LoginOptionsViewControllerTests.testBootConfigPickerViewRendered`, `RestClientWebSocketTests.testNewWebSocketFromURLRequest`.
+- `SFUserAccountManagerTests.testLogin` — baselined (env/old-refresh-flow), unchanged.
 
 ## (historical) P0.2d root-cause analysis — three independent migration artifacts
 

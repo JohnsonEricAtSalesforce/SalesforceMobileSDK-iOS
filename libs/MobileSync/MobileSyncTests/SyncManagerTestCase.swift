@@ -75,8 +75,13 @@ class SyncManagerTestCase: XCTestCase {
         }
     }
 
-    override func setUp() {
+    override func setUpWithError() throws {
         super.setUp()
+        // Skip (do not crash the host) when the live-org auth refresh didn't complete. See
+        // TestSetupUtils.authRefreshDidSucceed — the pre-token-refresh-coordinator flow hangs in the
+        // sim even with a valid token; the old fatal assert aborted the whole run and masked later tests.
+        // MobileSync sync tests all require a live sandbox org, so this class skips locally.
+        try XCTSkipUnless(TestSetupUtils.authRefreshDidSucceed, "Live-org auth refresh unavailable (known pre-coordinator hang); skipping live MobileSync tests.")
         if let exception = authException {
             XCTFail("Setting up authentication failed: \(exception)")
         }

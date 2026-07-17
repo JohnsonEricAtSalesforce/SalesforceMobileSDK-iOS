@@ -33,6 +33,32 @@ public class TestSetupUtils: NSObject {
 
     private static var credentials: OAuthCredentials?
 
+    // MARK: - Auth-refresh outcome (migration-branch divergence from upstream — see below)
+    //
+    // Records whether the most recent `synchronousAuthRefresh` actually completed with a live-org
+    // session. Live-org test classes read this to `XCTSkipUnless(...)` instead of crashing when the
+    // refresh never completes.
+    //
+    // WHY THIS EXISTS (and why it is a deliberate divergence from the merge-base oracle):
+    // The pre-token-refresh-coordinator OAuth refresh flow used by these tests HANGS in the
+    // simulator test host — the refresh callback never fires, `waitForCompletion()` spins to its 30s
+    // timeout, and `returnStatus` stays `waiting`. The original code then hit a fatal
+    // `assert(returnStatus == didLoad)` INSIDE `class func setUp()`, which traps the whole test host
+    // before any test runs; xcodebuild restarts, re-traps, exceeds max-restart-count, and ABORTS THE
+    // ENTIRE RUN — silently masking every test class that sorts alphabetically after the first
+    // live-org class (this is exactly what hid 3 real migration regressions until the 2026-07-17
+    // revalidation). A fresh, independently-verified-valid refresh token does NOT fix the hang (the
+    // defect is the old refresh flow, not token staleness), so the only local remedy is to degrade
+    // the abort into a clean per-class skip.
+    //
+    // Upstream already fixed the underlying flow via the token refresh coordinator (997c4e09a /
+    // PR #4087 / 8f597c962). When that work is ported through the upstream-sync backlog, this
+    // assert-to-flag change will very likely CONFLICT with the ported version of
+    // `synchronousAuthRefresh` — that conflict is intentional and is the signal to re-evaluate /
+    // remove this workaround. See memory [[oracle-revalidation-2026-07-17]] and
+    // `.claude/test-baseline.md`.
+    @objc public private(set) static var authRefreshDidSucceed: Bool = false
+
     @objc public class func populateUILoginInfo(fromConfigFileFor testClass: AnyClass) -> [Any] {
         guard let tokenPath = Bundle(for: testClass).path(forResource: "ui_test_credentials", ofType: "json") else {
             preconditionFailure("UI test config file not found!")
@@ -101,7 +127,19 @@ public class TestSetupUtils: NSObject {
 
         _ = authListener.waitForCompletion()
         UserAccountManager.shared.perform(NSSelectorFromString("setCurrentUserInternal:"), with: user)
-        assert(authListener.returnStatus == kTestRequestStatusDidLoad, "After auth attempt, expected status '\(kTestRequestStatusDidLoad)', got '\(authListener.returnStatus ?? "nil")'")
+
+        // MIGRATION-BRANCH DIVERGENCE from the merge-base oracle (see `authRefreshDidSucceed` above).
+        // The oracle asserted here: `assert(authListener.returnStatus == kTestRequestStatusDidLoad, …)`.
+        // That fatal assert, hit from a live-org test class's `class func setUp()`, aborts the whole
+        // xcodebuild run (host restart cascade) whenever the pre-coordinator refresh flow hangs — which
+        // it does even with a verified-valid token — masking every class that runs after it. Instead of
+        // trapping, record the outcome so callers can `XCTSkipUnless(...)` cleanly. This intentionally
+        // conflicts with the eventual token-refresh-coordinator port (997c4e09a / PR #4087) as a
+        // detectable "revisit me" marker.
+        authRefreshDidSucceed = (authListener.returnStatus == kTestRequestStatusDidLoad)
+        if !authRefreshDidSucceed {
+            SFSDKCoreLogger.w(TestSetupUtils.self, message: "synchronousAuthRefresh did not complete with a live session (status '\(authListener.returnStatus ?? "nil")', error: \(authListener.lastError?.localizedDescription ?? "none")). Live-org tests will be skipped. This is the known pre-token-refresh-coordinator hang, not a migration regression.")
+        }
     }
 
     @objc public class func newClientCredentials() -> OAuthCredentials {
