@@ -27,6 +27,22 @@ import XCTest
 
 class SFNetworkTests: XCTestCase {
 
+    // `Network.sharedInstances` is a process-global registry, and testSessionSharing asserts absolute
+    // instance counts against it. Other test classes that create RestClient/OAuth/Network instances leak
+    // the default ephemeral + background instances into that registry, so without an explicit reset this
+    // test fails order-dependently in a full-suite run (e.g. count 3 vs 1) while passing in isolation.
+    // Clear the registry before and after each test so the count assertions are deterministic. (The test
+    // body already calls removeAllSharedInstances() mid-run, so this changes no production behavior.)
+    override func setUp() {
+        super.setUp()
+        Network.removeAllSharedInstances()
+    }
+
+    override func tearDown() {
+        Network.removeAllSharedInstances()
+        super.tearDown()
+    }
+
     func testSessionSharing() {
         // Default ephemeral instance
         do {

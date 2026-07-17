@@ -421,11 +421,23 @@ only 2 self-recovering restarts, no abort. Aggregate 481 passed / 95 skipped / 4
 Live classes still burn ~30s each in the hung class-setUp before skipping (underlying flow; only the
 coordinator port fixes the hang — we removed only the ABORT). See memory [[live-auth-abort-harden-2026-07-17]].
 
-**Newly-UNMASKED failure — NOT yet baselined, pending triage (operator: Option-A, triage after this commit):**
-- `SFNetworkTests.testSessionSharing` — DETERMINISTIC `XCTAssertEqual` fails (`3` vs `1` at
-  `SFNetworkTests.swift:36`, `4` vs `2`, etc. across lines 36/46/56/64/75 — session-sharing counts). Was hidden
-  behind the abort; predicted in P0.2e cluster #4 ("testSessionSharing counts 0 vs 2") but never confirmed until
-  now. NEEDS the merge-base-oracle treatment (pre-existing vs migration regression) before any baseline/fix.
+**Newly-unmasked failure — TRIAGED + FIXED 2026-07-17 (test-only), NOT baselined:**
+- `SFNetworkTests.testSessionSharing` — was DETERMINISTIC `XCTAssertEqual` fails (`3` vs `1` at
+  `SFNetworkTests.swift:36`, `4` vs `2`, etc. across lines 36/46/56/64/75 — session-sharing counts) in the
+  full-suite run; hidden behind the abort; predicted in P0.2e cluster #4 ("testSessionSharing counts 0 vs 2").
+  **Merge-base-oracle verdict: PRE-EXISTING test-isolation defect, NOT a migration regression.** The test
+  body, the `Network`/`SFNetwork` process-global `sharedInstances` registry, its accessors/identifiers, and
+  the full set of shared-instance callers (SFRestAPI, SFOAuthCoordinator, SFSDKOAuth2, SFUserAccountManager,
+  SFIdentityCoordinator, SFSDKAuthConfigUtil + WebSocket ext) are all byte-faithful between the migration tree
+  and the oracle (`6ed0ab408`) — so full-suite pollution behavior is necessarily identical; no migration-introduced
+  leaker exists. The test has NO `setUp`/`tearDown` and asserts ABSOLUTE counts against the global registry, so
+  the `+2` offset (3-vs-1 / 4-vs-2) is the default ephemeral+background instances leaked by an earlier-running
+  class. Passed in isolation (0.023s) in the migration tree. It only *appeared* new because removing the P0.2h
+  abort finally let `SFNetworkTests` (sorts after the aborting `RestClientPublisherTests`) run to completion.
+  **Fix (test-only, not baselined):** added `setUp`/`tearDown` to `SFNetworkTests` calling
+  `Network.removeAllSharedInstances()` so the count assertions are order-independent (the test body already
+  calls that mid-run, so no production behavior changes). Verified: class 3/3 + full-suite run green. Aligns with
+  our standards (rigorous fixture cleanup; no order-dependent tests) — same treatment class as P0.2g FTS cleanup.
 - Also seen (self-recovering host-crash asserts, not new): `SFOAuthCoordinator.swift:961` "JWT token should be
   present" (same singleton-leak as `testBootConfigPickerViewRendered`) and "credentials.redirectUri is required".
 - Ordering artifacts unchanged (pass in isolation, NOT baselined): `BiometricAuthenticationManagerTests.testNotEnabled`,
