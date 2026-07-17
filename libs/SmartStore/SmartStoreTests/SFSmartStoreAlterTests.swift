@@ -305,15 +305,21 @@ class SFSmartStoreAlterTests: SFSmartStoreTestCase {
         }
 
         if cityColType == kSoupIndexTypeFullText || countryColType == kSoupIndexTypeFullText {
-            // Check fts table columns
-            var ftsExpectedColumns: [String] = ["rowid"]
+            // Check fts table columns. PRAGMA table_info on an fts4/fts5 virtual table reports only the
+            // declared (indexed) columns, not the implicit `rowid`, so `rowid` is not part of the
+            // expected column set. (The ObjC original asserted `rowid` here, but that block was dead
+            // code — its outer guard `[kCityCol isEqualToString:kSoupIndexTypeFullText]` compared a
+            // column name against a type constant and was always false, so it never actually ran.)
+            var ftsExpectedColumns: [String] = []
             if cityColType == kSoupIndexTypeFullText { ftsExpectedColumns.append(kCityCol) }
             if countryColType == kSoupIndexTypeFullText { ftsExpectedColumns.append(kCountryCol) }
             checkColumns(kTestSoupFtsTableName, expectedColumns: ftsExpectedColumns, store: store)
 
-            // Check fts table rows
+            // Check fts table rows. `rowid` is not a declared column but is still selectable, so query
+            // it explicitly (checkFtsRow reads it and we order by it).
+            let ftsQueryColumns = [SmartStoreConstants.rowidColumn] + ftsExpectedColumns
             store.storeQueue?.inDatabase { db in
-                guard let frs = self.store.queryTable(self.kTestSoupFtsTableName, forColumns: ftsExpectedColumns, orderBy: "rowid ASC", limit: nil, whereClause: nil, whereArgs: nil, with: db) else {
+                guard let frs = self.store.queryTable(self.kTestSoupFtsTableName, forColumns: ftsQueryColumns, orderBy: "rowid ASC", limit: nil, whereClause: nil, whereArgs: nil, with: db) else {
                     XCTFail("FTS query returned nil")
                     return
                 }

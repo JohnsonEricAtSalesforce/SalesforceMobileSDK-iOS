@@ -16,12 +16,12 @@ when composition changes (one new break + one coincidental pass = same count). M
 
 ## SmartStore
 
-### `assertion-bug` — FTS AlterTests (P1 follow-up: fix assertion logic)
+### ✅ RESOLVED 2026-07-17 — `assertion-bug` FTS AlterTests (was: P1 follow-up)
 
-Confirmed empirically 2026-07-05 (SmartStore scheme). 6 test methods; each runs under both FTS4
-and FTS5 configs, so ~12 *executions* fail — this reconciles the 2026-05-25 gate report's
-"12 expected failures" vs. "6 FTS tests" wording (both correct, counted differently).
-Failure signature: `XCTAssertEqual failed … Wrong columns actual: TABLE__…` in `SFSmartStoreAlterTests.swift`.
+**Removed from the baseline** (shrinking ratchet) — the 6 FTS AlterTests below are now FIXED and
+green. They were previously baselined as an `assertion-bug` (confirmed 2026-07-05; each runs under
+both FTS4 and FTS5 configs, so ~12 *executions* failed). Failure signature was
+`XCTAssertEqual failed … Wrong columns actual: TABLE_1_…` at `SFSmartStoreAlterTests.swift:312`.
 
 - `SFSmartStoreAlterTests/testAlterSoupTypeChangeFullTextToJSON1`
 - `SFSmartStoreAlterTests/testAlterSoupTypeChangeFullTextToString`
@@ -29,6 +29,18 @@ Failure signature: `XCTAssertEqual failed … Wrong columns actual: TABLE__…` 
 - `SFSmartStoreAlterTests/testAlterSoupTypeChangeStringToFullText`
 - `SFSmartStoreAlterTests/testAlterSoupWithFullTextIndexesFromFts4ToFts5`
 - `SFSmartStoreAlterTests/testAlterSoupWithFullTextIndexesToGetIndexesOnCreatedAndLastModified`
+
+**Root cause + fix (test-only, no production change):** the FTS-column-check block in
+`checkDb(...)` asserted the implicit `rowid` appears in the fts virtual table's column list. It does
+NOT: `PRAGMA table_info` on an fts4/fts5 virtual table reports only the *declared* (indexed) columns
+(empirically `TABLE_1_0`,`TABLE_1_1`), never `rowid`. The ObjC original asserted `rowid` too, but that
+whole block was **dead code** — its outer guard `[kCityCol isEqualToString:kSoupIndexTypeFullText]`
+compared a column NAME (`"TABLE_1_0"`) against a type constant (`"full_text"`), always false, so it
+never executed. The Swift port "corrected" the guard to `cityColType == kSoupIndexTypeFullText`,
+activating the dormant (and wrong) `rowid` expectation → 6 fails. **Fix:** dropped `rowid` from the
+expected column set; kept selecting `rowid` explicitly for the row query (undeclared but selectable —
+`checkFtsRow` reads it and the query orders by it). Verified 6/6 green (build-for-testing +
+test-without-building, sim `BBFD2C0E…`). See `SFSmartStoreAlterTests.swift:307-324`.
 
 ### `pre-existing-nonflaky` — 2 failures unmasked by the P0.2b fix (operator-approved 2026-07-14)
 
@@ -418,7 +430,7 @@ test-only. All three are separate from the credentials fix.
 | Last confirmed | 2026-07-05 (SmartStore scheme, empirical run) |
 | Simulator | runtime-resolved iPhone (name-agnostic per P0.1) |
 | Run totals | 177 executed / 130 passed / 47 failed / 0 skipped |
-| Baseline (assertion-bug) | 6 FTS methods (~12 executions) |
+| Baseline (assertion-bug) | ✅ RESOLVED 2026-07-17 — the 6 FTS methods are fixed & removed from the ratchet |
 | Quarantined (not baselined) | ~35 setUp-crash cases → P0.2b |
 | Not run locally | MobileSync integration (env-skip) |
 
