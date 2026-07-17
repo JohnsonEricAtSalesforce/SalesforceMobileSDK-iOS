@@ -315,6 +315,59 @@ These 3 are the residual "test-isolation vs. real" tail flagged when P0.2e opene
 longer provisional; P0.2e is CLOSED.** (Future hardening candidate, separate work: make the suite
 order-independent — reset UAM/OAuth singletons in tearDown — and convert the JWT `assert` to a guard.)
 
+### Full oracle revalidation (2026-07-17) — found + FIXED 3 previously-MASKED SDKCore regressions
+
+Operator-directed full revalidation of ALL libraries vs the merge-base oracle (`/tmp/oracle-base` @ `6ed0ab40`,
+unmigrated ObjC) before resuming the port queue. Ran each library's suite in BOTH clones on the same sim and
+diffed. Method note: run the two clones **serially** on the sim — concurrent test hosts collide during bootstrap
+("Early unexpected exit before establishing connection"), a false failure. FMDB identical in both trees
+(fmdb 2.7.12-sqlcipher) → SmartStore engine-drift ruled out.
+
+**Why these were invisible until now:** every prior full SDKCore run (incl. the P0.2e close-out above) ABORTS at
+`RestClientPublisherTests` (live-refresh setUp hang → signal trap → exceeds max-restart → whole run dies).
+That class sorts BEFORE `SFRest*`/`SFSDKUrlCache*`, so those never executed. Re-running offline (skip the 4
+live-org classes: RestClientPublisherTests, RestClientTests, SalesforceRestAPITests, SFSDKAuthUtilTests) let
+the suite COMPLETE in both clones (migration 484 / oracle 490 cases; oracle only `testLogin` fails = live).
+
+**3 regressions — pass at oracle, fail DETERMINISTICALLY in isolation in migration — now FIXED:**
+1. `SFSDKUrlCacheTests.testEncryptedCacheEntry` — `URLCache.shared` was never the encrypted cache. Root cause:
+   `SalesforceSDKManager.swift` set `URLCacheType = .encrypted` in its own `init()`, but Swift does NOT fire a
+   `didSet` observer when a class assigns its OWN stored property inside its OWN initializer, so the
+   cache-install side effect never ran. ObjC installed it via a setter method invoked in init. FIX: extracted
+   `installSharedURLCache(for:)` from the didSet and called it explicitly from init (behavior-faithful to ObjC).
+2. `SFSDKUrlCacheTests.testNullCacheEntry` — was NOT a separate bug: cross-test pollution from #1. With the
+   encrypted cache never installed, `URLCache.shared` was the real system cache, so the response stored by
+   `testEncryptedCacheEntry` (same URL) leaked into this test's lookup. Confirmed: passes when run truly alone;
+   fixed transitively by #1. (Deliberately did NOT add a `cachedResponse(for:)` override — the ObjC
+   SFSDKNullURLCache overrides only `storeCachedResponse`, so an override would be unfaithful.)
+3. `SFRestAPIDataTaskRaceTests` (`testFlushPendingRequestQueueDoesNotDoubleInvokeBlocks` +
+   `testResendActiveRequestsDoesNotDoubleInvokeBlocks`) — tests call production via
+   `perform(NSSelectorFromString(...))` guarded by `responds(to:)`, but `SFRestAPI.swift`
+   `flushPendingRequestQueue(_:rawResponse:)` / `resendActiveRequestsRequiringAuthentication()` were plain
+   `private func` → invisible to the ObjC runtime → `responds(to:)` false → guard returned early → production
+   never ran → double-invoke guard untested. FIX: added `@objc` to both (still `private` in Swift; ObjC
+   exposed all methods to the runtime). ESCALATION-SENSITIVE (OAuth-refresh request queue) — operator-approved.
+
+Verification: SFSDKUrlCacheTests 6/6 + SFRestAPIDataTaskRaceTests 9/9 PASS (post-fix build). Fix #1 is
+escalation-sensitive (URLCache used by RestAPI) — operator-approved. Both production files: one method each.
+
+**Not regressions (documented, NOT baselined):** `WebSocketClientTests.testListenReceives…` passes solo
+(full-suite ordering artifact). `RestClientWebSocketTests.testNewWebSocketFromURLRequest` depends on a
+prior live-auth'd `RestClient.sharedInstance.user` → env/ordering, inconclusive.
+
+**SmartStore: no new regressions** — all 8 migration failures are already in this baseline. Root-caused the 6
+FTS AlterTests (`assertion-bug` section above): the ObjC FTS-column-check block (`SFSmartStoreAlterTests.m:343`)
+is guarded by `[kCityCol isEqualToString:kSoupIndexTypeFullText]` where `kCityCol=="TABLE_1_0"` and the type
+const is `"full_text"` → ALWAYS FALSE → dead code that NEVER ran in ObjC. The Swift port "corrected" the guard
+to `cityColType == kSoupIndexTypeFullText` (SFSmartStoreAlterTests.swift:307), ACTIVATING a dormant assertion
+whose expectation (`rowid` present in an fts5 table's `PRAGMA table_info`) is false → 6 fails. TEST-ONLY
+artifact (over-faithful "fix" of a latent ObjC copy-paste bug); the P1 follow-up is to correct the test
+expectation for fts5, not touch production.
+
+**MobileSync: not locally runnable in either clone** — every sync class does live `synchronousAuthRefresh` in
+`SyncManagerTestCase.setUp()`; the stale live-org refresh token crashes setUp identically in ObjC and Swift.
+Matches the `env-skip` baseline entry; needs a live sandbox org (CI).
+
 ## (historical) P0.2d root-cause analysis — three independent migration artifacts
 
 Distinct from the (now-fixed) credentials cluster. Root-caused 2026-07-14: **three independent

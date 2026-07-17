@@ -454,7 +454,9 @@ open class RestClient: NSObject {
         })
     }
 
-    private func flushPendingRequestQueue(_ error: Error?, rawResponse: URLResponse?) {
+    // @objc so the ObjC runtime exposes it (the ObjC original was a runtime-visible method); the
+    // data-task race tests invoke it via perform(NSSelectorFromString("flushPendingRequestQueue:rawResponse:")).
+    @objc private func flushPendingRequestQueue(_ error: Error?, rawResponse: URLResponse?) {
         let pendingRequests = activeRequests.asSet() as? Set<AnyHashable> ?? []
         for case let request as RestRequest in pendingRequests {
             let oldTask = request.sessionDataTask
@@ -465,7 +467,9 @@ open class RestClient: NSObject {
         pendingRequestsBeingProcessed = false
     }
 
-    private func resendActiveRequestsRequiringAuthentication() {
+    // @objc so the ObjC runtime exposes it; invoked by the data-task race tests via
+    // perform(NSSelectorFromString("resendActiveRequestsRequiringAuthentication")).
+    @objc private func resendActiveRequestsRequiringAuthentication() {
         let pendingRequests = activeRequests.asSet() as? Set<AnyHashable> ?? []
         for case let request as RestRequest in pendingRequests {
             let oldTask = request.sessionDataTask

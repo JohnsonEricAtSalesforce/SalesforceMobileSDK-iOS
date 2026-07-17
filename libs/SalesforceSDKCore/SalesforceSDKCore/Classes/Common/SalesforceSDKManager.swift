@@ -314,20 +314,28 @@ open class SalesforceSDKManager: NSObject {
     @objc public var URLCacheType: SFURLCacheType = .encrypted {
         didSet {
             guard URLCacheType != oldValue else { return }
-            URLCache.shared.removeAllCachedResponses()
-            let cache: URLCache
-            switch URLCacheType {
-            case .encrypted:
-                cache = SFSDKEncryptedURLCache(memoryCapacity: kDefaultCacheMemoryCapacity, diskCapacity: kDefaultCacheDiskCapacity, cacheDirectory: nil)
-            case .null:
-                cache = SFSDKNullURLCache(memoryCapacity: kDefaultCacheMemoryCapacity, diskCapacity: kDefaultCacheDiskCapacity, directory: nil)
-            case .standard:
-                cache = URLCache(memoryCapacity: kDefaultCacheMemoryCapacity, diskCapacity: kDefaultCacheDiskCapacity, directory: nil)
-            @unknown default:
-                cache = URLCache(memoryCapacity: kDefaultCacheMemoryCapacity, diskCapacity: kDefaultCacheDiskCapacity, directory: nil)
-            }
-            URLCache.shared = cache
+            installSharedURLCache(for: URLCacheType)
         }
+    }
+
+    /// Installs the shared `URLCache` matching the given type. Factored out of the `URLCacheType`
+    /// `didSet` so it can also run from `init()`: Swift does not fire property observers when a class
+    /// assigns its own stored property inside its own initializer, so the initial `.encrypted`
+    /// assignment must install the cache explicitly (the ObjC original did this via its setter).
+    private func installSharedURLCache(for type: SFURLCacheType) {
+        URLCache.shared.removeAllCachedResponses()
+        let cache: URLCache
+        switch type {
+        case .encrypted:
+            cache = SFSDKEncryptedURLCache(memoryCapacity: kDefaultCacheMemoryCapacity, diskCapacity: kDefaultCacheDiskCapacity, cacheDirectory: nil)
+        case .null:
+            cache = SFSDKNullURLCache(memoryCapacity: kDefaultCacheMemoryCapacity, diskCapacity: kDefaultCacheDiskCapacity, directory: nil)
+        case .standard:
+            cache = URLCache(memoryCapacity: kDefaultCacheMemoryCapacity, diskCapacity: kDefaultCacheDiskCapacity, directory: nil)
+        @unknown default:
+            cache = URLCache(memoryCapacity: kDefaultCacheMemoryCapacity, diskCapacity: kDefaultCacheDiskCapacity, directory: nil)
+        }
+        URLCache.shared = cache
     }
 
     @objc public var useEphemeralSessionForAdvancedAuth: Bool = true
@@ -371,6 +379,9 @@ open class SalesforceSDKManager: NSObject {
         computeWebViewUserAgent()
         userAgentString = defaultUserAgentString()
         URLCacheType = .encrypted
+        // didSet does not fire for a class assigning its own property in its own init, so install
+        // the initial cache explicitly (matches the ObjC setter-invoked-in-init behavior).
+        installSharedURLCache(for: URLCacheType)
         setupServiceConfiguration()
         SFSDKSalesforceSDKUpgradeManager.upgrade()
         ScreenLockManagerInternal.shared.checkForScreenLockUsers()
