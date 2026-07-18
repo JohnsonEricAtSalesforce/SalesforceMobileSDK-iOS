@@ -385,9 +385,17 @@ class SalesforceOAuthUnitTests: XCTestCase {
         let coordinator = SFOAuthCoordinator()
         XCTAssertNotNil(coordinator, "coordinator should not be nil")
 
-        // authenticate with nil credentials should trigger assertion/exception
-        // In Swift, calling authenticate() with nil credentials causes a precondition failure.
-        // We verify the coordinator exists and that authenticateWithCredentials nil raises.
+        // Oracle: XCTAssertThrows([coordinator authenticate]) — a default coordinator has nil
+        // credentials, so authenticate() must raise a catchable NSException from its
+        // precondition guard. (SFSDKCatchException bridges the ObjC NSException to Swift.)
+        let exception = SFSDKCatchException {
+            coordinator.authenticate()
+        }
+        XCTAssertNotNil(exception, "authenticate with nil credentials should raise an exception")
+
+        // Oracle's second assert — XCTAssertThrows([coordinator authenticateWithCredentials:nil]) —
+        // is no longer representable: authenticate(withCredentials:) now takes a non-optional
+        // OAuthCredentials, so the nil case is prevented at compile time by the type system.
     }
 
     // MARK: - testMultipleUsers

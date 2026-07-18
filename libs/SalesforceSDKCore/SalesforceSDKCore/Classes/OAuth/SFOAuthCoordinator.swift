@@ -956,7 +956,16 @@ public class SFOAuthCoordinator: NSObject, WKNavigationDelegate, WKUIDelegate {
     }
 }
 
-// Helper for NSAssert equivalent in Swift
+// Helper for NSAssert equivalent in Swift.
+//
+// The ObjC `NSAssert` these call sites were migrated from raises a catchable
+// `NSInternalInconsistencyException` on failure. The prior implementation used Swift
+// `assert()`, which instead calls `abort()` (uncatchable) in debug builds and is compiled
+// out entirely in release — silently changing the precondition contract of the public
+// `authenticate()` / `authenticate(withCredentials:)` entry points. Raise a catchable
+// `NSException` to restore the original, oracle-faithful behavior.
 private func NSAssert(_ condition: @autoclosure () -> Bool, _ message: String) {
-    assert(condition(), message)
+    if !condition() {
+        NSException(name: .internalInconsistencyException, reason: message, userInfo: nil).raise()
+    }
 }

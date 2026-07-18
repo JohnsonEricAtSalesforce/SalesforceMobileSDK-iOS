@@ -115,3 +115,20 @@ not auto-fixing, since restoring these assertions (esp. #3's nil-cred throw) cou
 failures that need their own oracle triage, and none block the port queue (they weaken coverage, they don't
 hide dropped tests — that risk is closed by the restore). Recommend fixing #3 before the port queue touches
 OAuth-coordinator code; #1/#2/#5 opportunistically.
+
+---
+
+## ✅ ALL FOUR FIDELITY FINDINGS FIXED (2026-07-18) — operator: "Fix #1,2,5 and 3 now."
+
+Each fix is faithful to the oracle and was individually **built + run green** (per-scheme, verified by me — not a subagent claim). Test/production classification per finding:
+
+| # | Fix | Files | Test or Prod | Verified |
+|---|-----|-------|--------------|----------|
+| 1 | Restored the in-race assertion. Migrated `object(atIndexedSubscript:)` returns non-optional `Any` (NSNull() sentinel), so `XCTAssertNotNil` would warn "never nil" (= a bug per CLAUDE.md) → asserted `XCTAssertFalse(… is NSNull)`, faithful to oracle intent. Set variant already faithful (oracle Set had no in-block assert either); only Array touched. | `SFSDKSafeMutableArrayTests.swift` | **test-only** | pass (0.300s) |
+| 2 | Restored impl-type assertion. Facade held `loggingImpl` `private` → added `internal var underlyingLoggerImpl` (test-visible via `@testable`, NOT public API) + `XCTAssertTrue(logger.underlyingLoggerImpl is TestLoggingImpl)`. | `SFLogger.swift` (prod, internal accessor) + `SFLoggerTests.swift` | **test-only** (internal accessor, no public surface change) | pass |
+| 5 | Restored the intermediate setup assert the migration's `if let` skipped: oracle `@finally` unconditionally restores+asserts the key → added `XCTAssertNotNil(originalKey, …)` so the restore path is always exercised. | `SFSmartStoreTests.swift` | **test-only** | pass (0.269s) |
+| 3 | **PRODUCTION + test, ESCALATION-GATED (OAuth) — flag in PR.** Changed the private `NSAssert` shim (SFOAuthCoordinator.swift:960) from Swift `assert()` (uncatchable abort in debug / compiled-out in release) to raise a catchable `NSException(.internalInconsistencyException)` — faithful to the oracle ObjC `NSAssert` at ALL its call sites (all were `NSAssert`). Added a header-only `static inline SFSDKCatchException()` ObjC catch bridge to the existing `SalesforceSDKCoreTests-Bridging-Header.h` (NO new file / NO xcodeproj change). Restored `testCoordinatorDefaultInstantiation` to assert `authenticate()` raises (caught via the bridge). Oracle's 2nd assert (`authenticateWithCredentials:nil`) is now unrepresentable — migrated param is non-optional `OAuthCredentials`, nil prevented at compile time. | `SFOAuthCoordinator.swift` (prod shim) + `SalesforceSDKCoreTests-Bridging-Header.h` + `SalesforceOAuthUnitTests.swift` | **PROD + test** | pass (0.002s, throw now genuinely exercised) |
+
+**Build gate:** SalesforceSDKCore, SmartStore, SalesforceSDKCommon all `build-for-testing` GREEN (verified by me).
+**Env note:** SmartStore single-test `test-without-building` crashed at bootstrap with `Library not loaded: @rpath/SQLCipher.framework/SQLCipher` — a **stale-DerivedData artifact** (SQLCipher.framework was pruned as "stale" and not re-copied), reproduced on an UNTOUCHED control test, NOT caused by the edit. A full `test` (rebuilds/copies SQLCipher) resolved it; #5 then passed.
+**#3 escalation reminder:** production OAuth public-behavior change — must be flagged for human review in the eventual PR (operator pre-approved Option B). Shim change is shared by JWT + mydomain-discovery guards too; all were oracle `NSAssert`, so catchable-raise is faithful across all sites. Deliberate divergence from the (buggy) migrated behavior back toward oracle — mark for future merge awareness.
