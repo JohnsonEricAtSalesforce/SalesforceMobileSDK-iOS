@@ -145,7 +145,10 @@ class SFSDKSafeMutableArrayTests: XCTestCase {
             group.enter()
             DispatchQueue.global().async {
                 if idx < array.count {
-                    _ = array.object(atIndexedSubscript: idx)
+                    // Faithful to the oracle's XCTAssertNotNil(array[idx]): the migrated
+                    // API returns a non-optional Any (NSNull() sentinel for a missing slot),
+                    // so verify a real object came back rather than the empty sentinel.
+                    XCTAssertFalse(array.object(atIndexedSubscript: idx) is NSNull)
                 }
                 group.leave()
             }

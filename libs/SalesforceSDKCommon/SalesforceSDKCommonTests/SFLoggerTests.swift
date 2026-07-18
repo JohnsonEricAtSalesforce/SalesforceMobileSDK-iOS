@@ -48,6 +48,9 @@ class SFLoggerTests: XCTestCase {
     func testLoggerInstance() {
         let logger = SalesforceLogger.logger(forComponent: kTestDefaultComponent)
         XCTAssertNotNil(logger, "Logger instance should have been created")
+        // Faithful to the oracle's XCTAssertTrue([logger.logger isKindOfClass:[TestLoggingImpl class]]):
+        // verify the injected backing impl is the test double registered in setUp.
+        XCTAssertTrue(logger.underlyingLoggerImpl is TestLoggingImpl, "Logger should be an instance of TestLoggingImpl")
         logger.level = .debug
         XCTAssertEqual(logger.level, .debug, "Logger level should be set to debug")
     }

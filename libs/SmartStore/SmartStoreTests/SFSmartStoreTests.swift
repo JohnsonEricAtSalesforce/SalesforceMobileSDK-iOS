@@ -494,6 +494,9 @@ class SFSmartStoreTests: SFSmartStoreTestCase {
         let storeName = "testSmartStoreIsRecreatedWhenKeyIsLost"
         let keyLabel = "com.salesforce.keystore.\(SmartStoreConstants.encryptionKeyLabel)"
         let originalKey = KeychainHelper.read(service: keyLabel, account: nil).data
+        // Oracle's @finally unconditionally restores + asserts success; assert we captured
+        // the original key so the restore below is exercised (faithful to that contract).
+        XCTAssertNotNil(originalKey, "Original encryption key should have been read before the test drops it")
 
         defer {
             // Drop store

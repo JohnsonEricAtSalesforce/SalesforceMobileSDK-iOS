@@ -92,6 +92,11 @@ open class SalesforceLogger: NSObject {
     private var loggingImpl: SFLogging
     private var logReceiver: SalesforceLogReceiver?
 
+    /// The underlying logger implementation backing this facade.
+    /// Exposed at internal visibility for test verification (reachable via `@testable import`);
+    /// not part of the public API surface.
+    internal var underlyingLoggerImpl: SFLogging { loggingImpl }
+
     /// Sets log level to be used by this logger.
     public var level: SFLogLevel {
         get { loggingImpl.logLevel }
