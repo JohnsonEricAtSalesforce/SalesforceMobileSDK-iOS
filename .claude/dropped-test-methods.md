@@ -17,11 +17,11 @@ methods): SDKCore's only 7 migration-only methods are the new `CredentialsArchiv
 - **Case-sensitivity false positive (+1):** `SFSmartStoreAlterTests.testAlterSoupwithFullTextIndexesFromFts4ToFts5`
   (oracle lowercase `with`) → migration `…FromFts4ToFts5` **uppercase `With`**. Same test, present + compiled.
   **NOT dropped.**
-- Final tally: **50 confirmed dropped** (was estimated 53).
+- Final tally: **55 confirmed dropped** — SDKCore 50 + MobileSync 5. (SmartStore's raw −1 is the
+  case-only false positive, so it is NOT counted.) The raw Python diff prints 50 + 1(SmartStore FP) + 5 = 56;
+  minus the 1 SmartStore false positive = **55 real**. Regenerate anytime with `python3 /tmp/method_diff.py`.
 
-## CONFIRMED DROPPED — 50 methods
-
-### SalesforceSDKCore — 50 total... wait, per-lib below
+## CONFIRMED DROPPED — 55 methods (SDKCore 50 + MobileSync 5)
 
 ### SalesforceSDKCore (46 + 2 + 1 + 1 = 50)
 **`SalesforceRestAPITests` — 46** (LIVE-ORG class, currently `XCTSkipUnless`-gated; doubly masked):
@@ -69,7 +69,7 @@ REST/sync commits) will modify. Resuming porting without them = regressions in t
 Aggravator: 46 of 50 are in live-org classes already skipped, so they're masked twice.
 
 ## Plan (operator-approved: restore all, verify, audit, hold porting)
-1. ✅ Second-pass verification (this file). 2. Restore 50 methods `.m`→`.swift` byte-faithful.
+1. ✅ Second-pass verification (this file). 2. Restore 55 methods `.m`→`.swift` byte-faithful.
 3. Oracle-compare each restored class (fail-at-oracle=baseline; pass-oracle/fail-migration=regression→fix).
 4. Remaining audits: assertion-fidelity, FTS4/5 parameterization, live-org skip ledger.
 5. THEN resume port queue.
