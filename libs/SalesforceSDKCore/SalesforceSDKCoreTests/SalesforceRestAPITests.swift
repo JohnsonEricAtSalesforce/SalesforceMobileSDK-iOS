@@ -1120,6 +1120,1139 @@ class SalesforceRestAPITests: XCTestCase {
         XCTAssertEqual(statusCode, 200, "Request did not return 200")
     }
 
+    // MARK: - Dropped Tests Restored
+
+    func testBatchWithBatchRequest() {
+        let accountName = generateRecordName()
+        let contactName = generateRecordName()
+
+        let batchRequestBuilder = BatchRequestBuilder()
+
+        let createAccountRequest = RestClient.sharedInstance.requestForCreate(withObjectType: kAccount, fields: [kName: accountName], apiVersion: SFRestDefaultAPIVersion)
+        batchRequestBuilder.addRequest(createAccountRequest)
+
+        let createContactRequest = RestClient.sharedInstance.requestForCreate(withObjectType: kContact, fields: [kLastName: contactName], apiVersion: SFRestDefaultAPIVersion)
+        batchRequestBuilder.addRequest(createContactRequest)
+
+        let queryForAccount = RestClient.sharedInstance.requestForQuery("select Id from Account where Name = '\(accountName)'", apiVersion: SFRestDefaultAPIVersion)
+        batchRequestBuilder.addRequest(queryForAccount)
+
+        let queryForContact = RestClient.sharedInstance.requestForQuery("select Id from Contact where Name = '\(contactName)'", apiVersion: SFRestDefaultAPIVersion)
+        batchRequestBuilder.addRequest(queryForContact)
+
+        let batchRequest = batchRequestBuilder.buildBatchRequest(SFRestDefaultAPIVersion)
+        let response = sendSyncRequest(batchRequest)
+
+        guard let dataResponse = response.dataResponse as? [String: Any],
+              let results = dataResponse[kResults] as? [[String: Any]] else {
+            XCTFail("Invalid response"); return
+        }
+        XCTAssertEqual(dataResponse[kHasErrors] as? Bool, false)
+        XCTAssertEqual(results.count, 4)
+        XCTAssertEqual((results[0][kStatusCode] as? Int), 201)
+        XCTAssertEqual((results[1][kStatusCode] as? Int), 201)
+        XCTAssertEqual((results[2][kStatusCode] as? Int), 200)
+        XCTAssertEqual((results[3][kStatusCode] as? Int), 200)
+
+        let accountId = (results[0][kResult] as? [String: Any])?[kLid] as? String
+        let contactId = (results[1][kResult] as? [String: Any])?[kLid] as? String
+        let idFromFirstQuery = ((results[2][kResult] as? [String: Any])?[kRecords] as? [[String: Any]])?.first?[kId] as? String
+        let idFromSecondQuery = ((results[3][kResult] as? [String: Any])?[kRecords] as? [[String: Any]])?.first?[kId] as? String
+        XCTAssertEqual(accountId, idFromFirstQuery)
+        XCTAssertEqual(contactId, idFromSecondQuery)
+    }
+
+    func testBatchWithBatchRequestResponse() {
+        let accountName = generateRecordName()
+        let contactName = generateRecordName()
+
+        let batchRequestBuilder = BatchRequestBuilder()
+
+        let createAccountRequest = RestClient.sharedInstance.requestForCreate(withObjectType: kAccount, fields: [kName: accountName], apiVersion: SFRestDefaultAPIVersion)
+        batchRequestBuilder.addRequest(createAccountRequest)
+
+        let createContactRequest = RestClient.sharedInstance.requestForCreate(withObjectType: kContact, fields: [kLastName: contactName], apiVersion: SFRestDefaultAPIVersion)
+        batchRequestBuilder.addRequest(createContactRequest)
+
+        let queryForAccount = RestClient.sharedInstance.requestForQuery("select Id from Account where Name = '\(accountName)'", apiVersion: SFRestDefaultAPIVersion)
+        batchRequestBuilder.addRequest(queryForAccount)
+
+        let queryForContact = RestClient.sharedInstance.requestForQuery("select Id from Contact where Name = '\(contactName)'", apiVersion: SFRestDefaultAPIVersion)
+        batchRequestBuilder.addRequest(queryForContact)
+
+        let batchRequest = batchRequestBuilder.buildBatchRequest(SFRestDefaultAPIVersion)
+        let exp = expectation(description: "Batch Request")
+        var batchResponse: BatchResponse?
+        var error: NSError?
+
+        RestClient.sharedInstance.sendBatchRequest(batchRequest, failureBlock: { _, err, _ in
+            error = err as NSError?
+            exp.fulfill()
+        }, successBlock: { response, _ in
+            batchResponse = response
+            exp.fulfill()
+        })
+
+        waitForExpectations(timeout: 30)
+        XCTAssertNil(error, "Error invoking batch api")
+        XCTAssertNotNil(batchResponse, "Batch Response should not be nil")
+        XCTAssertFalse(batchResponse?.hasErrors ?? true, "Batch Response should not return with errors")
+        XCTAssertNotNil(batchResponse?.results, "Batch Sub Responses should not be nil")
+        XCTAssertEqual(4, batchResponse?.results.count ?? 0, "Wrong number of results")
+
+        guard let results = batchResponse?.results else { return }
+        XCTAssertEqual(results.count, 4)
+        XCTAssertEqual(((results[0] as? [String: Any])?[kStatusCode] as? Int), 201)
+        XCTAssertEqual(((results[1] as? [String: Any])?[kStatusCode] as? Int), 201)
+        XCTAssertEqual(((results[2] as? [String: Any])?[kStatusCode] as? Int), 200)
+        XCTAssertEqual(((results[3] as? [String: Any])?[kStatusCode] as? Int), 200)
+
+        let accountId = ((results[0] as? [String: Any])?[kResult] as? [String: Any])?[kLid] as? String
+        let contactId = ((results[1] as? [String: Any])?[kResult] as? [String: Any])?[kLid] as? String
+        let idFromFirstQuery = (((results[2] as? [String: Any])?[kResult] as? [String: Any])?[kRecords] as? [[String: Any]])?.first?[kId] as? String
+        let idFromSecondQuery = (((results[3] as? [String: Any])?[kResult] as? [String: Any])?[kRecords] as? [[String: Any]])?.first?[kId] as? String
+        XCTAssertEqual(accountId, idFromFirstQuery)
+        XCTAssertEqual(contactId, idFromSecondQuery)
+    }
+
+    func testBlockUpdate() {
+        let api = RestClient.sharedInstance
+        let lastName = generateRecordName()
+        let updatedLastName = "\(lastName)_updated"
+        var fields: [String: String] = [kFirstName: "John", kLastName: lastName]
+        var recordId: String?
+
+        var currentExp = expectation(description: "performCreateWithObjectType-creating contact")
+        var request = api.requestForCreate(withObjectType: kContact, fields: fields, apiVersion: SFRestDefaultAPIVersion)
+        api.send(request, failureBlock: { _, error, _ in
+            XCTFail("Unexpected error \(error)")
+            currentExp.fulfill()
+        }, successBlock: { d, _ in
+            recordId = (d as? [String: Any])?[kLid] as? String
+            currentExp.fulfill()
+        })
+        waitForExpectations(timeout: 15)
+
+        guard let contactId = recordId else { return }
+
+        currentExp = expectation(description: "performRetrieveWithObjectType-retrieving contact")
+        request = api.requestForRetrieve(withObjectType: kContact, objectId: contactId, fieldList: kLastName, apiVersion: SFRestDefaultAPIVersion)
+        api.send(request, failureBlock: { _, error, _ in
+            XCTFail("Unexpected error \(error)")
+            currentExp.fulfill()
+        }, successBlock: { d, _ in
+            XCTAssertEqual((d as? [String: Any])?[kLastName] as? String, lastName)
+            currentExp.fulfill()
+        })
+        waitForExpectations(timeout: 15)
+
+        currentExp = expectation(description: "performUpdateWithObjectType-updating contact")
+        fields[kLastName] = updatedLastName
+        request = api.requestForUpdate(withObjectType: kContact, objectId: contactId, fields: fields, apiVersion: SFRestDefaultAPIVersion)
+        api.send(request, failureBlock: { _, error, _ in
+            XCTFail("Unexpected error \(error)")
+            currentExp.fulfill()
+        }, successBlock: { _, _ in
+            currentExp.fulfill()
+        })
+        waitForExpectations(timeout: 15)
+
+        currentExp = expectation(description: "performRetrieveWithObjectType-retrieving contact")
+        request = api.requestForRetrieve(withObjectType: kContact, objectId: contactId, fieldList: kLastName, apiVersion: SFRestDefaultAPIVersion)
+        api.send(request, failureBlock: { _, error, _ in
+            XCTFail("Unexpected error \(error)")
+            currentExp.fulfill()
+        }, successBlock: { d, _ in
+            XCTAssertEqual((d as? [String: Any])?[kLastName] as? String, updatedLastName)
+            currentExp.fulfill()
+        })
+        waitForExpectations(timeout: 15)
+
+        currentExp = expectation(description: "performDeleteWithObjectType-deleting contact")
+        request = api.requestForDelete(withObjectType: kContact, objectId: contactId, apiVersion: SFRestDefaultAPIVersion)
+        api.send(request, failureBlock: { _, error, _ in
+            XCTFail("Unexpected error \(error)")
+            currentExp.fulfill()
+        }, successBlock: { _, _ in
+            currentExp.fulfill()
+        })
+        waitForExpectations(timeout: 15)
+    }
+
+    func testBlocks() {
+        let api = RestClient.sharedInstance
+
+        let failWithExpectedFail: (Any?, Error?, URLResponse?) -> Void = { _, _, _ in
+            self.currentExpectation?.fulfill()
+        }
+
+        let failWithUnexpectedFail: (Any?, Error?, URLResponse?) -> Void = { _, error, _ in
+            XCTFail("Unexpected error \(String(describing: error))")
+            self.currentExpectation?.fulfill()
+        }
+
+        let successWithUnexpectedSuccessBlock: (Any?, URLResponse?) -> Void = { d, _ in
+            XCTFail("Unexpected success \(String(describing: d))")
+            self.currentExpectation?.fulfill()
+        }
+
+        let dictSuccessBlock: (Any?, URLResponse?) -> Void = { d, _ in
+            XCTAssertTrue(d is [String: Any], "Response should be a dictionary")
+            self.currentExpectation?.fulfill()
+        }
+
+        let arraySuccessBlock: (Any?, URLResponse?) -> Void = { a, _ in
+            XCTAssertTrue(a is [Any], "Response should be an array")
+            self.currentExpectation?.fulfill()
+        }
+
+        // Test error helper
+        let errorStr = "Sample error."
+        XCTAssertTrue(errorStr == RestClient.error(withDescription: errorStr).localizedDescription)
+
+        // Block functions that should always fail
+        currentExpectation = expectation(description: "performDeleteWithObjectType-nil")
+        var request = api.requestForDelete(withObjectType: kContact, objectId: "nil", apiVersion: SFRestDefaultAPIVersion)
+        api.send(request, failureBlock: failWithExpectedFail, successBlock: successWithUnexpectedSuccessBlock)
+        waitForExpectations(timeout: 15)
+
+        currentExpectation = expectation(description: "performCreateWithObjectType-nil")
+        request = api.requestForCreate(withObjectType: kContact, fields: nil, apiVersion: SFRestDefaultAPIVersion)
+        api.send(request, failureBlock: failWithExpectedFail, successBlock: successWithUnexpectedSuccessBlock)
+        waitForExpectations(timeout: 15)
+
+        currentExpectation = expectation(description: "performMetadataWithObjectType-nil")
+        request = api.requestForMetadata(withObjectType: kContact, apiVersion: SFRestDefaultAPIVersion)
+        api.send(request, failureBlock: failWithExpectedFail, successBlock: successWithUnexpectedSuccessBlock)
+        waitForExpectations(timeout: 15)
+
+        currentExpectation = expectation(description: "performDescribeWithObjectType-nil")
+        request = api.requestForDescribe(withObjectType: kContact, apiVersion: SFRestDefaultAPIVersion)
+        api.send(request, failureBlock: failWithExpectedFail, successBlock: successWithUnexpectedSuccessBlock)
+        waitForExpectations(timeout: 15)
+
+        currentExpectation = expectation(description: "performRetrieveWithObjectType-nil")
+        request = api.requestForRetrieve(withObjectType: kContact, objectId: "nil", fieldList: nil, apiVersion: SFRestDefaultAPIVersion)
+        api.send(request, failureBlock: failWithExpectedFail, successBlock: successWithUnexpectedSuccessBlock)
+        waitForExpectations(timeout: 15)
+
+        currentExpectation = expectation(description: "performUpdateWithObjectType-nil")
+        request = api.requestForUpdate(withObjectType: kContact, objectId: "nil", fields: nil, apiVersion: SFRestDefaultAPIVersion)
+        api.send(request, failureBlock: failWithExpectedFail, successBlock: successWithUnexpectedSuccessBlock)
+        waitForExpectations(timeout: 15)
+
+        currentExpectation = expectation(description: "performUpsertWithObjectType-nil")
+        request = api.requestForUpsert(withObjectType: kContact, externalIdField: "Id", externalId: nil, fields: [:], apiVersion: SFRestDefaultAPIVersion)
+        api.send(request, failureBlock: failWithExpectedFail, successBlock: successWithUnexpectedSuccessBlock)
+        waitForExpectations(timeout: 15)
+
+        currentExpectation = expectation(description: "performSOQLQuery-nil")
+        request = api.requestForQuery("", apiVersion: SFRestDefaultAPIVersion)
+        api.send(request, failureBlock: failWithExpectedFail, successBlock: successWithUnexpectedSuccessBlock)
+        waitForExpectations(timeout: 15)
+
+        currentExpectation = expectation(description: "performSOQLQueryAll-nil")
+        request = api.requestForQueryAll("", apiVersion: SFRestDefaultAPIVersion)
+        api.send(request, failureBlock: failWithExpectedFail, successBlock: successWithUnexpectedSuccessBlock)
+        waitForExpectations(timeout: 15)
+
+        // Block functions that should always succeed
+        currentExpectation = expectation(description: "performRequestForResourcesWithFailBlock")
+        request = api.requestForResources(SFRestDefaultAPIVersion)
+        api.send(request, failureBlock: failWithUnexpectedFail, successBlock: dictSuccessBlock)
+        waitForExpectations(timeout: 15)
+
+        currentExpectation = expectation(description: "performRequestForVersionsWithFailBlock")
+        request = api.requestForVersions()
+        api.send(request, failureBlock: { _, error, _ in
+            XCTFail("Unexpected error \(String(describing: error))")
+            self.currentExpectation?.fulfill()
+        }, successBlock: { response, _ in
+            XCTAssertTrue(response is [Any], "Response should be an array")
+            self.currentExpectation?.fulfill()
+        })
+        waitForExpectations(timeout: 15)
+
+        currentExpectation = expectation(description: "performDescribeGlobalWithFailBlock")
+        request = api.requestForDescribeGlobal(SFRestDefaultAPIVersion)
+        api.send(request, failureBlock: failWithUnexpectedFail, successBlock: dictSuccessBlock)
+        waitForExpectations(timeout: 15)
+
+        currentExpectation = expectation(description: "performSOQLQuery-select id from user limit 10")
+        request = api.requestForQuery("select id from user limit 10", apiVersion: SFRestDefaultAPIVersion)
+        api.send(request, failureBlock: failWithUnexpectedFail, successBlock: dictSuccessBlock)
+        waitForExpectations(timeout: 15)
+
+        currentExpectation = expectation(description: "performSOQLQueryAll-select id from user limit 10")
+        request = api.requestForQueryAll("select id from user limit 10", apiVersion: SFRestDefaultAPIVersion)
+        api.send(request, failureBlock: failWithUnexpectedFail, successBlock: dictSuccessBlock)
+        waitForExpectations(timeout: 15)
+
+        currentExpectation = expectation(description: "performSOSLSearch-find {batman}")
+        request = api.requestForSearch("find {batman}", apiVersion: SFRestDefaultAPIVersion)
+        api.send(request, failureBlock: failWithUnexpectedFail, successBlock: dictSuccessBlock)
+        waitForExpectations(timeout: 15)
+
+        currentExpectation = expectation(description: "performDescribeWithObjectType-Contact")
+        request = api.requestForDescribe(withObjectType: kContact, apiVersion: SFRestDefaultAPIVersion)
+        api.send(request, failureBlock: failWithUnexpectedFail, successBlock: dictSuccessBlock)
+        waitForExpectations(timeout: 15)
+
+        currentExpectation = expectation(description: "performMetadataWithObjectType-Contact")
+        request = api.requestForMetadata(withObjectType: kContact, apiVersion: SFRestDefaultAPIVersion)
+        api.send(request, failureBlock: failWithUnexpectedFail, successBlock: dictSuccessBlock)
+        waitForExpectations(timeout: 15)
+        dataCleanupRequired = false
+    }
+
+    func testBlocksCancel() {
+        currentExpectation = expectation(description: "performRequestForResourcesWithFailBlock-with-cancel")
+        let api = RestClient.sharedInstance
+
+        let failWithExpectedFail: (Any?, Error?, URLResponse?) -> Void = { _, _, _ in
+            self.currentExpectation?.fulfill()
+        }
+
+        let successWithUnexpectedSuccessBlock: (Any?, URLResponse?) -> Void = { d, _ in
+            XCTFail("Unexpected success \(String(describing: d))")
+            self.currentExpectation?.fulfill()
+        }
+
+        let request = api.requestForResources(SFRestDefaultAPIVersion)
+        api.send(request, failureBlock: failWithExpectedFail, successBlock: successWithUnexpectedSuccessBlock)
+
+        api.cancelAllRequests()
+
+        waitForExpectations(timeout: 15)
+        dataCleanupRequired = false
+    }
+
+    func testBlocksTimeout() {
+        currentExpectation = expectation(description: "performRequestForResourcesWithFailBlock-with-forced-timeout")
+        let api = RestClient.sharedInstance
+
+        let failWithExpectedFail: (Any?, Error?, URLResponse?) -> Void = { _, _, _ in
+            self.currentExpectation?.fulfill()
+        }
+
+        let successWithUnexpectedSuccessBlock: (Any?, URLResponse?) -> Void = { d, _ in
+            XCTFail("Unexpected success \(String(describing: d))")
+            self.currentExpectation?.fulfill()
+        }
+
+        let request = api.requestForResources(SFRestDefaultAPIVersion)
+        api.send(request, failureBlock: failWithExpectedFail, successBlock: successWithUnexpectedSuccessBlock)
+
+        let found = api.forceTimeoutRequest(request)
+        XCTAssertTrue(found, "Request was not sent and should not be found.")
+        waitForExpectations(timeout: 15)
+        dataCleanupRequired = false
+    }
+
+    func testCollectionCreateWithBadRecordAndAllOrNoneFalse() {
+        let accountName = "\(kEntityPrefixName)_account_\(CFAbsoluteTimeGetCurrent())"
+        let contactName = "\(kEntityPrefixName)_contact_\(CFAbsoluteTimeGetCurrent())"
+
+        let records = makeRecords([
+            ["Account", "BadField", accountName],
+            ["Contact", "LastName", contactName]
+        ])
+
+        let request = RestClient.sharedInstance.requestForCollectionCreate(false, records: records, apiVersion: SFRestDefaultAPIVersion)
+        let response = sendSyncRequest(request)
+        let parsedCreateResponse = CollectionResponse(array: response.dataResponse as? [[String: Any]] ?? [])
+
+        XCTAssertEqual(parsedCreateResponse.subResponses.count, 2)
+        XCTAssertNil(parsedCreateResponse.subResponses[0].objectId)
+        XCTAssertFalse(parsedCreateResponse.subResponses[0].success)
+        XCTAssertEqual(parsedCreateResponse.subResponses[0].errors.count, 1)
+        XCTAssertEqual(parsedCreateResponse.subResponses[0].errors[0].statusCode, "INVALID_FIELD")
+        XCTAssertTrue(parsedCreateResponse.subResponses[1].objectId.hasPrefix("003"))
+        XCTAssertTrue(parsedCreateResponse.subResponses[1].success)
+        XCTAssertEqual(parsedCreateResponse.subResponses[1].errors.count, 0)
+    }
+
+    func testCollectionCreateWithBadRecordAndAllOrNoneTrue() {
+        let accountName = "\(kEntityPrefixName)_account_\(CFAbsoluteTimeGetCurrent())"
+        let contactName = "\(kEntityPrefixName)_contact_\(CFAbsoluteTimeGetCurrent())"
+
+        let records = makeRecords([
+            ["Account", "BadField", accountName],
+            ["Contact", "LastName", contactName]
+        ])
+
+        let request = RestClient.sharedInstance.requestForCollectionCreate(true, records: records, apiVersion: SFRestDefaultAPIVersion)
+        let response = sendSyncRequest(request)
+        let parsedCreateResponse = CollectionResponse(array: response.dataResponse as? [[String: Any]] ?? [])
+
+        XCTAssertEqual(parsedCreateResponse.subResponses.count, 2)
+        XCTAssertNil(parsedCreateResponse.subResponses[0].objectId)
+        XCTAssertFalse(parsedCreateResponse.subResponses[0].success)
+        XCTAssertEqual(parsedCreateResponse.subResponses[0].errors.count, 1)
+        XCTAssertEqual(parsedCreateResponse.subResponses[0].errors[0].statusCode, "INVALID_FIELD")
+        XCTAssertNil(parsedCreateResponse.subResponses[1].objectId)
+        XCTAssertFalse(parsedCreateResponse.subResponses[1].success)
+        XCTAssertEqual(parsedCreateResponse.subResponses[0].errors.count, 1)
+        XCTAssertEqual(parsedCreateResponse.subResponses[1].errors[0].statusCode, "ALL_OR_NONE_OPERATION_ROLLED_BACK")
+    }
+
+    func testCollectionUpdate() {
+        let firstAccountName = "\(kEntityPrefixName)_account_1_\(CFAbsoluteTimeGetCurrent())"
+        let secondAccountName = "\(kEntityPrefixName)_account_2_\(CFAbsoluteTimeGetCurrent())"
+        let contactName = "\(kEntityPrefixName)_contact_\(CFAbsoluteTimeGetCurrent())"
+
+        let records = makeRecords([
+            ["Account", "Name", firstAccountName],
+            ["Contact", "LastName", contactName],
+            ["Account", "Name", secondAccountName]
+        ])
+
+        var request = RestClient.sharedInstance.requestForCollectionCreate(true, records: records, apiVersion: SFRestDefaultAPIVersion)
+        var response = sendSyncRequest(request)
+
+        let parsedCreateResponse = CollectionResponse(array: response.dataResponse as? [[String: Any]] ?? [])
+        let firstAccountId = parsedCreateResponse.subResponses[0].objectId ?? ""
+        let contactId = parsedCreateResponse.subResponses[1].objectId ?? ""
+
+        let firstAccountNameUpdated = "\(firstAccountName)_updated"
+        let contactNameUpdated = "\(contactName)_updated"
+        let updatedRecords = makeRecords([
+            ["Account", "Name", firstAccountNameUpdated, "Id", firstAccountId],
+            ["Contact", "LastName", contactNameUpdated, "Id", contactId]
+        ])
+
+        request = RestClient.sharedInstance.requestForCollectionUpdate(true, records: updatedRecords, apiVersion: SFRestDefaultAPIVersion)
+        response = sendSyncRequest(request)
+
+        let parsedUpdateResponse = CollectionResponse(array: response.dataResponse as? [[String: Any]] ?? [])
+
+        XCTAssertEqual(parsedUpdateResponse.subResponses.count, 2)
+        XCTAssertTrue(parsedUpdateResponse.subResponses[0].objectId.hasPrefix("001"))
+        XCTAssertTrue(parsedUpdateResponse.subResponses[0].success)
+        XCTAssertEqual(parsedUpdateResponse.subResponses[0].errors.count, 0)
+        XCTAssertTrue(parsedUpdateResponse.subResponses[1].objectId.hasPrefix("003"))
+        XCTAssertTrue(parsedUpdateResponse.subResponses[1].success)
+        XCTAssertEqual(parsedUpdateResponse.subResponses[1].errors.count, 0)
+
+        let secondAccountId = parsedCreateResponse.subResponses[2].objectId ?? ""
+        request = RestClient.sharedInstance.requestForCollectionRetrieve(kAccount, objectIds: [firstAccountId, secondAccountId], fieldList: ["Id", "Name"], apiVersion: SFRestDefaultAPIVersion)
+        response = sendSyncRequest(request)
+        guard let accountsRetrieved = response.dataResponse as? [[String: Any]] else { return }
+        XCTAssertEqual(accountsRetrieved.count, 2)
+        XCTAssertEqual(accountsRetrieved[0]["Name"] as? String, firstAccountNameUpdated)
+        XCTAssertEqual(accountsRetrieved[1]["Name"] as? String, secondAccountName)
+
+        request = RestClient.sharedInstance.requestForCollectionRetrieve("Contact", objectIds: [contactId], fieldList: ["Id", "LastName"], apiVersion: SFRestDefaultAPIVersion)
+        response = sendSyncRequest(request)
+        guard let contactsRetrieved = response.dataResponse as? [[String: Any]] else { return }
+        XCTAssertEqual(contactsRetrieved.count, 1)
+        XCTAssertEqual(contactsRetrieved[0]["LastName"] as? String, contactNameUpdated)
+    }
+
+    func testCollectionUpsertExistingRecords() {
+        let firstAccountName = "\(kEntityPrefixName)_account_1_\(CFAbsoluteTimeGetCurrent())"
+        let secondAccountName = "\(kEntityPrefixName)_account_2_\(CFAbsoluteTimeGetCurrent())"
+
+        let records = makeRecords([
+            ["Account", "Name", firstAccountName],
+            ["Account", "Name", secondAccountName]
+        ])
+
+        var request = RestClient.sharedInstance.requestForCollectionCreate(true, records: records, apiVersion: SFRestDefaultAPIVersion)
+        var response = sendSyncRequest(request)
+
+        let parsedCreateResponse = CollectionResponse(array: response.dataResponse as? [[String: Any]] ?? [])
+        let firstAccountId = parsedCreateResponse.subResponses[0].objectId ?? ""
+        let secondAccountId = parsedCreateResponse.subResponses[1].objectId ?? ""
+
+        let firstAccountNameUpdated = "\(firstAccountName)_updated"
+        let secondAccountNameUpdated = "\(secondAccountName)_updated"
+        let updatedAccounts = makeRecords([
+            ["Account", "Name", firstAccountNameUpdated, "Id", firstAccountId],
+            ["Account", "Name", secondAccountNameUpdated, "Id", secondAccountId]
+        ])
+
+        request = RestClient.sharedInstance.requestForCollectionUpsert(true, objectType: kAccount, externalIdField: "Id", records: updatedAccounts, apiVersion: SFRestDefaultAPIVersion)
+        response = sendSyncRequest(request)
+
+        let parsedUpsertResponse = CollectionResponse(array: response.dataResponse as? [[String: Any]] ?? [])
+
+        XCTAssertEqual(parsedUpsertResponse.subResponses.count, 2)
+        XCTAssertTrue(parsedUpsertResponse.subResponses[0].objectId.hasPrefix("001"))
+        XCTAssertTrue(parsedUpsertResponse.subResponses[0].success)
+        XCTAssertEqual(parsedUpsertResponse.subResponses[0].errors.count, 0)
+        XCTAssertTrue(parsedUpsertResponse.subResponses[1].objectId.hasPrefix("001"))
+        XCTAssertTrue(parsedUpsertResponse.subResponses[1].success)
+        XCTAssertEqual(parsedUpsertResponse.subResponses[1].errors.count, 0)
+
+        request = RestClient.sharedInstance.requestForCollectionRetrieve(kAccount, objectIds: [firstAccountId, secondAccountId], fieldList: ["Id", "Name"], apiVersion: SFRestDefaultAPIVersion)
+        response = sendSyncRequest(request)
+        guard let accountsRetrieved = response.dataResponse as? [[String: Any]] else { return }
+
+        XCTAssertEqual(accountsRetrieved.count, 2)
+        XCTAssertEqual(accountsRetrieved[0]["Name"] as? String, firstAccountNameUpdated)
+        XCTAssertEqual(accountsRetrieved[1]["Name"] as? String, secondAccountNameUpdated)
+    }
+
+    func testCollectionUpsertNewRecords() {
+        let firstAccountName = "\(kEntityPrefixName)_account_1_\(CFAbsoluteTimeGetCurrent())"
+        let secondAccountName = "\(kEntityPrefixName)_account_2_\(CFAbsoluteTimeGetCurrent())"
+
+        let records = makeRecords([
+            ["Account", "Name", firstAccountName],
+            ["Account", "Name", secondAccountName]
+        ])
+
+        let request = RestClient.sharedInstance.requestForCollectionUpsert(true, objectType: kAccount, externalIdField: "Id", records: records, apiVersion: SFRestDefaultAPIVersion)
+        let response = sendSyncRequest(request)
+
+        let parsedUpsertResponse = CollectionResponse(array: response.dataResponse as? [[String: Any]] ?? [])
+
+        XCTAssertEqual(parsedUpsertResponse.subResponses.count, 2)
+        XCTAssertTrue(parsedUpsertResponse.subResponses[0].objectId.hasPrefix("001"))
+        XCTAssertTrue(parsedUpsertResponse.subResponses[0].success)
+        XCTAssertEqual(0, parsedUpsertResponse.subResponses[0].errors.count)
+        XCTAssertTrue(parsedUpsertResponse.subResponses[1].objectId.hasPrefix("001"))
+        XCTAssertTrue(parsedUpsertResponse.subResponses[1].success)
+        XCTAssertEqual(0, parsedUpsertResponse.subResponses[1].errors.count)
+    }
+
+    func testCustomSalesforceEndpoint() {
+        let endpoint = "/custom/endpoint"
+        let path = "/custom/endpoint"
+        let request = RestRequest.customEndPointRequest(withMethod: .GET, endPoint: endpoint, path: path, queryParams: nil)
+        guard let currentUser = currentUser else { return }
+        guard let urlRequest = request.prepareRequestForSend(currentUser) else { return }
+        XCTAssertNotNil(urlRequest, "UrlRequest URL should not be nil")
+        let urlString = urlRequest.url?.absoluteString ?? ""
+        XCTAssertTrue(urlString.range(of: endpoint) != nil, "The URL must have custom endpoint path")
+        XCTAssertTrue(urlString.range(of: path) != nil, "The URL must have custom path")
+        dataCleanupRequired = false
+    }
+
+    func testEscapingWithSOQLQuery() {
+        let request = RestClient.sharedInstance.requestForQuery("Select Name from Account where LastModifiedDate > 2017-03-21T12:11:06.000+0000", apiVersion: SFRestDefaultAPIVersion)
+        let response = sendSyncRequest(request)
+        XCTAssertEqual(response.returnStatus, kTestRequestStatusDidLoad, "request failed")
+        dataCleanupRequired = false
+    }
+
+    func testFailedRequestRemovedFromQueue() {
+        guard let origInstanceUrl = currentUser?.credentials.instanceUrl else { return }
+        currentUser?.credentials.instanceUrl = URL(string: "https://some.non-existent-domain-blafhsdfh")
+        currentExpectation = expectation(description: "performRequestToFail")
+
+        let failWithExpectedFail: (Any?, Error?, URLResponse?) -> Void = { _, _, _ in
+            self.currentExpectation?.fulfill()
+        }
+        let successWithUnexpectedSuccessBlock: (Any?, URLResponse?) -> Void = { _, _ in
+            XCTFail("Request should not have succeeded.")
+            self.currentExpectation?.fulfill()
+        }
+
+        let request = RestClient.sharedInstance.requestForResources(SFRestDefaultAPIVersion)
+        RestClient.sharedInstance.send(request, failureBlock: failWithExpectedFail, successBlock: successWithUnexpectedSuccessBlock)
+        waitForExpectations(timeout: 15)
+        XCTAssertEqual(0, RestClient.sharedInstance.activeRequests.count, "Active requests queue should be empty.")
+        currentUser?.credentials.instanceUrl = origInstanceUrl
+        dataCleanupRequired = false
+    }
+
+    func testFileSharesWithUserCommunity() {
+        guard let creds = OAuthCredentials.credentials(identifier: "CLIENT ID", clientId: "CLIENT ID", encrypted: false) else { return }
+        creds.userId = "USERID"
+        creds.organizationId = "ORGID"
+        creds.communityId = "COMMUNITYID"
+        creds.instanceUrl = URL(string: "https://sample.domain")
+        let account = UserAccount(credentials: creds)
+        account.transitionToLoginState(.loggedIn)
+        guard let restAPI = RestClient.restClient(for: account) else { return }
+        XCTAssertNotNil(restAPI, "RestApi instance for this user must exist")
+        let request = restAPI.requestForFilesSharedWithUser("someid", page: 0, apiVersion: SFRestDefaultAPIVersion)
+        XCTAssertNotNil(request, "Request should have been created")
+        guard let urlRequest = request.prepareRequestForSend(account) else { return }
+        let urlString = urlRequest.url?.absoluteString ?? ""
+        XCTAssertTrue(urlString.range(of: "connect/communities/COMMUNITYID/") != nil, "The URL must have communities path")
+        dataCleanupRequired = false
+    }
+
+    func testFilesInUsersGroupsWithCommunity() {
+        guard let creds = OAuthCredentials.credentials(identifier: "CLIENT ID", clientId: "CLIENT ID", encrypted: false) else { return }
+        creds.userId = "USERID"
+        creds.organizationId = "ORGID"
+        creds.instanceUrl = URL(string: "https://sample.domain")
+        creds.communityId = "COMMUNITYID"
+        let account = UserAccount(credentials: creds)
+        account.transitionToLoginState(.loggedIn)
+        guard let restAPI = RestClient.restClient(for: account) else { return }
+        XCTAssertNotNil(restAPI, "RestApi instance for this user must exist")
+        let request = restAPI.requestForFilesInUsersGroups(creds.userId, page: 0, apiVersion: SFRestDefaultAPIVersion)
+        XCTAssertNotNil(request, "Request should have been created")
+        guard let urlRequest = request.prepareRequestForSend(account) else { return }
+        let urlString = urlRequest.url?.absoluteString ?? ""
+        XCTAssertTrue(urlString.range(of: "connect/communities/COMMUNITYID/") != nil, "The URL must have communities path")
+        dataCleanupRequired = false
+    }
+
+    func testGetLayoutWithObjectAPINameWithoutLayoutType() {
+        let request = RestClient.sharedInstance.requestForLayout(withObjectAPIName: kContact, formFactor: nil, layoutType: nil, mode: nil, recordTypeId: nil, apiVersion: SFRestDefaultAPIVersion)
+        let response = sendSyncRequest(request)
+        XCTAssertEqual(response.returnStatus, kTestRequestStatusDidLoad, "request failed")
+        dataCleanupRequired = false
+    }
+
+    func testGetLayoutWithObjectAPINameWithoutMode() {
+        let request = RestClient.sharedInstance.requestForLayout(withObjectAPIName: kContact, formFactor: nil, layoutType: nil, mode: nil, recordTypeId: nil, apiVersion: SFRestDefaultAPIVersion)
+        let response = sendSyncRequest(request)
+        XCTAssertEqual(response.returnStatus, kTestRequestStatusDidLoad, "request failed")
+        dataCleanupRequired = false
+    }
+
+    func testGetLayoutWithObjectAPINameWithoutRecordTypeId() {
+        let request = RestClient.sharedInstance.requestForLayout(withObjectAPIName: kContact, formFactor: nil, layoutType: nil, mode: nil, recordTypeId: nil, apiVersion: SFRestDefaultAPIVersion)
+        let response = sendSyncRequest(request)
+        XCTAssertEqual(response.returnStatus, kTestRequestStatusDidLoad, "request failed")
+        dataCleanupRequired = false
+    }
+
+    func testNoTrailingQuestionMarkForEmptyParams() {
+        let pathWithParams = "/rest/endpoint?page=10"
+        let request = RestRequest(method: .GET, path: pathWithParams, queryParams: [:])
+        request.endpoint = "/services/apex"
+        guard let currentUser = currentUser else { return }
+        guard let urlRequest = request.prepareRequestForSend(currentUser) else { return }
+        XCTAssertTrue(urlRequest.url?.absoluteString.hasSuffix(pathWithParams) ?? false, "Wrong URL")
+        dataCleanupRequired = false
+    }
+
+    func testOwnedFilesListWithCommunity() {
+        guard let creds = OAuthCredentials.credentials(identifier: "CLIENT ID", clientId: "CLIENT ID", encrypted: false) else { return }
+        creds.userId = "USERID"
+        creds.organizationId = "ORGID"
+        creds.communityId = "COMMUNITYID"
+        creds.instanceUrl = URL(string: "https://sample.domain")
+        let account = UserAccount(credentials: creds)
+        account.transitionToLoginState(.loggedIn)
+        guard let restAPI = RestClient.restClient(for: account) else { return }
+        XCTAssertNotNil(restAPI, "RestApi instance for this user must exist")
+        let request = restAPI.requestForOwnedFilesList(creds.userId, page: 0, apiVersion: SFRestDefaultAPIVersion)
+        XCTAssertNotNil(request, "Request should have been created")
+        guard let urlRequest = request.prepareRequestForSend(account) else { return }
+        let urlString = urlRequest.url?.absoluteString ?? ""
+        XCTAssertTrue(urlString.range(of: "connect/communities/COMMUNITYID/") != nil, "The URL must have communities path")
+        dataCleanupRequired = false
+    }
+
+    func testOwnedFilesListWithCommunityWithHeaders() {
+        guard let creds = OAuthCredentials.credentials(identifier: "CLIENT ID", clientId: "CLIENT ID", encrypted: false) else { return }
+        creds.userId = "USERID"
+        creds.organizationId = "ORGID"
+        creds.communityId = "COMMUNITYID"
+        creds.instanceUrl = URL(string: "https://sample.domain")
+        let account = UserAccount(credentials: creds)
+        account.transitionToLoginState(.loggedIn)
+        guard let restAPI = RestClient.restClient(for: account) else { return }
+        XCTAssertNotNil(restAPI, "RestApi instance for this user must exist")
+        let request = restAPI.requestForOwnedFilesList(creds.userId, page: 0, apiVersion: SFRestDefaultAPIVersion)
+        let simpleType = "ASimpleType"
+        let simpleTypeLength = "100000"
+        request.setHeaderValue(simpleType, forHeaderName: "Content-type")
+        request.setHeaderValue(simpleTypeLength, forHeaderName: "Content-Length")
+        XCTAssertNotNil(request, "Request should have been created")
+        guard let urlRequest = request.prepareRequestForSend(account) else { return }
+        XCTAssertEqual(simpleTypeLength, urlRequest.value(forHTTPHeaderField: "Content-Length"))
+        XCTAssertEqual(simpleType, urlRequest.value(forHTTPHeaderField: "Content-Type"))
+        let urlString = urlRequest.url?.absoluteString ?? ""
+        XCTAssertTrue(urlString.range(of: "connect/communities/COMMUNITYID/") != nil, "The URL must have communities path")
+        dataCleanupRequired = false
+    }
+
+    func testParsePrimingRecordsResponse() {
+        guard let dict = try? JSONSerialization.jsonObject(with: "{\"primingRecords\":{\"Account\":{\"012S00000009B8HIAU\":[{\"id\":\"001S000001QEDnzIAH\", \"systemModstamp\":\"2021-08-23T18:42:32.000Z\"}, {\"id\":\"001S000000va6rGIAQ\", \"systemModstamp\":\"2019-02-09T02:19:38.000Z\"}]}, \"Contact\":{\"012000000000000AAA\":[{\"id\":\"003S00000129813IAA\", \"systemModstamp\":\"2018-12-22T06:13:59.000Z\"}, {\"id\":\"003S0000012LUhRIAW\", \"systemModstamp\":\"2019-01-12T06:13:11.000Z\"}, {\"id\":\"003S0000012hWwRIAU\", \"systemModstamp\":\"2019-01-30T00:59:06.000Z\"}]}}, \"relayToken\":\"fake-token\", \"ruleErrors\":[{\"ruleId\":\"rule-1\"}, {\"ruleId\":\"rule-2\"}], \"stats\":{\"recordCountServed\":100, \"recordCountTotal\":200, \"ruleCountServed\":2, \"ruleCountTotal\":3}}".data(using: .utf8)!) as? [String: Any] else { return }
+
+        let primingRecordsResponse = PrimingRecordsResponse(dict: dict as NSDictionary)
+
+        XCTAssertEqual(primingRecordsResponse.primingRecords.count, 2)
+        XCTAssertEqual(primingRecordsResponse.primingRecords["Account"]?.count, 1)
+        XCTAssertEqual(primingRecordsResponse.primingRecords["Account"]?["012S00000009B8HIAU"]?.count, 2)
+        XCTAssertEqual(primingRecordsResponse.primingRecords["Account"]?["012S00000009B8HIAU"]?[0].objectId, "001S000001QEDnzIAH")
+        XCTAssertEqual(primingRecordsResponse.primingRecords["Account"]?["012S00000009B8HIAU"]?[1].objectId, "001S000000va6rGIAQ")
+        XCTAssertEqual(primingRecordsResponse.primingRecords["Account"]?["012S00000009B8HIAU"]?[0].systemModstamp.timeIntervalSince1970, 1629744152)
+
+        XCTAssertEqual(primingRecordsResponse.primingRecords["Contact"]?.count, 1)
+        XCTAssertEqual(primingRecordsResponse.primingRecords["Contact"]?["012000000000000AAA"]?.count, 3)
+        XCTAssertEqual(primingRecordsResponse.primingRecords["Contact"]?["012000000000000AAA"]?[0].objectId, "003S00000129813IAA")
+        XCTAssertEqual(primingRecordsResponse.primingRecords["Contact"]?["012000000000000AAA"]?[1].objectId, "003S0000012LUhRIAW")
+        XCTAssertEqual(primingRecordsResponse.primingRecords["Contact"]?["012000000000000AAA"]?[2].objectId, "003S0000012hWwRIAU")
+        XCTAssertEqual(primingRecordsResponse.primingRecords["Contact"]?["012000000000000AAA"]?[0].systemModstamp.timeIntervalSince1970, 1545459239)
+
+        XCTAssertEqual(primingRecordsResponse.relayToken, "fake-token")
+
+        XCTAssertEqual(primingRecordsResponse.ruleErrors.count, 2)
+        XCTAssertEqual(primingRecordsResponse.ruleErrors[0].ruleId, "rule-1")
+        XCTAssertEqual(primingRecordsResponse.ruleErrors[1].ruleId, "rule-2")
+
+        XCTAssertEqual(primingRecordsResponse.stats.recordCountServed, 100)
+        XCTAssertEqual(primingRecordsResponse.stats.recordCountTotal, 200)
+        XCTAssertEqual(primingRecordsResponse.stats.ruleCountServed, 2)
+        XCTAssertEqual(primingRecordsResponse.stats.ruleCountTotal, 3)
+        dataCleanupRequired = false
+    }
+
+    func testParsePrimingRecordsResponseFromServer() {
+        let request = RestClient.sharedInstance.requestForPrimingRecords(nil, changedAfterTimestamp: nil, apiVersion: SFRestDefaultAPIVersion)
+        let response = sendSyncRequest(request)
+        guard let dataResponse = response.dataResponse as? [String: Any] else { return }
+        do {
+            _ = PrimingRecordsResponse(dict: dataResponse as NSDictionary)
+        } catch {
+            XCTFail("Unexpected error \(error)")
+        }
+        dataCleanupRequired = false
+    }
+
+    func testRefreshNotificationWithValidGetRequest() {
+        let invalidAccessToken = "xyz"
+        changeOauthTokens(accessToken: invalidAccessToken, refreshToken: nil)
+
+        expectation(forNotification: NSNotification.Name.sfNotificationUserDidRefreshToken, object: nil) { notification in
+            return notification.userInfo?[kSFNotificationUserInfoAccountKey] != nil
+        }
+
+        let request = RestClient.sharedInstance.requestForResources(SFRestDefaultAPIVersion)
+        let response = sendSyncRequest(request)
+        waitForExpectations(timeout: 10.0)
+        XCTAssertEqual(response.returnStatus, kTestRequestStatusDidLoad, "request failed")
+
+        let newAccessToken = currentUser?.credentials.accessToken ?? ""
+        XCTAssertFalse(newAccessToken == invalidAccessToken, "access token wasn't refreshed")
+        dataCleanupRequired = false
+    }
+
+    func testRequestForInvokeNotificationActionWithVersion() {
+        let notificationId = "67890"
+        let actionIdentifier = "deny_action"
+        let customAPIVersion = "v64.0"
+        let api = RestClient.sharedInstance
+
+        let request = api.requestForInvokeNotificationAction(notificationId, actionIdentifier: actionIdentifier, apiVersion: customAPIVersion)
+
+        XCTAssertNotNil(request, "Expected request object to be created.")
+        XCTAssertEqual(request.method, .POST, "Expected POST method.")
+        let expectedPath = "/\(customAPIVersion)/connect/notifications/\(notificationId)/actions/\(actionIdentifier)"
+        XCTAssertEqual(request.path, expectedPath)
+        dataCleanupRequired = false
+    }
+
+    func testRequestForNotificationTypesWithVersion() {
+        let customAPIVersion = "v64.0"
+        let request = RestClient.sharedInstance.requestForNotificationTypes(withVersion: customAPIVersion)
+
+        XCTAssertNotNil(request, "Expected request object to be created.")
+        XCTAssertEqual(request.method, RestRequest.Method.GET, "Expected GET method.")
+        let expectedPath = "/\(customAPIVersion)/connect/notifications/types"
+        XCTAssertEqual(request.path, expectedPath)
+        dataCleanupRequired = false
+    }
+
+    func testRequestWithCompositeRequest() {
+        let accountName = generateRecordName()
+        let contactName = generateRecordName()
+
+        let requestBuilder = CompositeRequestBuilder()
+
+        let createAccountRequest = RestClient.sharedInstance.requestForCreate(withObjectType: kAccount, fields: [kName: accountName], apiVersion: SFRestDefaultAPIVersion)
+        requestBuilder.addRequest(createAccountRequest, referenceId: "refAccount")
+
+        let createContactRequest = RestClient.sharedInstance.requestForCreate(withObjectType: kContact, fields: [kLastName: contactName, kAccountId: "@{refAccount.id}"], apiVersion: SFRestDefaultAPIVersion)
+        requestBuilder.addRequest(createContactRequest, referenceId: "refContact")
+
+        let queryForContact = RestClient.sharedInstance.requestForQuery("select Id, AccountId from Contact where LastName = '\(contactName)'", apiVersion: SFRestDefaultAPIVersion)
+        requestBuilder.addRequest(queryForContact, referenceId: "refQuery")
+
+        let response = sendSyncRequest(requestBuilder.buildCompositeRequest(RestClient.sharedInstance.apiVersion))
+
+        guard let dataResponse = response.dataResponse as? [String: Any],
+              let results = dataResponse[kCompositeResponse] as? [[String: Any]] else {
+            XCTFail("Invalid response"); return
+        }
+        XCTAssertEqual(3, results.count, "Wrong number of results")
+        XCTAssertEqual((results[0][kHttpStatusCode] as? Int), 201)
+        XCTAssertEqual((results[1][kHttpStatusCode] as? Int), 201)
+        XCTAssertEqual((results[2][kHttpStatusCode] as? Int), 200)
+
+        let accountId = (results[0][kBody] as? [String: Any])?[kLid] as? String
+        let contactId = (results[1][kBody] as? [String: Any])?[kLid] as? String
+        let queryRecords = (results[2][kBody] as? [String: Any])?[kRecords] as? [[String: Any]]
+        XCTAssertEqual(1, queryRecords?.count, "Wrong number of results for query request")
+        XCTAssertEqual(accountId, queryRecords?.first?[kAccountId] as? String, "Account id not returned by query")
+        XCTAssertEqual(contactId, queryRecords?.first?[kId] as? String, "Contact id not returned by query")
+    }
+
+    func testRequestWithCompositeRequestResponse() {
+        let accountName = generateRecordName()
+        let contactName = generateRecordName()
+
+        let requestBuilder = CompositeRequestBuilder()
+        let expectationComposite = expectation(description: "Composite Request")
+
+        let createAccountRequest = RestClient.sharedInstance.requestForCreate(withObjectType: kAccount, fields: [kName: accountName], apiVersion: SFRestDefaultAPIVersion)
+        requestBuilder.addRequest(createAccountRequest, referenceId: "refAccount")
+
+        let createContactRequest = RestClient.sharedInstance.requestForCreate(withObjectType: kContact, fields: [kLastName: contactName, kAccountId: "@{refAccount.id}"], apiVersion: SFRestDefaultAPIVersion)
+        requestBuilder.addRequest(createContactRequest, referenceId: "refContact")
+
+        let queryForContact = RestClient.sharedInstance.requestForQuery("select Id, AccountId from Contact where LastName = '\(contactName)'", apiVersion: SFRestDefaultAPIVersion)
+        requestBuilder.addRequest(queryForContact, referenceId: "refQuery")
+
+        let compositeRequest = requestBuilder.buildCompositeRequest(RestClient.sharedInstance.apiVersion)
+        var compositeResponse: CompositeResponse?
+        var error: NSError?
+
+        RestClient.sharedInstance.sendCompositeRequest(compositeRequest, failureBlock: { _, err, _ in
+            error = err as NSError?
+            expectationComposite.fulfill()
+        }, successBlock: { response, _ in
+            compositeResponse = response
+            expectationComposite.fulfill()
+        })
+
+        waitForExpectations(timeout: 30)
+        XCTAssertNil(error, "Error invoking composite api")
+        XCTAssertNotNil(compositeResponse, "Composite Response should not be nil")
+        XCTAssertNotNil(compositeResponse?.subResponses, "Composite Sub Responses should not be nil")
+        XCTAssertEqual(3, compositeResponse?.subResponses.count, "Wrong number of results")
+
+        guard let subResponses = compositeResponse?.subResponses else { return }
+        XCTAssertEqual(subResponses[0].httpStatusCode, 201)
+        XCTAssertEqual(subResponses[1].httpStatusCode, 201)
+        XCTAssertEqual(subResponses[2].httpStatusCode, 200)
+
+        XCTAssertNotNil(subResponses[0].body, "Subresponse must have a response body")
+        XCTAssertNotNil(subResponses[1].body, "Subresponse must have a response body")
+        XCTAssertNotNil(subResponses[2].body, "Subresponse must have a response body")
+
+        let accountId = (subResponses[0].body as? [String: Any])?[kLid] as? String
+        let contactId = (subResponses[1].body as? [String: Any])?[kLid] as? String
+        let queryRecords = (subResponses[2].body as? [String: Any])?[kRecords] as? [[String: Any]]
+
+        XCTAssertEqual(1, queryRecords?.count, "Wrong number of results for query request")
+        XCTAssertEqual(accountId, queryRecords?.first?[kAccountId] as? String, "Account id not returned by query")
+        XCTAssertEqual(contactId, queryRecords?.first?[kId] as? String, "Contact id not returned by query")
+    }
+
+    func testRestUrlForNetworkServiceType() {
+        let request = RestRequest(method: .GET, serviceHostType: .instance, baseURL: "http://www.apple.com", path: "/test/testing", queryParams: nil)
+
+        request.networkServiceType = .default
+        guard let currentUser = currentUser else { return }
+        var finalRequest = request.prepareRequestForSend(currentUser)
+        XCTAssertTrue(finalRequest?.networkServiceType == .default, "Network Service Type should have been set to NSURLNetworkServiceTypeDefault")
+
+        request.networkServiceType = .responsiveData
+        finalRequest = request.prepareRequestForSend(currentUser)
+        XCTAssertTrue(finalRequest?.networkServiceType == .responsiveData, "Network Service Type should have been set to NSURLNetworkServiceTypeResponsiveData")
+
+        request.networkServiceType = .background
+        finalRequest = request.prepareRequestForSend(currentUser)
+        XCTAssertTrue(finalRequest?.networkServiceType == .background, "Network Service Type should have been set to NSURLNetworkServiceTypeBackground")
+        dataCleanupRequired = false
+    }
+
+    func testSOQLQueryWithBatchSize() {
+        let request = RestClient.sharedInstance.requestForQuery("Select Name from Account", apiVersion: SFRestDefaultAPIVersion, batchSize: 250)
+        XCTAssertEqual("batchSize=250", request.customHeaders?["Sforce-Query-Options"] as? String)
+        let response = sendSyncRequest(request)
+        XCTAssertEqual(response.returnStatus, kTestRequestStatusDidLoad, "request failed")
+        dataCleanupRequired = false
+    }
+
+    func testSOQLWithNewLine() {
+        let lastName = "Silver-\(Date())"
+        let fields = [kFirstName: "LongJohn", kLastName: lastName]
+        var request = RestClient.sharedInstance.requestForCreate(withObjectType: kContact, fields: fields, apiVersion: SFRestDefaultAPIVersion)
+        var response = sendSyncRequest(request)
+        XCTAssertEqual(response.returnStatus, kTestRequestStatusDidLoad, "request failed")
+
+        guard let contactId = (response.dataResponse as? [String: Any])?[kLid] as? String else {
+            XCTFail("id not present"); return
+        }
+
+        defer {
+            request = RestClient.sharedInstance.requestForDelete(withObjectType: kContact, objectId: contactId, apiVersion: SFRestDefaultAPIVersion)
+            _ = sendSyncRequest(request)
+        }
+
+        let queryString = "SELECT Id,\n FirstName,\n LastName\n FROM Contact \nWHERE Id = '\(contactId)'"
+
+        request = RestClient.sharedInstance.requestForQuery(queryString, apiVersion: SFRestDefaultAPIVersion)
+        response = sendSyncRequest(request)
+        XCTAssertEqual(response.returnStatus, kTestRequestStatusDidLoad, "request failed")
+        let records = (response.dataResponse as? [String: Any])?[kRecords] as? [[String: Any]]
+        XCTAssertEqual(records?.count, 1, "expected 1 record")
+    }
+
+    func testSalesforceFullUrlPath() {
+        let fullPathURL = "https://some.custom.url/A/B/C"
+        let request = RestRequest(method: .GET, path: fullPathURL, queryParams: nil)
+        guard let currentUser = currentUser else { return }
+        guard let urlRequest = request.prepareRequestForSend(currentUser) else { return }
+        XCTAssertNotNil(urlRequest, "UrlRequest URL should not be nil")
+        let urlString = urlRequest.url?.absoluteString ?? ""
+        XCTAssertTrue(urlString.hasPrefix(fullPathURL) && urlString.range(of: fullPathURL) != nil, "The URL must match the setting of full URL in path")
+        dataCleanupRequired = false
+    }
+
+    func testUpdateNotificationRequestPath() {
+        let builder = UpdateNotificationsRequestBuilder()
+        let notificationId = "testID"
+        builder.setNotificationId(notificationId)
+        let request = builder.buildUpdateNotificationsRequest(SFRestDefaultAPIVersion)
+        let expectedPath = "/connect/notifications/\(notificationId)"
+        XCTAssert(request.path.hasSuffix(expectedPath))
+        dataCleanupRequired = false
+    }
+
+    func testUpdateNotificationsRequestContent() {
+        let builder = UpdateNotificationsRequestBuilder()
+        let notificationIds = ["testID1", "testID2"]
+        builder.setNotificationIds(notificationIds)
+        let request = builder.buildUpdateNotificationsRequest(SFRestDefaultAPIVersion)
+        XCTAssert(request.path.hasSuffix("/connect/notifications"))
+        guard let requestBody = request.requestBodyAsDictionary else { return }
+        guard let requestNotificationIds = requestBody["notificationIds"] as? [String] else { return }
+        XCTAssertEqual(notificationIds, requestNotificationIds)
+        dataCleanupRequired = false
+    }
+
+    func testUpdateWithIfUnmodifiedSince() {
+        let accountName = generateRecordName()
+        let fields: [String: String] = [kName: accountName]
+        var request = RestClient.sharedInstance.requestForCreate(withObjectType: kAccount, fields: fields, apiVersion: SFRestDefaultAPIVersion)
+        var response = sendSyncRequest(request)
+        XCTAssertEqual(response.returnStatus, kTestRequestStatusDidLoad, "request should have succeeded")
+        guard let accountId = (response.dataResponse as? [String: Any])?[kLid] as? String else { return }
+
+        request = RestClient.sharedInstance.requestForRetrieve(withObjectType: kAccount, objectId: accountId, fieldList: "Name,LastModifiedDate", apiVersion: SFRestDefaultAPIVersion)
+        response = sendSyncRequest(request)
+        let retrievedName = (response.dataResponse as? [String: Any])?[kName] as? String
+        XCTAssertEqual(retrievedName, accountName, "wrong name retrieved")
+        guard let lastModifiedDateStr = (response.dataResponse as? [String: Any])?["LastModifiedDate"] as? String else { return }
+
+        let httpDateFormatter = DateFormatter()
+        httpDateFormatter.dateFormat = "EEE',' dd MMM yyyy HH':'mm':'ss 'GMT'"
+        guard let createdDate = httpDateFormatter.date(from: lastModifiedDateStr) else { return }
+
+        Thread.sleep(forTimeInterval: 1.0)
+
+        let accountNameUpdated = "\(accountName)_updated"
+        let fieldsUpdated: [String: String] = [kName: accountNameUpdated]
+        request = RestClient.sharedInstance.requestForUpdate(withObjectType: kAccount, objectId: accountId, fields: fieldsUpdated, ifUnmodifiedSinceDate: createdDate, apiVersion: SFRestDefaultAPIVersion)
+        response = sendSyncRequest(request)
+        XCTAssertEqual(response.returnStatus, kTestRequestStatusDidLoad, "request should have succeeded")
+
+        request = RestClient.sharedInstance.requestForRetrieve(withObjectType: kAccount, objectId: accountId, fieldList: kName, apiVersion: SFRestDefaultAPIVersion)
+        response = sendSyncRequest(request)
+        let secondRetrievedName = (response.dataResponse as? [String: Any])?[kName] as? String
+        XCTAssertEqual(secondRetrievedName, accountNameUpdated, "wrong name retrieved")
+
+        let pastDate = Date(timeIntervalSinceNow: -3600)
+        let blockedUpdatedName = "\(accountNameUpdated)_updated_again"
+        let blockedFieldsUpdated: [String: String] = [kName: blockedUpdatedName]
+        request = RestClient.sharedInstance.requestForUpdate(withObjectType: kAccount, objectId: accountId, fields: blockedFieldsUpdated, ifUnmodifiedSinceDate: pastDate, apiVersion: SFRestDefaultAPIVersion)
+        response = sendSyncRequest(request)
+        XCTAssertEqual(response.returnStatus, kTestRequestStatusDidFail, "request should failed")
+        XCTAssertEqual(response.lastError?.code, 412, "request should have returned a 412")
+
+        request = RestClient.sharedInstance.requestForRetrieve(withObjectType: kAccount, objectId: accountId, fieldList: kName, apiVersion: SFRestDefaultAPIVersion)
+        response = sendSyncRequest(request)
+        let thirdRetrievedName = (response.dataResponse as? [String: Any])?[kName] as? String
+        XCTAssertEqual(thirdRetrievedName, accountNameUpdated, "wrong name retrieved")
+    }
+
+    func testUploadBatchDetailsDeleteFiles() {
+        var fileAttrs = uploadFile()
+        let fileAttrs2 = uploadFile()
+
+        var request = RestClient.sharedInstance.requestForBatchFileDetails([fileAttrs[kLid] as? String ?? "", fileAttrs2[kLid] as? String ?? ""], apiVersion: SFRestDefaultAPIVersion)
+        var response = sendSyncRequest(request)
+        XCTAssertEqual(response.returnStatus, kTestRequestStatusDidLoad, "request failed")
+        guard let results1 = (response.dataResponse as? [String: Any])?[kResults] as? [[String: Any]] else { return }
+        XCTAssertEqual((results1[0][kStatusCode] as? Int), 200, "expected 200")
+        XCTAssertEqual((results1[1][kStatusCode] as? Int), 200, "expected 200")
+
+        request = RestClient.sharedInstance.requestForDelete(withObjectType: "ContentDocument", objectId: fileAttrs[kLid] as? String ?? "", apiVersion: SFRestDefaultAPIVersion)
+        response = sendSyncRequest(request)
+        XCTAssertEqual(response.returnStatus, kTestRequestStatusDidLoad, "request failed")
+
+        request = RestClient.sharedInstance.requestForBatchFileDetails([fileAttrs[kLid] as? String ?? "", fileAttrs2[kLid] as? String ?? ""], apiVersion: SFRestDefaultAPIVersion)
+        response = sendSyncRequest(request)
+        XCTAssertEqual(response.returnStatus, kTestRequestStatusDidLoad, "request failed")
+        guard let results2 = (response.dataResponse as? [String: Any])?[kResults] as? [[String: Any]] else { return }
+        XCTAssertEqual((results2[0][kStatusCode] as? Int), 404, "expected 404")
+        XCTAssertEqual((results2[1][kStatusCode] as? Int), 200, "expected 200")
+
+        request = RestClient.sharedInstance.requestForDelete(withObjectType: "ContentDocument", objectId: fileAttrs2[kLid] as? String ?? "", apiVersion: SFRestDefaultAPIVersion)
+        response = sendSyncRequest(request)
+        XCTAssertEqual(response.returnStatus, kTestRequestStatusDidLoad, "request failed")
+
+        request = RestClient.sharedInstance.requestForBatchFileDetails([fileAttrs[kLid] as? String ?? "", fileAttrs2[kLid] as? String ?? ""], apiVersion: SFRestDefaultAPIVersion)
+        response = sendSyncRequest(request)
+        XCTAssertEqual(response.returnStatus, kTestRequestStatusDidLoad, "request failed")
+        guard let results3 = (response.dataResponse as? [String: Any])?[kResults] as? [[String: Any]] else { return }
+        XCTAssertEqual((results3[0][kStatusCode] as? Int), 404, "expected 404")
+        XCTAssertEqual((results3[1][kStatusCode] as? Int), 404, "expected 404")
+    }
+
+    func testUploadBatchDetailsDeleteFilesCommunity() {
+        let fileAttrs = uploadFile()
+        let fileAttrs2 = uploadFile()
+        guard let creds = OAuthCredentials.credentials(identifier: "CLIENT ID", clientId: "CLIENT ID", encrypted: false) else { return }
+        creds.userId = "USERID"
+        creds.organizationId = "ORGID"
+        creds.communityId = "COMMUNITYID"
+        creds.instanceUrl = URL(string: "https://sample.domain")
+        let account = UserAccount(credentials: creds)
+        account.transitionToLoginState(.loggedIn)
+
+        guard let restAPI = RestClient.restClient(for: account) else { return }
+        XCTAssertNotNil(restAPI, "RestApi instance for this user must exist")
+        let request = restAPI.requestForBatchFileDetails([fileAttrs[kLid] as? String ?? "", fileAttrs2[kLid] as? String ?? ""], apiVersion: SFRestDefaultAPIVersion)
+        XCTAssertNotNil(request, "Request should have been created")
+        guard let urlRequest = request.prepareRequestForSend(account) else { return }
+        let urlString = urlRequest.url?.absoluteString ?? ""
+        XCTAssertTrue(urlString.range(of: "connect/communities/COMMUNITYID/") != nil, "The URL must have communities path")
+        dataCleanupRequired = false
+    }
+
+    func testUploadDetailsDeleteFile() {
+        let fileAttrs = uploadFile()
+
+        var request = RestClient.sharedInstance.requestForFileDetails(fileAttrs[kLid] as? String ?? "", forVersion: nil, apiVersion: SFRestDefaultAPIVersion)
+        var response = sendSyncRequest(request)
+        XCTAssertEqual(response.returnStatus, kTestRequestStatusDidLoad, "request failed")
+
+        request = RestClient.sharedInstance.requestForDelete(withObjectType: "ContentDocument", objectId: fileAttrs[kLid] as? String ?? "", apiVersion: SFRestDefaultAPIVersion)
+        response = sendSyncRequest(request)
+        XCTAssertEqual(response.returnStatus, kTestRequestStatusDidLoad, "request failed")
+
+        request = RestClient.sharedInstance.requestForFileDetails(fileAttrs[kLid] as? String ?? "", forVersion: nil, apiVersion: SFRestDefaultAPIVersion)
+        response = sendSyncRequest(request)
+        XCTAssertEqual(response.returnStatus, kTestRequestStatusDidFail, "request was supposed to fail")
+        XCTAssertEqual(response.lastError?.code, 404, "invalid code")
+    }
+
+    func testUploadDetailsDeleteFileWithCommunity() {
+        guard let creds = OAuthCredentials.credentials(identifier: "CLIENT ID", clientId: "CLIENT ID", encrypted: false) else { return }
+        creds.userId = "USERID"
+        creds.organizationId = "ORGID"
+        creds.communityId = "COMMUNITYID"
+        creds.instanceUrl = URL(string: "https://sample.domain")
+        let account = UserAccount(credentials: creds)
+        account.transitionToLoginState(.loggedIn)
+
+        let fileAttrs = uploadFile()
+        guard let restAPI = RestClient.restClient(for: account) else { return }
+        XCTAssertNotNil(restAPI, "RestApi instance for this user must exist")
+        let request = restAPI.requestForFileDetails(fileAttrs[kLid] as? String ?? "", forVersion: nil, apiVersion: SFRestDefaultAPIVersion)
+        XCTAssertNotNil(request, "Request should have been created")
+        guard let urlRequest = request.prepareRequestForSend(account) else { return }
+        let urlString = urlRequest.url?.absoluteString ?? ""
+        XCTAssertTrue(urlString.range(of: "connect/communities/COMMUNITYID/") != nil, "The URL must have communities path")
+        dataCleanupRequired = false
+    }
+
+    func testUploadDownloadDeleteFileWithCommunity() {
+        guard let creds = OAuthCredentials.credentials(identifier: "CLIENT ID", clientId: "CLIENT ID", encrypted: false) else { return }
+        creds.userId = "USERID"
+        creds.organizationId = "ORGID"
+        creds.communityId = "COMMUNITYID"
+        creds.instanceUrl = URL(string: "https://sample.domain")
+        let account = UserAccount(credentials: creds)
+        account.transitionToLoginState(.loggedIn)
+
+        let fileAttrs = uploadFile()
+        guard let restAPI = RestClient.restClient(for: account) else { return }
+        XCTAssertNotNil(restAPI, "RestApi instance for this user must exist")
+        var request = restAPI.requestForFileRendition(fileAttrs[kLid] as? String ?? "", version: nil, renditionType: "PDF", page: 0, apiVersion: SFRestDefaultAPIVersion)
+        XCTAssertNotNil(request, "Request should have been created")
+        var urlRequest = request.prepareRequestForSend(account)
+        var urlString = urlRequest?.url?.absoluteString ?? ""
+        XCTAssertTrue(urlString.range(of: "connect/communities/COMMUNITYID/") != nil, "The URL must have communities path")
+
+        request = restAPI.requestForDelete(withObjectType: "ContentDocument", objectId: fileAttrs[kLid] as? String ?? "", apiVersion: SFRestDefaultAPIVersion)
+        urlRequest = request.prepareRequestForSend(account)
+        urlString = urlRequest?.url?.absoluteString ?? ""
+        XCTAssertTrue(urlString.range(of: "connect/communities/COMMUNITYID/") != nil, "The URL must have communities path")
+
+        request = restAPI.requestForFileContents(fileAttrs[kLid] as? String ?? "", version: nil, apiVersion: SFRestDefaultAPIVersion)
+        urlRequest = request.prepareRequestForSend(account)
+        urlString = urlRequest?.url?.absoluteString ?? ""
+        XCTAssertTrue(urlString.range(of: "connect/communities/COMMUNITYID/") != nil, "The URL must have communities path")
+        dataCleanupRequired = false
+    }
+
+    func testUploadOwnedFilesDelete() {
+        let fileAttrs = uploadFile()
+        var request = RestClient.sharedInstance.requestForOwnedFilesList(nil, page: 0, apiVersion: SFRestDefaultAPIVersion)
+        var response = sendSyncRequest(request)
+        XCTAssertEqual(response.returnStatus, kTestRequestStatusDidLoad, "request failed")
+
+        let fileAttrs2 = uploadFile()
+
+        request = RestClient.sharedInstance.requestForOwnedFilesList(nil, page: 0, apiVersion: SFRestDefaultAPIVersion)
+        response = sendSyncRequest(request)
+        XCTAssertEqual(response.returnStatus, kTestRequestStatusDidLoad, "request failed")
+
+        request = RestClient.sharedInstance.requestForDelete(withObjectType: "ContentDocument", objectId: fileAttrs2[kLid] as? String ?? "", apiVersion: SFRestDefaultAPIVersion)
+        response = sendSyncRequest(request)
+        XCTAssertEqual(response.returnStatus, kTestRequestStatusDidLoad, "request failed")
+
+        request = RestClient.sharedInstance.requestForOwnedFilesList(nil, page: 0, apiVersion: SFRestDefaultAPIVersion)
+        response = sendSyncRequest(request)
+        XCTAssertEqual(response.returnStatus, kTestRequestStatusDidLoad, "request failed")
+
+        request = RestClient.sharedInstance.requestForDelete(withObjectType: "ContentDocument", objectId: fileAttrs[kLid] as? String ?? "", apiVersion: SFRestDefaultAPIVersion)
+        response = sendSyncRequest(request)
+        XCTAssertEqual(response.returnStatus, kTestRequestStatusDidLoad, "request failed")
+    }
+
+    func testUploadProfilePhoto() {
+        let timecode = Date.timeIntervalSinceReferenceDate
+        let fileTitle = "FileName\(timecode).png"
+        guard let fileData = SFSDKResourceUtils.imageNamed("salesforce-logo")?.pngData() else { return }
+        let fileMimeType = "application/octet-stream"
+
+        let request = RestClient.sharedInstance.requestForProfilePhotoUpload(fileData, fileName: fileTitle, mimeType: fileMimeType, userId: currentUser?.credentials.userId ?? "", apiVersion: SFRestDefaultAPIVersion)
+        let response = sendSyncRequest(request)
+
+        XCTAssertEqual(response.returnStatus, kTestRequestStatusDidLoad, "request failed")
+    }
+
+    func testUploadProfilePhotoCommunity() {
+        guard let creds = OAuthCredentials.credentials(identifier: "CLIENT ID", clientId: "CLIENT ID", encrypted: false) else { return }
+        creds.userId = "USERID"
+        creds.organizationId = "ORGID"
+        creds.instanceUrl = URL(string: "https://sample.domain")
+        creds.communityId = "COMMUNITYID"
+        let account = UserAccount(credentials: creds)
+        account.transitionToLoginState(.loggedIn)
+        guard let restAPI = RestClient.restClient(for: account) else { return }
+        XCTAssertNotNil(restAPI, "RestApi instance for this user must exist")
+
+        let timecode = Date.timeIntervalSinceReferenceDate
+        let fileTitle = "FileName\(timecode).png"
+        guard let fileData = SFSDKResourceUtils.imageNamed("salesforce-logo")?.pngData() else { return }
+        let fileMimeType = "application/octet-stream"
+        let request = restAPI.requestForProfilePhotoUpload(fileData, fileName: fileTitle, mimeType: fileMimeType, userId: creds.userId ?? "", apiVersion: SFRestDefaultAPIVersion)
+
+        XCTAssertNotNil(request, "Request should have been created")
+        guard let urlRequest = request.prepareRequestForSend(account) else { return }
+        let urlString = urlRequest.url?.absoluteString ?? ""
+        XCTAssertTrue(urlString.range(of: "connect/communities/COMMUNITYID/user-profiles/") != nil, "The URL must have communities path")
+        dataCleanupRequired = false
+    }
+
     // MARK: - Private Helpers
 
     private func makeRecords(_ typeFieldNameValues: [[String]]) -> [[String: Any]] {
@@ -1134,6 +2267,93 @@ class SalesforceRestAPITests: XCTestCase {
             records.append(record)
         }
         return records
+    }
+
+    func testUploadShareFileSharesSharedFilesUnshareDelete() {
+        // upload file
+        let fileAttrs = uploadFile()
+        let fileId = fileAttrs[kLid] as? String ?? ""
+
+        // get id of other user
+        let otherUserId = getOtherUser()
+
+        // get file shares
+        var request = RestClient.sharedInstance.requestForFileShares(fileId, page: 0, apiVersion: SFRestDefaultAPIVersion)
+        var response = sendSyncRequest(request)
+        XCTAssertEqual(response.returnStatus, kTestRequestStatusDidLoad, "request failed")
+        var shares = (response.dataResponse as? [String: Any])?["shares"] as? [[String: Any]] ?? []
+        XCTAssertEqual(shares.count, 1, "expected one share")
+        XCTAssertEqual((shares.first?["entity"] as? [String: Any])?[kLid] as? String, currentUser?.credentials.userId, "expected share with current user")
+        XCTAssertEqual(shares.first?["sharingType"] as? String, "I", "wrong sharing type")
+
+        // get count files shared with other user
+        request = RestClient.sharedInstance.requestForFilesSharedWithUser(otherUserId, page: 0, apiVersion: SFRestDefaultAPIVersion)
+        response = sendSyncRequest(request)
+        XCTAssertEqual(response.returnStatus, kTestRequestStatusDidLoad, "request failed")
+        let countFilesSharedWithOtherUser = ((response.dataResponse as? [String: Any])?["files"] as? [[String: Any]] ?? []).count
+
+        // share file with other user
+        request = RestClient.sharedInstance.requestForAddFileShare(fileId, entityId: otherUserId, shareType: "V", apiVersion: SFRestDefaultAPIVersion)
+        response = sendSyncRequest(request)
+        XCTAssertEqual(response.returnStatus, kTestRequestStatusDidLoad, "request failed")
+        let shareId = (response.dataResponse as? [String: Any])?[kLid] as? String ?? ""
+
+        // get file shares again
+        request = RestClient.sharedInstance.requestForFileShares(fileId, page: 0, apiVersion: SFRestDefaultAPIVersion)
+        response = sendSyncRequest(request)
+        XCTAssertEqual(response.returnStatus, kTestRequestStatusDidLoad, "request failed")
+        shares = (response.dataResponse as? [String: Any])?["shares"] as? [[String: Any]] ?? []
+        var actualUserIdToType = [String: String]()
+        for share in shares {
+            let shareEntityId = (share["entity"] as? [String: Any])?[kLid] as? String ?? ""
+            let shareType = share["sharingType"] as? String ?? ""
+            actualUserIdToType[shareEntityId] = shareType
+        }
+        XCTAssertEqual(actualUserIdToType.count, 2, "expected two shares")
+        XCTAssertTrue(actualUserIdToType.keys.contains(currentUser?.credentials.userId ?? ""), "expected share with current user")
+        XCTAssertEqual(actualUserIdToType[currentUser?.credentials.userId ?? ""], "I", "wrong sharing type for current user")
+        XCTAssertTrue(actualUserIdToType.keys.contains(otherUserId), "expected shared with other user")
+        XCTAssertEqual(actualUserIdToType[otherUserId], "V", "wrong sharing type for other user")
+
+        // get count files shared with other user
+        request = RestClient.sharedInstance.requestForFilesSharedWithUser(otherUserId, page: 0, apiVersion: SFRestDefaultAPIVersion)
+        response = sendSyncRequest(request)
+        XCTAssertEqual(response.returnStatus, kTestRequestStatusDidLoad, "request failed")
+        XCTAssertEqual(((response.dataResponse as? [String: Any])?["files"] as? [[String: Any]] ?? []).count, countFilesSharedWithOtherUser + 1, "expected one more file shared with other user")
+
+        // unshare file from other user
+        request = RestClient.sharedInstance.requestForDeleteFileShare(shareId, apiVersion: SFRestDefaultAPIVersion)
+        response = sendSyncRequest(request)
+        XCTAssertEqual(response.returnStatus, kTestRequestStatusDidLoad, "request failed")
+
+        // get files shares again
+        request = RestClient.sharedInstance.requestForFileShares(fileId, page: 0, apiVersion: SFRestDefaultAPIVersion)
+        response = sendSyncRequest(request)
+        XCTAssertEqual(response.returnStatus, kTestRequestStatusDidLoad, "request failed")
+        shares = (response.dataResponse as? [String: Any])?["shares"] as? [[String: Any]] ?? []
+        XCTAssertEqual(shares.count, 1, "expected one share")
+        XCTAssertEqual((shares.first?["entity"] as? [String: Any])?[kLid] as? String, currentUser?.credentials.userId, "expected share with current user")
+        XCTAssertEqual(shares.first?["sharingType"] as? String, "I", "wrong sharing type")
+
+        // get count files shared with other user
+        request = RestClient.sharedInstance.requestForFilesSharedWithUser(otherUserId, page: 0, apiVersion: SFRestDefaultAPIVersion)
+        response = sendSyncRequest(request)
+        XCTAssertEqual(response.returnStatus, kTestRequestStatusDidLoad, "request failed")
+        XCTAssertEqual(((response.dataResponse as? [String: Any])?["files"] as? [[String: Any]] ?? []).count, countFilesSharedWithOtherUser, "expected one less file shared with other user")
+
+        // delete file
+        request = RestClient.sharedInstance.requestForDelete(withObjectType: "ContentDocument", objectId: fileId, apiVersion: SFRestDefaultAPIVersion)
+        response = sendSyncRequest(request)
+        XCTAssertEqual(response.returnStatus, kTestRequestStatusDidLoad, "request failed")
+    }
+
+    private func getOtherUser() -> String {
+        let soql = "SELECT Id FROM User WHERE Id != '\(currentUser?.credentials.userId ?? "")'"
+        let request = RestClient.sharedInstance.requestForQuery(soql, apiVersion: SFRestDefaultAPIVersion)
+        let response = sendSyncRequest(request)
+        XCTAssertEqual(response.returnStatus, kTestRequestStatusDidLoad, "request failed")
+        let records = (response.dataResponse as? [String: Any])?[kRecords] as? [[String: Any]]
+        return records?.first?[kId] as? String ?? ""
     }
 
     private func uploadFile() -> [String: Any] {

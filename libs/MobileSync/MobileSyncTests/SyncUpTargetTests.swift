@@ -315,6 +315,55 @@ class SyncUpTargetTests: SyncManagerTestCase {
         for (key, value) in idToFieldsUpdated { idToFields[key] = value }
     }
 
+    /// Sync down the test accounts, delete account on server, update same account locally, sync up with merge mode LEAVE_IF_CHANGED, check smartstore and server afterwards
+    func testSyncUpWithLocallyUpdatedRemotelyDeletedRecordsWithoutOverwrite() {
+        createTestData()
+        trySyncDown(.overwrite)
+
+        let idToFieldsLocallyUpdated = makeSomeLocalChanges()
+        let ids = Array(idToFieldsLocallyUpdated.keys)
+
+        let remotelyDeletedId = ids[0]
+        deleteAccounts(onServer: [remotelyDeletedId])
+
+        trySyncUp(ids.count, mergeMode: .leaveIfChanged)
+
+        let idsClause = buildInClause(ids)
+        let smartSql = "SELECT {accounts:_soup} FROM {accounts} WHERE {accounts:Id} IN \(idsClause)"
+        guard let query = QuerySpec.buildSmartQuerySpec(smartSql: smartSql, pageSize: UInt(ids.count)) else { return }
+        let rows = (try? store.query(using: query, startingFromPageIndex: 0)) ?? []
+        for row in rows {
+            guard let rowArray = row as? [Any], let account = rowArray[0] as? [String: Any] else { continue }
+            let accountId = account[ID] as? String ?? ""
+            if accountId == remotelyDeletedId {
+                XCTAssertEqual(true, account[kSyncTargetLocal] as? Bool)
+                XCTAssertEqual(false, account[kSyncTargetLocallyCreated] as? Bool)
+                XCTAssertEqual(true, account[kSyncTargetLocallyUpdated] as? Bool)
+                XCTAssertEqual(false, account[kSyncTargetLocallyDeleted] as? Bool)
+            } else {
+                XCTAssertEqual(false, account[kSyncTargetLocal] as? Bool)
+                XCTAssertEqual(false, account[kSyncTargetLocallyCreated] as? Bool)
+                XCTAssertEqual(false, account[kSyncTargetLocallyUpdated] as? Bool)
+                XCTAssertEqual(false, account[kSyncTargetLocallyDeleted] as? Bool)
+            }
+        }
+
+        let soql = "SELECT Id, Name, Description FROM Account WHERE Id IN \(idsClause)"
+        let request = RestClient.sharedInstance.requestForQuery(soql, apiVersion: SFRestDefaultAPIVersion)
+        guard let records = sendSyncRequest(request)?[RECORDS] as? [[String: Any]] else { return }
+        var idsOnServer: [String] = []
+        for record in records {
+            let recordId = record[ID] as? String ?? ""
+            idsOnServer.append(recordId)
+            if let expectedFields = idToFieldsLocallyUpdated[recordId] {
+                XCTAssertEqual(expectedFields[NAME] as? String, record[NAME] as? String)
+                XCTAssertEqual(expectedFields[DESCRIPTION] as? String, record[DESCRIPTION] as? String)
+            }
+        }
+        XCTAssertFalse(idsOnServer.contains(remotelyDeletedId))
+        XCTAssertEqual(ids.count - 1, idsOnServer.count)
+    }
+
     /// Sync down the test accounts, delete account on server, delete same account locally, sync up
     func testSyncUpWithLocallyDeletedRemotelyDeletedRecords() {
         createTestData()
@@ -358,6 +407,11 @@ class SyncUpTargetTests: SyncManagerTestCase {
         trySyncUp(3, mergeMode: .leaveIfChanged)
         checkDbStateFlags(idsLocallyDeleted, soupName: ACCOUNTS_SOUP, expectedLocallyCreated: false, expectedLocallyUpdated: false, expectedLocallyDeleted: true)
         checkServer(idToFieldsRemotelyUpdated)
+    }
+
+    /// Sync up many locally created records
+    func testSyncUpManyLocallyCreatedRecords() {
+        trySyncUpWithLocallyCreatedRecords(.overwrite, countRecords: 500)
     }
 
     /// Create accounts locally but with external id field populated, sync up with external id field name provided

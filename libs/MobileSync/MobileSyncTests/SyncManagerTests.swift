@@ -678,6 +678,216 @@ class SyncManagerTests: SyncManagerTestCase {
         checkDbForAfterTestSyncDown(target, soupName: ACCOUNTS_SOUP, expectedNumberOfRecords: numberOfRecords)
     }
 
+    /// Tests resync for a refresh-sync-down when there are more records in the table than can be enumerated in one soql call to the server
+    func testRefreshReSyncWithMultipleRoundTrips() {
+        createTestData()
+
+        // Adding soup elements with just ids to soup
+        for accountId in idToFields.keys {
+            _ = store.upsert(entries: [[ID: accountId]] as! [[String: Any]], forSoupNamed: ACCOUNTS_SOUP)
+        }
+
+        // Running a refresh-sync-down for soup with one id per soql query (to force multiple round trips)
+        let target = SFRefreshSyncDownTarget.newSyncTarget(ACCOUNTS_SOUP, objectType: ACCOUNT_TYPE, fieldlist: [ID, NAME, DESCRIPTION, LAST_MODIFIED_DATE])
+        // target.countIdsPerSoql = 1 // private - skip in Swift
+        let syncId = NSNumber(value: trySyncDown(.overwrite, target: target, soupName: ACCOUNTS_SOUP, totalSize: UInt(idToFields.count), numberFetches: UInt(idToFields.count)))
+
+        // Check sync time stamp
+        guard let sync = syncManager.getSyncStatus(syncId) else { return }
+        let options = sync.options
+        let maxTimeStamp = sync.maxTimeStamp
+        XCTAssertTrue(maxTimeStamp > 0, "Wrong time stamp")
+
+        // Make sure the soup has the records with id and names
+        checkDb(idToFields)
+
+        // Make some remote changes
+        let idToFieldsUpdated = makeSomeRemoteChanges()
+
+        // Call reSync
+        let queue = SFSyncUpdateCallbackQueue()
+        _ = queue.runReSync(syncId, syncManager: syncManager)
+
+        // Check status updates
+        checkStatus(queue.getNextSyncUpdate(), expectedType: .down, expectedId: syncId.intValue, expectedTarget: target, expectedOptions: options, expectedStatus: .running, expectedProgress: 0, expectedTotalSize: -1)
+        for expectedProgress in [0, 10, 10, 20, 20, 20, 20, 20, 20, 20, 20] {
+            let state = queue.getNextSyncUpdate()
+            checkStatus(state, expectedType: .down, expectedId: syncId.intValue, expectedTarget: target, expectedOptions: options, expectedStatus: .running, expectedProgress: expectedProgress, expectedTotalSize: idToFields.count)
+        }
+        checkStatus(queue.getNextSyncUpdate(), expectedType: .down, expectedId: syncId.intValue, expectedTarget: target, expectedOptions: options, expectedStatus: .done, expectedProgress: 100, expectedTotalSize: idToFields.count)
+
+        // Check db
+        checkDb(idToFieldsUpdated)
+
+        // Check sync time stamp
+        XCTAssertTrue(syncManager.getSyncStatus(syncId)?.maxTimeStamp ?? 0 > maxTimeStamp)
+    }
+
+    /// Test running and stopping a single sync down (using TestSyncDownTarget)
+    func testStopRestartSingleSyncDown() {
+        createAccountsSoup()
+        let syncName = "testStopRestartSingleSyncDown"
+        let numberOfRecords: UInt = 10
+        let target = TestSyncDownTarget(prefix: "test", numberOfRecords: numberOfRecords, numberOfRecordsPerPage: 1, sleepPerFetch: 0.1)
+        let options = SFSyncOptions.newSyncOptions(forSyncDown: .leaveIfChanged)
+        guard let sync = SFSyncState.newSyncDown(withOptions: options, target: target, soupName: ACCOUNTS_SOUP, name: syncName, store: store) else { return }
+        let syncId = sync.syncId
+
+        // Run sync
+        let queue = SFSyncUpdateCallbackQueue()
+        queue.runSync(sync, syncManager: syncManager)
+
+        // Checks status updates
+        checkStatus(queue.getNextSyncUpdate(), expectedType: .down, expectedId: syncId, expectedTarget: target, expectedOptions: options, expectedStatus: .running, expectedProgress: 0, expectedTotalSize: -1)
+        checkStatus(queue.getNextSyncUpdate(), expectedType: .down, expectedId: syncId, expectedTarget: target, expectedOptions: options, expectedStatus: .running, expectedProgress: 0, expectedTotalSize: Int(numberOfRecords))
+        checkStatus(queue.getNextSyncUpdate(), expectedType: .down, expectedId: syncId, expectedTarget: target, expectedOptions: options, expectedStatus: .running, expectedProgress: 10, expectedTotalSize: Int(numberOfRecords))
+        checkStatus(queue.getNextSyncUpdate(), expectedType: .down, expectedId: syncId, expectedTarget: target, expectedOptions: options, expectedStatus: .running, expectedProgress: 20, expectedTotalSize: Int(numberOfRecords))
+        checkStatus(queue.getNextSyncUpdate(), expectedType: .down, expectedId: syncId, expectedTarget: target, expectedOptions: options, expectedStatus: .running, expectedProgress: 30, expectedTotalSize: Int(numberOfRecords))
+        checkStatus(queue.getNextSyncUpdate(), expectedType: .down, expectedId: syncId, expectedTarget: target, expectedOptions: options, expectedStatus: .running, expectedProgress: 40, expectedTotalSize: Int(numberOfRecords))
+        checkStatus(queue.getNextSyncUpdate(), expectedType: .down, expectedId: syncId, expectedTarget: target, expectedOptions: options, expectedStatus: .running, expectedProgress: 50, expectedTotalSize: Int(numberOfRecords))
+
+        // Stop sync manager
+        stopSyncManager(0.2)
+
+        checkStatus(queue.getNextSyncUpdate(), expectedType: .down, expectedId: syncId, expectedTarget: target, expectedOptions: options, expectedStatus: .stopped, expectedProgress: 50, expectedTotalSize: Int(numberOfRecords))
+        let numberOfRecordsFetched = UInt(Double(numberOfRecords) * 0.5)
+        let numberOfRecordsLeft = numberOfRecords - numberOfRecordsFetched + 1 // we refetch records at maxTimeStamp when a sync was stopped
+
+        // Check db
+        checkDbForAfterTestSyncDown(target, soupName: ACCOUNTS_SOUP, expectedNumberOfRecords: numberOfRecordsFetched)
+
+        // Check sync time stamp and status
+        checkSyncState(NSNumber(value: syncId), expectedTimeStamp: target.dateForPositionAsMillis(numberOfRecordsFetched - 1), expectedStatus: .stopped)
+
+        // Try to restart sync while sync manager is paused
+        do {
+            _ = try queue.runReSync(NSNumber(value: syncId), syncManager: syncManager, error: ())
+            XCTFail("Should have thrown error")
+        } catch let error as NSError {
+            XCTAssertEqual(kSFMobileSyncErrorDomain, error.domain, "Wrong error domain")
+            XCTAssertEqual(kSFSyncManagerStoppedErrorCode, error.code, "Wrong error code")
+            XCTAssertEqual(kSFSyncManagerStoppedError, error.userInfo["error"] as? String, "Wrong error type")
+        }
+
+        // Restarting sync manager without restarting syncs
+        let resultOfRestart = try? queue.restart(syncManager, restartStoppedSyncs: false)
+        XCTAssertTrue(resultOfRestart ?? false)
+        XCTAssertFalse(syncManager.isStopped(), "Stopped should be false")
+
+        // Check sync time stamp and status
+        checkSyncState(NSNumber(value: syncId), expectedTimeStamp: target.dateForPositionAsMillis(numberOfRecordsFetched - 1), expectedStatus: .stopped)
+
+        // Stop sync manager
+        stopSyncManager(0)
+
+        // Restarting sync manager restarting syncs
+        let resultOfRestart2 = try? queue.restart(syncManager, restartStoppedSyncs: true)
+        XCTAssertTrue(resultOfRestart2 ?? false)
+        XCTAssertFalse(syncManager.isStopped(), "Stopped should be false")
+
+        checkStatus(queue.getNextSyncUpdate(), expectedType: .down, expectedId: syncId, expectedTarget: target, expectedOptions: options, expectedStatus: .running, expectedProgress: 0, expectedTotalSize: -1)
+        checkStatus(queue.getNextSyncUpdate(), expectedType: .down, expectedId: syncId, expectedTarget: target, expectedOptions: options, expectedStatus: .running, expectedProgress: 0, expectedTotalSize: Int(numberOfRecordsLeft))
+        checkStatus(queue.getNextSyncUpdate(), expectedType: .down, expectedId: syncId, expectedTarget: target, expectedOptions: options, expectedStatus: .running, expectedProgress: 16, expectedTotalSize: Int(numberOfRecordsLeft))
+        checkStatus(queue.getNextSyncUpdate(), expectedType: .down, expectedId: syncId, expectedTarget: target, expectedOptions: options, expectedStatus: .running, expectedProgress: 33, expectedTotalSize: Int(numberOfRecordsLeft))
+        checkStatus(queue.getNextSyncUpdate(), expectedType: .down, expectedId: syncId, expectedTarget: target, expectedOptions: options, expectedStatus: .running, expectedProgress: 50, expectedTotalSize: Int(numberOfRecordsLeft))
+        checkStatus(queue.getNextSyncUpdate(), expectedType: .down, expectedId: syncId, expectedTarget: target, expectedOptions: options, expectedStatus: .running, expectedProgress: 66, expectedTotalSize: Int(numberOfRecordsLeft))
+        checkStatus(queue.getNextSyncUpdate(), expectedType: .down, expectedId: syncId, expectedTarget: target, expectedOptions: options, expectedStatus: .running, expectedProgress: 83, expectedTotalSize: Int(numberOfRecordsLeft))
+        checkStatus(queue.getNextSyncUpdate(), expectedType: .down, expectedId: syncId, expectedTarget: target, expectedOptions: options, expectedStatus: .done, expectedProgress: 100, expectedTotalSize: Int(numberOfRecordsLeft))
+
+        // Check db
+        checkDbForAfterTestSyncDown(target, soupName: ACCOUNTS_SOUP, expectedNumberOfRecords: numberOfRecords)
+    }
+
+    /// Test running and stopping multiple sync downs (using TestSyncDownTarget)
+    func testStopRestartMultipleSyncDowns() {
+        createAccountsSoup()
+        let syncName1 = "testStopRestartMultipleSyncDowns1"
+        let syncName2 = "testStopRestartMultipleSyncDowns2"
+        let numberOfRecords1: UInt = 5
+        let numberOfRecords2: UInt = 4
+
+        let options = SFSyncOptions.newSyncOptions(forSyncDown: .leaveIfChanged)
+        let target1 = TestSyncDownTarget(prefix: "test1", numberOfRecords: numberOfRecords1, numberOfRecordsPerPage: 1, sleepPerFetch: 0.1)
+        let target2 = TestSyncDownTarget(prefix: "test2", numberOfRecords: numberOfRecords2, numberOfRecordsPerPage: 1, sleepPerFetch: 0.1)
+        let syncId1 = SFSyncState.newSyncDown(withOptions: options, target: target1, soupName: ACCOUNTS_SOUP, name: syncName1, store: store)?.syncId ?? 0
+        let syncId2 = SFSyncState.newSyncDown(withOptions: options, target: target2, soupName: ACCOUNTS_SOUP, name: syncName2, store: store)?.syncId ?? 0
+
+        // Run sync
+        let queue = SFSyncUpdateCallbackQueue()
+        XCTAssertNotNil(try? queue.runReSyncByName(syncName1, syncManager: syncManager))
+        // Sleeping a bit - to make sure it goes first
+        Thread.sleep(forTimeInterval: 0.05)
+        XCTAssertNotNil(try? queue.runReSyncByName(syncName2, syncManager: syncManager))
+
+        // Checks status updates
+        checkStatus(queue.getNextSyncUpdate(), expectedType: .down, expectedId: syncId1, expectedTarget: target1, expectedOptions: options, expectedStatus: .running, expectedProgress: 0, expectedTotalSize: -1)
+        checkStatus(queue.getNextSyncUpdate(), expectedType: .down, expectedId: syncId2, expectedTarget: target2, expectedOptions: options, expectedStatus: .running, expectedProgress: 0, expectedTotalSize: -1)
+        checkStatus(queue.getNextSyncUpdate(), expectedType: .down, expectedId: syncId1, expectedTarget: target1, expectedOptions: options, expectedStatus: .running, expectedProgress: 0, expectedTotalSize: Int(numberOfRecords1))
+        checkStatus(queue.getNextSyncUpdate(), expectedType: .down, expectedId: syncId1, expectedTarget: target1, expectedOptions: options, expectedStatus: .running, expectedProgress: 20, expectedTotalSize: Int(numberOfRecords1))
+
+        // Stop sync manager
+        stopSyncManager(0.3)
+        checkStatus(queue.getNextSyncUpdate(), expectedType: .down, expectedId: syncId1, expectedTarget: target1, expectedOptions: options, expectedStatus: .stopped, expectedProgress: 20, expectedTotalSize: Int(numberOfRecords1))
+        checkStatus(queue.getNextSyncUpdate(), expectedType: .down, expectedId: syncId2, expectedTarget: target2, expectedOptions: options, expectedStatus: .stopped, expectedProgress: 0, expectedTotalSize: -1)
+        let numberOfRecordsFetched1 = UInt(Double(numberOfRecords1) * 0.2)
+        let numberOfRecordsLeft1 = numberOfRecords1 - numberOfRecordsFetched1 + 1 // we refetch records at maxTimeStamp when a sync was stopped
+
+        // Check db
+        checkDbForAfterTestSyncDown(target1, soupName: ACCOUNTS_SOUP, expectedNumberOfRecords: numberOfRecordsFetched1)
+        checkDbForAfterTestSyncDown(target2, soupName: ACCOUNTS_SOUP, expectedNumberOfRecords: 0)
+
+        // Check sync time stamp and status
+        checkSyncState(NSNumber(value: syncId1), expectedTimeStamp: target1.dateForPositionAsMillis(numberOfRecordsFetched1 - 1), expectedStatus: .stopped)
+        checkSyncState(NSNumber(value: syncId2), expectedTimeStamp: -1, expectedStatus: .stopped)
+
+        // Restarting sync manager without restarting syncs
+        XCTAssertTrue((try? queue.restart(syncManager, restartStoppedSyncs: false)) ?? false)
+        XCTAssertFalse(syncManager.isStopped(), "Stopped should be false")
+
+        // Manually restart second sync
+        XCTAssertNotNil(try? queue.runReSyncByName(syncName2, syncManager: syncManager))
+        checkStatus(queue.getNextSyncUpdate(), expectedType: .down, expectedId: syncId2, expectedTarget: target2, expectedOptions: options, expectedStatus: .running, expectedProgress: 0, expectedTotalSize: -1)
+        checkStatus(queue.getNextSyncUpdate(), expectedType: .down, expectedId: syncId2, expectedTarget: target2, expectedOptions: options, expectedStatus: .running, expectedProgress: 0, expectedTotalSize: Int(numberOfRecords2))
+        checkStatus(queue.getNextSyncUpdate(), expectedType: .down, expectedId: syncId2, expectedTarget: target2, expectedOptions: options, expectedStatus: .running, expectedProgress: 25, expectedTotalSize: Int(numberOfRecords2))
+        checkStatus(queue.getNextSyncUpdate(), expectedType: .down, expectedId: syncId2, expectedTarget: target2, expectedOptions: options, expectedStatus: .running, expectedProgress: 50, expectedTotalSize: Int(numberOfRecords2))
+
+        // Stop sync manager
+        stopSyncManager(0.2)
+        checkStatus(queue.getNextSyncUpdate(), expectedType: .down, expectedId: syncId2, expectedTarget: target2, expectedOptions: options, expectedStatus: .stopped, expectedProgress: 50, expectedTotalSize: Int(numberOfRecords2))
+        let numberOfRecordsFetched2 = UInt(Double(numberOfRecords2) * 0.5)
+        let numberOfRecordsLeft2 = numberOfRecords2 - numberOfRecordsFetched2 + 1 // we refetch records at maxTimeStamp when a sync was stopped
+
+        // Check sync time stamp and status
+        checkSyncState(NSNumber(value: syncId1), expectedTimeStamp: target1.dateForPositionAsMillis(numberOfRecordsFetched1 - 1), expectedStatus: .stopped)
+        checkSyncState(NSNumber(value: syncId2), expectedTimeStamp: target1.dateForPositionAsMillis(numberOfRecordsFetched2 - 1), expectedStatus: .stopped)
+
+        // Check db
+        checkDbForAfterTestSyncDown(target1, soupName: ACCOUNTS_SOUP, expectedNumberOfRecords: numberOfRecordsFetched1)
+        checkDbForAfterTestSyncDown(target2, soupName: ACCOUNTS_SOUP, expectedNumberOfRecords: numberOfRecordsFetched2)
+
+        // Restarting sync manager restarting syncs
+        XCTAssertTrue((try? queue.restart(syncManager, restartStoppedSyncs: true)) ?? false)
+        XCTAssertFalse(syncManager.isStopped(), "Stopped should be false")
+        checkStatus(queue.getNextSyncUpdate(), expectedType: .down, expectedId: syncId1, expectedTarget: target1, expectedOptions: options, expectedStatus: .running, expectedProgress: 0, expectedTotalSize: -1)
+        checkStatus(queue.getNextSyncUpdate(), expectedType: .down, expectedId: syncId2, expectedTarget: target2, expectedOptions: options, expectedStatus: .running, expectedProgress: 0, expectedTotalSize: -1)
+        checkStatus(queue.getNextSyncUpdate(), expectedType: .down, expectedId: syncId1, expectedTarget: target1, expectedOptions: options, expectedStatus: .running, expectedProgress: 0, expectedTotalSize: Int(numberOfRecordsLeft1))
+        checkStatus(queue.getNextSyncUpdate(), expectedType: .down, expectedId: syncId1, expectedTarget: target1, expectedOptions: options, expectedStatus: .running, expectedProgress: 20, expectedTotalSize: Int(numberOfRecordsLeft1))
+        checkStatus(queue.getNextSyncUpdate(), expectedType: .down, expectedId: syncId1, expectedTarget: target1, expectedOptions: options, expectedStatus: .running, expectedProgress: 40, expectedTotalSize: Int(numberOfRecordsLeft1))
+        checkStatus(queue.getNextSyncUpdate(), expectedType: .down, expectedId: syncId1, expectedTarget: target1, expectedOptions: options, expectedStatus: .running, expectedProgress: 60, expectedTotalSize: Int(numberOfRecordsLeft1))
+        checkStatus(queue.getNextSyncUpdate(), expectedType: .down, expectedId: syncId1, expectedTarget: target1, expectedOptions: options, expectedStatus: .running, expectedProgress: 80, expectedTotalSize: Int(numberOfRecordsLeft1))
+        checkStatus(queue.getNextSyncUpdate(), expectedType: .down, expectedId: syncId1, expectedTarget: target1, expectedOptions: options, expectedStatus: .done, expectedProgress: 100, expectedTotalSize: Int(numberOfRecordsLeft1))
+
+        // sync1 is done, sync2 should run next
+        checkStatus(queue.getNextSyncUpdate(), expectedType: .down, expectedId: syncId2, expectedTarget: target2, expectedOptions: options, expectedStatus: .running, expectedProgress: 0, expectedTotalSize: Int(numberOfRecordsLeft2))
+        checkStatus(queue.getNextSyncUpdate(), expectedType: .down, expectedId: syncId2, expectedTarget: target2, expectedOptions: options, expectedStatus: .running, expectedProgress: 33, expectedTotalSize: Int(numberOfRecordsLeft2))
+        checkStatus(queue.getNextSyncUpdate(), expectedType: .down, expectedId: syncId2, expectedTarget: target2, expectedOptions: options, expectedStatus: .running, expectedProgress: 66, expectedTotalSize: Int(numberOfRecordsLeft2))
+        checkStatus(queue.getNextSyncUpdate(), expectedType: .down, expectedId: syncId2, expectedTarget: target2, expectedOptions: options, expectedStatus: .done, expectedProgress: 100, expectedTotalSize: Int(numberOfRecordsLeft2))
+
+        // Check db
+        checkDbForAfterTestSyncDown(target1, soupName: ACCOUNTS_SOUP, expectedNumberOfRecords: numberOfRecords1)
+        checkDbForAfterTestSyncDown(target2, soupName: ACCOUNTS_SOUP, expectedNumberOfRecords: numberOfRecords2)
+    }
+
     // MARK: - Helper methods
 
     private func checkSyncState(_ syncId: NSNumber, expectedTimeStamp: Int64, expectedStatus: SFSyncStateStatus) {
