@@ -1,6 +1,6 @@
 # Upstream Sync Backlog Ledger
 
-Marker (done floor): 6ed0ab40  ·  origin/dev HEAD: bac017113  ·  34 behind (12 logical units)  ·  Updated: 2026-07-14 (#4038 skipped — marker held: #4035 below it still pending)
+Marker (done floor): 6ed0ab40  ·  origin/dev HEAD: bac017113  ·  34 behind (12 logical units)  ·  Updated: 2026-07-18 (#4042 ported → b97f7f579; marker held at 6ed0ab40 — #4035 below it still pending)
 
 > Pre-mapping pass: 34 upstream commits grouped into 12 first-parent units and classified by net-diff
 > file footprint. Grouping uses first-parent history of `origin/dev` (top-level landings), not raw
@@ -17,12 +17,12 @@ Marker (done floor): 6ed0ab40  ·  origin/dev HEAD: bac017113  ·  34 behind (12
 > see "Migration order vs. original history" at the bottom.
 
 ## Migration status
-███████░░░░░░░░░░░░░░  4/12 units done (33%; ported+skipped)   ·   libs/-impacting: 2/8
+████████░░░░░░░░░░░░  5/12 units done (42%; ported+skipped)   ·   libs/-impacting: 3/8
 
 | Status        | Cnt | Units |
 |---------------|-----|-------|
-| ✅ ported     |  1  | #4043 |
-| 🔬 analyzed   |  6  | #4039 #4040 #4041 #4042 #4044 #4046 |
+| ✅ ported     |  2  | #4043 #4042 |
+| 🔬 analyzed   |  5  | #4039 #4040 #4041 #4044 #4046 |
 | 🚧 in-progress|  0  | — |
 | ⏸ deferred    |  0  | — |
 | ⏭ skipped     |  3  | #4038 (buggy method not in migrated Swift surface), master-merge×2 (empty net diff) |
@@ -31,7 +31,7 @@ Marker (done floor): 6ed0ab40  ·  origin/dev HEAD: bac017113  ·  34 behind (12
 ## Units
 | PR / unit | Members (first-parent range) | Cat | Status | Port commit | Notes |
 |-----------|------------------------------|-----|--------|-------------|-------|
-| #4042 SFUserAccount thread-safety race | bac017113 (squash) | B | 🔬 analyzed · ✅ approved | — | target-confirmed; clean `syncQueue.sync{}` wrap |
+| #4042 SFUserAccount thread-safety race | bac017113 (squash) | B | ✅ ported | b97f7f579 | `syncQueue.sync{}` wrap of encode(with:) (+ .m ref synced verbatim); build ✓; testUserAccountEncoding ✓ (runs, not live-gated) |
 | #4047 nightly schedules + security | 97ab8b544 (squash) | F | ⬜ pending | — | `.github/workflows/*` only — no libs/ impact; cherry-pick candidate |
 | #4046 don't add my domain | c0c3f5a01 (merge, 1 PR-side) | B | 🔬 analyzed · ✅ approved | — | dep `DomainDiscoveryCoordinator` confirmed; + `.pbxproj` (Cat-C nested) + 1 test.swift |
 | #4044 remove redundant biometric auto-present | 03f1d1863 (merge, 1) | B | 🔬 analyzed · ✅ approved | — | pairs with #4041 — port AFTER it |
