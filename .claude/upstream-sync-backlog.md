@@ -1,6 +1,6 @@
 # Upstream Sync Backlog Ledger
 
-Marker (done floor): `bac017113`  ·  forcedotcom/dev HEAD (target): `b5d37d807`  ·  **49 first-parent units / 129 commits behind**  ·  Re-seeded: 2026-07-19 (Phase 0 of the resume-porting plan).
+Marker (done floor): `48366cbb7` (unit 1 done)  ·  forcedotcom/dev HEAD (target): `b5d37d807`  ·  **48 units remaining**  ·  Re-seeded: 2026-07-19 (Phase 0 of the resume-porting plan).
 
 > **Direction:** we port changes **FROM** `forcedotcom/dev` **INTO** our ObjC→Swift migration branch
 > (`feature/objc-to-swift-test-migration`). Each unit is a *semantic re-implementation* against the current
@@ -17,7 +17,7 @@ Marker (done floor): `bac017113`  ·  forcedotcom/dev HEAD (target): `b5d37d807`
 > non-libs (CI, docs, skills, sample apps). Live progress bar = subject of lead task #9.
 
 ## Migration status
-░░░░░░░░░░░░░░░░░░░░  0/49 units done (0%)   ·   libs-production-impacting: 0/21   ·   Phase 0 (analysis) in progress
+▓░░░░░░░░░░░░░░░░░░░  1/49 units done (2%)   ·   libs-production-impacting: 1/21   ·   Phase 1 porting (unit 1 ✅)
 
 | Bucket | Count | Notes |
 |--------|-------|-------|
@@ -31,7 +31,7 @@ Marker (done floor): `bac017113`  ·  forcedotcom/dev HEAD (target): `b5d37d807`
 
 | # | PR / unit | Commit | Cat | Escalation | Status | Notes |
 |---|-----------|--------|-----|-----------|--------|-------|
-| 1 | #4049 fix test-credentials login domain | 48366cbb7 | B | — | ⬜ pending | `SFSDKTestCredentialsData.m` (test-support). Test-scoped config, no product logic. |
+| 1 | #4049 fix test-credentials login domain | 48366cbb7 | B | — | ✅ ported | Ported scheme-stripping (`https://`/`http://` prefix) into compiled `SFSDKTestCredentialsData.swift` `loginHost` (the `.m` is de-referenced — 0 in Sources); `.m` ref-synced verbatim to upstream post-image. SDKCore TEST BUILD ✓, 0 new warnings. Test-support only (consumed by live-org setUp) → build-green gate; baseline unaffected. |
 | 2 | #4045 screen-lock customization | f604c8540 | A+C | ⚠ lock-UI | ⬜ pending | 4 ScreenLock `.swift` (already Swift) + `ScreenLockManagerTests.swift` + pbxproj. Cat-A verbatim where pre-image matches; passcode/lock-screen UI → flag. |
 | 3 | SECURITY.md compliance | 11f6cb461 | F | — | ⬜ pending | repo-root `SECURITY.md` only. |
 | 4 | #4050 fix instant login | 7a20ddd56 | B | ⚠ login | ⬜ pending | 2 libs prod files; login flow → flag. |

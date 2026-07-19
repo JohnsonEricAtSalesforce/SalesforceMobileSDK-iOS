@@ -65,7 +65,10 @@ public class SFSDKTestCredentialsData: NSObject {
     }
 
     @objc public var loginHost: String {
-        return credentialsDict["test_login_domain"] as? String ?? ""
+        let value = credentialsDict["test_login_domain"] as? String ?? ""
+        if value.hasPrefix("https://") { return String(value.dropFirst(8)) }
+        if value.hasPrefix("http://") { return String(value.dropFirst(7)) }
+        return value
     }
 
     @objc public var communityUrl: String {
