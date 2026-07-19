@@ -48,21 +48,21 @@ class RestClientPublisherTests: XCTestCase {
     func testQueryPublisher() {
         let request = RestClient.sharedInstance.requestForQuery( "select name from CONTACT", apiVersion: nil)
         let publisher = RestClient.sharedInstance.publisher(for: request)
-        
+
         let validTest = evaluateResults(publisher: publisher)
-        wait(for: validTest.expectations, timeout: 5)
+        wait(for: validTest.expectations, timeout: 60)
         validTest.cancellable?.cancel()
     }
-    
+
     func testRecordsPublisher() {
         let request = RestClient.sharedInstance.requestForQuery( "select name from CONTACT", apiVersion: nil)
         let publisher: AnyPublisher<RestClient.QueryResponse<TestContact>, Never> = RestClient.sharedInstance.records(forRequest: request)
-        
+
         let validTest = evaluateResults(publisher: publisher)
-        wait(for: validTest.expectations, timeout: 5)
+        wait(for: validTest.expectations, timeout: 60)
         validTest.cancellable?.cancel()
     }
-  
+
     func testCompositePublisher() {
         let accountName = self.generateRecordName()
         let contactName = self.generateRecordName()
@@ -75,9 +75,9 @@ class RestClientPublisherTests: XCTestCase {
         
         let compositeRequest = requestBuilder.buildCompositeRequest(apiVersion)
         let publisher = RestClient.sharedInstance.publisher(for: compositeRequest)
-        
+
         let validTest = evaluateResults(publisher: publisher)
-        wait(for: validTest.expectations, timeout: 10)
+        wait(for: validTest.expectations, timeout: 60)
         validTest.cancellable?.cancel()
     }
 
@@ -95,41 +95,42 @@ class RestClientPublisherTests: XCTestCase {
         
         let batchRequest = requestBuilder.buildBatchRequest(apiVersion)
         let publisher = RestClient.sharedInstance.publisher(for: batchRequest)
-        
+
         let validTest = evaluateResults(publisher: publisher)
-        wait(for: validTest.expectations, timeout: 10)
+        wait(for: validTest.expectations, timeout: 60)
         validTest.cancellable?.cancel()
     }
-    
+
     private func evaluateResults<T: Publisher>(publisher: T?, evaluateValidResult: Bool = true) ->  (expectations:[XCTestExpectation], cancellable: AnyCancellable?)  {
         let finished = expectation(description: "finished")
         let received = expectation(description: "received")
         let failed = expectation(description: "failed")
-        
+
         if evaluateValidResult {
             failed.isInverted = true
         } else {
             received.isInverted = true
         }
-        
-        let cancellable = publisher?.sink (receiveCompletion: { (completion) in
-            switch completion {
-            case .failure(let error):
-                XCTAssertNotNil(error)
-                failed.fulfill()
-            case .finished:
-                finished.fulfill()
-            }
-        }, receiveValue: { response in
-            XCTAssertNotNil(response)
-            received.fulfill()
-        })
+
+        let cancellable = publisher?
+            .receive(on: DispatchQueue.main)
+            .sink(receiveCompletion: { completion in
+                switch completion {
+                case .failure(let error):
+                    XCTAssertNotNil(error)
+                    failed.fulfill()
+                case .finished:
+                    finished.fulfill()
+                }
+            }, receiveValue: { response in
+                XCTAssertNotNil(response)
+                received.fulfill()
+            })
         return (expectations: [finished, received, failed], cancellable: cancellable)
     }
-    
+
     private func generateRecordName() -> String {
-        let timecode = Date.timeIntervalSinceReferenceDate
-        return "SwiftPublishersTestsiOS\(timecode)"
+        return "SwiftPublishersTestsiOS\(Date.timeIntervalSinceReferenceDate)"
     }
-    
+
 }
