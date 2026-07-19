@@ -99,8 +99,8 @@ let kSFOAuthCookieSidClient                 = "cookie-sid_Client"
 let kSFOAuthSidCookieName                   = "sidCookieName"
 let kSFOAuthParentSid                       = "parent_sid"
 let kSFOAuthTokenFormat                     = "token_format"
-let kSFOAuthBeaconChildConsumerKey          = "beacon_child_consumer_key"
-let kSFOAuthBeaconChildConsumerSecret       = "beacon_child_consumer_secret"
+let kSFOAuthBeaconChildConsumerKey          = "auto_installed_app_org_consumer_key"
+let kSFOAuthBeaconChildConsumerSecret       = "auto_installed_app_org_consumer_secret"
 let kSFOAuthApprovalCode                    = "code"
 
 // OAuth Error Type Strings

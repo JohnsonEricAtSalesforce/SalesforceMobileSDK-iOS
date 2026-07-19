@@ -52,8 +52,8 @@ class SFSDKOAuthTokenEndpointResponseTests: XCTestCase {
         params["sidCookieName"] = "test-sid-cookie-name"
         params["parent_sid"] = "test-parent-sid"
         params["token_format"] = "test-token-format"
-        params["beacon_child_consumer_key"] = "test-beacon-child-consumer-key"
-        params["beacon_child_consumer_secret"] = "test-beacon-child-consumer-secret"
+        params["auto_installed_app_org_consumer_key"] = "test-beacon-child-consumer-key"
+        params["auto_installed_app_org_consumer_secret"] = "test-beacon-child-consumer-secret"
 
         // Additional fields
         let additionalFields = ["additional-1", "additional-2"]

@@ -498,8 +498,17 @@ open class OAuthCredentials: NSObject, NSSecureCoding, NSCopying {
         if let val = params["sidCookieName"] as? String { sidCookieName = val }
         if let val = params["parent_sid"] as? String { parentSid = val }
         if let val = params["token_format"] as? String { tokenFormat = val }
-        if let val = params["beacon_child_consumer_key"] as? String { beaconChildConsumerKey = val }
-        if let val = params["beacon_child_consumer_secret"] as? String { beaconChildConsumerSecret = val }
+        // TODO: Remove beacon_child_consumer_* legacy fallback once server version 264 has rolled out everywhere.
+        if let val = params["auto_installed_app_org_consumer_key"] as? String {
+            beaconChildConsumerKey = val
+        } else if let val = params["beacon_child_consumer_key"] as? String {
+            beaconChildConsumerKey = val
+        }
+        if let val = params["auto_installed_app_org_consumer_secret"] as? String {
+            beaconChildConsumerSecret = val
+        } else if let val = params["beacon_child_consumer_secret"] as? String {
+            beaconChildConsumerSecret = val
+        }
     }
 
     /// Returns the oauth client id to use for refresh.
