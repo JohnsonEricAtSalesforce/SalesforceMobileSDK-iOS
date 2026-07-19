@@ -432,7 +432,10 @@ class SFUserAccountManagerTests: XCTestCase {
         let session = SFSDKAuthSession(with: request, credentials: nil)
         let coordinator = SFOAuthCoordinator(authSession: session)
         coordinator.delegate = UserAccountManager.shared
-        coordinator.beginWebViewFlow()
+
+        // Invoke the delegate directly — no WKWebView needed since this test only verifies
+        // that loginViewControllerConfig propagates correctly to the presented controller.
+        UserAccountManager.shared.oauthCoordinator(coordinator, didBeginAuthenticationWithView: coordinator.view)
 
         waitForExpectations(timeout: 20)
         XCTAssertTrue(success, "SFSDKLoginViewController config should have changed")
