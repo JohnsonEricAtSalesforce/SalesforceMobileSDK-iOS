@@ -1,6 +1,6 @@
 # Upstream Sync Backlog Ledger
 
-Marker (done floor): 6ed0ab40  ·  origin/dev HEAD: bac017113  ·  34 behind (12 logical units)  ·  Updated: 2026-07-18 (#4042 ported → b97f7f579; marker held at 6ed0ab40 — #4035 below it still pending)
+Marker (done floor): 6ed0ab40  ·  origin/dev HEAD: bac017113  ·  34 behind (12 logical units)  ·  Updated: 2026-07-18 (#4042→b97f7f579, #4041→d0f3596f1, #4044→98d2111f0 ported; marker held at 6ed0ab40 — #4035 below it still pending)
 
 > Pre-mapping pass: 34 upstream commits grouped into 12 first-parent units and classified by net-diff
 > file footprint. Grouping uses first-parent history of `origin/dev` (top-level landings), not raw
@@ -17,12 +17,12 @@ Marker (done floor): 6ed0ab40  ·  origin/dev HEAD: bac017113  ·  34 behind (12
 > see "Migration order vs. original history" at the bottom.
 
 ## Migration status
-████████░░░░░░░░░░░░  5/12 units done (42%; ported+skipped)   ·   libs/-impacting: 3/8
+███████████░░░░░░░░░  7/12 units done (58%; ported+skipped)   ·   libs/-impacting: 5/8
 
 | Status        | Cnt | Units |
 |---------------|-----|-------|
-| ✅ ported     |  2  | #4043 #4042 |
-| 🔬 analyzed   |  5  | #4039 #4040 #4041 #4044 #4046 |
+| ✅ ported     |  4  | #4043 #4042 #4041 #4044 |
+| 🔬 analyzed   |  3  | #4039 #4040 #4046 |
 | 🚧 in-progress|  0  | — |
 | ⏸ deferred    |  0  | — |
 | ⏭ skipped     |  3  | #4038 (buggy method not in migrated Swift surface), master-merge×2 (empty net diff) |
@@ -34,8 +34,8 @@ Marker (done floor): 6ed0ab40  ·  origin/dev HEAD: bac017113  ·  34 behind (12
 | #4042 SFUserAccount thread-safety race | bac017113 (squash) | B | ✅ ported | b97f7f579 | `syncQueue.sync{}` wrap of encode(with:) (+ .m ref synced verbatim); build ✓; testUserAccountEncoding ✓ (runs, not live-gated) |
 | #4047 nightly schedules + security | 97ab8b544 (squash) | F | ⬜ pending | — | `.github/workflows/*` only — no libs/ impact; cherry-pick candidate |
 | #4046 don't add my domain | c0c3f5a01 (merge, 1 PR-side) | B | 🔬 analyzed · ✅ approved | — | dep `DomainDiscoveryCoordinator` confirmed; + `.pbxproj` (Cat-C nested) + 1 test.swift |
-| #4044 remove redundant biometric auto-present | 03f1d1863 (merge, 1) | B | 🔬 analyzed · ✅ approved | — | pairs with #4041 — port AFTER it |
-| #4041 biometric opt-in auto-present + lock | d73eb2a0e (merge, 5) | B | 🔬 analyzed · ✅ approved | — | adds NEW `automaticPresentation` via its `.swift` hunks; apply those first |
+| #4044 remove redundant biometric auto-present | 03f1d1863 (merge, 1) | B | ✅ ported | 98d2111f0 | removed viewDidLoad auto-present block from SFLoginViewController.swift (+ .m ref verbatim); build ✓; ⚠ escalation (biometric/login-UI) — flag in PR |
+| #4041 biometric opt-in auto-present + lock | d73eb2a0e (merge, 5) | B | ✅ ported | d0f3596f1 | NEW `automaticPresentation` (protocol+Internal default true); auto-present in lock() + retrievedIdentityDataImpl opt-in dialog; 7 new tests + mock conformance; build ✓, 7/7 + RetryPolicy ✓ (testNotEnabled = pre-existing P0.2e ordering artifact, not induced); ⚠ escalation (biometric/lock) — flag in PR |
 | #4043 fix trait collection warning | 36f6bf636 (merge, 1) | B | ✅ ported | (pending commit) | non-escalation; registerForTraitChanges in SFSDKUITableViewCell.swift + RootViewController.swift (Cat-A verbatim); build ✓, scoped tests ✓; SDKCore gate provisional per P0.2c |
 | MASTER merge (a2d6db8ae) | a2d6db8ae | — | ⏭ skipped | — | "Merging master into dev" — empty net diff (no-op) |
 | #4040 hide nav bar on native login | 881c626eb (merge, 2) | B | 🔬 analyzed · ✅ approved | — | self-contained one-line UI flag |
