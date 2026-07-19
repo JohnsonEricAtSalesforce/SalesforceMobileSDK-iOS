@@ -315,12 +315,19 @@ public func SFKeyForUserIdAndScope(_ userId: String?, _ orgId: String?, _ commun
     }
 
     public func encode(with encoder: NSCoder) {
-        encoder.encode(_accessScopes, forKey: kUser_ACCESS_SCOPES)
-        encoder.encode(_credentials, forKey: kUser_CREDENTIALS)
-        encoder.encode(_idData, forKey: kUser_ID_DATA)
-        encoder.encode(_customData, forKey: kUser_CUSTOM_DATA)
-        encoder.encode(Int(accessRestrictions.rawValue), forKey: kUser_ACCESS_RESTRICTIONS)
-        encoder.encode(_notificationTypes, forKey: kUser_NOTIFICATION_TYPES)
+        // Read the ivars under syncQueue so any pending barrier writes (setAccessScopes,
+        // setIdData, setCustomDataObject:forKey:, ...) complete before they're encoded.
+        // Without this, encoding immediately after a setter can capture stale (nil/empty)
+        // values — the race fixed upstream in #4042. accessRestrictions is a plain stored
+        // property (no queue accessor), so reading it here does not re-enter syncQueue.
+        syncQueue.sync {
+            encoder.encode(_accessScopes, forKey: kUser_ACCESS_SCOPES)
+            encoder.encode(_credentials, forKey: kUser_CREDENTIALS)
+            encoder.encode(_idData, forKey: kUser_ID_DATA)
+            encoder.encode(_customData, forKey: kUser_CUSTOM_DATA)
+            encoder.encode(Int(accessRestrictions.rawValue), forKey: kUser_ACCESS_RESTRICTIONS)
+            encoder.encode(_notificationTypes, forKey: kUser_NOTIFICATION_TYPES)
+        }
     }
 
     deinit {
