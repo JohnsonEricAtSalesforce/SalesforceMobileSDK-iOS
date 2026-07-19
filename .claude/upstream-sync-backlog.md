@@ -1,6 +1,6 @@
 # Upstream Sync Backlog Ledger
 
-Marker (done floor): `2a879dc7d` (units 1-16 done)  ·  forcedotcom/dev HEAD (target): `b5d37d807`  ·  **33 units remaining**  ·  Re-seeded: 2026-07-19 (Phase 0 of the resume-porting plan).
+Marker (done floor): `3965852bf` (units 1-17 done)  ·  forcedotcom/dev HEAD (target): `b5d37d807`  ·  **32 units remaining**  ·  Re-seeded: 2026-07-19 (Phase 0 of the resume-porting plan).
 
 > **Direction:** we port changes **FROM** `forcedotcom/dev` **INTO** our ObjC→Swift migration branch
 > (`feature/objc-to-swift-test-migration`). Each unit is a *semantic re-implementation* against the current
@@ -17,7 +17,7 @@ Marker (done floor): `2a879dc7d` (units 1-16 done)  ·  forcedotcom/dev HEAD (ta
 > non-libs (CI, docs, skills, sample apps). Live progress bar = subject of lead task #9.
 
 ## Migration status
-▓▓▓▓▓▓▓░░░░░░░░░░░░░  16/49 units done (33%)   ·   libs-production-impacting: 5/21   ·   Phase 1 porting (units 1-16 ✅)
+▓▓▓▓▓▓▓░░░░░░░░░░░░░  17/49 units done (35%)   ·   libs-production-impacting: 5/21   ·   Phase 1 porting (units 1-17 ✅)
 
 | Bucket | Count | Notes |
 |--------|-------|-------|
@@ -47,7 +47,7 @@ Marker (done floor): `2a879dc7d` (units 1-16 done)  ·  forcedotcom/dev HEAD (ta
 | 14 | #4065 skip CI on doc-only PRs | 84672d1eb | F | ⚠ CI-config | ✅ ported | pr.yaml: added `paths-ignore` (`**/*.md`, LICENSE, .gitignore, CODEOWNERS) to the `pull_request_target` trigger so doc-only PRs skip CI. File matched pre-image → post-image applied verbatim, byte-identical. ⚠ escalation: CI-config — flag in PR. No build gate. |
 | 15 | #4071 stabilize flaky push-notif registration | f8291e901 | A | flaky | ✅ ported | `MockRestClient` gained an `onSend: ((RestRequest)->Void)?` hook (fired in `send`); `PushNotificationManagerTests.testRegisterForSalesforceNotifications_Success` + `testOnUserMigratedRefreshToken_WithDeviceToken_TriggersRegistration` rewritten from `asyncAfter(0.2)`/completion-callback timing to an `onSend`-driven expectation on the registration POST (path+method), 5s timeout, deterministic. MockRestClient matched pre-image → post-image applied verbatim (POST-MATCH). PushNotificationManagerTests had pre-existing migration deltas (setUp account upsert, MockRestClient(user:), selector name, MockPreferences init) → applied ONLY the 2 unit-15 hunks on top, preserving those. SDKCore TEST BUILD ✓ 0 warn; class PASS 43/43. Re-baseline: unchanged (none in baseline). |
 | 16 | #4066 stabilize flaky PushNotif foreground registration | 2a879dc7d | A | flaky | ✅ ported | Follow-up to #4071 on the same file: 4 foreground-registration tests (modeNone / modeCurrentUser / modeAllUsers appear+foreground / modeAllUsers no-device-token) converted from `asyncAfter(0.2)` timing to `onSend`-driven expectations — inverted expectation (`isInverted`, 0.5s) for the no-call cases, positive expectation (2s) for the register cases. Ported the 4 unit-16 hunks on top of our migration-delta file. Closures use the `{ _ in … }` form to match our one-param `onSend: ((RestRequest)->Void)?` (semantically identical to upstream's mixed 0-/1-param spellings). SDKCore TEST BUILD ✓ 0 warn; class PASS 43/43. Re-baseline: unchanged (none in baseline). |
-| 17 | #4073 fix closure-param mismatch PushNotifTests | 3965852bf | A | flaky | ⬜ pending | 1 test file (follow-up to #4066). Re-baseline after. |
+| 17 | #4073 fix closure-param mismatch PushNotifTests | 3965852bf | A | flaky | ✅ ported (no-op) | Upstream fixed the two `onSend = { … }` 0-param closures introduced by #4066 to `{ _ in … }`. In our port of unit 16 I ALREADY used the one-param `{ _ in }` form (our `onSend` has always been `((RestRequest)->Void)?`), so unit 17's post-image already matched our tree — verified 0 remaining 0-param `onSend` closures. No source change; marker advanced to preserve contiguity. No build needed (identical tree to already-green unit 16). |
 | 18 | #4069 stabilize flaky RestClientPublisherTests | fd2a345e6 | A | flaky | ⬜ pending | 1 test file (live-gated class). Re-baseline after. |
 | 19 | #4067 stabilize flaky testLoginViewControllerCustomizations | 366db6141 | A | flaky | ⬜ pending | 1 test file. Re-baseline after. |
 | 20 | #4072 fix nil crash SFSDKBatchResponse haltOnError | ed5391fd1 | B | — | ⬜ pending | prod + test; batch-response nil guard. |
