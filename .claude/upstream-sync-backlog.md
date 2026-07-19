@@ -1,6 +1,6 @@
 # Upstream Sync Backlog Ledger
 
-Marker (done floor): 6ed0ab40  ·  origin/dev HEAD: bac017113  ·  34 behind (12 logical units)  ·  Updated: 2026-07-18 (#4042→b97f7f579, #4041→d0f3596f1, #4044→98d2111f0 ported; marker held at 6ed0ab40 — #4035 below it still pending)
+Marker (done floor): 6ed0ab40  ·  origin/dev HEAD: bac017113  ·  34 behind (12 logical units)  ·  Updated: 2026-07-18 (#4040→ad2f35a05 ported; prior #4042→b97f7f579, #4041→d0f3596f1, #4044→98d2111f0; marker held at 6ed0ab40 — #4035 below it still pending)
 
 > Pre-mapping pass: 34 upstream commits grouped into 12 first-parent units and classified by net-diff
 > file footprint. Grouping uses first-parent history of `origin/dev` (top-level landings), not raw
@@ -17,12 +17,12 @@ Marker (done floor): 6ed0ab40  ·  origin/dev HEAD: bac017113  ·  34 behind (12
 > see "Migration order vs. original history" at the bottom.
 
 ## Migration status
-███████████░░░░░░░░░  7/12 units done (58%; ported+skipped)   ·   libs/-impacting: 5/8
+█████████████░░░░░░░  8/12 units done (67%; ported+skipped)   ·   libs/-impacting: 6/8
 
 | Status        | Cnt | Units |
 |---------------|-----|-------|
-| ✅ ported     |  4  | #4043 #4042 #4041 #4044 |
-| 🔬 analyzed   |  3  | #4039 #4040 #4046 |
+| ✅ ported     |  5  | #4043 #4042 #4041 #4044 #4040 |
+| 🔬 analyzed   |  2  | #4039 #4046 |
 | 🚧 in-progress|  0  | — |
 | ⏸ deferred    |  0  | — |
 | ⏭ skipped     |  3  | #4038 (buggy method not in migrated Swift surface), master-merge×2 (empty net diff) |
@@ -38,7 +38,7 @@ Marker (done floor): 6ed0ab40  ·  origin/dev HEAD: bac017113  ·  34 behind (12
 | #4041 biometric opt-in auto-present + lock | d73eb2a0e (merge, 5) | B | ✅ ported | d0f3596f1 | NEW `automaticPresentation` (protocol+Internal default true); auto-present in lock() + retrievedIdentityDataImpl opt-in dialog; 7 new tests + mock conformance; build ✓, 7/7 + RetryPolicy ✓ (testNotEnabled = pre-existing P0.2e ordering artifact, not induced); ⚠ escalation (biometric/lock) — flag in PR |
 | #4043 fix trait collection warning | 36f6bf636 (merge, 1) | B | ✅ ported | (pending commit) | non-escalation; registerForTraitChanges in SFSDKUITableViewCell.swift + RootViewController.swift (Cat-A verbatim); build ✓, scoped tests ✓; SDKCore gate provisional per P0.2c |
 | MASTER merge (a2d6db8ae) | a2d6db8ae | — | ⏭ skipped | — | "Merging master into dev" — empty net diff (no-op) |
-| #4040 hide nav bar on native login | 881c626eb (merge, 2) | B | 🔬 analyzed · ✅ approved | — | self-contained one-line UI flag |
+| #4040 hide nav bar on native login | 881c626eb (merge, 2) | B | ✅ ported | ad2f35a05 | one-line `setNavigationBarHidden(true,animated:false)` in `presentLoginViewImpl` native-login branch (+ new test); .m stub not ref-synced; build ✓, NativeLoginManagerTests 6/6 ✓ (new test not live-gated); ⚠ escalation (login-UI) — flag in PR |
 | #4039 auth-loading default + deprecate property | d4a9ce0db (merge, 2) | B | 🔬 analyzed · ✅ approved ⚠ | — | ⚠ PUBLIC-API deprecation REVERSAL — approved; keep SDK-owner flag; see detail |
 | #4038 fix hardcoded log level | 439d33e90 (merge, 1) | B→skip | ⏭ skipped | ref-sync only | buggy variadic `format:` method NOT in migrated Swift surface — no compiled Swift behavior to fix; SFLogger.m ref synced to upstream. See detail + ⚠ dropped-API flag. |
 | MASTER merge (9bf7b52f2 #4037) | 9bf7b52f2 | — | ⏭ skipped | — | "Merge from master" — empty net diff (no-op) |
