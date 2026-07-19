@@ -37,6 +37,26 @@ class SFOAuthCoordinatorTests: XCTestCase {
         XCTAssertEqual(coordinator.testLoginHint, expectedLoginHint)
         XCTAssertEqual(coordinator.credentials?.domain, mockDomain)
     }
+
+    /// #4039: the default for `showAuthWindowWhileLoading` was flipped NO -> YES (the auth window
+    /// is now shown while the webview loads). This asserts against the internal backing
+    /// (`showAuthWindowWhileLoadingInternal`) — the same storage the deprecated public property
+    /// wraps and that the coordinator's load callbacks read — so the test itself does not trip the
+    /// deprecation warning on the public property.
+    func test_givenFreshUserAccountManager_whenReadingShowAuthWindowWhileLoading_thenDefaultsToTrue() {
+        let manager = UserAccountManager.shared
+        let original = manager.showAuthWindowWhileLoadingInternal
+        defer { manager.showAuthWindowWhileLoadingInternal = original }
+
+        // New default is true (was false before #4039).
+        XCTAssertTrue(manager.showAuthWindowWhileLoadingInternal, "showAuthWindowWhileLoading should default to true as of #4039.")
+
+        // The backing is read/write (the public property is a functional wrapper over it).
+        manager.showAuthWindowWhileLoadingInternal = false
+        XCTAssertFalse(manager.showAuthWindowWhileLoadingInternal)
+        manager.showAuthWindowWhileLoadingInternal = true
+        XCTAssertTrue(manager.showAuthWindowWhileLoadingInternal)
+    }
 }
 
 // MARK: - SFOAuthCoordinatorDelegate conformance for tests

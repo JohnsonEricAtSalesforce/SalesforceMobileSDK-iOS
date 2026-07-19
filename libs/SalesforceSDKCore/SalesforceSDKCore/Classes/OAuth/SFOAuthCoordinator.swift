@@ -856,7 +856,10 @@ public class SFOAuthCoordinator: NSObject, WKNavigationDelegate, WKUIDelegate {
         if delegate?.responds(to: #selector(SFOAuthCoordinatorDelegate.oauthCoordinator(_:didStartLoad:))) ?? false {
             delegate?.oauthCoordinator?(self, didStartLoad: webView)
         }
-        if UserAccountManager.shared.showAuthWindowWhileLoading {
+        // When `showAuthWindowWhileLoading` is removed (15.0), call startWebviewAuthenticationIfNeeded()
+        // unconditionally. Reads the internal backing to avoid the deprecation warning (Swift
+        // equivalent of upstream's SFSDK_USE_DEPRECATED_BEGIN/END guard).
+        if UserAccountManager.shared.showAuthWindowWhileLoadingInternal {
             startWebviewAuthenticationIfNeeded()
         }
     }
@@ -865,7 +868,10 @@ public class SFOAuthCoordinator: NSObject, WKNavigationDelegate, WKUIDelegate {
         if delegate?.responds(to: #selector(SFOAuthCoordinatorDelegate.oauthCoordinator(_:didFinishLoad:error:))) ?? false {
             delegate?.oauthCoordinator?(self, didFinishLoad: webView, error: nil)
         }
-        if !UserAccountManager.shared.showAuthWindowWhileLoading {
+        // Remove this block when `showAuthWindowWhileLoading` is removed (15.0). Reads the internal
+        // backing to avoid the deprecation warning (Swift equivalent of upstream's
+        // SFSDK_USE_DEPRECATED_BEGIN/END guard).
+        if !UserAccountManager.shared.showAuthWindowWhileLoadingInternal {
             startWebviewAuthenticationIfNeeded()
         }
     }

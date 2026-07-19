@@ -937,10 +937,14 @@
     if ([self.delegate respondsToSelector:@selector(oauthCoordinator:didStartLoad:)]) {
         [self.delegate oauthCoordinator:self didStartLoad:webView];
     }
-    
+
+    SFSDK_USE_DEPRECATED_BEGIN
+    // When `showAuthWindowWhileLoading` is removed, call `[self startWebviewAuthenticationIfNeeded];`
+    // without conditional check
     if ([SFUserAccountManager sharedInstance].showAuthWindowWhileLoading) {
         [self startWebviewAuthenticationIfNeeded];
     }
+    SFSDK_USE_DEPRECATED_END
 }
 
 - (void)startWebviewAuthenticationIfNeeded {
@@ -964,10 +968,13 @@
     if ([self.delegate respondsToSelector:@selector(oauthCoordinator:didFinishLoad:error:)]) {
         [self.delegate oauthCoordinator:self didFinishLoad:webView error:nil];
     }
-    
+
+    SFSDK_USE_DEPRECATED_BEGIN
+    // Remove this block when `showAuthWindowWhileLoading` is removed
     if (![SFUserAccountManager sharedInstance].showAuthWindowWhileLoading) {
         [self startWebviewAuthenticationIfNeeded];
     }
+    SFSDK_USE_DEPRECATED_END
 }
 
 - (void)webView:(WKWebView *)webView didFailNavigation:(WKNavigation *)navigation withError:(NSError *)error {

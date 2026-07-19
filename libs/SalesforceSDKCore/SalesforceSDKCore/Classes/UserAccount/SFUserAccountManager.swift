@@ -363,8 +363,20 @@ open class UserAccountManager: NSObject {
     /// Whether to fall back to web-based authentication instead of native login.
     @objc public var shouldFallbackToWebAuthentication: Bool = false
 
-    /// If true, present auth window while webview is loading; otherwise wait until loaded.
-    @objc public var showAuthWindowWhileLoading: Bool = false
+    /// Internal backing for `showAuthWindowWhileLoading`. Internal reads (e.g. SFOAuthCoordinator)
+    /// use this to avoid the deprecation warning on the public property. This is the Swift
+    /// equivalent of upstream's `SFSDK_USE_DEPRECATED_BEGIN/END` guard around the ObjC use sites.
+    /// When the public property is removed in 15.0, the auth window will always be shown while
+    /// loading, so this backing can be deleted and the coordinator reads unconditionalized.
+    var showAuthWindowWhileLoadingInternal: Bool = true
+
+    /// If true, present the auth window while the webview is loading. Otherwise wait to present the
+    /// auth window until the webview has finished loading. Defaults to `true`.
+    @available(*, deprecated, message: "This property will be removed in Salesforce Mobile SDK 15.0. The auth window will always be shown while loading.")
+    @objc public var showAuthWindowWhileLoading: Bool {
+        get { showAuthWindowWhileLoadingInternal }
+        set { showAuthWindowWhileLoadingInternal = newValue }
+    }
 
     /// Custom filter for supported notification types.
     @objc public var filterSupportedNotificationTypes: (([NotificationType]) -> [NotificationType])?
@@ -409,7 +421,9 @@ open class UserAccountManager: NSObject {
         migrateUserDefaults()
         errorManager = SFSDKAuthErrorManager()
         shouldFallbackToWebAuthentication = false
-        showAuthWindowWhileLoading = false
+        // Defaults to true as of #4039 (was false). Set the internal backing directly to avoid
+        // the deprecation warning on the public `showAuthWindowWhileLoading` property.
+        showAuthWindowWhileLoadingInternal = true
 
         alertDisplayBlock = { [weak self] message, window in
             guard let self = self else { return }
