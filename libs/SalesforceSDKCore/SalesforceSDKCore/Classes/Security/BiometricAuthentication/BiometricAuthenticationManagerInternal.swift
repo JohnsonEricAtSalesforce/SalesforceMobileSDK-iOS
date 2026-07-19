@@ -46,7 +46,9 @@ public class BiometricAuthenticationManagerInternal: NSObject, BiometricAuthenti
     }
     
     public var locked = false
-    
+
+    public var automaticPresentation = true
+
     internal var backgroundTimestamp: Double = 0
     // This is a local var so it can be stubbed for tests
     internal var laContext = LAContext()
@@ -147,8 +149,14 @@ public class BiometricAuthenticationManagerInternal: NSObject, BiometricAuthenti
                 SFSDKCoreLogger.e(BiometricAuthenticationManagerInternal.self, message: "Biometric authentication failed: \(error)")
             }
         }
+
+        if hasBiometricOptedIn() && automaticPresentation {
+            SFApplicationHelper.sharedApplication()?.connectedScenes.forEach() { scene in
+                presentBiometric(scene: scene)
+            }
+        }
     }
-    
+
     public func biometricOptIn(optIn: Bool) {
         if var policy = readBioAuhPolicy() {
             policy.optIn = optIn

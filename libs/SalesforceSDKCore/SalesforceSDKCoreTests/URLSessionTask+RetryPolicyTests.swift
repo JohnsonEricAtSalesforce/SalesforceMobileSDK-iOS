@@ -5,9 +5,11 @@ class URLSessionTaskRetryPolicyTests: XCTestCase {
 
     class MockBiometricAuthenticationManager: BiometricAuthenticationManager {
         var enabled: Bool
-        
+
         var locked: Bool
-        
+
+        var automaticPresentation: Bool = true
+
         func lock() {
             locked = true
         }

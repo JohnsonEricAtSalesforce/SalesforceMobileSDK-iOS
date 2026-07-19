@@ -2227,6 +2227,12 @@ extension UserAccountManager {
                         bioAuthManager.storePolicy(userAccount: currentUser, hasMobilePolicy: hasBioAuthPolicy, sessionTimeout: Int32(sessionTimeout))
                     }
 
+                    if !bioAuthManager.hasBiometricOptedIn() && bioAuthManager.automaticPresentation {
+                        if let topVC = SFSDKWindowManager.shared.mainWindow(authSession.oauthRequest.scene).topViewController() {
+                            bioAuthManager.presentOptInDialog(viewController: topVC)
+                        }
+                    }
+
                     if let preCreds = preLoginCredentials,
                        let currentRefresh = self.currentUserAccount?.credentials.refreshToken,
                        preCreds.refreshToken != currentRefresh {
