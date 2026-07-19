@@ -1,6 +1,6 @@
 # Upstream Sync Backlog Ledger
 
-Marker (done floor): `985e2adce` (units 1-10 done)  ·  forcedotcom/dev HEAD (target): `b5d37d807`  ·  **39 units remaining**  ·  Re-seeded: 2026-07-19 (Phase 0 of the resume-porting plan).
+Marker (done floor): `4c70ec9ef` (units 1-11 done)  ·  forcedotcom/dev HEAD (target): `b5d37d807`  ·  **38 units remaining**  ·  Re-seeded: 2026-07-19 (Phase 0 of the resume-porting plan).
 
 > **Direction:** we port changes **FROM** `forcedotcom/dev` **INTO** our ObjC→Swift migration branch
 > (`feature/objc-to-swift-test-migration`). Each unit is a *semantic re-implementation* against the current
@@ -17,7 +17,7 @@ Marker (done floor): `985e2adce` (units 1-10 done)  ·  forcedotcom/dev HEAD (ta
 > non-libs (CI, docs, skills, sample apps). Live progress bar = subject of lead task #9.
 
 ## Migration status
-▓▓▓▓░░░░░░░░░░░░░░░░  10/49 units done (20%)   ·   libs-production-impacting: 5/21   ·   Phase 1 porting (units 1-10 ✅)
+▓▓▓▓░░░░░░░░░░░░░░░░  11/49 units done (22%)   ·   libs-production-impacting: 5/21   ·   Phase 1 porting (units 1-11 ✅)
 
 | Bucket | Count | Notes |
 |--------|-------|-------|
@@ -41,7 +41,7 @@ Marker (done floor): `985e2adce` (units 1-10 done)  ·  forcedotcom/dev HEAD (ta
 | 8 | #4059 diag warning: OAuth code-exchange vs Lightning URL | bdeba0b3e | B | ⚠ OAuth + L10n(pre-appr) | ✅ ported | Ported the diagnostic branch into compiled Swift `SFOAuthCoordinator.handleResponse` (de-ref .m ref-synced byte-faithful): on `unsupported_grant_type` + `.lightning.` domain, log an error and re-wrap the failure NSError with localized `lightningUrlCodeExchangeError` before `notifyDelegateOfFailure`. Added `kSFOAuthErrorTypeUnsupportedGrantType` to the de-ref `SFSDKOAuthConstants.h` (module-visible in Swift). Added `lightningUrlCodeExchangeError` to en.lproj **Localizable.strings** (PRE-APPROVED, PR-flag). NEW `SFOAuthCoordinatorLightningURLTests.swift` — **adapted to the migrated Swift surface** (`@testable`, `SFOAuthInfo`, `OAuthCredentials.credentials(...)`, direct `credentials.domain`/`redirectUri`, internal `handleResponse`) instead of upstream's ObjC-selector spellings; made `handleResponse` `private`→internal for `@testable`. pbxproj: 4 additive entries, upstream UUIDs 1A31073F / 399A1150 (no collision). **Bridging-header ObjC categories DELIBERATELY OMITTED** — they declare categories on now-Swift classes (`SFOAuthCoordinator`, `SFSDKOAuthTokenEndpointResponse`) which won't compile; `@testable` supersedes them (matches existing `SFOAuthCoordinatorTests`/`SFSDKOAuthTokenEndpointResponseTests` idiom). SDKCore TEST BUILD ✓ 0 warn; 5 new tests PASS (not live-gated). ⚠ escalation: OAuth diagnostic + L10n — flag in PR. |
 | 9 | #4058 doc: scope | e2c0d69f7 | F | — | ✅ ported | NEW `.claude/doc-scopes.json` (doc-scope manifest for the PR-review tooling): 5 entries (readme, UPGRADE, CLAUDE.md, AuthFlowTester UITests overview, mobile-sdk-ios-pr-review skill). Written verbatim, byte-identical to upstream. Non-product, no build gate. |
 | 10 | #4061 stabilize flaky testBootConfigPickerViewRendered | 985e2adce | A | flaky | ✅ ported | Replaced the async `DispatchQueue.main.asyncAfter(0.2)` + expectation dance in `LoginOptionsViewControllerTests.testBootConfigPickerViewRendered` with a deterministic `layoutIfNeeded()` + `XCTAssertGreaterThan(view.frame.height, 0)` (UIKit layout only, no SwiftUI-internal/OS-variant assumptions). Migration API-name deltas preserved (`SalesforceSDKManager.shared`, `BootConfig(dict:)`). Test-only. SDKCore TEST BUILD ✓ 0 warn; class PASS 4/4. Re-baseline: unchanged — this test was already passing (only flaky-timing) and is not in the baseline. |
-| 11 | #4062 stabilize flaky testMissingLoginHint | 4c70ec9ef | A | flaky | ⬜ pending | 1 test file. Re-baseline after. |
+| 11 | #4062 stabilize flaky testMissingLoginHint | 4c70ec9ef | A | flaky | ✅ ported | `DomainDiscoveryCoordinatorTests`: dropped `@MainActor` on the class and converted all 7 tests `async throws`→`throws` (the `handle(callbackURL:)` path is synchronous URL parsing; removing the actor hop de-flakes). Our file was byte-identical to upstream's pre-image → applied post-image directly; verified BYTE-IDENTICAL to upstream post-image. Test-only. SDKCore TEST BUILD ✓ 0 warn; class PASS 7/7. Re-baseline: unchanged (none of these in baseline). |
 | 12 | #4063 stabilize flaky testCAOpaque (UI) | 4ba0c943f | F | flaky | ⬜ pending | `.github/workflows` + AuthFlowTester UITests. Re-baseline after. |
 | 13 | #4064 doc: scope | 08d39f43a | F | — | ⬜ pending | docs only. |
 | 14 | #4065 skip CI on doc-only PRs | 84672d1eb | F | — | ⬜ pending | CI config. |
