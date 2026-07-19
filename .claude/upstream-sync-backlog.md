@@ -1,6 +1,6 @@
 # Upstream Sync Backlog Ledger
 
-Marker (done floor): `366db6141` (units 1-19 done)  ·  forcedotcom/dev HEAD (target): `b5d37d807`  ·  **30 units remaining**  ·  Re-seeded: 2026-07-19 (Phase 0 of the resume-porting plan).
+Marker (done floor): `ed5391fd1` (units 1-20 done)  ·  forcedotcom/dev HEAD (target): `b5d37d807`  ·  **29 units remaining**  ·  Re-seeded: 2026-07-19 (Phase 0 of the resume-porting plan).
 
 > **Direction:** we port changes **FROM** `forcedotcom/dev` **INTO** our ObjC→Swift migration branch
 > (`feature/objc-to-swift-test-migration`). Each unit is a *semantic re-implementation* against the current
@@ -17,7 +17,7 @@ Marker (done floor): `366db6141` (units 1-19 done)  ·  forcedotcom/dev HEAD (ta
 > non-libs (CI, docs, skills, sample apps). Live progress bar = subject of lead task #9.
 
 ## Migration status
-▓▓▓▓▓▓▓░░░░░░░░░░░░░  19/49 units done (39%)   ·   libs-production-impacting: 5/21   ·   Phase 1 porting (units 1-19 ✅)
+▓▓▓▓▓▓▓▓░░░░░░░░░░░░  20/49 units done (41%)   ·   libs-production-impacting: 6/21   ·   Phase 1 porting (units 1-20 ✅)
 
 | Bucket | Count | Notes |
 |--------|-------|-------|
@@ -50,7 +50,7 @@ Marker (done floor): `366db6141` (units 1-19 done)  ·  forcedotcom/dev HEAD (ta
 | 17 | #4073 fix closure-param mismatch PushNotifTests | 3965852bf | A | flaky | ✅ ported (no-op) | Upstream fixed the two `onSend = { … }` 0-param closures introduced by #4066 to `{ _ in … }`. In our port of unit 16 I ALREADY used the one-param `{ _ in }` form (our `onSend` has always been `((RestRequest)->Void)?`), so unit 17's post-image already matched our tree — verified 0 remaining 0-param `onSend` closures. No source change; marker advanced to preserve contiguity. No build needed (identical tree to already-green unit 16). |
 | 18 | #4069 stabilize flaky RestClientPublisherTests | fd2a345e6 | A | flaky + LIVE-gated | ✅ ported | Bumped all 4 publisher-test timeouts (5/5/10/10 → 60) and routed the shared `evaluateResults` sink through `.receive(on: DispatchQueue.main)` (deterministic main-thread delivery); inlined `generateRecordName`. Preserved our migration deltas: the live-gate `setUpWithError` `XCTSkipUnless(authRefreshDidSucceed)` + `RestClient.sharedInstance.requestForQuery`/`CompositeRequestBuilder.addRequest` API names. **LIVE-gated class** → SDKCore TEST BUILD ✓ 0 warn is the gate; runtime SKIPs until unit 44 (#4087). Confirmed the known pre-coordinator hang is in `class func setUp()`→`synchronousAuthRefresh()` (runs before instance-level skip) — killed cleanly, oracle-identical, not a regression. Re-baseline: N/A (class doesn't run; not in baseline). |
 | 19 | #4067 stabilize flaky testLoginViewControllerCustomizations | 366db6141 | A | flaky | ✅ ported | Replaced `coordinator.beginWebViewFlow()` (needs a real WKWebView load → flaky) with a direct delegate invocation `UserAccountManager.shared.oauthCoordinator(coordinator, didBeginAuthenticationWithView: coordinator.view)` in the compiled Swift twin `SFUserAccountManagerTests.swift` (line 435, the `testLoginViewControllerCustomizations` case — NOT the sibling at 392); ref-synced the de-referenced `.m` byte-faithfully (line 476). Swift delegate name = `oauthCoordinator(_:didBeginAuthenticationWithView:)`, `coordinator.view` is `WKWebView`. NOT live-gated (setUp is local state cleanup, no auth refresh). SDKCore TEST BUILD ✓; ran `testLoginViewControllerCustomizations` → **passed (0.175s)**, deterministic. Re-baseline: no change (test now passes; was not in baseline). |
-| 20 | #4072 fix nil crash SFSDKBatchResponse haltOnError | ed5391fd1 | B | — | ⬜ pending | prod + test; batch-response nil guard. |
+| 20 | #4072 fix nil crash SFSDKBatchResponse haltOnError | ed5391fd1 | B | — | ✅ ported | Prod nil-guard (`_results = isKindOfClass:NSArray ? results : @[]`) was **already present** in the compiled Swift twin `SFSDKBatchResponse.swift` (`results = (dict["results"] as? [Any]) ?? []`) — equivalent, no Swift change needed; ref-synced the de-referenced `.m` byte-faithfully. Test `RestClientTest.swift testAsyncBatchRequestStopOnFailure` restructured per upstream (hoisted setup out of the `do`, `XCTUnwrap` + `XCTAssertEqual` replacing `as!` force-unwraps + `XCTAssertTrue(==)`), preserving our migration API names (`RestClient.sharedInstance`, `.addRequest`, `.requestForQuery`). **LIVE-gated class** (RestClientTests setUp does synchronousAuthRefresh + XCTSkipUnless) → SDKCore TEST BUILD ✓ is the gate; test SKIPs until unit 44. Not a flaky-stabilize unit → no re-baseline. |
 | 21 | #4070 stabilize flaky UI test testCAOpaque | 26a513347 | F | flaky | ⬜ pending | AuthFlowTester scene + UITests. Re-baseline after. |
 | 22 | #4074 refresh uses instance URL | 25f2ca733 | B | ⚠ OAuth/refresh | ⬜ pending | `SFOAuthCredentials.m`, `SFSDKOAuth2.m`/`+Internal.h` + test `.m` + pbxproj. |
 | 23 | #4075 fix push unregister wrong user | 4d7e7588e | A+B | — | ⬜ pending | `PushNotificationManager.swift`, `RemoteNotificationRegistering.swift` + tests. |
