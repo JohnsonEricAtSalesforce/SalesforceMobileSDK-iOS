@@ -8,6 +8,8 @@
 
 /* Begin PBXBuildFile section */
 		4F6852742E7CE50800D37B27 /* FMDB in Frameworks */ = {isa = PBXBuildFile; productRef = 4F6852732E7CE50800D37B27 /* FMDB */; };
+		FADE00000000000000000003 /* FMDB in Frameworks */ = {isa = PBXBuildFile; productRef = FADE00000000000000000001 /* FMDB */; };
+		FADE00000000000000000004 /* SQLCipher in Frameworks */ = {isa = PBXBuildFile; productRef = FADE00000000000000000002 /* SQLCipher */; };
 		4F941E951F8C43370035EB03 /* userstore.json in Resources */ = {isa = PBXBuildFile; fileRef = 4F941E941F8C43370035EB03 /* userstore.json */; };
 		4FADBCB51BA0CEDA00D01855 /* ImagesMobileSyncExplorer.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 4FADBCB41BA0CEDA00D01855 /* ImagesMobileSyncExplorer.xcassets */; };
 		4FCA4A9D1FBE61C300F081B3 /* usersyncs.json in Resources */ = {isa = PBXBuildFile; fileRef = 4FCA4A9C1FBE61C300F081B3 /* usersyncs.json */; };
@@ -380,6 +382,8 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				FADE00000000000000000003 /* FMDB in Frameworks */,
+				FADE00000000000000000004 /* SQLCipher in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -630,6 +634,10 @@
 				B7A134F21D99EBE300A4559C /* PBXTargetDependency */,
 			);
 			name = MobileSyncExplorerCommon;
+			packageProductDependencies = (
+				FADE00000000000000000001 /* FMDB */,
+				FADE00000000000000000002 /* SQLCipher */,
+			);
 			productName = MobileSyncExplorerCommon;
 			productReference = B7A134301D99D52600A4559C /* MobileSyncExplorerCommon.framework */;
 			productType = "com.apple.product-type.framework";
@@ -991,7 +999,6 @@
 				LIBRARY_SEARCH_PATHS = "";
 				ONLY_ACTIVE_ARCH = YES;
 				SDKROOT = iphoneos;
-				SWIFT_OBJC_BRIDGING_HEADER = "../../../shared/test/XCUITest-Bridging-Header.h";
 				TARGETED_DEVICE_FAMILY = "1,2";
 			};
 			name = Debug;
@@ -1048,7 +1055,6 @@
 				LIBRARY_SEARCH_PATHS = "";
 				SDKROOT = iphoneos;
 				SWIFT_COMPILATION_MODE = wholemodule;
-				SWIFT_OBJC_BRIDGING_HEADER = "../../../shared/test/XCUITest-Bridging-Header.h";
 				SWIFT_OPTIMIZATION_LEVEL = "-O";
 				TARGETED_DEVICE_FAMILY = "1,2";
 				VALIDATE_PRODUCT = YES;
@@ -1226,6 +1232,16 @@
 			productName = FMDB;
 		};
 		4FE34A4D2E5527A0000D6367 /* SQLCipher */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 4FE34A4C2E5527A0000D6367 /* XCRemoteSwiftPackageReference "SQLCipher" */;
+			productName = SQLCipher;
+		};
+		FADE00000000000000000001 /* FMDB */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 4F6852722E7CE50800D37B27 /* XCRemoteSwiftPackageReference "fmdb" */;
+			productName = FMDB;
+		};
+		FADE00000000000000000002 /* SQLCipher */ = {
 			isa = XCSwiftPackageProductDependency;
 			package = 4FE34A4C2E5527A0000D6367 /* XCRemoteSwiftPackageReference "SQLCipher" */;
 			productName = SQLCipher;

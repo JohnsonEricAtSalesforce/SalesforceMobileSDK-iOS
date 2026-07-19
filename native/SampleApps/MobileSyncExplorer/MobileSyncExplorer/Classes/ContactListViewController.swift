@@ -26,6 +26,7 @@ import UIKit
 import SalesforceSDKCore
 import SmartStore
 import MobileSync
+import MobileSyncExplorerCommon
 
 class ContactListViewController: UITableViewController, UISearchBarDelegate {
 
@@ -395,13 +396,13 @@ class ContactListViewController: UITableViewController, UISearchBarDelegate {
         if text == kActionLogout {
             showLogoutActionSheet()
         } else if text == kActionSwitchUser {
-            let umvc = SFDefaultUserManagementViewController { [weak self] _ in
+            let umvc = SalesforceUserManagementViewController { [weak self] _ in
                 self?.dismiss(animated: true)
             }
             present(umvc, animated: true)
         } else if text == kActionDbInspector {
             if let store = dataMgr?.store {
-                let inspector = SFSmartStoreInspectorViewController(store: store)
+                let inspector = InspectorViewController(store: store)
                 present(inspector, animated: false)
             }
         }
@@ -411,7 +412,7 @@ class ContactListViewController: UITableViewController, UISearchBarDelegate {
         let alert = UIAlertController(title: nil, message: "Are you sure you want to log out?", preferredStyle: .alert)
         let logoutAction = UIAlertAction(title: "Logout", style: .destructive) { [weak self] _ in
             self?.logoutActionSheet = nil
-            SFUserAccountManager.sharedInstance().logout()
+            UserAccountManager.shared.logout()
         }
         let cancelAction = UIAlertAction(title: "Cancel", style: .cancel, handler: nil)
         alert.addAction(logoutAction)

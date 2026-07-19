@@ -26,21 +26,21 @@ import Foundation
 
 /// MobileSyncExplorerConfig holds the config for both the app and the extension.
 @objcMembers
-class MobileSyncExplorerConfig: NSObject {
+public class MobileSyncExplorerConfig: NSObject {
 
     private static let kAppGroupName = "group.com.salesforce.mobilesdk.MobileSyncExplorer"
     private static let kUserLoggedIn = "userLoggedIn"
 
     /// The App GroupName ("group.*") associated with the configured Connected Application.
-    let appGroupName: String
+    public let appGroupName: String
 
     /// Indicates whether app groups are enabled for MobileSyncExplorer.
-    let appGroupsEnabled: Bool
+    public let appGroupsEnabled: Bool
 
     /// Returns flag associated with NSUserDefaults for user's logged in state.
-    let userLogInStatusKey: String
+    public let userLogInStatusKey: String
 
-    static let sharedInstance = MobileSyncExplorerConfig()
+    public static let sharedInstance = MobileSyncExplorerConfig()
 
     private override init() {
         self.appGroupName = MobileSyncExplorerConfig.kAppGroupName

@@ -24,6 +24,7 @@
 
 import UIKit
 import MobileSync
+import MobileSyncExplorerCommon
 
 class ContactDetailViewController: UITableViewController {
 

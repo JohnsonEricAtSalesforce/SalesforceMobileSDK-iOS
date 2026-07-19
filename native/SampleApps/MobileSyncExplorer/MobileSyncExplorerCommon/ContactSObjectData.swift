@@ -28,11 +28,11 @@ import MobileSync
 let kLastModifiedDate = "LastModifiedDate"
 
 @objcMembers
-class ContactSObjectData: SObjectData {
+public class ContactSObjectData: SObjectData {
 
     private static var sDataSpec: ContactSObjectDataSpec?
 
-    override class func dataSpec() -> SObjectDataSpec {
+    public override class func dataSpec() -> SObjectDataSpec {
         if sDataSpec == nil {
             sDataSpec = ContactSObjectDataSpec()
         }
@@ -41,42 +41,42 @@ class ContactSObjectData: SObjectData {
 
     // MARK: - Property getters / setters
 
-    var firstName: String? {
+    public var firstName: String? {
         get { return nonNullFieldValue(kContactFirstNameField) as? String }
         set { updateSoupForFieldName(kContactFirstNameField, fieldValue: newValue) }
     }
 
-    var lastName: String? {
+    public var lastName: String? {
         get { return nonNullFieldValue(kContactLastNameField) as? String }
         set { updateSoupForFieldName(kContactLastNameField, fieldValue: newValue) }
     }
 
-    var title: String? {
+    public var title: String? {
         get { return nonNullFieldValue(kContactTitleField) as? String }
         set { updateSoupForFieldName(kContactTitleField, fieldValue: newValue) }
     }
 
-    var mobilePhone: String? {
+    public var mobilePhone: String? {
         get { return nonNullFieldValue(kContactMobilePhoneField) as? String }
         set { updateSoupForFieldName(kContactMobilePhoneField, fieldValue: newValue) }
     }
 
-    var email: String? {
+    public var email: String? {
         get { return nonNullFieldValue(kContactEmailField) as? String }
         set { updateSoupForFieldName(kContactEmailField, fieldValue: newValue) }
     }
 
-    var department: String? {
+    public var department: String? {
         get { return nonNullFieldValue(kContactDepartmentField) as? String }
         set { updateSoupForFieldName(kContactDepartmentField, fieldValue: newValue) }
     }
 
-    var homePhone: String? {
+    public var homePhone: String? {
         get { return nonNullFieldValue(kContactHomePhoneField) as? String }
         set { updateSoupForFieldName(kContactHomePhoneField, fieldValue: newValue) }
     }
 
-    var lastModifiedDate: String? {
+    public var lastModifiedDate: String? {
         get { return nonNullFieldValue(kLastModifiedDate) as? String }
     }
 }

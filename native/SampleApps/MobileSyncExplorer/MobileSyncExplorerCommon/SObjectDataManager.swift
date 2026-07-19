@@ -28,7 +28,7 @@ import SmartStore
 import MobileSync
 
 @objcMembers
-class SObjectDataManager: NSObject {
+public class SObjectDataManager: NSObject {
 
     private static let kMaxQueryPageSize: UInt = 1000
     private static let kSearchFilterQueueName = "com.salesforce.mobileSyncExplorer.searchFilterQueue"
@@ -40,42 +40,41 @@ class SObjectDataManager: NSObject {
     private let searchFilterQueue: DispatchQueue
     private var fullDataRowList: [SObjectData]?
 
-    var store: SFSmartStore {
-        return SFSmartStore.sharedStore(withName: kDefaultSmartStoreName) as! SFSmartStore
+    public var store: SmartStore {
+        return SmartStore.shared(withName: SmartStoreConstants.defaultStoreName)!
     }
 
-    var dataRows: [SObjectData]?
+    public var dataRows: [SObjectData]?
 
-    init(dataSpec: SObjectDataSpec) {
-        self.syncMgr = SFMobileSyncSyncManager.sharedInstance(for: SFUserAccountManager.sharedInstance().currentUser!)!
+    public init(dataSpec: SObjectDataSpec) {
+        self.syncMgr = SFMobileSyncSyncManager.sharedInstance(forUserAccount: UserAccountManager.shared.currentUserAccount!)!
         self.dataSpec = dataSpec
         self.searchFilterQueue = DispatchQueue(label: SObjectDataManager.kSearchFilterQueueName)
         super.init()
 
         // Setup store and syncs if needed
-        MobileSyncSDKManager.shared.setupUserStore(fromDefaultConfig: ())
-        MobileSyncSDKManager.shared.setupUserSyncs(fromDefaultConfig: ())
+        MobileSyncSDKManager.sharedInstance.setupUserStoreFromDefaultConfig()
+        MobileSyncSDKManager.sharedInstance.setupUserSyncsFromDefaultConfig()
     }
 
-    func refreshRemoteData(_ completionBlock: @escaping () -> Void) {
-        weak var weakSelf = self
-        syncMgr.reSync(byName: SObjectDataManager.kSyncDownName, updateBlock: { sync in
-            guard let strongSelf = weakSelf else { return }
-            if let sync = sync, sync.isDone() || sync.hasFailed() {
-                strongSelf.refreshLocalData(completionBlock)
+    public func refreshRemoteData(_ completionBlock: @escaping () -> Void) {
+        _ = try? syncMgr.reSync(named: SObjectDataManager.kSyncDownName) { [weak self] sync in
+            guard let self = self else { return }
+            if sync.isDone() || sync.hasFailed() {
+                self.refreshLocalData(completionBlock)
             }
-        }, error: nil)
+        }
     }
 
-    func updateRemoteData(_ completionBlock: @escaping (SFSyncState) -> Void) {
-        syncMgr.reSync(byName: SObjectDataManager.kSyncUpName, updateBlock: { sync in
-            if let sync = sync, sync.isDone() || sync.hasFailed() {
+    public func updateRemoteData(_ completionBlock: @escaping (SFSyncState) -> Void) {
+        _ = try? syncMgr.reSync(named: SObjectDataManager.kSyncUpName) { sync in
+            if sync.isDone() || sync.hasFailed() {
                 completionBlock(sync)
             }
-        }, error: nil)
+        }
     }
 
-    func filterOnSearchTerm(_ searchTerm: String?, completion completionBlock: (() -> Void)?) {
+    public func filterOnSearchTerm(_ searchTerm: String?, completion completionBlock: (() -> Void)?) {
         searchFilterQueue.async { [weak self] in
             guard let self = self else { return }
             self.dataRows = self.fullDataRowList
@@ -108,16 +107,16 @@ class SObjectDataManager: NSObject {
 
     // MARK: - Local data methods
 
-    func refreshLocalData(_ completionBlock: (() -> Void)?) {
-        let sobjectsQuerySpec = SFQuerySpec.newAllQuerySpec(dataSpec.soupName, withOrderPath: dataSpec.orderByFieldName, with: .ascending, withPageSize: SObjectDataManager.kMaxQueryPageSize)
-        var queryError: NSError?
-        let queryResults = store.query(with: sobjectsQuerySpec, pageIndex: 0, error: &queryError)
-        SFSDKMobileSyncLogger.log(type(of: self), level: .debug, message: "Got local query results. Populating data rows.")
-
-        if let error = queryError {
+    public func refreshLocalData(_ completionBlock: (() -> Void)?) {
+        let sobjectsQuerySpec = QuerySpec.buildAllQuerySpec(soupName: dataSpec.soupName, orderPath: dataSpec.orderByFieldName, order: .ascending, pageSize: SObjectDataManager.kMaxQueryPageSize)
+        let queryResults: [Any]
+        do {
+            queryResults = try store.query(using: sobjectsQuerySpec, startingFromPageIndex: 0)
+        } catch {
             SFSDKMobileSyncLogger.log(type(of: self), level: .error, message: "Error retrieving '\(dataSpec.objectType)' data from SmartStore: \(error.localizedDescription)")
             return
         }
+        SFSDKMobileSyncLogger.log(type(of: self), level: .debug, message: "Got local query results. Populating data rows.")
 
         fullDataRowList = populateDataRows(queryResults as? [[String: Any]] ?? [])
         SFSDKMobileSyncLogger.log(type(of: self), level: .debug, message: "Finished generating data rows. Number of rows: \(fullDataRowList?.count ?? 0). Refreshing view.")
@@ -125,57 +124,57 @@ class SObjectDataManager: NSObject {
         completionBlock?()
     }
 
-    func createLocalData(_ newData: SObjectData) {
+    public func createLocalData(_ newData: SObjectData) {
         newData.updateSoupForFieldName(kSyncTargetLocal, fieldValue: true)
         newData.updateSoupForFieldName(kSyncTargetLocallyCreated, fieldValue: true)
-        store.upsertEntries([newData.soupDict], toSoup: type(of: newData).dataSpec().soupName)
+        _ = store.upsert(entries: [newData.soupDict], forSoupNamed: type(of: newData).dataSpec().soupName)
     }
 
-    func updateLocalData(_ updatedData: SObjectData) {
+    public func updateLocalData(_ updatedData: SObjectData) {
         updatedData.updateSoupForFieldName(kSyncTargetLocal, fieldValue: true)
         updatedData.updateSoupForFieldName(kSyncTargetLocallyUpdated, fieldValue: true)
-        store.upsertEntries([updatedData.soupDict], toSoup: type(of: updatedData).dataSpec().soupName)
+        _ = store.upsert(entries: [updatedData.soupDict], forSoupNamed: type(of: updatedData).dataSpec().soupName)
     }
 
-    func deleteLocalData(_ dataToDelete: SObjectData) {
+    public func deleteLocalData(_ dataToDelete: SObjectData) {
         dataToDelete.updateSoupForFieldName(kSyncTargetLocal, fieldValue: true)
         dataToDelete.updateSoupForFieldName(kSyncTargetLocallyDeleted, fieldValue: true)
-        store.upsertEntries([dataToDelete.soupDict], toSoup: type(of: dataToDelete).dataSpec().soupName)
+        _ = store.upsert(entries: [dataToDelete.soupDict], forSoupNamed: type(of: dataToDelete).dataSpec().soupName)
     }
 
-    func undeleteLocalData(_ dataToUnDelete: SObjectData) {
+    public func undeleteLocalData(_ dataToUnDelete: SObjectData) {
         dataToUnDelete.updateSoupForFieldName(kSyncTargetLocallyDeleted, fieldValue: false)
         let locallyCreatedOrUpdated = dataLocallyCreated(dataToUnDelete) || dataLocallyUpdated(dataToUnDelete)
         dataToUnDelete.updateSoupForFieldName(kSyncTargetLocal, fieldValue: locallyCreatedOrUpdated)
-        store.upsertEntries([dataToUnDelete.soupDict], toSoup: type(of: dataToUnDelete).dataSpec().soupName, withExternalIdPath: kSObjectIdField, error: nil)
+        _ = try? store.upsert(entries: [dataToUnDelete.soupDict], forSoupNamed: type(of: dataToUnDelete).dataSpec().soupName, withExternalIdPath: kSObjectIdField)
     }
 
-    func dataHasLocalChanges(_ data: SObjectData) -> Bool {
+    public func dataHasLocalChanges(_ data: SObjectData) -> Bool {
         return (data.fieldValueForFieldName(kSyncTargetLocal) as? Bool) ?? false
     }
 
-    func dataLocallyCreated(_ data: SObjectData) -> Bool {
+    public func dataLocallyCreated(_ data: SObjectData) -> Bool {
         return (data.fieldValueForFieldName(kSyncTargetLocallyCreated) as? Bool) ?? false
     }
 
-    func dataLocallyUpdated(_ data: SObjectData) -> Bool {
+    public func dataLocallyUpdated(_ data: SObjectData) -> Bool {
         return (data.fieldValueForFieldName(kSyncTargetLocallyUpdated) as? Bool) ?? false
     }
 
-    func dataLocallyDeleted(_ data: SObjectData) -> Bool {
+    public func dataLocallyDeleted(_ data: SObjectData) -> Bool {
         return (data.fieldValueForFieldName(kSyncTargetLocallyDeleted) as? Bool) ?? false
     }
 
-    func lastModifiedRecords(_ limit: Int, completion completionBlock: @escaping () -> Void) {
-        let sobjectsQuerySpec = SFQuerySpec.newAllQuerySpec(dataSpec.soupName, withOrderPath: "_soupLastModifiedDate", with: .descending, withPageSize: UInt(limit))
-        var queryError: NSError?
-        let queryResults = store.query(with: sobjectsQuerySpec, pageIndex: 0, error: &queryError)
-        SFSDKMobileSyncLogger.log(type(of: self), level: .debug, message: "Got local query results. Populating data rows.")
-
-        if let error = queryError {
+    public func lastModifiedRecords(_ limit: Int, completion completionBlock: @escaping () -> Void) {
+        let sobjectsQuerySpec = QuerySpec.buildAllQuerySpec(soupName: dataSpec.soupName, orderPath: "_soupLastModifiedDate", order: .descending, pageSize: UInt(limit))
+        let queryResults: [Any]
+        do {
+            queryResults = try store.query(using: sobjectsQuerySpec, startingFromPageIndex: 0)
+        } catch {
             SFSDKMobileSyncLogger.log(type(of: self), level: .error, message: "Error retrieving '\(dataSpec.objectType)' data from SmartStore: \(error.localizedDescription)")
             return
         }
+        SFSDKMobileSyncLogger.log(type(of: self), level: .debug, message: "Got local query results. Populating data rows.")
 
         fullDataRowList = populateDataRows(queryResults as? [[String: Any]] ?? [])
         SFSDKMobileSyncLogger.log(type(of: self), level: .debug, message: "Finished generating data rows. Number of rows: \(fullDataRowList?.count ?? 0). Refreshing view.")

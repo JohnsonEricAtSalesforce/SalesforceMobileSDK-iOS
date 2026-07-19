@@ -27,6 +27,7 @@ import UserNotifications
 import SalesforceSDKCommon
 import SalesforceSDKCore
 import MobileSync
+import MobileSyncExplorerCommon
 
 class AppDelegate: UIResponder, UIApplicationDelegate {
 
@@ -35,8 +36,8 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
     override init() {
         super.init()
         let config = MobileSyncExplorerConfig.sharedInstance
-        SFSDKDatasharingHelper.sharedInstance().appGroupName = config.appGroupName
-        SFSDKDatasharingHelper.sharedInstance().appGroupEnabled = config.appGroupsEnabled
+        SFSDKDatasharingHelper.sharedInstance.appGroupName = config.appGroupName
+        SFSDKDatasharingHelper.sharedInstance.appGroupEnabled = config.appGroupsEnabled
 
         MobileSyncSDKManager.initializeSDK()
 
@@ -55,14 +56,14 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
         UNUserNotificationCenter.current().requestAuthorization(options: [.sound, .alert, .badge]) { granted, error in
             if granted {
                 DispatchQueue.main.async {
-                    SFPushNotificationManager.sharedInstance().registerForRemoteNotifications()
+                    PushNotificationManager.sharedInstance().registerForRemoteNotifications()
                 }
             } else {
-                SFLogger.d(type(of: self), message: "Push notification authorization denied")
+                SalesforceLogger.d(type(of: self), message: "Push notification authorization denied")
             }
 
             if let error = error {
-                SFLogger.e(type(of: self), message: "Push notification authorization error: \(error)")
+                SalesforceLogger.e(type(of: self), message: "Push notification authorization error: \(error)")
             }
         }
     }
@@ -73,9 +74,9 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
     }
 
     func didRegisterForRemoteNotifications(withDeviceToken deviceToken: Data) {
-        SFPushNotificationManager.sharedInstance().didRegisterForRemoteNotifications(withDeviceToken: deviceToken)
-        if SFUserAccountManager.sharedInstance().currentUser?.credentials.accessToken != nil {
-            SFPushNotificationManager.sharedInstance().registerSalesforceNotifications(completionBlock: nil, fail: nil)
+        PushNotificationManager.sharedInstance().didRegisterForRemoteNotifications(withDeviceToken: deviceToken)
+        if UserAccountManager.shared.currentUserAccount?.credentials.accessToken != nil {
+            _ = PushNotificationManager.sharedInstance().registerSalesforceNotifications(completionBlock: nil, failBlock: nil)
         }
     }
 

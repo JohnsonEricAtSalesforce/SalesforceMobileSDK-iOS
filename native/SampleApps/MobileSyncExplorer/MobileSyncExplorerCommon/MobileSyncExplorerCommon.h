@@ -21,12 +21,16 @@
  WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY
  WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-#import <MobileSyncExplorerCommon/MobileSyncExplorerConfig.h>
-#import <MobileSyncExplorerCommon/ContactSObjectData.h>
-#import <MobileSyncExplorerCommon/ContactSObjectDataSpec.h>
-#import <MobileSyncExplorerCommon/SObjectData.h>
-#import <MobileSyncExplorerCommon/SObjectDataFieldSpec.h>
-#import <MobileSyncExplorerCommon/SObjectDataSpec.h>
-#import <MobileSyncExplorerCommon/SObjectDataManager.h>
+#import <Foundation/Foundation.h>
 
+//! Project version number for MobileSyncExplorerCommon.
+FOUNDATION_EXPORT double MobileSyncExplorerCommonVersionNumber;
+
+//! Project version string for MobileSyncExplorerCommon.
+FOUNDATION_EXPORT const unsigned char MobileSyncExplorerCommonVersionString[];
+
+// This framework's public interface is now defined entirely in Swift. The previous
+// Objective-C headers (MobileSyncExplorerConfig.h, ContactSObjectData.h, etc.) were
+// converted to Swift during the ObjC→Swift migration; consumers import the framework
+// as a Swift module (`import MobileSyncExplorerCommon`) rather than via these headers.
 

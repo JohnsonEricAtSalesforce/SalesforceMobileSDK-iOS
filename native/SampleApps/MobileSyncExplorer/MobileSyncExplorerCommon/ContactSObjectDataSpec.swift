@@ -24,18 +24,18 @@
 
 import Foundation
 
-let kContactFirstNameField = "FirstName"
-let kContactLastNameField = "LastName"
-let kContactTitleField = "Title"
-let kContactMobilePhoneField = "MobilePhone"
-let kContactEmailField = "Email"
-let kContactDepartmentField = "Department"
-let kContactHomePhoneField = "HomePhone"
+public let kContactFirstNameField = "FirstName"
+public let kContactLastNameField = "LastName"
+public let kContactTitleField = "Title"
+public let kContactMobilePhoneField = "MobilePhone"
+public let kContactEmailField = "Email"
+public let kContactDepartmentField = "Department"
+public let kContactHomePhoneField = "HomePhone"
 
 @objcMembers
-class ContactSObjectDataSpec: SObjectDataSpec {
+public class ContactSObjectDataSpec: SObjectDataSpec {
 
-    init() {
+    public init() {
         let objectType = "Contact"
         let objectFieldSpecs: [SObjectDataFieldSpec] = [
             SObjectDataFieldSpec(fieldName: kContactFirstNameField, searchable: true),
@@ -51,7 +51,7 @@ class ContactSObjectDataSpec: SObjectDataSpec {
         super.init(objectType: objectType, objectFieldSpecs: objectFieldSpecs, soupName: soupName, orderByFieldName: orderByFieldName)
     }
 
-    override class func createSObjectData(_ soupDict: [String: Any]) -> SObjectData {
+    public override class func createSObjectData(_ soupDict: [String: Any]) -> SObjectData {
         return ContactSObjectData(soupDict: soupDict)
     }
 }

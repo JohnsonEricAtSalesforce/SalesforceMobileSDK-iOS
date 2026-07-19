@@ -26,17 +26,17 @@ import Foundation
 import SalesforceSDKCore
 
 @objcMembers
-class SObjectData: NSObject {
-    var soupDict: [String: Any]
+public class SObjectData: NSObject {
+    public var soupDict: [String: Any]
 
-    override init() {
+    public override init() {
         self.soupDict = [:]
         super.init()
         initSoupValues(type(of: self).dataSpec().fieldNames)
         updateSoupForFieldName("attributes", fieldValue: ["type": type(of: self).dataSpec().objectType])
     }
 
-    init(soupDict: [String: Any]) {
+    public init(soupDict: [String: Any]) {
         self.soupDict = [:]
         super.init()
         initSoupValues(type(of: self).dataSpec().fieldNames)
@@ -46,17 +46,17 @@ class SObjectData: NSObject {
         }
     }
 
-    func fieldValueForFieldName(_ fieldName: String) -> Any? {
+    public func fieldValueForFieldName(_ fieldName: String) -> Any? {
         return nonNullFieldValue(fieldName)
     }
 
-    func updateSoupForFieldName(_ fieldName: String, fieldValue: Any?) {
+    public func updateSoupForFieldName(_ fieldName: String, fieldValue: Any?) {
         var mutableSoup = soupDict
         mutableSoup[fieldName] = fieldValue ?? NSNull()
         soupDict = mutableSoup
     }
 
-    class func dataSpec() -> SObjectDataSpec {
+    public class func dataSpec() -> SObjectDataSpec {
         fatalError("You must override dataSpec() in a subclass")
     }
 
@@ -70,7 +70,7 @@ class SObjectData: NSObject {
         return value
     }
 
-    override var description: String {
+    public override var description: String {
         return "<\(type(of: self)):\(Unmanaged.passUnretained(self).toOpaque())> \(soupDict)"
     }
 

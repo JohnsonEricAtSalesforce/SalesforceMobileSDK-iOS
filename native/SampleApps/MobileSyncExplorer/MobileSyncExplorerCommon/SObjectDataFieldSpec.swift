@@ -25,11 +25,11 @@
 import Foundation
 
 @objcMembers
-class SObjectDataFieldSpec: NSObject {
-    var fieldName: String
-    var isSearchable: Bool
+public class SObjectDataFieldSpec: NSObject {
+    public var fieldName: String
+    public var isSearchable: Bool
 
-    init(fieldName: String, searchable isSearchable: Bool) {
+    public init(fieldName: String, searchable isSearchable: Bool) {
         self.fieldName = fieldName
         self.isSearchable = isSearchable
         super.init()

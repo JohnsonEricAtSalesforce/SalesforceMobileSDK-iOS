@@ -34,10 +34,11 @@ class SceneDelegate: UIResponder, UIWindowSceneDelegate {
     func scene(_ scene: UIScene, willConnectTo session: UISceneSession, options connectionOptions: UIScene.ConnectionOptions) {
         guard let windowScene = scene as? UIWindowScene else { return }
 
-        self.window = SFSDKUIWindow(windowScene: windowScene)
+        self.window = UIWindow(frame: windowScene.coordinateSpace.bounds)
+        self.window?.windowScene = windowScene
 
         // App Setup for any changes to the current authenticated user
-        SFSDKAuthHelper.registerBlock(forCurrentUserChangeNotifications: scene) { [weak self] in
+        AuthHelper.registerBlock(forCurrentUserChangeNotifications: scene) { [weak self] in
             self?.resetUserLoginStatus()
             self?.resetViewState {
                 self?.setupRootViewController()
@@ -46,7 +47,7 @@ class SceneDelegate: UIResponder, UIWindowSceneDelegate {
 
         initializeAppViewState()
 
-        SFSDKAuthHelper.loginIfRequired(scene) { [weak self] in
+        AuthHelper.loginIfRequired(scene) { [weak self] in
             self?.resetUserLoginStatus()
             self?.setupRootViewController()
         }
@@ -79,7 +80,7 @@ class SceneDelegate: UIResponder, UIWindowSceneDelegate {
     // MARK: - Private methods
 
     private func resetUserLoginStatus() {
-        let loggedIn = SFUserAccountManager.sharedInstance().currentUser != nil
+        let loggedIn = UserAccountManager.shared.currentUserAccount != nil
         UserDefaults.msdkUserDefaults().set(loggedIn, forKey: "userLoggedIn")
         UserDefaults.msdkUserDefaults().synchronize()
         let isLoggedIn = UserDefaults.msdkUserDefaults().bool(forKey: "userLoggedIn")

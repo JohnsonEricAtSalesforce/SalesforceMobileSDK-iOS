@@ -29,21 +29,21 @@ import MobileSync
 let kSObjectIdField = "Id"
 
 @objcMembers
-class SObjectDataSpec: NSObject {
-    var objectType: String
-    var objectFieldSpecs: [SObjectDataFieldSpec]
-    var soupName: String
-    var orderByFieldName: String
+public class SObjectDataSpec: NSObject {
+    public var objectType: String
+    public var objectFieldSpecs: [SObjectDataFieldSpec]
+    public var soupName: String
+    public var orderByFieldName: String
 
-    var fieldNames: [String] {
+    public var fieldNames: [String] {
         return objectFieldSpecs.map { $0.fieldName }
     }
 
-    var soupFieldNames: [String] {
+    public var soupFieldNames: [String] {
         return objectFieldSpecs.map { "{\(soupName):\($0.fieldName)}" }
     }
 
-    init(objectType: String, objectFieldSpecs: [SObjectDataFieldSpec], soupName: String, orderByFieldName: String) {
+    public init(objectType: String, objectFieldSpecs: [SObjectDataFieldSpec], soupName: String, orderByFieldName: String) {
         self.objectType = objectType
         self.objectFieldSpecs = SObjectDataSpec.buildObjectFieldSpecs(objectFieldSpecs)
         self.soupName = soupName
@@ -51,7 +51,7 @@ class SObjectDataSpec: NSObject {
         super.init()
     }
 
-    class func createSObjectData(_ soupDict: [String: Any]) -> SObjectData {
+    public class func createSObjectData(_ soupDict: [String: Any]) -> SObjectData {
         fatalError("You must override createSObjectData(_:) in a subclass")
     }
 
