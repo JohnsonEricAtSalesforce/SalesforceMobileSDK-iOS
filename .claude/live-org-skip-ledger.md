@@ -49,3 +49,33 @@ operator flagged (a future REST/sync port can no longer pass green against absen
 When the token-refresh-coordinator upstream port lands and live auth succeeds in-sim, re-run each class
 WITHOUT the skip and reconcile against the oracle per Task 10; move passing classes off this ledger. Until
 then, any gate that reports these as "passing" must annotate them as SKIPPED.
+
+---
+
+## REVALIDATION 2026-07-19 — deferrals re-checked against current state (static/source; not a fresh live run)
+
+Operator asked whether the deferred test items are now unblocked "now that we'd caught up on the porting
+that deferral was based on." Traced the actual unblocker and its position in history:
+
+- **The live-auth unblocker is upstream `997c4e09a` "Add token refresh coordinator" (PR #4087, dated
+  2026-06-26).** Verified: it is **NOT** an ancestor of our drained marker `bac017113` — it was never in
+  the 12-unit queue we drained. It **is** in the current `origin/dev` (`b155f785d`), i.e. it sits inside
+  the **fresh 121-commit backlog** (46 first-parent units). **Conclusion: the porting is NOT caught up to
+  the commit the deferral was based on** — the 51 restored live-org tests remain correctly SKIP-gated.
+  Production footprint of the port (from the `.dev` oracle diff `997c4e09a^..8f597c962`): ~15 modified
+  production files + 3 NEW (`SFSDKTokenRefreshCoordinator.h/.m`, `SFOAuthErrorCode.swift`); all
+  ESCALATION-class (OAuth/token/credential). It is effectively the first big unit of the fresh backlog.
+
+- **`testAssertionForUnauthenticatedClient` — infra blocker REMOVED, class-gate blocker REMAINS.** The
+  ObjC exception-catch bridge `SFSDKCatchException()` now EXISTS (added 2026-07-18 for fidelity fix #3, in
+  `SalesforceSDKCoreTests-Bridging-Header.h`). That was the sole reason this test was "documented-blocked."
+  BUT it still lives inside `SalesforceRestAPITests`, whose class-level `XCTSkipUnless(authRefreshDidSucceed)`
+  skips every method. Since the test targets the *unauthenticated* global client (no live org needed), it
+  is the ONE deferred item that could run today IF relocated to a non-live-gated test class. Small, low-risk.
+
+- **The 4 assertion-fidelity findings (#1/#2/#3-HIGH/#5) are already FIXED** (2026-07-18, verified green) —
+  no longer deferred. See `.claude/task11-audits.md` "ALL FOUR FIDELITY FINDINGS FIXED."
+
+**Net:** parity-with-oracle for the deferred tests = (a) port #4087 (large, ESCALATION) to make the 51
+live-org tests execute + oracle-compare (Task 10), and optionally (b) relocate the one unauth test now.
+Both are folded into the resume-porting plan; #4087 is a fresh-backlog unit, not a drained-queue leftover.

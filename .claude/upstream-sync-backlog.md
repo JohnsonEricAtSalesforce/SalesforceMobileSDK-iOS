@@ -1,210 +1,123 @@
 # Upstream Sync Backlog Ledger
 
-Marker (done floor): bac017113  ·  origin/dev HEAD: bac017113  ·  0 behind (queue DRAINED)  ·  Updated: 2026-07-18 (#4035→0da03630e ported [Cat-F sample/UI, verbatim] — LAST unit; contiguous prefix complete → marker ADVANCED 6ed0ab40→bac017113. Prior: #4047→18d10ada9, #4039→e269a42c9 [pre-map was BACKWARDS — corrected], #4046→0abe5ed79, #4040→ad2f35a05, #4042→b97f7f579, #4041→d0f3596f1, #4044→98d2111f0)
+Marker (done floor): `bac017113`  ·  forcedotcom/dev HEAD (target): `b5d37d807`  ·  **49 first-parent units / 129 commits behind**  ·  Re-seeded: 2026-07-19 (Phase 0 of the resume-porting plan).
 
-> Pre-mapping pass: 34 upstream commits grouped into 12 first-parent units and classified by net-diff
-> file footprint. Grouping uses first-parent history of `origin/dev` (top-level landings), not raw
-> `rev-list` — this correctly excludes the master-merge sub-history. See `upstream-sync-job.md` Step 5.
+> **Direction:** we port changes **FROM** `forcedotcom/dev` **INTO** our ObjC→Swift migration branch
+> (`feature/objc-to-swift-test-migration`). Each unit is a *semantic re-implementation* against the current
+> migrated Swift surface (NOT a cherry-pick).
 >
-> **Escalation review (2026-07-14):** all 5 escalation-sensitive units reviewed against their upstream
-> diffs and **operator-APPROVED to port**. Port-readiness verified against the branch:
-> `DomainDiscoveryCoordinator` exists (#4046 dep OK); `SFUserAccount.swift` has the identical
-> `syncQueue` (#4042 = clean 1:1 wrap); biometric `presentOptInDialog`/`hasBiometricOptedIn` exist but
-> `automaticPresentation` is NEW and arrives via #4041's own `.swift` hunks. #4039 approved WITH the
-> caveat that it reverses a public-API deprecation — see its detail block; keep the SDK-owner flag.
+> **Order:** strict upstream **first-parent order, oldest→newest** (operator: "we don't want to reorder the
+> history"). Unlike the drained-12 pass (which reordered risk-ascending), this pass ports in exact upstream
+> sequence. Marker advances as a contiguous prefix; frontier units stay in the ledger until the prefix reaches
+> them.
 >
-> **Sequencing:** we port in DEPENDENCY order, which is NOT strictly the upstream chronological order —
-> see "Migration order vs. original history" at the bottom.
+> **Grouping:** first-parent walk of `bac017113..forcedotcom/dev` (top-level landings; excludes merged
+> sub-history). Category by net first-parent diff footprint: **A** pure-Swift verbatim/near-verbatim · **B**
+> ObjC→Swift semantic translation · **C** build/config/pbxproj/xcconfig · **D** new files/targets · **F**
+> non-libs (CI, docs, skills, sample apps). Live progress bar = subject of lead task #9.
 
 ## Migration status
-████████████████████  12/12 units done (100%; ported+skipped)   ·   libs/-impacting: 8/8   ·   QUEUE DRAINED
+░░░░░░░░░░░░░░░░░░░░  0/49 units done (0%)   ·   libs-production-impacting: 0/21   ·   Phase 0 (analysis) in progress
 
-| Status        | Cnt | Units |
-|---------------|-----|-------|
-| ✅ ported     |  9  | #4043 #4042 #4041 #4044 #4040 #4046 #4039 #4047 #4035 |
-| 🔬 analyzed   |  0  | — |
-| 🚧 in-progress|  0  | — |
-| ⏸ deferred    |  0  | — |
-| ⏭ skipped     |  3  | #4038 (buggy method not in migrated Swift surface), master-merge×2 (empty net diff) |
-| ⬜ pending    |  0  | — |
+| Bucket | Count | Notes |
+|--------|-------|-------|
+| libs-production-impacting | 21 | touch a compiled `libs/**` production source file |
+| test/proj-only (libs)     | 15 | only `libs/**` test files, TestApps, or `.xcodeproj` |
+| non-libs                  | 13 | CI, docs, skills, sample apps, SECURITY.md |
+| **escalation-class**      | **~16** | see Escalation Summary below — flagged in PR narrative |
+| flaky-stabilize           | 9 | re-baseline after each (test-behavior changes) |
 
-## Units
-| PR / unit | Members (first-parent range) | Cat | Status | Port commit | Notes |
-|-----------|------------------------------|-----|--------|-------------|-------|
-| #4042 SFUserAccount thread-safety race | bac017113 (squash) | B | ✅ ported | b97f7f579 | `syncQueue.sync{}` wrap of encode(with:) (+ .m ref synced verbatim); build ✓; testUserAccountEncoding ✓ (runs, not live-gated) |
-| #4047 nightly schedules + security | 97ab8b544 (squash) | F | ✅ ported | 18d10ada9 | `.github/workflows/*` (6 files) only — all matched upstream pre-image → applied post-image VERBATIM (== upstream byte-for-byte); weekday nightly schedule + Actions security hardening (script-injection env: vars, least-priv secrets, persist-credentials:false); YAML valid; ⚠ escalation (CI-config + security) — operator-approved verbatim, flag in PR |
-| #4046 don't add my domain | c0c3f5a01 (merge, 1 PR-side) | B | ✅ ported | 0abe5ed79 | dropped `loginHost=myDomain` in SFOAuthCoordinator.handleCustomDomainUpdate (+ .m ref verbatim); added `isDiscoveryLogin` guard in SFUserAccountManager.setCurrentUserInternalFull (.m stub, no ref-sync); non-deprecated `isDiscoveryDomain(_:)` overload (no warning); NEW WelcomeDiscoveryLoginHostTests.swift (6 tests, NOT live-gated) + pbxproj (upstream UUIDs, additive); build ✓ (no new warnings), 6/6 ✓; ⚠⚠ escalation (OAuth/login-host + build-system pbxproj) — flag in PR |
-| #4044 remove redundant biometric auto-present | 03f1d1863 (merge, 1) | B | ✅ ported | 98d2111f0 | removed viewDidLoad auto-present block from SFLoginViewController.swift (+ .m ref verbatim); build ✓; ⚠ escalation (biometric/login-UI) — flag in PR |
-| #4041 biometric opt-in auto-present + lock | d73eb2a0e (merge, 5) | B | ✅ ported | d0f3596f1 | NEW `automaticPresentation` (protocol+Internal default true); auto-present in lock() + retrievedIdentityDataImpl opt-in dialog; 7 new tests + mock conformance; build ✓, 7/7 + RetryPolicy ✓ (testNotEnabled = pre-existing P0.2e ordering artifact, not induced); ⚠ escalation (biometric/lock) — flag in PR |
-| #4043 fix trait collection warning | 36f6bf636 (merge, 1) | B | ✅ ported | (pending commit) | non-escalation; registerForTraitChanges in SFSDKUITableViewCell.swift + RootViewController.swift (Cat-A verbatim); build ✓, scoped tests ✓; SDKCore gate provisional per P0.2c |
-| MASTER merge (a2d6db8ae) | a2d6db8ae | — | ⏭ skipped | — | "Merging master into dev" — empty net diff (no-op) |
-| #4040 hide nav bar on native login | 881c626eb (merge, 2) | B | ✅ ported | ad2f35a05 | one-line `setNavigationBarHidden(true,animated:false)` in `presentLoginViewImpl` native-login branch (+ new test); .m stub not ref-synced; build ✓, NativeLoginManagerTests 6/6 ✓ (new test not live-gated); ⚠ escalation (login-UI) — flag in PR |
-| #4039 auth-loading default + deprecate property | d4a9ce0db (merge, 2) | B | ✅ ported | e269a42c9 | ⚠ PUBLIC-API — pre-map was BACKWARDS (see detail): actually a NEW deprecation of `showAuthWindowWhileLoading` (removal 15.0) + default flip NO→YES. Swift: `@available(deprecated)` public computed wrapper over new `internal showAuthWindowWhileLoadingInternal=true`; 2 coord reads use backing (warning-free = Swift equiv of SFSDK_USE_DEPRECATED guards); .m ref-synced verbatim; .h(gutted)/.m(stub) no target. +1 default-flip test. Build ✓ 0 warnings, 23/23 OAuth ✓; SDK-owner flag STAYS raised |
-| #4038 fix hardcoded log level | 439d33e90 (merge, 1) | B→skip | ⏭ skipped | ref-sync only | buggy variadic `format:` method NOT in migrated Swift surface — no compiled Swift behavior to fix; SFLogger.m ref synced to upstream. See detail + ⚠ dropped-API flag. |
-| MASTER merge (9bf7b52f2 #4037) | 9bf7b52f2 | — | ⏭ skipped | — | "Merge from master" — empty net diff (no-op) |
-| #4035 RTR login UI tests + config | d340d5437 (merge, ~7) | F | ✅ ported | 0da03630e | 8 files (7 pre-existing + new RTRLoginTests.swift), all matched upstream pre-image → applied post-image VERBATIM (== upstream byte-for-byte); +230/-41. No pbxproj (AuthFlowTester uses synchronized folder groups; upstream touched none). NO runnable gate: RTR tests are live-org UI tests gated on gitignored `ui_test_config.json` (absent both dirs); AuthFlowTester scheme fails to compile but PRE-EXISTING+unrelated — with #4035 stashed the sample still fails on `RestClient.shared` (RevokeView) + `AuthHelper.registerBlock` (SceneDelegate), files #4035 doesn't touch. Sample app never ported to migrated Swift API → separate migration-parity follow-up |
+## Units (strict upstream first-parent order — port oldest→newest)
 
-## Category-B detail
+| # | PR / unit | Commit | Cat | Escalation | Status | Notes |
+|---|-----------|--------|-----|-----------|--------|-------|
+| 1 | #4049 fix test-credentials login domain | 48366cbb7 | B | — | ⬜ pending | `SFSDKTestCredentialsData.m` (test-support). Test-scoped config, no product logic. |
+| 2 | #4045 screen-lock customization | f604c8540 | A+C | ⚠ lock-UI | ⬜ pending | 4 ScreenLock `.swift` (already Swift) + `ScreenLockManagerTests.swift` + pbxproj. Cat-A verbatim where pre-image matches; passcode/lock-screen UI → flag. |
+| 3 | SECURITY.md compliance | 11f6cb461 | F | — | ⬜ pending | repo-root `SECURITY.md` only. |
+| 4 | #4050 fix instant login | 7a20ddd56 | B | ⚠ login | ⬜ pending | 2 libs prod files; login flow → flag. |
+| 5 | #4052 signal semaphore in setReturnStatus: | 4ed3b2da3 | B | — | ⬜ pending | `SFSDKTestRequestListener` (test-support); all completion paths signal. |
+| 6 | #4056 code-review skill | f6db7f4f4 | F | — | ⬜ pending | `.claude/skills/**` — non-product. |
+| 7 | #4057 rename beacon child consumer keys | 8c61acba7 | B | ⚠ OAuth-const | ⬜ pending | `SFOAuthCredentials.m` + `SFSDKOAuthConstants.h` + 2 test `.m`. Constant rename in OAuth surface → note. |
+| 8 | #4059 diag warning: OAuth code-exchange vs Lightning URL | bdeba0b3e | B | ⚠ OAuth + L10n(pre-appr) | ⬜ pending | `SFOAuthCoordinator.m`, constants, NEW `SFOAuthCoordinatorLightningURLTests.swift`, bridging-header, **Localizable.strings** (PRE-APPROVED). |
+| 9 | #4058 doc: scope | e2c0d69f7 | F | — | ⬜ pending | docs only. |
+| 10 | #4061 stabilize flaky testBootConfigPickerViewRendered | 985e2adce | A | flaky | ⬜ pending | 1 test file. Re-baseline after. |
+| 11 | #4062 stabilize flaky testMissingLoginHint | 4c70ec9ef | A | flaky | ⬜ pending | 1 test file. Re-baseline after. |
+| 12 | #4063 stabilize flaky testCAOpaque (UI) | 4ba0c943f | F | flaky | ⬜ pending | `.github/workflows` + AuthFlowTester UITests. Re-baseline after. |
+| 13 | #4064 doc: scope | 08d39f43a | F | — | ⬜ pending | docs only. |
+| 14 | #4065 skip CI on doc-only PRs | 84672d1eb | F | — | ⬜ pending | CI config. |
+| 15 | #4071 stabilize flaky push-notif registration | f8291e901 | A | flaky | ⬜ pending | 2 test files. Re-baseline after. |
+| 16 | #4066 stabilize flaky PushNotif foreground registration | 2a879dc7d | A | flaky | ⬜ pending | 1 test file. Re-baseline after. |
+| 17 | #4073 fix closure-param mismatch PushNotifTests | 3965852bf | A | flaky | ⬜ pending | 1 test file (follow-up to #4066). Re-baseline after. |
+| 18 | #4069 stabilize flaky RestClientPublisherTests | fd2a345e6 | A | flaky | ⬜ pending | 1 test file (live-gated class). Re-baseline after. |
+| 19 | #4067 stabilize flaky testLoginViewControllerCustomizations | 366db6141 | A | flaky | ⬜ pending | 1 test file. Re-baseline after. |
+| 20 | #4072 fix nil crash SFSDKBatchResponse haltOnError | ed5391fd1 | B | — | ⬜ pending | prod + test; batch-response nil guard. |
+| 21 | #4070 stabilize flaky UI test testCAOpaque | 26a513347 | F | flaky | ⬜ pending | AuthFlowTester scene + UITests. Re-baseline after. |
+| 22 | #4074 refresh uses instance URL | 25f2ca733 | B | ⚠ OAuth/refresh | ⬜ pending | `SFOAuthCredentials.m`, `SFSDKOAuth2.m`/`+Internal.h` + test `.m` + pbxproj. |
+| 23 | #4075 fix push unregister wrong user | 4d7e7588e | A+B | — | ⬜ pending | `PushNotificationManager.swift`, `RemoteNotificationRegistering.swift` + tests. |
+| 24 | #4053 stabilize flaky REST API + auth tests | 8319f9e93 | B | flaky + live-infra | ⬜ pending | **`TestSetupUtils.m`** (the live-gate infra) + `SFSDKAuthUtilTests.swift` + `SalesforceRestAPITests.m`. Watch interaction with our `authRefreshDidSucceed` divergence. Re-baseline after. |
+| 25 | #4077 swift xcconfig | 269223600 | C | ⚠⚠ build-system | ⬜ pending | `configuration/Common.xcconfig` + **ALL 7 pbxproj** (4 libs + 3 sample). Structural; genuine pbxproj merge; build-verify every scheme. |
+| 26 | #4076 app scene (SDKCore test app) | d3fbf593c | C+D | ⚠ build-system | ⬜ pending | SDKCoreTestApp scene migration; storyboards + Info.plist + pbxproj. Test-app only. |
+| 27 | #4082 MobileSync test app | 6741d365b | D | ⚠ build-system | ⬜ pending | NEW `MobileSyncTestApp` target + pbxproj. |
+| 28 | #4083 SmartStore test app | 453232268 | D | ⚠ build-system | ⬜ pending | NEW `SmartStoreTestApp` target + pbxproj. |
+| 29 | #4081 Analytics test app | ec26a5666 | D | ⚠ build-system | ⬜ pending | NEW `SalesforceAnalyticsTestApp` target + pbxproj. |
+| 30 | #4079 statuses write permission | 7d9a91bfa | F | — | ⬜ pending | CI workflow permission. |
+| 31 | #4084 fix test failure | 7b6201360 | A | — | ⬜ pending | 1 test file. |
+| 32 | #4078 fix Login-for-Admin + Welcome-Discovery incompatibility | 29439f0bb | B | ⚠⚠ login/OAuth | ⬜ pending | `SFLoginViewController.m`, `DomainDiscoveryCoordinator.swift`, `SFOAuthCoordinator.m`, `SFSDKAuthRequest.h`, `SFUserAccountManager.h/.m` + tests + bridging. |
+| 33 | #4089 run all UI tests on AuthFlowTester change | 3379fb272 | F | — | ⬜ pending | CI config. |
+| 34 | #4090 fix iOS18/macOS15 runner | 6a8a47717 | F | — | ⬜ pending | CI config. |
+| 35 | #4086 feature flags per user | 99a173b58 | B | ⚠⚠ feature-flags + podspec + multi-lib | ⬜ pending | 23 files: **`SalesforceSDKCore.podspec`**, `SFMobileSyncSyncManager.m`, `SFSDKAppFeatureMarkers.*`, `SalesforceSDKManager.*`, `SFUserAccount.*`, `SFSmartStore.m` + tests + sample. Spans Core/MobileSync/SmartStore. |
+| 36 | #4091 notification-types thread safety | 9de77c7e2 | B | ⚠ thread-safety | ⬜ pending | `SFUserAccount.m` + `SFUserAccountThreadSafetyTests.swift` + pbxproj. |
+| 37 | #4092 iOS RTR feature flag | ab84f31bd | B | ⚠ feature-flag/OAuth | ⬜ pending | `SFSDKAppFeatureMarkers.*`, `SFOAuthSessionRefresher.m` + tests + sample. |
+| 38 | #4094 OAuth error-code enum | 6993d6ba8 | B+D | ⚠ OAuth | ⬜ pending | `SFOAuthCoordinator.m`, NEW `SFOAuthErrorCode.swift`, `SFSDKOAuth2.h/.m`, constants + tests + pbxproj. |
+| 39 | #4093 make advanced-auth default + deprecate forceAdvancedAuthentication | a2c4ee4d5 | B | ⚠⚠⚠ PUBLIC API + advanced-auth + L10n(pre-appr) | ⬜ pending | 24 files: `SalesforceSDKManager.*`, LoginHost VCs, `SFOAuthCoordinator.m`, `SFUserAccountManager.m` + tests + **Localizable.strings** + sample. PUBLIC-API deprecation + default behavior flip. |
+| 40 | #4088 invalid login-host recovery | a2a271cca | B | ⚠ login-host + L10n(pre-appr) | ⬜ pending | `NewLoginHostView.swift`, `SFUserAccountManager.m` + tests + pbxproj + **Localizable.strings**. |
+| 41 | #4095 token-exchange error tests | e4bdf6397 | A | — | ⬜ pending | 1 test `.swift` + pbxproj. |
+| 42 | #4096 SQLCipher 4.17.0 | 303013dd7 | C | ⚠⚠ dependency bump (PRE-APPROVED gate) | ⬜ pending | `SmartStore.podspec`, `mobilesdk_pods.rb`, SmartStore pbxproj, MobileSyncExplorer pbxproj, `SFSmartStoreTests.m`, skill. SQLCipher 4.16→4.17. Gate PRE-APPROVED (Feedback #4). |
+| 43 | #4098 fix nil-sceneId crash on advanced-auth browser callback | e4e838863 | B | ⚠ OAuth/scene | ⬜ pending | `SFOAuthCoordinator+Internal.h/.m`, `SFSDKAuthSession.m` + test. |
+| 44 | #4087 token refresh coordinator | 6e0967833 | B+D | ⚠⚠⚠ OAuth/token (LIVE-AUTH UNBLOCKER) | ⬜ pending | 18 files: NEW `SFSDKTokenRefreshCoordinator.h/.m`, `SFOAuthErrorCode.swift`(via #4094), `SFOAuthSessionRefresher.*`, `SFIdentityCoordinator.m`, `SFRestAPI.m`, `UserAccountManager.swift`, `SFSDKOAuth2.m` + tests. **THIS unblocks the 51 SKIP-gated live-org tests → enables Phase 2.** |
+| 45 | #4102 improve token-refresh error handling | 19d4436ab | B | ⚠ OAuth/token | ⬜ pending | `SFRestAPI.m`, `SFSDKOAuth2.h/.m` + tests + pbxproj. |
+| 46 | #4105 fix iOS26 login-host classifier | b155f785d | B | ⚠ login-host | ⬜ pending | `SFOAuthCoordinator.m`, `SFSDKAuthErrorManager.m/+Internal.h` + test + pbxproj. |
+| 47 | #4103 MobileSync docs | 5c31fb1eb | F | — | ⬜ pending | docs only. |
+| 48 | #4111 push-notification docs | 5dd85627a | F | — | ⬜ pending | docs only. |
+| 49 | #4112 parent-children sync fieldlist docs | b5d37d807 | F | — | ⬜ pending | docs only. **Marker → b5d37d807 when this lands.** |
 
-> Confidence key: **[target-confirmed]** = exact Swift file + concept located; **[needs-trace]** =
-> Swift target identified but the precise landing point still needs confirmation before porting.
+## Escalation summary (up-front, Phase 0 — Feedback #1)
 
-### #4042 — Fix thread-safety race in SFUserAccount encodeWithCoder  [target-confirmed] · ✅ APPROVED
-- **Intent:** `encodeWithCoder` read ivars without synchronizing while setters use `dispatch_barrier_async`,
-  racing to capture stale/nil values. Upstream wraps the encode in `dispatch_sync(_syncQueue,…)`.
-- **Swift mapping (VERIFIED):** `SFUserAccount.swift:304 func encode(with:)` currently reads the six ivars
-  UNGUARDED — exact mirror of pre-fix ObjC. The same primitive exists: `syncQueue` (concurrent
-  `DispatchQueue`, `.barrier` writes) at line 151. Port = wrap the encode body in `syncQueue.sync { … }`.
-  This is a clean 1:1 — same queue, same pattern already used by the property accessors.
-- **Files:** `SFUserAccount.m` → `Classes/UserAccount/SFUserAccount.swift:304` (+ update ObjC reference).
-- **Escalation:** credential-adjacent serialization — APPROVED (sync fix, no logic/contract change).
+Requires PR-narrative flags; operator pre-approvals noted. **No new sign-off requested for pre-approved items.**
 
-### #4046 — don't add my domain  [target-confirmed] · ✅ APPROVED
-- **Intent:** don't persist a My Domain into login-host storage — it pollutes the server picker and
-  breaks return-to-Discovery on logout. Two guarded edits: (1) drop `setLoginHost:myDomain` in
-  `handleCustomDomainUpdateWithLoginHint`; (2) add `isDiscoveryDomain:` guard before persisting
-  `credentials.domain` as login host in `setCurrentUserInternal:`.
-- **Swift mapping (VERIFIED):** `SFOAuthCoordinator.swift` + `SFUserAccountManager.swift`. The dependency
-  `SFDomainDiscoveryCoordinator`/`isDiscoveryDomain:` **exists on branch** as
-  `Classes/OAuth/DomainDiscoveryCoordinator.swift` (migrated name, no SF prefix) — no hidden prerequisite.
-- **Files:** `SFOAuthCoordinator.m`→`.swift`, `SFUserAccountManager.m`→`.swift` (`setCurrentUserInternal:`);
-  **+ `.pbxproj`** (nested Cat-C — only adds a test file ref); + `WelcomeDiscoveryLoginHostTests.swift` (test).
-- **⚠ Escalation:** OAuth/login-host behavior — APPROVED.
+- **PUBLIC API:** #4093 (unit 39) — advanced-auth becomes default + `forceAdvancedAuthentication` deprecated. SDK-owner flag.
+- **OAuth / token / credential:** #4059 (8), #4057 (7, const rename), #4074 (22, refresh), #4078 (32), #4092 (37), #4094 (38), #4098 (43), #4087 (44, coordinator), #4102 (45), #4105 (46, login-host classifier), #4088 (40, login-host recovery).
+- **Login-UI / lock:** #4045 (2, screen-lock), #4050 (4, instant login), #4078 (32).
+- **Feature-flags:** #4086 (35, per-user + podspec + multi-lib), #4092 (37).
+- **Thread-safety:** #4091 (36).
+- **Build-system (structural, Feedback #2):** #4077 (25, xcconfig + all pbxproj), #4076 (26, app-scene), #4082/#4083/#4081 (27/28/29, new test-app targets). Genuine pbxproj merges — build-verify each scheme.
+- **Dependency bump:** #4096 (42, SQLCipher 4.17) — **gate PRE-APPROVED (Feedback #4)**; still PR-flag.
+- **Localization (Localizable.strings) — PRE-APPROVED (Feedback #6):** #4059 (8), #4093 (39), #4088 (40). Still PR-flag.
 
-### #4044 — Remove redundant biometric auto-present from SFLoginViewController  [needs-trace]
-- **Intent:** remove a now-redundant biometric auto-present call (paired with #4041's refactor).
-- **Swift mapping:** `SFLoginViewController.m` → `SFLoginViewController.swift`. Find + remove the
-  auto-present call site.
-- **Files:** `SFLoginViewController.m` → `Classes/Login/SFLoginViewController.swift`.
-- **Sequencing:** logically follows #4041 — port #4041 first, then this removal.
+## Live-org / Phase 2 note (Feedback #5 — ACCEPTED)
 
-### #4041 — Add option to automatically present biometric opt-in and lock  [target-confirmed] · ✅ APPROVED
-- **Intent:** new option to auto-present biometric opt-in; lock via `handleAppForeground()`; default true.
-- **Swift mapping (VERIFIED):** `presentOptInDialog(viewController:)` + `hasBiometricOptedIn()` already
-  exist on branch. **`automaticPresentation` does NOT yet exist — it is NEW, introduced by this PR's own
-  `.swift` hunks** (`BiometricAuthenticationManager.swift` + `…Internal.swift`). **Apply those `.swift`
-  hunks FIRST** (they add the property), THEN translate the `SFUserAccountManager.m` hunk in
-  `retrievedIdentityData:` which references it. Order within the unit matters.
-- **Files:** 2 prod `.swift` (apply direct, adds `automaticPresentation`) + `SFUserAccountManager.m`→`.swift`
-  (`retrievedIdentityData:`) + 2 test `.swift`.
-- **⚠ Escalation:** biometric/lock behavior — APPROVED. Port BEFORE #4044 (which removes the now-redundant
-  auto-present it supersedes).
+#4087 (unit **44**) is the token-refresh-coordinator that unblocks live auth. Per operator decision, we do NOT
+pull it forward — history order is preserved. The 51 restored live-org tests (RestAPI 45 + SyncManager 3 +
+SyncUpTarget 2) stay correctly SKIP-gated for units 1–43. Phase 2 (task #13) becomes actionable once unit 44
+lands: remove the `TestSetupUtils.authRefreshDidSucceed` workaround, run the live-org tests + Task 10
+oracle-compare, retire `.claude/live-org-skip-ledger.md`, marker → `b5d37d807` at unit 49. See
+`.claude/live-org-skip-ledger.md` "REVALIDATION 2026-07-19".
 
-### #4043 — Fix trait collection warning  [target-confirmed] · ✅ PORTED
-- **Intent:** replace the deprecated `traitCollectionDidChange(_:)` override (iOS 17 deprecation
-  warning) with the modern `registerForTraitChanges([UITraitUserInterfaceStyle.self]) { … }` closure
-  API, in two independent VCs. Same behavior: re-run the color update when the interface style flips.
-- **Swift mapping (VERIFIED):**
-  - **Cat-B:** `SFSDKUITableViewCell.swift` (compiled; `.m` de-referenced). Removed the override;
-    registered the trait handler in the shared `setupCell()` (called from BOTH `init(style:)` and
-    `init(coder:)`) — strictly better than upstream's init-only placement, covers the NIB path too.
-    Handler calls `cell.updateLayerColor()`.
-  - **Cat-A:** `native/…/RestAPIExplorer/…/RootViewController.swift` — matched upstream pre-image
-    exactly; applied upstream's Swift hunk verbatim (byte-identical). Removed override, registered in
-    `viewDidLoad`.
-- **Files:** `SFSDKUITableViewCell.m`→`Classes/IDP/SFSDKUITableViewCell.swift` (+ ref synced to upstream,
-  identical); `RootViewController.swift` (sample app, Cat-A verbatim).
-- **Gate:** SalesforceSDKCore. **Build ✓.** Tests: accepted via SCOPED evidence — the IDP command
-  tests nearest the changed file (`SFSDKIDPAuthCodeLoginRequestCommandTest`,
-  `SFSDKIDPLoginRequestCommandTest`) **passed**; NO failure anywhere touches `SFSDKUITableViewCell`,
-  trait changes, or the sample app. A clean full-suite subset check was NOT possible: SalesforceSDKCore
-  has a large pre-existing auth-credentials crash cluster (**tracker P0.2c**, root cause = the
-  `f11e4754f` `OAuthCredentials(...)!` bug) that is deliberately not baselined. SDKCore gate is
-  provisional until P0.2c is fixed; #4043 verified clean against it regardless.
-- **Escalation:** none (UI trait-observation refactor, no behavior/contract change).
+## Re-baseline note (Feedback #3)
 
-### #4040 — Hide navigation bar on native login view presentation  [target-confirmed] · ✅ APPROVED
-- **Intent:** one line — `setNavigationBarHidden:YES` on the presented native-login nav controller in
-  `presentLoginView:`, so custom native-login VCs don't show a stray blue nav bar on re-presentation.
-- **Swift mapping:** `SFUserAccountManager.swift`, `presentLoginView(...)`. Self-contained; no new API.
-  + `NativeLoginManagerTests.swift` (test, cherry-pickable).
-- **Files:** `SFUserAccountManager.m`→`.swift` (`presentLoginView:`) + test `.swift`.
-- **⚠ Escalation:** login-UI presentation — APPROVED (single presentation flag, no contract change).
+`.claude/test-baseline-ids.txt` was a stale 4-id/Jul-17 list. Re-derived at Phase 0 against current HEAD
+(`5a9d30763`) before unit 1, and re-derived again after each of the 9 flaky-stabilize units (10,11,12,15,16,17,
+18,19,21 — and #4053/unit 24) since those deliberately change test behavior. SmartStore gate stays provisional
+(P0.2b); SDKCore gate settled per P0.2e.
 
-### #4039 — Change default loading behavior + DEPRECATE public property  ⚠ PUBLIC API  [PORTED e269a42c9] · ✅ DONE
-- **⚠ PRE-MAPPING WAS BACKWARDS (corrected 2026-07-18 at port time):** the original ledger/analysis
-  described this as a deprecation *reversal* (un-deprecate + flip YES→NO + drop guards). The ACTUAL
-  upstream commit `d4a9ce0db` does the OPPOSITE — its PR title is "Change default loading and **deprecate**
-  property." Verified against the real first-parent diff. Corrected intent below.
-- **Actual intent:** (1) flip default `showAuthWindowWhileLoading` **NO→YES** in init
-  (`_showAuthWindowWhileLoading = YES`); (2) **ADD** `SFSDK_DEPRECATED(14.0,15.0,…)` to the public property
-  in `SFUserAccountManager.h` (newly deprecates it; removal targeted 15.0); (3) **ADD**
-  `SFSDK_USE_DEPRECATED_BEGIN/END` guards around the two `showAuthWindowWhileLoading` reads in
-  `SFOAuthCoordinator` (didStartProvisionalNavigation / didFinishNavigation).
-- **Swift mapping (AS PORTED):** the property + init are Swift-native here (`.h` is gutted — 0 `@property`;
-  `SFUserAccountManager.m` is a constants-only stub) so upstream's `.h`/`.m` hunks have NO faithful target.
-  - `SFUserAccountManager.swift`: public `showAuthWindowWhileLoading` → `@available(*, deprecated, message:
-    "…removed in 15.0…")` computed wrapper over NEW `internal var showAuthWindowWhileLoadingInternal = true`
-    (the flipped default). The internal backing is the Swift equivalent of `SFSDK_USE_DEPRECATED_BEGIN/END`:
-    in-module reads use it and stay warning-free; external callers of the public property still get warned.
-    init sets `showAuthWindowWhileLoadingInternal = true`.
-  - `SFOAuthCoordinator.swift`: both load-callback reads switched to the internal backing (warning-free).
-  - `SFOAuthCoordinator.m`: ref-synced verbatim (de-referenced/byte-faithful) — applied the two upstream
-    `SFSDK_USE_DEPRECATED_BEGIN/END` hunks exactly.
-- **Test:** upstream added none; added `test_givenFreshUserAccountManager_…thenDefaultsToTrue` (asserts new
-  `true` default + backing round-trip via the internal backing — test itself warning-free).
-- **⚠ Escalation — SDK-owner flag STAYS raised:** NEW public-API deprecation (release-notes/deprecation-doc
-  item, not silent) + PUBLIC default-behavior flip NO→YES (auth-window timing for all consumers). Ported for
-  `origin/dev` parity; NOT cleared for public release without owner sign-off.
+---
 
-### #4038 — Fix hardcoded log level  [TRACED → NO SWIFT TARGET] · ⏭ SKIPPED · ✅ OPERATOR-APPROVED (2026-07-14)
-> Disposition + dropped-public-API flag acknowledged by operator 2026-07-14. Unit closed.
-- **Intent:** upstream one-liner in the **C-style variadic** `+ log:cls:level:format:, ...` — it
-  passed the hardcoded `SFLogLevelDefault` to the backend instead of the caller's `level`. Fix = pass
-  `level`. (Net diff: single line in `SFLogger.m:304`.)
-- **Trace result (VERIFIED):** the buggy method **does not exist in the compiled Swift surface.**
-  - `SFLogger.m`/`SFLogger.h` are **de-referenced** (PBXFileReference only, no "in Sources" entry);
-    the compiled logger is `SFLogger.swift`.
-  - `SFLogger.swift` has **no variadic `format:` methods at all** — only `message:`-based ones. Swift
-    can't express `@objc` C-style variadics, so the entire `…format:, ...` family was dropped in the
-    Phase-1 migration (commit 015bc8c56).
-  - **No compiled caller needs it:** ObjC callers (`SalesforceRestAPITests.m`,
-    `SFSDKSalesforceSDKUpgradeManager.m`, `SFSDKCoreLogger.m`) are de-referenced; compiled
-    `SFLoggerTests.swift` exercises only `message:` methods; peer `SFSDKCoreLogger.swift` has its own
-    Swift-native `format: String, _ args: CVarArg...` (separate, unaffected).
-- **Disposition:** SKIPPED for compiled Swift (no behavior to change). Per Workflow Step 4, the
-  de-referenced `SFLogger.m` was overwritten with upstream content at `439d33e90` (now byte-identical)
-  so the audit reference stays truthful. No production Swift change ⇒ no build/test gate required.
-- **⚠ SEPARATE OWNER FLAG (not #4038):** the migration silently dropped a family of **public** API —
-  `SFLogger`'s variadic `format:, ...` convenience methods declared in the public `SFLogger.h`
-  (`+log:level:format:`, `+e:/i:/d:/w:/f:/v:/log:format:` and their instance forms). This is a
-  public-SDK surface regression introduced by the migration itself, independent of this port. Belongs
-  in a migration-parity review / release notes, NOT silently. Does not block advancing past #4038.
+## ARCHIVE — drained-12 pass (marker 6ed0ab40 → bac017113, completed 2026-07-18)
 
-### #4043 — Fix trait collection warning  [needs-trace] · ✅ APPROVED (non-escalation)
-- (detail above in Units table) `SFSDKUITableViewCell.m` → `SFSDKUITableViewCell.swift` + sample app `.swift`.
-
-## Migration order vs. original history
-
-**Upstream chronological order** (first-parent, oldest→newest):
-`#4035 → #4038 → #4039 → #4040 → #4043 → #4041 → #4044 → #4046 → #4047 → #4042`
-(the two master-merges interleave but are no-op skips).
-
-**Our porting order** (low-risk / dependency-first). ✅ = done:
-1. **Non-escalation B:** ✅ #4038 (skipped), ✅ #4043
-2. **Biometric cluster:** ✅ #4041 **then** ✅ #4044
-3. **Escalation B:** ✅ #4042, ✅ #4040, ✅ #4046, ✅ #4039 (#4039 last — public-contract change)
-4. **F units:** ✅ #4047 (CI, verbatim), ✅ #4035 (sample/UI, verbatim)
-
-**QUEUE DRAINED — all 12 units resolved (9 ported + 3 skipped).** libs/-impacting 8/8. Marker
-advanced 6ed0ab40 → bac017113 (origin/dev HEAD); 0 behind. Poller still NOT activated (no cron) —
-separate decision.
-
-**Yes — this deliberately re-orders relative to upstream history. Is that safe? Verified yes:**
-
-- The reordering is intentional: risk-ascending (F → simple B → escalation B), not chronological.
-- **The one real ordering constraint is preserved:** #4041 **before** #4044 (#4044 removes an
-  auto-present that #4041 introduces). Upstream has #4041 before #4044 too — we keep that.
-- **No file-level collision from reordering.** The units that share `SFUserAccountManager.swift`
-  (#4039 init, #4040 `presentLoginView:`, #4041 `retrievedIdentityData:`, #4046
-  `setCurrentUserInternal:`) each touch a **different method** — verified disjoint — so porting them
-  in any relative order produces the same final file; no hunk depends on a sibling's edit.
-- **`SFOAuthCoordinator.swift` is shared by #4039 and #4046** but again in different regions
-  (#4039 = the `showAuthWindowWhileLoading` guard blocks; #4046 = `handleCustomDomainUpdateWithLoginHint`).
-  Disjoint — order-independent.
-
-**Why order-independence holds in general here:** we are NOT cherry-picking upstream commits (which
-would be order-sensitive to parent state). Each unit is a *semantic re-implementation* against the
-current Swift file, so the only thing that matters is the true logical dependency (#4041→#4044), which
-we honor. The sync marker stays at the merge-base floor until a contiguous prefix is done; out-of-order
-`ported` units live in the ledger frontier exactly as designed.
+The previous 12-unit queue (upstream `6ed0ab408..bac017113`) is fully drained: 9 ported + 3 skipped, marker
+advanced to `bac017113`, branch pushed. Units: ✅ #4043 #4042 #4041 #4044 #4040 #4046 #4039 #4047 #4035
+(ported); ⏭ #4038 (buggy variadic not in migrated Swift surface — dropped-public-API flag raised),
+master-merge×2 (empty net diff). Full per-unit detail (Cat-B intent + Swift mapping + port commits + the
+#4039 backwards-premap correction + the #4041→#4044 ordering constraint + order-independence proof) is in git
+history of this file at commits `8deff8bbc`/`d0480a667` and memory [[project_sync_job_review]]. That pass
+reordered risk-ascending; THIS pass preserves strict upstream order per operator direction.
