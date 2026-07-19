@@ -91,11 +91,7 @@
         self.biometricButton = button;
         [self.view addSubview:self.biometricButton];
     }
-    
-    if (bioAuthManager.locked && bioAuthManager.hasBiometricOptedIn) {
-        [bioAuthManager presentBiometricWithScene:self.view.window.windowScene];
-    }
-    
+
     [self registerForTraitChanges:@[UITraitDisplayScale.class] withAction:@selector(setupNavigationBar)];
 }
 

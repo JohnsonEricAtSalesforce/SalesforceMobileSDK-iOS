@@ -140,10 +140,6 @@ public class SalesforceLoginViewController: SFSDKViewController, LoginHostDelega
             view.addSubview(button)
         }
 
-        if bioAuthManager.locked && bioAuthManager.hasBiometricOptedIn(), let scene = view.window?.windowScene {
-            bioAuthManager.presentBiometric(scene: scene)
-        }
-
         registerForTraitChanges([UITraitDisplayScale.self], action: #selector(setupNavigationBar))
     }
 
