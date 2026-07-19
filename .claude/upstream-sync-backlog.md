@@ -1,6 +1,6 @@
 # Upstream Sync Backlog Ledger
 
-Marker (done floor): `48366cbb7` (unit 1 done)  ·  forcedotcom/dev HEAD (target): `b5d37d807`  ·  **48 units remaining**  ·  Re-seeded: 2026-07-19 (Phase 0 of the resume-porting plan).
+Marker (done floor): `f604c8540` (units 1-2 done)  ·  forcedotcom/dev HEAD (target): `b5d37d807`  ·  **47 units remaining**  ·  Re-seeded: 2026-07-19 (Phase 0 of the resume-porting plan).
 
 > **Direction:** we port changes **FROM** `forcedotcom/dev` **INTO** our ObjC→Swift migration branch
 > (`feature/objc-to-swift-test-migration`). Each unit is a *semantic re-implementation* against the current
@@ -17,7 +17,7 @@ Marker (done floor): `48366cbb7` (unit 1 done)  ·  forcedotcom/dev HEAD (target
 > non-libs (CI, docs, skills, sample apps). Live progress bar = subject of lead task #9.
 
 ## Migration status
-▓░░░░░░░░░░░░░░░░░░░  1/49 units done (2%)   ·   libs-production-impacting: 1/21   ·   Phase 1 porting (unit 1 ✅)
+▓░░░░░░░░░░░░░░░░░░░  2/49 units done (4%)   ·   libs-production-impacting: 2/21   ·   Phase 1 porting (units 1-2 ✅)
 
 | Bucket | Count | Notes |
 |--------|-------|-------|
@@ -32,7 +32,7 @@ Marker (done floor): `48366cbb7` (unit 1 done)  ·  forcedotcom/dev HEAD (target
 | # | PR / unit | Commit | Cat | Escalation | Status | Notes |
 |---|-----------|--------|-----|-----------|--------|-------|
 | 1 | #4049 fix test-credentials login domain | 48366cbb7 | B | — | ✅ ported | Ported scheme-stripping (`https://`/`http://` prefix) into compiled `SFSDKTestCredentialsData.swift` `loginHost` (the `.m` is de-referenced — 0 in Sources); `.m` ref-synced verbatim to upstream post-image. SDKCore TEST BUILD ✓, 0 new warnings. Test-support only (consumed by live-org setUp) → build-green gate; baseline unaffected. |
-| 2 | #4045 screen-lock customization | f604c8540 | A+C | ⚠ lock-UI | ⬜ pending | 4 ScreenLock `.swift` (already Swift) + `ScreenLockManagerTests.swift` + pbxproj. Cat-A verbatim where pre-image matches; passcode/lock-screen UI → flag. |
+| 2 | #4045 screen-lock customization | f604c8540 | A+C | ⚠ lock-UI + NEW PUBLIC API | ✅ ported | Added `ScreenLockUIConfiguration` (NEW file, verbatim, `@objc(SFSDKScreenLockUIConfiguration)`: `icon`/`iconSize`) + `configuration` on `ScreenLockManager` protocol + `ScreenLockManagerInternal` + threaded into `ScreenLockUIView` (aspect-fit, resolvedIcon fallback). Protocol/Internal/View hunks re-applied over migration API-name deltas (`SFSDKWindowManager.shared`, optional `idData`, `salesforceBlueColor`, `OAuthCredentials.credentials(...)`, `SFIdentityData`). pbxproj: 4 additive entries, upstream UUIDs 694163EB/EC (dropped upstream's unrelated LoginForAdminTests reordering — belongs to #4093). SDKCore TEST BUILD ✓ 0 warn; 2 new tests PASS (testDefaultConfiguration, testSettingScreenLockManagerConfiguration, not live-gated). ⚠ escalation: lock-UI + NEW public API (`ScreenLockManager.configuration`, `SFSDKScreenLockUIConfiguration`) — flag in PR. |
 | 3 | SECURITY.md compliance | 11f6cb461 | F | — | ⬜ pending | repo-root `SECURITY.md` only. |
 | 4 | #4050 fix instant login | 7a20ddd56 | B | ⚠ login | ⬜ pending | 2 libs prod files; login flow → flag. |
 | 5 | #4052 signal semaphore in setReturnStatus: | 4ed3b2da3 | B | — | ⬜ pending | `SFSDKTestRequestListener` (test-support); all completion paths signal. |

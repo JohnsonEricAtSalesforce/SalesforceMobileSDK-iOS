@@ -240,6 +240,7 @@
 		A08773E03B6E86E007BBAFF4 /* SFSDKAuthErrorCommandTest.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1852A0F07600CFF73345A36B /* SFSDKAuthErrorCommandTest.swift */; };
 		A315F83B26EAAC8400B94428 /* ScreenLockManagerInternal.swift in Sources */ = {isa = PBXBuildFile; fileRef = A315F83A26EAAC8400B94428 /* ScreenLockManagerInternal.swift */; };
 		A315F84326EAAFF800B94428 /* ScreenLockUIView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A315F84226EAAFF800B94428 /* ScreenLockUIView.swift */; };
+		694163EC2FC7B2BE007E9C8B /* ScreenLockUIConfiguration.swift in Sources */ = {isa = PBXBuildFile; fileRef = 694163EB2FC7B2BE007E9C8B /* ScreenLockUIConfiguration.swift */; };
 		A32C854A25268005000FFA42 /* KeyValueEncryptedFileStoreInspector.swift in Sources */ = {isa = PBXBuildFile; fileRef = A32C854925268005000FFA42 /* KeyValueEncryptedFileStoreInspector.swift */; };
 		A37F3116252E5C2300026635 /* KeyValueEncryptedFileStoreViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = A37F3115252E5C2300026635 /* KeyValueEncryptedFileStoreViewController.swift */; };
 		A3C7475C29F7047400D72B7F /* ScreenLockManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = A3C7475B29F7047400D72B7F /* ScreenLockManager.swift */; };
@@ -909,6 +910,7 @@
 		A1F901C15DA8C9B2C9CA5E42 /* SFManagedPreferences.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = SFManagedPreferences.swift; sourceTree = "<group>"; };
 		A315F83A26EAAC8400B94428 /* ScreenLockManagerInternal.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ScreenLockManagerInternal.swift; sourceTree = "<group>"; };
 		A315F84226EAAFF800B94428 /* ScreenLockUIView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ScreenLockUIView.swift; sourceTree = "<group>"; };
+		694163EB2FC7B2BE007E9C8B /* ScreenLockUIConfiguration.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ScreenLockUIConfiguration.swift; sourceTree = "<group>"; };
 		A32C854925268005000FFA42 /* KeyValueEncryptedFileStoreInspector.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KeyValueEncryptedFileStoreInspector.swift; sourceTree = "<group>"; };
 		A37171F874F1DC5496268880 /* SFFormatUtils.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = SFFormatUtils.swift; sourceTree = "<group>"; };
 		A37F3115252E5C2300026635 /* KeyValueEncryptedFileStoreViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KeyValueEncryptedFileStoreViewController.swift; sourceTree = "<group>"; };
@@ -1800,6 +1802,7 @@
 		A315F84126EAAFCD00B94428 /* ScreenLock */ = {
 			isa = PBXGroup;
 			children = (
+				694163EB2FC7B2BE007E9C8B /* ScreenLockUIConfiguration.swift */,
 				A315F83A26EAAC8400B94428 /* ScreenLockManagerInternal.swift */,
 				A315F84226EAAFF800B94428 /* ScreenLockUIView.swift */,
 				A3C7475B29F7047400D72B7F /* ScreenLockManager.swift */,
@@ -2605,6 +2608,7 @@
 				2365097E2DAD6B1B002BCFA9 /* RemoteNotificationRegistering.swift in Sources */,
 				23EDDEFE2DE0F7620024AD39 /* URLRequest+RestRequest.swift in Sources */,
 				A315F84326EAAFF800B94428 /* ScreenLockUIView.swift in Sources */,
+				694163EC2FC7B2BE007E9C8B /* ScreenLockUIConfiguration.swift in Sources */,
 				A3C7475F29F7087B00D72B7F /* BiometricAuthenticationManager.swift in Sources */,
 				4FE006B12EBEB65900CFD66F /* AuthFlowTypesView.swift in Sources */,
 				4FE006B22EBEB65900CFD66F /* BootConfigEditor.swift in Sources */,
