@@ -2737,6 +2737,10 @@ extension UserAccountManager {
                 let nativeLogin = multiWindowNativeLoginVC ?? (SalesforceSDKManager.shared.nativeLoginViewControllers["defaultKey" as NSString] as? UIViewController)
                 guard let nativeLoginVC = nativeLogin else { return }
                 let controllerToPresent = SFSDKNavigationController(rootViewController: nativeLoginVC)
+                // Hide the nav bar for custom native login views. SFLoginViewController hides it
+                // internally, but custom VCs don't — without this, a Salesforce-blue nav bar appears
+                // on top of the native login view on re-presentation (e.g. after fallback to web auth).
+                controllerToPresent.setNavigationBarHidden(true, animated: false)
                 controllerToPresent.modalPresentationStyle = .fullScreen
                 SFSDKWindowManager.shared.authWindow(viewHandler.scene).viewController?.present(controllerToPresent, animated: false, completion: {})
             } else if !viewHandler.isAdvancedAuthFlow {
