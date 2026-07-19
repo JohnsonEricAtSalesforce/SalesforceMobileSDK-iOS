@@ -1,6 +1,6 @@
 # Upstream Sync Backlog Ledger
 
-Marker (done floor): `4ba0c943f` (units 1-12 done)  ·  forcedotcom/dev HEAD (target): `b5d37d807`  ·  **37 units remaining**  ·  Re-seeded: 2026-07-19 (Phase 0 of the resume-porting plan).
+Marker (done floor): `08d39f43a` (units 1-13 done)  ·  forcedotcom/dev HEAD (target): `b5d37d807`  ·  **36 units remaining**  ·  Re-seeded: 2026-07-19 (Phase 0 of the resume-porting plan).
 
 > **Direction:** we port changes **FROM** `forcedotcom/dev` **INTO** our ObjC→Swift migration branch
 > (`feature/objc-to-swift-test-migration`). Each unit is a *semantic re-implementation* against the current
@@ -17,7 +17,7 @@ Marker (done floor): `4ba0c943f` (units 1-12 done)  ·  forcedotcom/dev HEAD (ta
 > non-libs (CI, docs, skills, sample apps). Live progress bar = subject of lead task #9.
 
 ## Migration status
-▓▓▓▓▓░░░░░░░░░░░░░░░  12/49 units done (24%)   ·   libs-production-impacting: 5/21   ·   Phase 1 porting (units 1-12 ✅)
+▓▓▓▓▓░░░░░░░░░░░░░░░  13/49 units done (27%)   ·   libs-production-impacting: 5/21   ·   Phase 1 porting (units 1-13 ✅)
 
 | Bucket | Count | Notes |
 |--------|-------|-------|
@@ -43,7 +43,7 @@ Marker (done floor): `4ba0c943f` (units 1-12 done)  ·  forcedotcom/dev HEAD (ta
 | 10 | #4061 stabilize flaky testBootConfigPickerViewRendered | 985e2adce | A | flaky | ✅ ported | Replaced the async `DispatchQueue.main.asyncAfter(0.2)` + expectation dance in `LoginOptionsViewControllerTests.testBootConfigPickerViewRendered` with a deterministic `layoutIfNeeded()` + `XCTAssertGreaterThan(view.frame.height, 0)` (UIKit layout only, no SwiftUI-internal/OS-variant assumptions). Migration API-name deltas preserved (`SalesforceSDKManager.shared`, `BootConfig(dict:)`). Test-only. SDKCore TEST BUILD ✓ 0 warn; class PASS 4/4. Re-baseline: unchanged — this test was already passing (only flaky-timing) and is not in the baseline. |
 | 11 | #4062 stabilize flaky testMissingLoginHint | 4c70ec9ef | A | flaky | ✅ ported | `DomainDiscoveryCoordinatorTests`: dropped `@MainActor` on the class and converted all 7 tests `async throws`→`throws` (the `handle(callbackURL:)` path is synchronous URL parsing; removing the actor hop de-flakes). Our file was byte-identical to upstream's pre-image → applied post-image directly; verified BYTE-IDENTICAL to upstream post-image. Test-only. SDKCore TEST BUILD ✓ 0 warn; class PASS 7/7. Re-baseline: unchanged (none of these in baseline). |
 | 12 | #4063 stabilize flaky testCAOpaque (UI) | 4ba0c943f | F | flaky + ⚠ CI-config | ✅ ported | Stabilize `testCAOpaque_DefaultScopes_WebServerFlow`: added a `network` timeout tier (default 30s, env `UI_TEST_NETWORK_TIMEOUT`) to `UITestTimeouts`, bumped short 1→2 / long 3→10, routed server-round-trip waits (login/allow buttons, `isShowing()`) to `.network`, and made page-object `tap()` assert existence (XCTAssertTrue with file/line) instead of silently ignoring. CI: pr.yaml + ui-test-nightly.yaml timeouts 2→3 / 7→15. All 7 files were byte-identical to upstream pre-image → applied post-image verbatim; verified BYTE-IDENTICAL to post-image. Non-libs UITest support + CI (not in libs schemes; UITest target is live-gated). ⚠ escalation: CI-config (`.github/workflows/*.yaml`) — flag in PR. Re-baseline: N/A to libs schemes (UITest-only). |
-| 13 | #4064 doc: scope | 08d39f43a | F | — | ⬜ pending | docs only. |
+| 13 | #4064 doc: scope | 08d39f43a | F | — | ✅ ported | UPGRADE.md rewrite: replaced the stale v7.0→7.1 Swift-throws migration snippet with a generic "upgrade via forceios templates + release notes" section and refreshed the community link (StackExchange→Trailblazer). File matched pre-image → post-image applied verbatim, byte-identical. Docs-only, no build gate. |
 | 14 | #4065 skip CI on doc-only PRs | 84672d1eb | F | — | ⬜ pending | CI config. |
 | 15 | #4071 stabilize flaky push-notif registration | f8291e901 | A | flaky | ⬜ pending | 2 test files. Re-baseline after. |
 | 16 | #4066 stabilize flaky PushNotif foreground registration | 2a879dc7d | A | flaky | ⬜ pending | 1 test file. Re-baseline after. |
