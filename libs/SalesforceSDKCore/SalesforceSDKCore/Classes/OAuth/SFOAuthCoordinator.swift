@@ -594,7 +594,7 @@ public class SFOAuthCoordinator: NSObject, WKNavigationDelegate, WKUIDelegate {
         delegate?.oauthCoordinatorDidBeginNativeAuthentication(self)
     }
 
-    private func handleResponse(_ response: SFSDKOAuthTokenEndpointResponse) {
+    func handleResponse(_ response: SFSDKOAuthTokenEndpointResponse) {
         if !response.hasError {
             let scopeParser = ScopeParser(scopes: response.scopes)
             if !scopeParser.hasRefreshTokenScope() {
@@ -611,7 +611,18 @@ public class SFOAuthCoordinator: NSObject, WKNavigationDelegate, WKUIDelegate {
                     SFSDKCoreLogger.d(Self.self, format: "Refresh attempt timed out after %f seconds.", timeout)
                     stopAuthentication()
                 }
-                notifyDelegateOfFailure(err, authInfo: authInfo)
+                let isUnsupportedGrantType = response.error?.tokenEndpointErrorCode == kSFOAuthErrorTypeUnsupportedGrantType
+                let isLightningURL = credentials?.domain?.contains(".lightning.") ?? false
+                if isUnsupportedGrantType && isLightningURL {
+                    SFSDKCoreLogger.e(Self.self, format: "Code exchange failed with unsupported_grant_type against Lightning URL: %@. Lightning URLs do not support authorization_code grant type. Use a My Domain login server URL instead.", credentials?.domain ?? "")
+                    let localizedMessage = SFSDKResourceUtils.localizedString("lightningUrlCodeExchangeError")
+                    var userInfo = err.userInfo
+                    userInfo[NSLocalizedDescriptionKey] = localizedMessage
+                    let diagnosticError = NSError(domain: err.domain, code: err.code, userInfo: userInfo)
+                    notifyDelegateOfFailure(diagnosticError, authInfo: authInfo)
+                } else {
+                    notifyDelegateOfFailure(err, authInfo: authInfo)
+                }
                 responseData = NSMutableData(capacity: Int(kSFOAuthReponseBufferLength))
             }
         }

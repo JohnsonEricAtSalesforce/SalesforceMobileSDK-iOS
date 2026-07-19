@@ -50,6 +50,7 @@
 #import "SFSDKAuthRequest.h"
 #import <SalesforceSDKCore/SalesforceSDKCore-Swift.h>
 #import <LocalAuthentication/LocalAuthentication.h>
+#import "SFSDKResourceUtils.h"
 @interface SFOAuthCoordinator()
 
 @property (nonatomic) NSString *networkIdentifier;
@@ -666,7 +667,20 @@
                  [SFSDKCoreLogger d:[self class] format:@"Refresh attempt timed out after %f seconds.", self.timeout];
                  [self stopAuthentication];
              }
-             [self notifyDelegateOfFailure:response.error.error authInfo:self.authInfo];
+             BOOL isUnsupportedGrantType = [response.error.tokenEndpointErrorCode isEqualToString:kSFOAuthErrorTypeUnsupportedGrantType];
+             BOOL isLightningURL = [self.credentials.domain containsString:@".lightning."];
+             if (isUnsupportedGrantType && isLightningURL) {
+                 [SFSDKCoreLogger e:[self class] format:@"Code exchange failed with unsupported_grant_type against Lightning URL: %@. Lightning URLs do not support authorization_code grant type. Use a My Domain login server URL instead.", self.credentials.domain];
+                 NSString *localizedMessage = [SFSDKResourceUtils localizedString:@"lightningUrlCodeExchangeError"];
+                 NSMutableDictionary *userInfo = [NSMutableDictionary dictionaryWithDictionary:response.error.error.userInfo ?: @{}];
+                 userInfo[NSLocalizedDescriptionKey] = localizedMessage;
+                 NSError *diagnosticError = [NSError errorWithDomain:response.error.error.domain
+                                                                code:response.error.error.code
+                                                            userInfo:userInfo];
+                 [self notifyDelegateOfFailure:diagnosticError authInfo:self.authInfo];
+             } else {
+                 [self notifyDelegateOfFailure:response.error.error authInfo:self.authInfo];
+             }
              self.responseData = [NSMutableData dataWithCapacity:kSFOAuthReponseBufferLength];
          }
      }
