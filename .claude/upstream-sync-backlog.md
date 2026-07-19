@@ -1,6 +1,6 @@
 # Upstream Sync Backlog Ledger
 
-Marker (done floor): 6ed0ab40  ·  origin/dev HEAD: bac017113  ·  34 behind (12 logical units)  ·  Updated: 2026-07-18 (#4046→0abe5ed79 ported; prior #4040→ad2f35a05, #4042→b97f7f579, #4041→d0f3596f1, #4044→98d2111f0; marker held at 6ed0ab40 — #4035 below it still pending)
+Marker (done floor): 6ed0ab40  ·  origin/dev HEAD: bac017113  ·  34 behind (12 logical units)  ·  Updated: 2026-07-18 (#4039→e269a42c9 ported [pre-mapping was BACKWARDS — corrected, see detail]; prior #4046→0abe5ed79, #4040→ad2f35a05, #4042→b97f7f579, #4041→d0f3596f1, #4044→98d2111f0; marker held at 6ed0ab40 — #4035 below it still pending)
 
 > Pre-mapping pass: 34 upstream commits grouped into 12 first-parent units and classified by net-diff
 > file footprint. Grouping uses first-parent history of `origin/dev` (top-level landings), not raw
@@ -17,12 +17,12 @@ Marker (done floor): 6ed0ab40  ·  origin/dev HEAD: bac017113  ·  34 behind (12
 > see "Migration order vs. original history" at the bottom.
 
 ## Migration status
-███████████████░░░░░  9/12 units done (75%; ported+skipped)   ·   libs/-impacting: 7/8
+█████████████████░░░  10/12 units done (83%; ported+skipped)   ·   libs/-impacting: 8/8
 
 | Status        | Cnt | Units |
 |---------------|-----|-------|
-| ✅ ported     |  6  | #4043 #4042 #4041 #4044 #4040 #4046 |
-| 🔬 analyzed   |  1  | #4039 |
+| ✅ ported     |  7  | #4043 #4042 #4041 #4044 #4040 #4046 #4039 |
+| 🔬 analyzed   |  0  | — |
 | 🚧 in-progress|  0  | — |
 | ⏸ deferred    |  0  | — |
 | ⏭ skipped     |  3  | #4038 (buggy method not in migrated Swift surface), master-merge×2 (empty net diff) |
@@ -39,7 +39,7 @@ Marker (done floor): 6ed0ab40  ·  origin/dev HEAD: bac017113  ·  34 behind (12
 | #4043 fix trait collection warning | 36f6bf636 (merge, 1) | B | ✅ ported | (pending commit) | non-escalation; registerForTraitChanges in SFSDKUITableViewCell.swift + RootViewController.swift (Cat-A verbatim); build ✓, scoped tests ✓; SDKCore gate provisional per P0.2c |
 | MASTER merge (a2d6db8ae) | a2d6db8ae | — | ⏭ skipped | — | "Merging master into dev" — empty net diff (no-op) |
 | #4040 hide nav bar on native login | 881c626eb (merge, 2) | B | ✅ ported | ad2f35a05 | one-line `setNavigationBarHidden(true,animated:false)` in `presentLoginViewImpl` native-login branch (+ new test); .m stub not ref-synced; build ✓, NativeLoginManagerTests 6/6 ✓ (new test not live-gated); ⚠ escalation (login-UI) — flag in PR |
-| #4039 auth-loading default + deprecate property | d4a9ce0db (merge, 2) | B | 🔬 analyzed · ✅ approved ⚠ | — | ⚠ PUBLIC-API deprecation REVERSAL — approved; keep SDK-owner flag; see detail |
+| #4039 auth-loading default + deprecate property | d4a9ce0db (merge, 2) | B | ✅ ported | e269a42c9 | ⚠ PUBLIC-API — pre-map was BACKWARDS (see detail): actually a NEW deprecation of `showAuthWindowWhileLoading` (removal 15.0) + default flip NO→YES. Swift: `@available(deprecated)` public computed wrapper over new `internal showAuthWindowWhileLoadingInternal=true`; 2 coord reads use backing (warning-free = Swift equiv of SFSDK_USE_DEPRECATED guards); .m ref-synced verbatim; .h(gutted)/.m(stub) no target. +1 default-flip test. Build ✓ 0 warnings, 23/23 OAuth ✓; SDK-owner flag STAYS raised |
 | #4038 fix hardcoded log level | 439d33e90 (merge, 1) | B→skip | ⏭ skipped | ref-sync only | buggy variadic `format:` method NOT in migrated Swift surface — no compiled Swift behavior to fix; SFLogger.m ref synced to upstream. See detail + ⚠ dropped-API flag. |
 | MASTER merge (9bf7b52f2 #4037) | 9bf7b52f2 | — | ⏭ skipped | — | "Merge from master" — empty net diff (no-op) |
 | #4035 RTR login UI tests + config | d340d5437 (merge, ~7) | F | ⬜ pending | — | `native/SampleApps/AuthFlowTester/*` + `shared/test/ui_test_config.json.sample`; #4035 also needs `ui_test_config.json` to gate |
@@ -121,17 +121,31 @@ Marker (done floor): 6ed0ab40  ·  origin/dev HEAD: bac017113  ·  34 behind (12
 - **Files:** `SFUserAccountManager.m`→`.swift` (`presentLoginView:`) + test `.swift`.
 - **⚠ Escalation:** login-UI presentation — APPROVED (single presentation flag, no contract change).
 
-### #4039 — Change default loading behavior + REVERSE public-API deprecation  ⚠ PUBLIC API  [target-confirmed] · ✅ APPROVED (with caveat)
-- **Intent:** (1) flip default `showAuthWindowWhileLoading` YES→NO in init; (2) **remove** the
-  `SFSDK_DEPRECATED(14.0,15.0,…)` annotation from the public `.h` (un-deprecates a property that was on
-  the 15.0 removal path); (3) drop the `SFSDK_USE_DEPRECATED_BEGIN/END` guards in `SFOAuthCoordinator`.
-- **Swift mapping:** `SFOAuthCoordinator.swift` + `SFUserAccountManager.swift`; the public property must
-  be expressed WITHOUT the deprecation attribute and the default flipped; ObjC header reference updated.
-- **Files:** `SFOAuthCoordinator.m`→`.swift`, `SFUserAccountManager.h`+`.m`→`.swift` (+ ObjC ref update).
-- **⚠ Escalation — APPROVED WITH CAVEAT:** operator approved porting this to keep parity with `origin/dev`.
-  BUT it reverses a shipped public-API deprecation and flips a default behavior. **Keep the SDK-owner flag
-  raised** — this is a public-contract change that belongs in release notes / PR description, not a silent
-  port. Do not treat "approved to port" as "cleared for public release without owner sign-off."
+### #4039 — Change default loading behavior + DEPRECATE public property  ⚠ PUBLIC API  [PORTED e269a42c9] · ✅ DONE
+- **⚠ PRE-MAPPING WAS BACKWARDS (corrected 2026-07-18 at port time):** the original ledger/analysis
+  described this as a deprecation *reversal* (un-deprecate + flip YES→NO + drop guards). The ACTUAL
+  upstream commit `d4a9ce0db` does the OPPOSITE — its PR title is "Change default loading and **deprecate**
+  property." Verified against the real first-parent diff. Corrected intent below.
+- **Actual intent:** (1) flip default `showAuthWindowWhileLoading` **NO→YES** in init
+  (`_showAuthWindowWhileLoading = YES`); (2) **ADD** `SFSDK_DEPRECATED(14.0,15.0,…)` to the public property
+  in `SFUserAccountManager.h` (newly deprecates it; removal targeted 15.0); (3) **ADD**
+  `SFSDK_USE_DEPRECATED_BEGIN/END` guards around the two `showAuthWindowWhileLoading` reads in
+  `SFOAuthCoordinator` (didStartProvisionalNavigation / didFinishNavigation).
+- **Swift mapping (AS PORTED):** the property + init are Swift-native here (`.h` is gutted — 0 `@property`;
+  `SFUserAccountManager.m` is a constants-only stub) so upstream's `.h`/`.m` hunks have NO faithful target.
+  - `SFUserAccountManager.swift`: public `showAuthWindowWhileLoading` → `@available(*, deprecated, message:
+    "…removed in 15.0…")` computed wrapper over NEW `internal var showAuthWindowWhileLoadingInternal = true`
+    (the flipped default). The internal backing is the Swift equivalent of `SFSDK_USE_DEPRECATED_BEGIN/END`:
+    in-module reads use it and stay warning-free; external callers of the public property still get warned.
+    init sets `showAuthWindowWhileLoadingInternal = true`.
+  - `SFOAuthCoordinator.swift`: both load-callback reads switched to the internal backing (warning-free).
+  - `SFOAuthCoordinator.m`: ref-synced verbatim (de-referenced/byte-faithful) — applied the two upstream
+    `SFSDK_USE_DEPRECATED_BEGIN/END` hunks exactly.
+- **Test:** upstream added none; added `test_givenFreshUserAccountManager_…thenDefaultsToTrue` (asserts new
+  `true` default + backing round-trip via the internal backing — test itself warning-free).
+- **⚠ Escalation — SDK-owner flag STAYS raised:** NEW public-API deprecation (release-notes/deprecation-doc
+  item, not silent) + PUBLIC default-behavior flip NO→YES (auth-window timing for all consumers). Ported for
+  `origin/dev` parity; NOT cleared for public release without owner sign-off.
 
 ### #4038 — Fix hardcoded log level  [TRACED → NO SWIFT TARGET] · ⏭ SKIPPED · ✅ OPERATOR-APPROVED (2026-07-14)
 > Disposition + dropped-public-API flag acknowledged by operator 2026-07-14. Unit closed.
@@ -166,11 +180,14 @@ Marker (done floor): 6ed0ab40  ·  origin/dev HEAD: bac017113  ·  34 behind (12
 `#4035 → #4038 → #4039 → #4040 → #4043 → #4041 → #4044 → #4046 → #4047 → #4042`
 (the two master-merges interleave but are no-op skips).
 
-**Our proposed porting order** (low-risk / dependency-first):
-1. **F units:** #4047, #4035 (no libs/ impact; #4035 waits on `ui_test_config.json`)
-2. **Non-escalation B:** #4038, #4043
-3. **Biometric cluster:** #4041 **then** #4044
-4. **Escalation B:** #4042, #4040, #4046, #4039 (#4039 last — public-contract change)
+**Our porting order** (low-risk / dependency-first). ✅ = done:
+1. **Non-escalation B:** ✅ #4038 (skipped), ✅ #4043
+2. **Biometric cluster:** ✅ #4041 **then** ✅ #4044
+3. **Escalation B:** ✅ #4042, ✅ #4040, ✅ #4046, ✅ #4039 (#4039 last — public-contract change)
+4. **F units (REMAINING):** #4047, #4035 (no libs/ impact; #4035 waits on `ui_test_config.json`)
+
+**All library-impacting units are now ported (libs/-impacting 8/8).** Only the two Cat-F CI/sample-app
+units (#4047, #4035) remain — no `libs/` code impact.
 
 **Yes — this deliberately re-orders relative to upstream history. Is that safe? Verified yes:**
 
