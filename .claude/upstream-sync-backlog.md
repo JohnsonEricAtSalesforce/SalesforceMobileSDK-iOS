@@ -1,6 +1,6 @@
 # Upstream Sync Backlog Ledger
 
-Marker (done floor): 6ed0ab40  ·  origin/dev HEAD: bac017113  ·  34 behind (12 logical units)  ·  Updated: 2026-07-18 (#4047→18d10ada9 ported [Cat-F CI, verbatim]; prior #4039→e269a42c9 [pre-map was BACKWARDS — corrected], #4046→0abe5ed79, #4040→ad2f35a05, #4042→b97f7f579, #4041→d0f3596f1, #4044→98d2111f0; marker held at 6ed0ab40 — only #4035 remains)
+Marker (done floor): bac017113  ·  origin/dev HEAD: bac017113  ·  0 behind (queue DRAINED)  ·  Updated: 2026-07-18 (#4035→0da03630e ported [Cat-F sample/UI, verbatim] — LAST unit; contiguous prefix complete → marker ADVANCED 6ed0ab40→bac017113. Prior: #4047→18d10ada9, #4039→e269a42c9 [pre-map was BACKWARDS — corrected], #4046→0abe5ed79, #4040→ad2f35a05, #4042→b97f7f579, #4041→d0f3596f1, #4044→98d2111f0)
 
 > Pre-mapping pass: 34 upstream commits grouped into 12 first-parent units and classified by net-diff
 > file footprint. Grouping uses first-parent history of `origin/dev` (top-level landings), not raw
@@ -17,16 +17,16 @@ Marker (done floor): 6ed0ab40  ·  origin/dev HEAD: bac017113  ·  34 behind (12
 > see "Migration order vs. original history" at the bottom.
 
 ## Migration status
-██████████████████░░  11/12 units done (92%; ported+skipped)   ·   libs/-impacting: 8/8
+████████████████████  12/12 units done (100%; ported+skipped)   ·   libs/-impacting: 8/8   ·   QUEUE DRAINED
 
 | Status        | Cnt | Units |
 |---------------|-----|-------|
-| ✅ ported     |  8  | #4043 #4042 #4041 #4044 #4040 #4046 #4039 #4047 |
+| ✅ ported     |  9  | #4043 #4042 #4041 #4044 #4040 #4046 #4039 #4047 #4035 |
 | 🔬 analyzed   |  0  | — |
 | 🚧 in-progress|  0  | — |
 | ⏸ deferred    |  0  | — |
 | ⏭ skipped     |  3  | #4038 (buggy method not in migrated Swift surface), master-merge×2 (empty net diff) |
-| ⬜ pending    |  1  | #4035 |
+| ⬜ pending    |  0  | — |
 
 ## Units
 | PR / unit | Members (first-parent range) | Cat | Status | Port commit | Notes |
@@ -42,7 +42,7 @@ Marker (done floor): 6ed0ab40  ·  origin/dev HEAD: bac017113  ·  34 behind (12
 | #4039 auth-loading default + deprecate property | d4a9ce0db (merge, 2) | B | ✅ ported | e269a42c9 | ⚠ PUBLIC-API — pre-map was BACKWARDS (see detail): actually a NEW deprecation of `showAuthWindowWhileLoading` (removal 15.0) + default flip NO→YES. Swift: `@available(deprecated)` public computed wrapper over new `internal showAuthWindowWhileLoadingInternal=true`; 2 coord reads use backing (warning-free = Swift equiv of SFSDK_USE_DEPRECATED guards); .m ref-synced verbatim; .h(gutted)/.m(stub) no target. +1 default-flip test. Build ✓ 0 warnings, 23/23 OAuth ✓; SDK-owner flag STAYS raised |
 | #4038 fix hardcoded log level | 439d33e90 (merge, 1) | B→skip | ⏭ skipped | ref-sync only | buggy variadic `format:` method NOT in migrated Swift surface — no compiled Swift behavior to fix; SFLogger.m ref synced to upstream. See detail + ⚠ dropped-API flag. |
 | MASTER merge (9bf7b52f2 #4037) | 9bf7b52f2 | — | ⏭ skipped | — | "Merge from master" — empty net diff (no-op) |
-| #4035 RTR login UI tests + config | d340d5437 (merge, ~7) | F | ⬜ pending | — | `native/SampleApps/AuthFlowTester/*` + `shared/test/ui_test_config.json.sample`; #4035 also needs `ui_test_config.json` to gate |
+| #4035 RTR login UI tests + config | d340d5437 (merge, ~7) | F | ✅ ported | 0da03630e | 8 files (7 pre-existing + new RTRLoginTests.swift), all matched upstream pre-image → applied post-image VERBATIM (== upstream byte-for-byte); +230/-41. No pbxproj (AuthFlowTester uses synchronized folder groups; upstream touched none). NO runnable gate: RTR tests are live-org UI tests gated on gitignored `ui_test_config.json` (absent both dirs); AuthFlowTester scheme fails to compile but PRE-EXISTING+unrelated — with #4035 stashed the sample still fails on `RestClient.shared` (RevokeView) + `AuthHelper.registerBlock` (SceneDelegate), files #4035 doesn't touch. Sample app never ported to migrated Swift API → separate migration-parity follow-up |
 
 ## Category-B detail
 
@@ -184,10 +184,11 @@ Marker (done floor): 6ed0ab40  ·  origin/dev HEAD: bac017113  ·  34 behind (12
 1. **Non-escalation B:** ✅ #4038 (skipped), ✅ #4043
 2. **Biometric cluster:** ✅ #4041 **then** ✅ #4044
 3. **Escalation B:** ✅ #4042, ✅ #4040, ✅ #4046, ✅ #4039 (#4039 last — public-contract change)
-4. **F units:** ✅ #4047 (CI, verbatim), #4035 REMAINING (waits on `ui_test_config.json`)
+4. **F units:** ✅ #4047 (CI, verbatim), ✅ #4035 (sample/UI, verbatim)
 
-**All library-impacting units are ported (libs/-impacting 8/8).** Only Cat-F #4035 (sample-app/UI-test)
-remains — no `libs/` code impact.
+**QUEUE DRAINED — all 12 units resolved (9 ported + 3 skipped).** libs/-impacting 8/8. Marker
+advanced 6ed0ab40 → bac017113 (origin/dev HEAD); 0 behind. Poller still NOT activated (no cron) —
+separate decision.
 
 **Yes — this deliberately re-orders relative to upstream history. Is that safe? Verified yes:**
 
