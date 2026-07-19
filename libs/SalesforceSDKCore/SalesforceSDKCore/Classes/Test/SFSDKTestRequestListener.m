@@ -31,7 +31,9 @@ NSString* const kTestRequestStatusWaiting = @"waiting";
 NSString* const kTestRequestStatusDidLoad = @"didLoad";
 NSString* const kTestRequestStatusDidFail = @"didFail";
 
-@interface SFSDKTestRequestListener ()
+@interface SFSDKTestRequestListener () {
+    dispatch_semaphore_t _completionSemaphore;
+}
 @end
 
 @implementation SFSDKTestRequestListener
@@ -47,6 +49,7 @@ NSString* const kTestRequestStatusDidFail = @"didFail";
     if (nil != self) {
         self.maxWaitTime = 30.0;
         self.returnStatus = kTestRequestStatusWaiting;
+        _completionSemaphore = dispatch_semaphore_create(0);
     }
     return self;
 }
@@ -58,15 +61,16 @@ NSString* const kTestRequestStatusDidFail = @"didFail";
 }
 
 - (NSString *)waitForCompletion {
-    NSDate *startTime = [NSDate date] ;
-    while ([self.returnStatus isEqualToString:kTestRequestStatusWaiting]) {
-        NSTimeInterval elapsed = [[NSDate date] timeIntervalSinceDate:startTime];
-        if (elapsed > self.maxWaitTime) {
-            [SFSDKCoreLogger d:[self class] format:@"Request took too long (> %f secs) to complete.", elapsed];
-            return kTestRequestStatusDidFail;
-        }
-        [[NSRunLoop currentRunLoop] runUntilDate:[NSDate dateWithTimeIntervalSinceNow:0.1]];
+    // Wait for completion signal with timeout
+    dispatch_time_t timeout = dispatch_time(DISPATCH_TIME_NOW, (int64_t)(self.maxWaitTime * NSEC_PER_SEC));
+    long result = dispatch_semaphore_wait(_completionSemaphore, timeout);
+
+    if (result != 0) {
+        // Timeout occurred
+        [SFSDKCoreLogger d:[self class] format:@"Request took too long (> %f secs) to complete.", self.maxWaitTime];
+        return kTestRequestStatusDidFail;
     }
+
     return self.returnStatus;
 }
 
@@ -76,6 +80,7 @@ NSString* const kTestRequestStatusDidFail = @"didFail";
 {
     [SFSDKCoreLogger i:[self class] format:@"%@", NSStringFromSelector(_cmd)];
     self.returnStatus = kTestRequestStatusDidLoad;
+    dispatch_semaphore_signal(_completionSemaphore);
 }
 
 - (void)identityCoordinator:(SFIdentityCoordinator *)coordinator didFailWithError:(NSError *)error
@@ -83,6 +88,7 @@ NSString* const kTestRequestStatusDidFail = @"didFail";
     [SFSDKCoreLogger i:[self class] format:@"%@ with error: %@", NSStringFromSelector(_cmd), error];
     self.lastError = error;
     self.returnStatus = kTestRequestStatusDidFail;
+    dispatch_semaphore_signal(_completionSemaphore);
 }
 
 #pragma mark - SFOAuthCoordinatorDelegate
@@ -124,6 +130,7 @@ NSString* const kTestRequestStatusDidFail = @"didFail";
 {
     [SFSDKCoreLogger i:[self class] format:@"%@ with authInfo: %@", NSStringFromSelector(_cmd), info];
     self.returnStatus = kTestRequestStatusDidLoad;
+    dispatch_semaphore_signal(_completionSemaphore);
 }
 
 - (void)oauthCoordinator:(SFOAuthCoordinator *)coordinator didFailWithError:(NSError *)error authInfo:(SFOAuthInfo *)info
@@ -131,6 +138,7 @@ NSString* const kTestRequestStatusDidFail = @"didFail";
     [SFSDKCoreLogger i:[self class] format:@"%@ with authInfo: %@, error: %@", NSStringFromSelector(_cmd), info, error];
     self.lastError = error;
     self.returnStatus = kTestRequestStatusDidFail;
+    dispatch_semaphore_signal(_completionSemaphore);
 }
 
 @end

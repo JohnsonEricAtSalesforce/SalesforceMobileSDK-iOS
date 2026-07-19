@@ -213,7 +213,13 @@ open class SalesforceSDKManager: NSObject {
 
     @objc open class func initializeSDK() {
         initializeSDK(manager: instanceClass)
+    }
+
+    @objc public class func initializeSDK(manager className: AnyClass?) {
+        setInstanceClass(className)
+
         #if DEBUG
+        // For debug app builds only, use test instant log in if applicable.
         let arguments = ProcessInfo.processInfo.arguments
         if let credsIndex = arguments.firstIndex(of: "-creds"), credsIndex + 1 < arguments.count {
             let creds = arguments[credsIndex + 1]
@@ -221,10 +227,7 @@ open class SalesforceSDKManager: NSObject {
             TestSetupUtils.synchronousAuthRefresh(withUserDidLoginNotification: true)
         }
         #endif
-    }
 
-    @objc public class func initializeSDK(manager className: AnyClass?) {
-        setInstanceClass(className)
         _ = SalesforceSDKManager.shared
     }
 

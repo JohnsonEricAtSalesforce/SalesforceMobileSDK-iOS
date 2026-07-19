@@ -46,6 +46,8 @@ public class SFSDKTestRequestListener: NSObject, SFIdentityCoordinatorDelegate, 
     @objc public var returnStatus: String?
     @objc public var maxWaitTime: TimeInterval = 30.0
 
+    private let completionSemaphore = DispatchSemaphore(value: 0)
+
     public override init() {
         super.init()
         returnStatus = kTestRequestStatusWaiting
@@ -54,14 +56,11 @@ public class SFSDKTestRequestListener: NSObject, SFIdentityCoordinatorDelegate, 
     /// Wait for the request to complete (success or fail).
     /// Waits for up to maxWaitTime.
     @objc public func waitForCompletion() -> String {
-        let startTime = Date()
-        while returnStatus == kTestRequestStatusWaiting {
-            let elapsed = Date().timeIntervalSince(startTime)
-            if elapsed > maxWaitTime {
-                SFSDKCoreLogger.d(SFSDKTestRequestListener.self, message: "Request took too long (> \(elapsed) secs) to complete.")
-                return kTestRequestStatusDidFail
-            }
-            RunLoop.current.run(until: Date(timeIntervalSinceNow: 0.1))
+        // Wait for completion signal with timeout
+        let result = completionSemaphore.wait(timeout: .now() + maxWaitTime)
+        if result == .timedOut {
+            SFSDKCoreLogger.d(SFSDKTestRequestListener.self, message: "Request took too long (> \(maxWaitTime) secs) to complete.")
+            return kTestRequestStatusDidFail
         }
         return returnStatus ?? kTestRequestStatusDidFail
     }
@@ -71,12 +70,14 @@ public class SFSDKTestRequestListener: NSObject, SFIdentityCoordinatorDelegate, 
     public func identityCoordinatorRetrievedData(_ coordinator: SFIdentityCoordinator) {
         SFSDKCoreLogger.i(SFSDKTestRequestListener.self, message: #function)
         returnStatus = kTestRequestStatusDidLoad
+        completionSemaphore.signal()
     }
 
     public func identityCoordinator(_ coordinator: SFIdentityCoordinator, didFailWithError error: Error) {
         SFSDKCoreLogger.i(SFSDKTestRequestListener.self, message: "\(#function) with error: \(error)")
         lastError = error as NSError
         returnStatus = kTestRequestStatusDidFail
+        completionSemaphore.signal()
     }
 
     // MARK: - SFOAuthCoordinatorDelegate
@@ -112,11 +113,13 @@ public class SFSDKTestRequestListener: NSObject, SFIdentityCoordinatorDelegate, 
     public func oauthCoordinatorDidAuthenticate(_ coordinator: SFOAuthCoordinator, authInfo info: SFOAuthInfo) {
         SFSDKCoreLogger.i(SFSDKTestRequestListener.self, message: "\(#function) with authInfo: \(info)")
         returnStatus = kTestRequestStatusDidLoad
+        completionSemaphore.signal()
     }
 
     public func oauthCoordinator(_ coordinator: SFOAuthCoordinator, didFailWithError error: Error, authInfo info: SFOAuthInfo?) {
         SFSDKCoreLogger.i(SFSDKTestRequestListener.self, message: "\(#function) with authInfo: \(String(describing: info)), error: \(error)")
         lastError = error as NSError
         returnStatus = kTestRequestStatusDidFail
+        completionSemaphore.signal()
     }
 }
