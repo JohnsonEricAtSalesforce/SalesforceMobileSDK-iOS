@@ -1,6 +1,6 @@
 # Upstream Sync Backlog Ledger
 
-Marker (done floor): 6ed0ab40  ·  origin/dev HEAD: bac017113  ·  34 behind (12 logical units)  ·  Updated: 2026-07-18 (#4039→e269a42c9 ported [pre-mapping was BACKWARDS — corrected, see detail]; prior #4046→0abe5ed79, #4040→ad2f35a05, #4042→b97f7f579, #4041→d0f3596f1, #4044→98d2111f0; marker held at 6ed0ab40 — #4035 below it still pending)
+Marker (done floor): 6ed0ab40  ·  origin/dev HEAD: bac017113  ·  34 behind (12 logical units)  ·  Updated: 2026-07-18 (#4047→18d10ada9 ported [Cat-F CI, verbatim]; prior #4039→e269a42c9 [pre-map was BACKWARDS — corrected], #4046→0abe5ed79, #4040→ad2f35a05, #4042→b97f7f579, #4041→d0f3596f1, #4044→98d2111f0; marker held at 6ed0ab40 — only #4035 remains)
 
 > Pre-mapping pass: 34 upstream commits grouped into 12 first-parent units and classified by net-diff
 > file footprint. Grouping uses first-parent history of `origin/dev` (top-level landings), not raw
@@ -17,22 +17,22 @@ Marker (done floor): 6ed0ab40  ·  origin/dev HEAD: bac017113  ·  34 behind (12
 > see "Migration order vs. original history" at the bottom.
 
 ## Migration status
-█████████████████░░░  10/12 units done (83%; ported+skipped)   ·   libs/-impacting: 8/8
+██████████████████░░  11/12 units done (92%; ported+skipped)   ·   libs/-impacting: 8/8
 
 | Status        | Cnt | Units |
 |---------------|-----|-------|
-| ✅ ported     |  7  | #4043 #4042 #4041 #4044 #4040 #4046 #4039 |
+| ✅ ported     |  8  | #4043 #4042 #4041 #4044 #4040 #4046 #4039 #4047 |
 | 🔬 analyzed   |  0  | — |
 | 🚧 in-progress|  0  | — |
 | ⏸ deferred    |  0  | — |
 | ⏭ skipped     |  3  | #4038 (buggy method not in migrated Swift surface), master-merge×2 (empty net diff) |
-| ⬜ pending    |  2  | #4035 #4047 |
+| ⬜ pending    |  1  | #4035 |
 
 ## Units
 | PR / unit | Members (first-parent range) | Cat | Status | Port commit | Notes |
 |-----------|------------------------------|-----|--------|-------------|-------|
 | #4042 SFUserAccount thread-safety race | bac017113 (squash) | B | ✅ ported | b97f7f579 | `syncQueue.sync{}` wrap of encode(with:) (+ .m ref synced verbatim); build ✓; testUserAccountEncoding ✓ (runs, not live-gated) |
-| #4047 nightly schedules + security | 97ab8b544 (squash) | F | ⬜ pending | — | `.github/workflows/*` only — no libs/ impact; cherry-pick candidate |
+| #4047 nightly schedules + security | 97ab8b544 (squash) | F | ✅ ported | 18d10ada9 | `.github/workflows/*` (6 files) only — all matched upstream pre-image → applied post-image VERBATIM (== upstream byte-for-byte); weekday nightly schedule + Actions security hardening (script-injection env: vars, least-priv secrets, persist-credentials:false); YAML valid; ⚠ escalation (CI-config + security) — operator-approved verbatim, flag in PR |
 | #4046 don't add my domain | c0c3f5a01 (merge, 1 PR-side) | B | ✅ ported | 0abe5ed79 | dropped `loginHost=myDomain` in SFOAuthCoordinator.handleCustomDomainUpdate (+ .m ref verbatim); added `isDiscoveryLogin` guard in SFUserAccountManager.setCurrentUserInternalFull (.m stub, no ref-sync); non-deprecated `isDiscoveryDomain(_:)` overload (no warning); NEW WelcomeDiscoveryLoginHostTests.swift (6 tests, NOT live-gated) + pbxproj (upstream UUIDs, additive); build ✓ (no new warnings), 6/6 ✓; ⚠⚠ escalation (OAuth/login-host + build-system pbxproj) — flag in PR |
 | #4044 remove redundant biometric auto-present | 03f1d1863 (merge, 1) | B | ✅ ported | 98d2111f0 | removed viewDidLoad auto-present block from SFLoginViewController.swift (+ .m ref verbatim); build ✓; ⚠ escalation (biometric/login-UI) — flag in PR |
 | #4041 biometric opt-in auto-present + lock | d73eb2a0e (merge, 5) | B | ✅ ported | d0f3596f1 | NEW `automaticPresentation` (protocol+Internal default true); auto-present in lock() + retrievedIdentityDataImpl opt-in dialog; 7 new tests + mock conformance; build ✓, 7/7 + RetryPolicy ✓ (testNotEnabled = pre-existing P0.2e ordering artifact, not induced); ⚠ escalation (biometric/lock) — flag in PR |
@@ -184,10 +184,10 @@ Marker (done floor): 6ed0ab40  ·  origin/dev HEAD: bac017113  ·  34 behind (12
 1. **Non-escalation B:** ✅ #4038 (skipped), ✅ #4043
 2. **Biometric cluster:** ✅ #4041 **then** ✅ #4044
 3. **Escalation B:** ✅ #4042, ✅ #4040, ✅ #4046, ✅ #4039 (#4039 last — public-contract change)
-4. **F units (REMAINING):** #4047, #4035 (no libs/ impact; #4035 waits on `ui_test_config.json`)
+4. **F units:** ✅ #4047 (CI, verbatim), #4035 REMAINING (waits on `ui_test_config.json`)
 
-**All library-impacting units are now ported (libs/-impacting 8/8).** Only the two Cat-F CI/sample-app
-units (#4047, #4035) remain — no `libs/` code impact.
+**All library-impacting units are ported (libs/-impacting 8/8).** Only Cat-F #4035 (sample-app/UI-test)
+remains — no `libs/` code impact.
 
 **Yes — this deliberately re-orders relative to upstream history. Is that safe? Verified yes:**
 
