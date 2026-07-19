@@ -1,6 +1,6 @@
 # Upstream Sync Backlog Ledger
 
-Marker (done floor): `84672d1eb` (units 1-14 done)  ·  forcedotcom/dev HEAD (target): `b5d37d807`  ·  **35 units remaining**  ·  Re-seeded: 2026-07-19 (Phase 0 of the resume-porting plan).
+Marker (done floor): `f8291e901` (units 1-15 done)  ·  forcedotcom/dev HEAD (target): `b5d37d807`  ·  **34 units remaining**  ·  Re-seeded: 2026-07-19 (Phase 0 of the resume-porting plan).
 
 > **Direction:** we port changes **FROM** `forcedotcom/dev` **INTO** our ObjC→Swift migration branch
 > (`feature/objc-to-swift-test-migration`). Each unit is a *semantic re-implementation* against the current
@@ -17,7 +17,7 @@ Marker (done floor): `84672d1eb` (units 1-14 done)  ·  forcedotcom/dev HEAD (ta
 > non-libs (CI, docs, skills, sample apps). Live progress bar = subject of lead task #9.
 
 ## Migration status
-▓▓▓▓▓▓░░░░░░░░░░░░░░  14/49 units done (29%)   ·   libs-production-impacting: 5/21   ·   Phase 1 porting (units 1-14 ✅)
+▓▓▓▓▓▓░░░░░░░░░░░░░░  15/49 units done (31%)   ·   libs-production-impacting: 5/21   ·   Phase 1 porting (units 1-15 ✅)
 
 | Bucket | Count | Notes |
 |--------|-------|-------|
@@ -45,7 +45,7 @@ Marker (done floor): `84672d1eb` (units 1-14 done)  ·  forcedotcom/dev HEAD (ta
 | 12 | #4063 stabilize flaky testCAOpaque (UI) | 4ba0c943f | F | flaky + ⚠ CI-config | ✅ ported | Stabilize `testCAOpaque_DefaultScopes_WebServerFlow`: added a `network` timeout tier (default 30s, env `UI_TEST_NETWORK_TIMEOUT`) to `UITestTimeouts`, bumped short 1→2 / long 3→10, routed server-round-trip waits (login/allow buttons, `isShowing()`) to `.network`, and made page-object `tap()` assert existence (XCTAssertTrue with file/line) instead of silently ignoring. CI: pr.yaml + ui-test-nightly.yaml timeouts 2→3 / 7→15. All 7 files were byte-identical to upstream pre-image → applied post-image verbatim; verified BYTE-IDENTICAL to post-image. Non-libs UITest support + CI (not in libs schemes; UITest target is live-gated). ⚠ escalation: CI-config (`.github/workflows/*.yaml`) — flag in PR. Re-baseline: N/A to libs schemes (UITest-only). |
 | 13 | #4064 doc: scope | 08d39f43a | F | — | ✅ ported | UPGRADE.md rewrite: replaced the stale v7.0→7.1 Swift-throws migration snippet with a generic "upgrade via forceios templates + release notes" section and refreshed the community link (StackExchange→Trailblazer). File matched pre-image → post-image applied verbatim, byte-identical. Docs-only, no build gate. |
 | 14 | #4065 skip CI on doc-only PRs | 84672d1eb | F | ⚠ CI-config | ✅ ported | pr.yaml: added `paths-ignore` (`**/*.md`, LICENSE, .gitignore, CODEOWNERS) to the `pull_request_target` trigger so doc-only PRs skip CI. File matched pre-image → post-image applied verbatim, byte-identical. ⚠ escalation: CI-config — flag in PR. No build gate. |
-| 15 | #4071 stabilize flaky push-notif registration | f8291e901 | A | flaky | ⬜ pending | 2 test files. Re-baseline after. |
+| 15 | #4071 stabilize flaky push-notif registration | f8291e901 | A | flaky | ✅ ported | `MockRestClient` gained an `onSend: ((RestRequest)->Void)?` hook (fired in `send`); `PushNotificationManagerTests.testRegisterForSalesforceNotifications_Success` + `testOnUserMigratedRefreshToken_WithDeviceToken_TriggersRegistration` rewritten from `asyncAfter(0.2)`/completion-callback timing to an `onSend`-driven expectation on the registration POST (path+method), 5s timeout, deterministic. MockRestClient matched pre-image → post-image applied verbatim (POST-MATCH). PushNotificationManagerTests had pre-existing migration deltas (setUp account upsert, MockRestClient(user:), selector name, MockPreferences init) → applied ONLY the 2 unit-15 hunks on top, preserving those. SDKCore TEST BUILD ✓ 0 warn; class PASS 43/43. Re-baseline: unchanged (none in baseline). |
 | 16 | #4066 stabilize flaky PushNotif foreground registration | 2a879dc7d | A | flaky | ⬜ pending | 1 test file. Re-baseline after. |
 | 17 | #4073 fix closure-param mismatch PushNotifTests | 3965852bf | A | flaky | ⬜ pending | 1 test file (follow-up to #4066). Re-baseline after. |
 | 18 | #4069 stabilize flaky RestClientPublisherTests | fd2a345e6 | A | flaky | ⬜ pending | 1 test file (live-gated class). Re-baseline after. |
