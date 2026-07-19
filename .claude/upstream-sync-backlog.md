@@ -1,6 +1,6 @@
 # Upstream Sync Backlog Ledger
 
-Marker (done floor): `4ed3b2da3` (units 1-5 done)  ·  forcedotcom/dev HEAD (target): `b5d37d807`  ·  **44 units remaining**  ·  Re-seeded: 2026-07-19 (Phase 0 of the resume-porting plan).
+Marker (done floor): `f6db7f4f4` (units 1-6 done)  ·  forcedotcom/dev HEAD (target): `b5d37d807`  ·  **43 units remaining**  ·  Re-seeded: 2026-07-19 (Phase 0 of the resume-porting plan).
 
 > **Direction:** we port changes **FROM** `forcedotcom/dev` **INTO** our ObjC→Swift migration branch
 > (`feature/objc-to-swift-test-migration`). Each unit is a *semantic re-implementation* against the current
@@ -17,7 +17,7 @@ Marker (done floor): `4ed3b2da3` (units 1-5 done)  ·  forcedotcom/dev HEAD (tar
 > non-libs (CI, docs, skills, sample apps). Live progress bar = subject of lead task #9.
 
 ## Migration status
-▓▓░░░░░░░░░░░░░░░░░░  5/49 units done (10%)   ·   libs-production-impacting: 3/21   ·   Phase 1 porting (units 1-5 ✅)
+▓▓▓░░░░░░░░░░░░░░░░░  6/49 units done (12%)   ·   libs-production-impacting: 3/21   ·   Phase 1 porting (units 1-6 ✅)
 
 | Bucket | Count | Notes |
 |--------|-------|-------|
@@ -36,7 +36,7 @@ Marker (done floor): `4ed3b2da3` (units 1-5 done)  ·  forcedotcom/dev HEAD (tar
 | 3 | SECURITY.md compliance | 11f6cb461 | F | — | ✅ ported | 1-line: vuln-report contact `security@salesforce.com` → `https://www.sfdc.co/SubmitVuln`. Our file matched pre-image → applied verbatim. Docs-only, no build gate. |
 | 4 | #4050 fix instant login | 7a20ddd56 | B | ⚠ login | ✅ ported | (1) SalesforceSDKManager: moved the DEBUG `-creds` instant-login block from `initializeSDK()` into `initializeSDK(manager:)` so it runs on the subclass path too (Swift + de-ref .m ref-synced, region byte-identical to upstream). (2) SFSDKTestRequestListener: replaced RunLoop-poll `waitForCompletion` with a `DispatchSemaphore` signalled from all 4 completion callbacks (Swift + .m ref-synced byte-identical). SDKCore TEST BUILD ✓; only PRE-EXISTING warnings (none in edited regions). Test-support/instant-login (live) path → build-green gate; baseline unaffected. ⚠ escalation: login/instant-login — flag in PR. |
 | 5 | #4052 signal semaphore in setReturnStatus: | 4ed3b2da3 | B | — | ✅ ported | Refactor of unit-4 semaphore: signal from the `returnStatus` setter (Swift `didSet`, signals when != waiting) instead of 4 explicit callback signals → covers ALL completion paths. Swift `didSet` + de-ref `.m` ref-synced (setter override + `_returnStatus` in dealloc + removed 4 signals); `.m` byte-identical to upstream post-image except the migration `-Swift.h` import. SDKCore TEST BUILD ✓ (only pre-existing willBeginAuthenticationWith warning). |
-| 6 | #4056 code-review skill | f6db7f4f4 | F | — | ⬜ pending | `.claude/skills/**` — non-product. |
+| 6 | #4056 code-review skill | f6db7f4f4 | F | — | ✅ ported | NEW `mobile-sdk-ios-pr-review` skill: real file `.prizm/presubmits/skills/.../SKILL.md` (736 lines) + `.claude/skills/.../SKILL.md` symlink → it. Both restored verbatim (blob hashes byte-identical to upstream b8399728 / a4fab9de). Non-product, no build gate. |
 | 7 | #4057 rename beacon child consumer keys | 8c61acba7 | B | ⚠ OAuth-const | ⬜ pending | `SFOAuthCredentials.m` + `SFSDKOAuthConstants.h` + 2 test `.m`. Constant rename in OAuth surface → note. |
 | 8 | #4059 diag warning: OAuth code-exchange vs Lightning URL | bdeba0b3e | B | ⚠ OAuth + L10n(pre-appr) | ⬜ pending | `SFOAuthCoordinator.m`, constants, NEW `SFOAuthCoordinatorLightningURLTests.swift`, bridging-header, **Localizable.strings** (PRE-APPROVED). |
 | 9 | #4058 doc: scope | e2c0d69f7 | F | — | ⬜ pending | docs only. |
