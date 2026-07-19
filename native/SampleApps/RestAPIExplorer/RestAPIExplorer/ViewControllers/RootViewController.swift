@@ -114,7 +114,7 @@ class RootViewController: UIViewController {
     
     fileprivate var fullName: String {
         if let currentAccount = UserAccountManager.shared.currentUserAccount {
-            return (currentAccount.idData.firstName ?? "") + " " + (currentAccount.idData.lastName)
+            return (currentAccount.idData?.firstName ?? "") + " " + (currentAccount.idData?.lastName ?? "")
         }
         return ""
     }
@@ -852,8 +852,8 @@ extension RootViewController: ActionTableViewDelegate {
         case .primingRecords:
             request = restApi.request(forPrimingRecords: nil, changedAfterTimestamp: nil, apiVersion: SFRestDefaultAPIVersion)
         case .currentUserInfo:
-            guard let currentAccount = UserAccountManager.shared.currentUserAccount else {return}
-            let idData = currentAccount.idData
+            guard let currentAccount = UserAccountManager.shared.currentUserAccount,
+                  let idData = currentAccount.idData else {return}
             var userInfoString = "Name: " + self.fullName
             userInfoString += "\nID: " + idData.username
             userInfoString += "\nEmail: " + idData.email
@@ -875,13 +875,13 @@ extension RootViewController: ActionTableViewDelegate {
             self.exportTestingCredentials()
             return
         case .overrideStyleLight:
-            SFSDKWindowManager.shared().userInterfaceStyle = .light
+            SFSDKWindowManager.shared.userInterfaceStyle = .light
             return
         case .overrideStyleDark:
-            SFSDKWindowManager.shared().userInterfaceStyle = .dark
+            SFSDKWindowManager.shared.userInterfaceStyle = .dark
             return
         case .overrideStyleUnspecified:
-            SFSDKWindowManager.shared().userInterfaceStyle = .unspecified
+            SFSDKWindowManager.shared.userInterfaceStyle = .unspecified
             return
         }
         

@@ -26,7 +26,12 @@
 //
 
 import Foundation
-import SalesforceSDKCommon
+// Re-export SalesforceSDKCommon so that `import SalesforceSDKCore` transitively exposes its public
+// API (e.g. `SFJsonUtils`, `SalesforceLogger`). Prior SDK releases surfaced these to consumers via
+// the Objective-C umbrella header chain; the ObjC→Swift migration split them into a separate Swift
+// module, so without this re-export a plain `import SalesforceSDKCore` no longer sees them and
+// existing consumers (and the sample apps) fail to compile. `@_exported` restores that visibility.
+@_exported import SalesforceSDKCommon
 
 // MARK: - Type Aliases
 
@@ -121,6 +126,20 @@ open class RestClient: NSObject {
         sfRestApiList.setObject(instance, forKey: key as NSString)
         return instance
     }
+
+    /// Swift-facing alias for ``sharedInstance``. This is the canonical Swift name in prior
+    /// SDK releases (the Objective-C API is `sharedInstance`, exposed to Swift as `shared` via
+    /// `NS_SWIFT_NAME`). The ObjC→Swift migration renamed the primary Swift spelling to
+    /// `sharedInstance`; this alias preserves source compatibility for Swift consumers (and the
+    /// sample apps) that use `RestClient.shared`. `@nonobjc` because `sharedInstance` already owns
+    /// the `shared` Objective-C selector via `@objc(shared)`.
+    @nonobjc
+    public static var shared: RestClient { sharedInstance }
+
+    /// Swift-facing alias for ``sharedGlobalInstance`` (the canonical Swift name in prior SDK
+    /// releases). See ``shared`` for why this is `@nonobjc`.
+    @nonobjc
+    public static var sharedGlobal: RestClient { sharedGlobalInstance }
 
     /// Returns the singleton instance of `RestClient` associated with the specified user.
     @objc(restClientFor:)
@@ -784,5 +803,77 @@ open class RestClient: NSObject {
             restApi.cleanup()
         }
         RestClient.removeSharedInstance(for: user)
+    }
+}
+
+// MARK: - Swift-name compatibility
+
+/// Prior SDK releases surfaced these request builders through the Objective-C Clang importer,
+/// which splits the `For…` preposition into a Swift argument label (e.g. the selector
+/// `requestForResources:` imports to Swift as `request(forResources:)`). The ObjC→Swift migration
+/// re-declared them natively using the flat selector spelling (`requestForResources(_:)`), which
+/// silently dropped the previously-public split-label Swift names. These `@nonobjc` forwarding
+/// aliases restore source compatibility for Swift consumers (and the sample apps) that call the
+/// historical names. They are `@nonobjc` because the primary methods already own the Objective-C
+/// selectors; these exist purely for Swift call sites.
+extension RestClient {
+    @nonobjc public func request(forResources apiVersion: String?) -> RestRequest {
+        requestForResources(apiVersion)
+    }
+
+    @nonobjc public func request(forDescribeGlobal apiVersion: String?) -> RestRequest {
+        requestForDescribeGlobal(apiVersion)
+    }
+
+    @nonobjc public func request(forQuery soql: String, apiVersion: String?) -> RestRequest {
+        requestForQuery(soql, apiVersion: apiVersion)
+    }
+
+    @nonobjc public func request(forSearch sosl: String, apiVersion: String?) -> RestRequest {
+        requestForSearch(sosl, apiVersion: apiVersion)
+    }
+
+    @nonobjc public func request(forSearchScopeAndOrder apiVersion: String?) -> RestRequest {
+        requestForSearchScopeAndOrder(apiVersion)
+    }
+
+    @nonobjc public func request(forSearchResultLayout objectList: String, apiVersion: String?) -> RestRequest {
+        requestForSearchResultLayout(objectList, apiVersion: apiVersion)
+    }
+
+    @nonobjc public func request(forOwnedFilesList userId: String?, page: UInt, apiVersion: String?) -> RestRequest {
+        requestForOwnedFilesList(userId, page: page, apiVersion: apiVersion)
+    }
+
+    @nonobjc public func requestForFiles(inUsersGroups userId: String?, page: UInt, apiVersion: String?) -> RestRequest {
+        requestForFilesInUsersGroups(userId, page: page, apiVersion: apiVersion)
+    }
+
+    @nonobjc public func requestForFilesShared(withUser userId: String?, page: UInt, apiVersion: String?) -> RestRequest {
+        requestForFilesSharedWithUser(userId, page: page, apiVersion: apiVersion)
+    }
+
+    @nonobjc public func request(forFileDetails sfdcId: String, forVersion version: String?, apiVersion: String?) -> RestRequest {
+        requestForFileDetails(sfdcId, forVersion: version, apiVersion: apiVersion)
+    }
+
+    @nonobjc public func request(forBatchFileDetails sfdcIds: [String], apiVersion: String?) -> RestRequest {
+        requestForBatchFileDetails(sfdcIds, apiVersion: apiVersion)
+    }
+
+    @nonobjc public func request(forFileShares sfdcId: String, page: UInt, apiVersion: String?) -> RestRequest {
+        requestForFileShares(sfdcId, page: page, apiVersion: apiVersion)
+    }
+
+    @nonobjc public func request(forAddFileShare fileId: String, entityId: String, shareType: String, apiVersion: String?) -> RestRequest {
+        requestForAddFileShare(fileId, entityId: entityId, shareType: shareType, apiVersion: apiVersion)
+    }
+
+    @nonobjc public func request(forDeleteFileShare shareId: String, apiVersion: String?) -> RestRequest {
+        requestForDeleteFileShare(shareId, apiVersion: apiVersion)
+    }
+
+    @nonobjc public func request(forPrimingRecords relayToken: String?, changedAfterTimestamp timestamp: NSNumber?, apiVersion: String?) -> RestRequest {
+        requestForPrimingRecords(relayToken, changedAfterTimestamp: timestamp, apiVersion: apiVersion)
     }
 }

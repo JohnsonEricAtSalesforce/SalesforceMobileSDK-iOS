@@ -126,6 +126,23 @@ public class BootConfig: NSObject {
         self.init(dict: dict)
     }
 
+    // MARK: - Swift-name compatibility
+    //
+    // Prior SDK releases annotated both Objective-C initializers with `NS_SWIFT_NAME(init(_:))`,
+    // so Swift consumers called them unlabeled — `BootConfig(configDict)` and `BootConfig("/path")`
+    // — with overload resolution by argument type. The ObjC→Swift migration re-declared them with
+    // explicit Swift labels (`init(dict:)` / `init(configFile:)`), dropping the unlabeled spelling.
+    // These `@nonobjc` unlabeled overloads restore source compatibility for Swift consumers (and the
+    // sample apps); they forward to the labeled initializers.
+
+    @nonobjc public convenience init?(_ configDict: [AnyHashable: Any]?) {
+        self.init(dict: configDict as NSDictionary?)
+    }
+
+    @nonobjc public convenience init?(_ configFile: String) {
+        self.init(configFile: configFile)
+    }
+
     public override var description: String {
         return "<\(type(of: self)):\(Unmanaged.passUnretained(self).toOpaque()) data: \(configDict)>"
     }

@@ -131,6 +131,13 @@ public func SFAppTypeGetDescription(_ appType: SFAppType) -> String {
     }
 }
 
+/// Swift-name compatibility. Prior SDK releases exposed this class to Swift as `SalesforceManager`
+/// via `NS_SWIFT_NAME(SalesforceManager)` on the Objective-C `SalesforceSDKManager` interface. The
+/// ObjC→Swift migration kept the native Swift name `SalesforceSDKManager`, dropping the historical
+/// `SalesforceManager` Swift spelling. This typealias restores source compatibility for Swift
+/// consumers (and the sample apps).
+public typealias SalesforceManager = SalesforceSDKManager
+
 /// This class manages the basic infrastructure of the Mobile SDK elements of the app.
 @objc(SalesforceSDKManager)
 @objcMembers

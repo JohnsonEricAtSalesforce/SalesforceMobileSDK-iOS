@@ -99,6 +99,20 @@ import UIKit
         registerBlockForSwitchUserNotifications(completionBlock)
     }
 
+    /// Swift-facing aliases for ``registerBlockForCurrentUserChangeNotifications(_:)`` and its
+    /// scene overload. Prior SDK releases exposed this Objective-C method to Swift with the split
+    /// argument label `registerBlock(forCurrentUserChangeNotifications:...)` (Swift's automatic
+    /// method-name import). The ObjC→Swift migration collapsed it to the single-identifier Swift
+    /// name; these aliases preserve source compatibility for Swift consumers (and the sample apps).
+    /// `@nonobjc` because the primary methods already own the Objective-C selectors.
+    @nonobjc public class func registerBlock(forCurrentUserChangeNotifications completionBlock: @escaping (() -> Void)) {
+        registerBlockForCurrentUserChangeNotifications(completionBlock)
+    }
+
+    @nonobjc public class func registerBlock(forCurrentUserChangeNotifications scene: UIScene?, completion completionBlock: @escaping (() -> Void)) {
+        registerBlockForCurrentUserChangeNotifications(scene, completion: completionBlock)
+    }
+
     @objc public class func registerBlockForLogoutNotifications(_ completionBlock: @escaping (() -> Void)) {
         let scene = SFSDKWindowManager.shared.defaultScene()
         registerBlockForLogoutNotifications(scene, completion: completionBlock)

@@ -41,4 +41,13 @@ import UIKit
         guard let app = sharedApplication() else { return }
         app.open(url, options: options, completionHandler: completion)
     }
+
+    /// Swift-name compatibility. Prior SDK releases exposed the Objective-C `openURL:options:
+    /// completionHandler:` selector to Swift as `open(_:options:completionHandler:)` (the Clang
+    /// importer drops the "URL" from the base name). The migration re-declared it as `openURL(...)`,
+    /// dropping the historical Swift spelling. This `@nonobjc` alias restores it for Swift consumers
+    /// (and the sample apps).
+    @nonobjc public class func open(_ url: URL, options: [UIApplication.OpenExternalURLOptionsKey: Any], completionHandler completion: ((Bool) -> Void)?) {
+        openURL(url, options: options, completionHandler: completion)
+    }
 }

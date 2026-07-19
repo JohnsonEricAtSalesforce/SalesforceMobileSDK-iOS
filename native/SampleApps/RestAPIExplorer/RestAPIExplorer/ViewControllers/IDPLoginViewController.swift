@@ -137,7 +137,7 @@ class IDPLoginViewController: UIViewController {
     }
     
     func showSettingsIcon() {
-        let image = SFSDKResourceUtils.imageNamed("login-window-gear").withRenderingMode(.alwaysTemplate)
+        let image = SFSDKResourceUtils.imageNamed("login-window-gear")?.withRenderingMode(.alwaysTemplate)
         let barButton = UIBarButtonItem(image: image, style: .plain, target: self, action: #selector(showLoginHost))
         barButton.accessibilityLabel = SFSDKResourceUtils.localizedString("LOGIN_CHOOSE_SERVER")
         self.navigationController?.navigationBar.topItem?.rightBarButtonItem = barButton

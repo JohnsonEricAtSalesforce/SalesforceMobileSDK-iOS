@@ -39,6 +39,22 @@ public class SalesforceLoginViewControllerConfig: SFSDKViewControllerConfig {
     /// Specify the visibility of the settings icon.
     @objc public var showSettingsIcon: Bool = true
 
+    // Swift-name compatibility: prior SDK releases surfaced these to Swift as `showsNavigationBar`
+    // and `showsSettingsIcon` via `NS_SWIFT_NAME` on the Objective-C properties. The ObjC→Swift
+    // migration re-declared them under the shorter ObjC identifiers, dropping the historical Swift
+    // spellings. These `@nonobjc` computed aliases restore source compatibility for Swift consumers
+    // (and the sample apps); they forward to the primary stored properties.
+
+    @nonobjc public var showsNavigationBar: Bool {
+        get { showNavbar }
+        set { showNavbar = newValue }
+    }
+
+    @nonobjc public var showsSettingsIcon: Bool {
+        get { showSettingsIcon }
+        set { showSettingsIcon = newValue }
+    }
+
     /// Specify the visibility of the server picker option in the settings menu.
     @objc public var showServerPicker: Bool = true
 

@@ -333,7 +333,7 @@ struct UserCredentialsView: View {
     
     // User Identity
     private var username: String {
-        return UserAccountManager.shared.currentUserAccount?.idData.username ?? ""
+        return UserAccountManager.shared.currentUserAccount?.idData?.username ?? ""
     }
     
     private var usernameId: String {
