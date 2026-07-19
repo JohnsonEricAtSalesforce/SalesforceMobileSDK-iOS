@@ -2688,7 +2688,10 @@ extension UserAccountManager {
                     let isNativeLogin = nativeLoginEnabled && !shouldFallbackToWebAuthentication
                     // Native Login uses a secondary Connected App tied to a specific community URL.
                     // If the next login is web based it should not try to use that URL.
-                    if let domain = user.credentials.domain, !isNativeLogin {
+                    // Also skip if the app uses a Welcome/Discovery domain — persisting the My Domain
+                    // would pollute the server picker and prevent returning to the discovery page on logout.
+                    let isDiscoveryLogin = DomainDiscoveryCoordinator().isDiscoveryDomain(loginHost)
+                    if let domain = user.credentials.domain, !isNativeLogin, !isDiscoveryLogin {
                         loginHost = domain
                     }
                     didChangeValue(forKey: "currentUser")
