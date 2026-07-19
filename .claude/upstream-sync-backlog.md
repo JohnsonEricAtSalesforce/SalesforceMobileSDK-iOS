@@ -1,6 +1,6 @@
 # Upstream Sync Backlog Ledger
 
-Marker (done floor): `bdeba0b3e` (units 1-8 done)  ·  forcedotcom/dev HEAD (target): `b5d37d807`  ·  **41 units remaining**  ·  Re-seeded: 2026-07-19 (Phase 0 of the resume-porting plan).
+Marker (done floor): `e2c0d69f7` (units 1-9 done)  ·  forcedotcom/dev HEAD (target): `b5d37d807`  ·  **40 units remaining**  ·  Re-seeded: 2026-07-19 (Phase 0 of the resume-porting plan).
 
 > **Direction:** we port changes **FROM** `forcedotcom/dev` **INTO** our ObjC→Swift migration branch
 > (`feature/objc-to-swift-test-migration`). Each unit is a *semantic re-implementation* against the current
@@ -17,7 +17,7 @@ Marker (done floor): `bdeba0b3e` (units 1-8 done)  ·  forcedotcom/dev HEAD (tar
 > non-libs (CI, docs, skills, sample apps). Live progress bar = subject of lead task #9.
 
 ## Migration status
-▓▓▓░░░░░░░░░░░░░░░░░  8/49 units done (16%)   ·   libs-production-impacting: 5/21   ·   Phase 1 porting (units 1-8 ✅)
+▓▓▓░░░░░░░░░░░░░░░░░  9/49 units done (18%)   ·   libs-production-impacting: 5/21   ·   Phase 1 porting (units 1-9 ✅)
 
 | Bucket | Count | Notes |
 |--------|-------|-------|
@@ -39,7 +39,7 @@ Marker (done floor): `bdeba0b3e` (units 1-8 done)  ·  forcedotcom/dev HEAD (tar
 | 6 | #4056 code-review skill | f6db7f4f4 | F | — | ✅ ported | NEW `mobile-sdk-ios-pr-review` skill: real file `.prizm/presubmits/skills/.../SKILL.md` (736 lines) + `.claude/skills/.../SKILL.md` symlink → it. Both restored verbatim (blob hashes byte-identical to upstream b8399728 / a4fab9de). Non-product, no build gate. |
 | 7 | #4057 rename beacon child consumer keys | 8c61acba7 | B | ⚠ OAuth-const (internal) | ✅ ported | Server key renamed `beacon_child_consumer_{key,secret}` → `auto_installed_app_org_consumer_{key,secret}`, with legacy fallback in `updateCredentials` (server-264 rollout TODO). Ported into compiled Swift: `SFOAuthCredentials.swift updateCredentialsInternal` (new primary + legacy fallback), `SFSDKOAuth2.swift` constants (primary value rename, token-endpoint path). Both Swift test twins updated to new keys. De-ref `.h` (renamed + 2 legacy consts) + `SFOAuthCredentials.m` (fallback) + 2 test `.m` ref-synced. SDKCore TEST BUILD ✓ 0 warn; 5 affected tests PASS (SFOAuthCredentialsTests ×4 + SFSDKOAuthTokenEndpointResponseTests, not live-gated). ⚠ note: OAuth credential constant values — internal (no public API sig change); flag in PR. |
 | 8 | #4059 diag warning: OAuth code-exchange vs Lightning URL | bdeba0b3e | B | ⚠ OAuth + L10n(pre-appr) | ✅ ported | Ported the diagnostic branch into compiled Swift `SFOAuthCoordinator.handleResponse` (de-ref .m ref-synced byte-faithful): on `unsupported_grant_type` + `.lightning.` domain, log an error and re-wrap the failure NSError with localized `lightningUrlCodeExchangeError` before `notifyDelegateOfFailure`. Added `kSFOAuthErrorTypeUnsupportedGrantType` to the de-ref `SFSDKOAuthConstants.h` (module-visible in Swift). Added `lightningUrlCodeExchangeError` to en.lproj **Localizable.strings** (PRE-APPROVED, PR-flag). NEW `SFOAuthCoordinatorLightningURLTests.swift` — **adapted to the migrated Swift surface** (`@testable`, `SFOAuthInfo`, `OAuthCredentials.credentials(...)`, direct `credentials.domain`/`redirectUri`, internal `handleResponse`) instead of upstream's ObjC-selector spellings; made `handleResponse` `private`→internal for `@testable`. pbxproj: 4 additive entries, upstream UUIDs 1A31073F / 399A1150 (no collision). **Bridging-header ObjC categories DELIBERATELY OMITTED** — they declare categories on now-Swift classes (`SFOAuthCoordinator`, `SFSDKOAuthTokenEndpointResponse`) which won't compile; `@testable` supersedes them (matches existing `SFOAuthCoordinatorTests`/`SFSDKOAuthTokenEndpointResponseTests` idiom). SDKCore TEST BUILD ✓ 0 warn; 5 new tests PASS (not live-gated). ⚠ escalation: OAuth diagnostic + L10n — flag in PR. |
-| 9 | #4058 doc: scope | e2c0d69f7 | F | — | ⬜ pending | docs only. |
+| 9 | #4058 doc: scope | e2c0d69f7 | F | — | ✅ ported | NEW `.claude/doc-scopes.json` (doc-scope manifest for the PR-review tooling): 5 entries (readme, UPGRADE, CLAUDE.md, AuthFlowTester UITests overview, mobile-sdk-ios-pr-review skill). Written verbatim, byte-identical to upstream. Non-product, no build gate. |
 | 10 | #4061 stabilize flaky testBootConfigPickerViewRendered | 985e2adce | A | flaky | ⬜ pending | 1 test file. Re-baseline after. |
 | 11 | #4062 stabilize flaky testMissingLoginHint | 4c70ec9ef | A | flaky | ⬜ pending | 1 test file. Re-baseline after. |
 | 12 | #4063 stabilize flaky testCAOpaque (UI) | 4ba0c943f | F | flaky | ⬜ pending | `.github/workflows` + AuthFlowTester UITests. Re-baseline after. |
