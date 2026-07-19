@@ -57,7 +57,14 @@ NSString* const kTestRequestStatusDidFail = @"didFail";
 - (void)dealloc {
     self.dataResponse = nil;
     self.lastError = nil;
-    self.returnStatus = nil;
+    _returnStatus = nil;
+}
+
+- (void)setReturnStatus:(NSString *)returnStatus {
+    _returnStatus = returnStatus;
+    if (![returnStatus isEqualToString:kTestRequestStatusWaiting]) {
+        dispatch_semaphore_signal(_completionSemaphore);
+    }
 }
 
 - (NSString *)waitForCompletion {
@@ -80,7 +87,6 @@ NSString* const kTestRequestStatusDidFail = @"didFail";
 {
     [SFSDKCoreLogger i:[self class] format:@"%@", NSStringFromSelector(_cmd)];
     self.returnStatus = kTestRequestStatusDidLoad;
-    dispatch_semaphore_signal(_completionSemaphore);
 }
 
 - (void)identityCoordinator:(SFIdentityCoordinator *)coordinator didFailWithError:(NSError *)error
@@ -88,7 +94,6 @@ NSString* const kTestRequestStatusDidFail = @"didFail";
     [SFSDKCoreLogger i:[self class] format:@"%@ with error: %@", NSStringFromSelector(_cmd), error];
     self.lastError = error;
     self.returnStatus = kTestRequestStatusDidFail;
-    dispatch_semaphore_signal(_completionSemaphore);
 }
 
 #pragma mark - SFOAuthCoordinatorDelegate
@@ -130,7 +135,6 @@ NSString* const kTestRequestStatusDidFail = @"didFail";
 {
     [SFSDKCoreLogger i:[self class] format:@"%@ with authInfo: %@", NSStringFromSelector(_cmd), info];
     self.returnStatus = kTestRequestStatusDidLoad;
-    dispatch_semaphore_signal(_completionSemaphore);
 }
 
 - (void)oauthCoordinator:(SFOAuthCoordinator *)coordinator didFailWithError:(NSError *)error authInfo:(SFOAuthInfo *)info
@@ -138,7 +142,6 @@ NSString* const kTestRequestStatusDidFail = @"didFail";
     [SFSDKCoreLogger i:[self class] format:@"%@ with authInfo: %@, error: %@", NSStringFromSelector(_cmd), info, error];
     self.lastError = error;
     self.returnStatus = kTestRequestStatusDidFail;
-    dispatch_semaphore_signal(_completionSemaphore);
 }
 
 @end

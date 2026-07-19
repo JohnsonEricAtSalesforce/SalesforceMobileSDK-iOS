@@ -1,6 +1,6 @@
 # Upstream Sync Backlog Ledger
 
-Marker (done floor): `7a20ddd56` (units 1-4 done)  ·  forcedotcom/dev HEAD (target): `b5d37d807`  ·  **45 units remaining**  ·  Re-seeded: 2026-07-19 (Phase 0 of the resume-porting plan).
+Marker (done floor): `4ed3b2da3` (units 1-5 done)  ·  forcedotcom/dev HEAD (target): `b5d37d807`  ·  **44 units remaining**  ·  Re-seeded: 2026-07-19 (Phase 0 of the resume-porting plan).
 
 > **Direction:** we port changes **FROM** `forcedotcom/dev` **INTO** our ObjC→Swift migration branch
 > (`feature/objc-to-swift-test-migration`). Each unit is a *semantic re-implementation* against the current
@@ -17,7 +17,7 @@ Marker (done floor): `7a20ddd56` (units 1-4 done)  ·  forcedotcom/dev HEAD (tar
 > non-libs (CI, docs, skills, sample apps). Live progress bar = subject of lead task #9.
 
 ## Migration status
-▓▓░░░░░░░░░░░░░░░░░░  4/49 units done (8%)   ·   libs-production-impacting: 3/21   ·   Phase 1 porting (units 1-4 ✅)
+▓▓░░░░░░░░░░░░░░░░░░  5/49 units done (10%)   ·   libs-production-impacting: 3/21   ·   Phase 1 porting (units 1-5 ✅)
 
 | Bucket | Count | Notes |
 |--------|-------|-------|
@@ -35,7 +35,7 @@ Marker (done floor): `7a20ddd56` (units 1-4 done)  ·  forcedotcom/dev HEAD (tar
 | 2 | #4045 screen-lock customization | f604c8540 | A+C | ⚠ lock-UI + NEW PUBLIC API | ✅ ported | Added `ScreenLockUIConfiguration` (NEW file, verbatim, `@objc(SFSDKScreenLockUIConfiguration)`: `icon`/`iconSize`) + `configuration` on `ScreenLockManager` protocol + `ScreenLockManagerInternal` + threaded into `ScreenLockUIView` (aspect-fit, resolvedIcon fallback). Protocol/Internal/View hunks re-applied over migration API-name deltas (`SFSDKWindowManager.shared`, optional `idData`, `salesforceBlueColor`, `OAuthCredentials.credentials(...)`, `SFIdentityData`). pbxproj: 4 additive entries, upstream UUIDs 694163EB/EC (dropped upstream's unrelated LoginForAdminTests reordering — belongs to #4093). SDKCore TEST BUILD ✓ 0 warn; 2 new tests PASS (testDefaultConfiguration, testSettingScreenLockManagerConfiguration, not live-gated). ⚠ escalation: lock-UI + NEW public API (`ScreenLockManager.configuration`, `SFSDKScreenLockUIConfiguration`) — flag in PR. |
 | 3 | SECURITY.md compliance | 11f6cb461 | F | — | ✅ ported | 1-line: vuln-report contact `security@salesforce.com` → `https://www.sfdc.co/SubmitVuln`. Our file matched pre-image → applied verbatim. Docs-only, no build gate. |
 | 4 | #4050 fix instant login | 7a20ddd56 | B | ⚠ login | ✅ ported | (1) SalesforceSDKManager: moved the DEBUG `-creds` instant-login block from `initializeSDK()` into `initializeSDK(manager:)` so it runs on the subclass path too (Swift + de-ref .m ref-synced, region byte-identical to upstream). (2) SFSDKTestRequestListener: replaced RunLoop-poll `waitForCompletion` with a `DispatchSemaphore` signalled from all 4 completion callbacks (Swift + .m ref-synced byte-identical). SDKCore TEST BUILD ✓; only PRE-EXISTING warnings (none in edited regions). Test-support/instant-login (live) path → build-green gate; baseline unaffected. ⚠ escalation: login/instant-login — flag in PR. |
-| 5 | #4052 signal semaphore in setReturnStatus: | 4ed3b2da3 | B | — | ⬜ pending | `SFSDKTestRequestListener` (test-support); all completion paths signal. |
+| 5 | #4052 signal semaphore in setReturnStatus: | 4ed3b2da3 | B | — | ✅ ported | Refactor of unit-4 semaphore: signal from the `returnStatus` setter (Swift `didSet`, signals when != waiting) instead of 4 explicit callback signals → covers ALL completion paths. Swift `didSet` + de-ref `.m` ref-synced (setter override + `_returnStatus` in dealloc + removed 4 signals); `.m` byte-identical to upstream post-image except the migration `-Swift.h` import. SDKCore TEST BUILD ✓ (only pre-existing willBeginAuthenticationWith warning). |
 | 6 | #4056 code-review skill | f6db7f4f4 | F | — | ⬜ pending | `.claude/skills/**` — non-product. |
 | 7 | #4057 rename beacon child consumer keys | 8c61acba7 | B | ⚠ OAuth-const | ⬜ pending | `SFOAuthCredentials.m` + `SFSDKOAuthConstants.h` + 2 test `.m`. Constant rename in OAuth surface → note. |
 | 8 | #4059 diag warning: OAuth code-exchange vs Lightning URL | bdeba0b3e | B | ⚠ OAuth + L10n(pre-appr) | ⬜ pending | `SFOAuthCoordinator.m`, constants, NEW `SFOAuthCoordinatorLightningURLTests.swift`, bridging-header, **Localizable.strings** (PRE-APPROVED). |

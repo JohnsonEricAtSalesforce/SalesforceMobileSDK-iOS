@@ -43,7 +43,13 @@ public class SFSDKTestRequestListener: NSObject, SFIdentityCoordinatorDelegate, 
 
     @objc public var dataResponse: Any?
     @objc public var lastError: NSError?
-    @objc public var returnStatus: String?
+    @objc public var returnStatus: String? {
+        didSet {
+            if returnStatus != kTestRequestStatusWaiting {
+                completionSemaphore.signal()
+            }
+        }
+    }
     @objc public var maxWaitTime: TimeInterval = 30.0
 
     private let completionSemaphore = DispatchSemaphore(value: 0)
@@ -70,14 +76,12 @@ public class SFSDKTestRequestListener: NSObject, SFIdentityCoordinatorDelegate, 
     public func identityCoordinatorRetrievedData(_ coordinator: SFIdentityCoordinator) {
         SFSDKCoreLogger.i(SFSDKTestRequestListener.self, message: #function)
         returnStatus = kTestRequestStatusDidLoad
-        completionSemaphore.signal()
     }
 
     public func identityCoordinator(_ coordinator: SFIdentityCoordinator, didFailWithError error: Error) {
         SFSDKCoreLogger.i(SFSDKTestRequestListener.self, message: "\(#function) with error: \(error)")
         lastError = error as NSError
         returnStatus = kTestRequestStatusDidFail
-        completionSemaphore.signal()
     }
 
     // MARK: - SFOAuthCoordinatorDelegate
@@ -113,13 +117,11 @@ public class SFSDKTestRequestListener: NSObject, SFIdentityCoordinatorDelegate, 
     public func oauthCoordinatorDidAuthenticate(_ coordinator: SFOAuthCoordinator, authInfo info: SFOAuthInfo) {
         SFSDKCoreLogger.i(SFSDKTestRequestListener.self, message: "\(#function) with authInfo: \(info)")
         returnStatus = kTestRequestStatusDidLoad
-        completionSemaphore.signal()
     }
 
     public func oauthCoordinator(_ coordinator: SFOAuthCoordinator, didFailWithError error: Error, authInfo info: SFOAuthInfo?) {
         SFSDKCoreLogger.i(SFSDKTestRequestListener.self, message: "\(#function) with authInfo: \(String(describing: info)), error: \(error)")
         lastError = error as NSError
         returnStatus = kTestRequestStatusDidFail
-        completionSemaphore.signal()
     }
 }
