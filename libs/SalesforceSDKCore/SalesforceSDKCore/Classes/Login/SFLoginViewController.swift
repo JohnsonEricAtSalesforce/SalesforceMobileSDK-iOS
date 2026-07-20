@@ -275,16 +275,59 @@ public class SalesforceLoginViewController: SFSDKViewController, LoginHostDelega
             })
         }
 
-        menuActions.append(UIAction(title: SFSDKResourceUtils.localizedString("LOGIN_FOR_ADMIN"), image: nil, identifier: nil) { [weak self] _ in
-            guard let self = self else { return }
-            self.delegate?.loginViewControllerDidSelectLoginForAdmin?(self)
-        })
+        // Login for Admin - forces browser-based (advanced) authentication to support phishing-resistant MFA.
+        // Wrapped in an uncached UIDeferredMenuElement so the show/hide predicate is re-evaluated each
+        // time the menu opens. The entry is hidden during phase 1 of Welcome Discovery (i.e. before the
+        // user has selected an account on welcome.salesforce.com/discovery), where we have no resolved
+        // My Domain to launch the browser session against.
+        let loginForAdminElement = UIDeferredMenuElement.uncached { [weak self] completion in
+            guard let self = self,
+                  Self.shouldShowLoginForAdmin(for: self.currentAuthSessionForMenu()) else {
+                completion([])
+                return
+            }
+            let action = UIAction(title: SFSDKResourceUtils.localizedString("LOGIN_FOR_ADMIN"), image: nil, identifier: nil) { [weak self] _ in
+                guard let self = self else { return }
+                self.delegate?.loginViewControllerDidSelectLoginForAdmin?(self)
+            }
+            completion([action])
+        }
 
-        let menu = UIMenu(title: "", children: menuActions)
+        var menuElements: [UIMenuElement] = menuActions
+        menuElements.append(loginForAdminElement)
+
+        let menu = UIMenu(title: "", children: menuElements)
         let settingsButton = UIBarButtonItem(image: image, menu: menu)
         settingsButton.accessibilityLabel = SFSDKResourceUtils.localizedString("LOGIN_SETTINGS_BUTTON")
         settingsButton.accessibilityIdentifier = "settings"
         return settingsButton
+    }
+
+    private func currentAuthSessionForMenu() -> SFSDKAuthSession? {
+        guard let sceneId = view.window?.windowScene?.session.persistentIdentifier, !sceneId.isEmpty else {
+            return nil
+        }
+        return UserAccountManager.shared.authSessions[sceneId] as? SFSDKAuthSession
+    }
+
+    /// Predicate that controls visibility of the "Login for Admin" entry in the
+    /// settings menu. Returns `false` during phase 1 of Welcome Discovery (a discovery
+    /// host whose coordinator has not yet observed a custom domain update).
+    @objc(shouldShowLoginForAdminForSession:)
+    public class func shouldShowLoginForAdmin(for session: SFSDKAuthSession?) -> Bool {
+        // Default to showing the entry when we have no session/coordinator info.
+        // This matches the previous (always-shown) behavior on non-discovery flows
+        // and during early SDK lifecycle before the auth session is wired up.
+        guard let session = session else { return true }
+        let coordinator = session.oauthCoordinator
+
+        let loginHost = session.oauthRequest.loginHost
+        let isDiscoveryHost = DomainDiscoveryCoordinator.isDiscoveryDomain(loginHost)
+        // Hide only when we are mid-discovery (no My Domain selected yet).
+        if isDiscoveryHost && !coordinator.domainUpdated {
+            return false
+        }
+        return true
     }
 
     @objc public func createTitleItem() -> UIView {

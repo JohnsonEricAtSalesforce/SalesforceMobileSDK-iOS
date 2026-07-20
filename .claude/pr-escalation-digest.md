@@ -90,9 +90,23 @@ Pre-approved gates (still PR-flag, do NOT re-ask): SQLCipher #4096; Localizable.
   nothing compiled. Our `pr.yaml` matched the upstream pre-image exactly, so the upstream post-image was
   applied verbatim. Escalation = CI-config (pre-approved in the Phase-0 batch; still PR-flagged here).
 
-## Pending escalation units (upcoming — port in order)
+- **Unit 32 · #4078 · `29439f0bb` — login-UI + OAuth/credential + PUBLIC API deprecation.** Fixes the
+  Login-for-Admin (LFA) × Welcome-Discovery incompatibility. **Behavior:** during phase 1 of Welcome
+  Discovery (discovery host, no My Domain resolved yet) the "Login for Admin" settings entry is now hidden
+  and the action is a no-op; in phase 2 (My Domain resolved) LFA records the resolved My Domain + login hint
+  as **in-memory, LFA-scoped overrides** on the auth request and routes the browser session to that My Domain,
+  while leaving the request's `loginHost` untouched (so Reload / Clear Cache / post-cancel restart still use
+  the originally configured host). Overrides are cleared on browser-auth cancel. **New public API:** `+[SFLoginViewController
+  shouldShowLoginForAdminForSession:]` (menu-visibility predicate) and a new stateless class method
+  `DomainDiscoveryCoordinator.isDiscoveryDomain(_:)`. **Deprecation:** the two `DomainDiscoveryCoordinator`
+  *instance* `isDiscoveryDomain` overloads are now `@available(*, deprecated)` (MSDK 14.0 → remove 15.0),
+  delegating to the new class method. New `SFSDKAuthRequest` properties `loginAsAdminMyDomain` /
+  `loginAsAdminLoginHint`. Touches SFLoginViewController, DomainDiscoveryCoordinator, SFOAuthCoordinator,
+  SFSDKAuthRequest, SFUserAccountManager. **Reviewer note:** ObjC bridging-header category from upstream was
+  intentionally omitted (target class is now Swift; the helper is reachable via `@testable`). 44/44 new+touched
+  tests pass; no live-org dependency.
 
-- **32 · #4078 — login/OAuth:** Login-for-Admin + Welcome-Discovery incompatibility fix (SFLoginViewController, DomainDiscoveryCoordinator, SFOAuthCoordinator, SFUserAccountManager).
+## Pending escalation units (upcoming — port in order)
 - **35 · #4086 — feature-flags + podspec + multi-lib:** per-user feature flags across Core/MobileSync/SmartStore + SalesforceSDKCore.podspec.
 - **36 · #4091 — thread-safety:** notification-types thread safety on SFUserAccount.
 - **37 · #4092 — feature-flag/OAuth:** iOS RTR feature flag (SFOAuthSessionRefresher).

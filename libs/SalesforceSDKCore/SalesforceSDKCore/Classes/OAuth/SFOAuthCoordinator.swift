@@ -260,7 +260,7 @@ public class SFOAuthCoordinator: NSObject, WKNavigationDelegate, WKUIDelegate {
 
     @objc public func authenticate(withCredentials credentials: OAuthCredentials) {
         self.credentials = credentials
-        if domainDiscoveryCoordinator.isDiscoveryDomain(credentials.domain ?? "") {
+        if DomainDiscoveryCoordinator.isDiscoveryDomain(credentials.domain) {
             SFSDKAppFeatureMarkers.registerAppFeature(kSFAppFeatureWelcomeDiscovery)
             runMyDomainDiscoveryAndAuthenticate()
             return

@@ -648,6 +648,9 @@ open class UserAccountManager: NSObject {
                let existingSession = self.authSessions[sceneId] as? SFSDKAuthSession {
                 existingSession.isAuthenticating = false
             }
+            // LFA passes its hint via the request's loginAsAdminLoginHint override
+            // (consulted in authenticateWithRequest:); other restart paths intentionally
+            // pass nil so a hint set on a prior session does not bleed across server changes.
             _ = self.authenticateWithRequest(
                 session.oauthRequest,
                 loginHint: nil,
@@ -972,9 +975,14 @@ extension UserAccountManager: SFOAuthCoordinatorDelegate {
         guard let authSession = coordinator.authSession else { return }
 
         // When "Login for Admin" initiated the browser auth, clear the flag and
-        // restart the WebView login flow instead of showing the server picker.
+        // its My Domain / login hint overrides, then restart the WebView login
+        // flow against the originally configured host instead of showing the
+        // server picker. For Welcome Discovery, this means the user lands back
+        // on the discovery page and re-picks an account.
         if authSession.oauthRequest.loginAsAdmin {
             authSession.oauthRequest.loginAsAdmin = false
+            authSession.oauthRequest.loginAsAdminMyDomain = nil
+            authSession.oauthRequest.loginAsAdminLoginHint = nil
             restartAuthentication(authSession)
             return
         }
@@ -1091,10 +1099,31 @@ extension UserAccountManager: SalesforceLoginViewControllerDelegate {
     }
 
     public func loginViewControllerDidSelectLoginForAdmin(_ loginViewController: SalesforceLoginViewController) {
-        if let sceneId = loginViewController.view.window?.windowScene?.session.persistentIdentifier,
-           let session = authSessions[sceneId] as? SFSDKAuthSession {
-            session.oauthRequest.loginAsAdmin = true
+        guard let sceneId = loginViewController.view.window?.windowScene?.session.persistentIdentifier,
+              let session = authSessions[sceneId] as? SFSDKAuthSession else {
+            restartAuthenticationForViewController(loginViewController)
+            return
         }
+        let coordinator = session.oauthCoordinator
+
+        // Phase-1 Welcome Discovery: a discovery host is loaded but the user has not
+        // yet picked an account, so credentials.domain is still the discovery host
+        // and we have no My Domain to advance to. Switching to ASWebAuthenticationSession
+        // here would launch the browser against welcome.salesforce.com — wrong UX.
+        // No-op until phase 2 lands.
+        if DomainDiscoveryCoordinator.isDiscoveryDomain(session.oauthRequest.loginHost) && !coordinator.domainUpdated {
+            SFSDKCoreLogger.w(type(of: self), message: "loginViewControllerDidSelectLoginForAdmin: Login for Admin is not available before a My Domain has been selected on the Welcome Discovery page; ignoring.")
+            return
+        }
+
+        // Phase-2 Welcome Discovery (or a non-discovery host): record the resolved
+        // My Domain and login hint as LFA-scoped overrides on the request. The
+        // request's loginHost is left untouched so that Reload / Clear Cache /
+        // post-cancel restart continue to use the originally configured host.
+        // These overrides are in-memory only and are cleared on LFA cancel.
+        session.oauthRequest.loginAsAdminMyDomain = (coordinator.credentials?.domain?.count ?? 0) > 0 ? coordinator.credentials?.domain : nil
+        session.oauthRequest.loginAsAdminLoginHint = (coordinator.loginHint?.count ?? 0) > 0 ? coordinator.loginHint : nil
+        session.oauthRequest.loginAsAdmin = true
         restartAuthenticationForViewController(loginViewController)
     }
 
@@ -2005,7 +2034,19 @@ extension UserAccountManager {
                 codeVerifier: codeVerifier
             )
         }
-        authSession.oauthCoordinator.loginHint = loginHint
+        // Login for Admin: when the request carries a My Domain override (set by
+        // loginViewControllerDidSelectLoginForAdmin: in phase-2 Welcome Discovery),
+        // route the browser session to the resolved My Domain and forward the
+        // captured login hint, while leaving request.loginHost — and therefore
+        // every other restart path — pointed at the originally configured host.
+        let useLfaOverride = request.loginAsAdmin && (request.loginAsAdminMyDomain?.count ?? 0) > 0
+        if useLfaOverride {
+            authSession.credentials.domain = request.loginAsAdminMyDomain
+            authSession.oauthCoordinator.loginHint = request.loginAsAdminLoginHint
+        } else {
+            authSession.oauthCoordinator.loginHint = loginHint
+        }
+        let appConfigLoginHost = useLfaOverride ? request.loginAsAdminMyDomain : request.loginHost
         let sceneId = authSession.sceneId
         authSessions[sceneId] = authSession
 
@@ -2015,7 +2056,7 @@ extension UserAccountManager {
 
         Task { @MainActor in
             await SFSDKWebViewStateManager.removeSessionForcefully()
-            SalesforceSDKManager.shared.bootConfig(forLoginHost: request.loginHost) { appConfig in
+            SalesforceSDKManager.shared.bootConfig(forLoginHost: appConfigLoginHost) { appConfig in
                 guard let appConfig = appConfig else { return }
                 authSession.credentials.setValue(appConfig.remoteAccessConsumerKey, forKey: "clientId")
                 authSession.credentials.setValue(appConfig.oauthRedirectURI, forKey: "redirectUri")
@@ -2704,7 +2745,7 @@ extension UserAccountManager {
                     // If the next login is web based it should not try to use that URL.
                     // Also skip if the app uses a Welcome/Discovery domain — persisting the My Domain
                     // would pollute the server picker and prevent returning to the discovery page on logout.
-                    let isDiscoveryLogin = DomainDiscoveryCoordinator().isDiscoveryDomain(loginHost)
+                    let isDiscoveryLogin = DomainDiscoveryCoordinator.isDiscoveryDomain(loginHost)
                     if let domain = user.credentials.domain, !isNativeLogin, !isDiscoveryLogin {
                         loginHost = domain
                     }
