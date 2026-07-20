@@ -84,6 +84,12 @@ Pre-approved gates (still PR-flag, do NOT re-ask): SQLCipher #4096; Localizable.
   only — not shipped in any SDK framework.** SalesforceAnalytics TEST BUILD SUCCEEDED. Test-app cluster (units 26–29)
   complete.
 
+- **Unit 30 · #4079 · `7d9a91bfa` — build-system / CI permissions.** Added `statuses: write` to the two
+  Danger jobs' `permissions:` blocks in `.github/workflows/pr.yaml`, so Danger can post the required PR
+  commit statuses. **Reviewer note:** CI-workflow permission grant only — no library or app code touched,
+  nothing compiled. Our `pr.yaml` matched the upstream pre-image exactly, so the upstream post-image was
+  applied verbatim. Escalation = CI-config (pre-approved in the Phase-0 batch; still PR-flagged here).
+
 ## Pending escalation units (upcoming — port in order)
 
 - **32 · #4078 — login/OAuth:** Login-for-Admin + Welcome-Discovery incompatibility fix (SFLoginViewController, DomainDiscoveryCoordinator, SFOAuthCoordinator, SFUserAccountManager).
