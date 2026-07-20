@@ -21,7 +21,7 @@ Pod::Spec.new do |s|
 
       smartstore.dependency 'SalesforceSDKCore', "~>#{s.version}"
       smartstore.dependency 'FMDB/SQLCipher', '~> 2.7.12'
-      smartstore.dependency 'SQLCipher', '~> 4.16.0'
+      smartstore.dependency 'SQLCipher', '~> 4.17.0'
       smartstore.source_files = 'libs/SmartStore/SmartStore/Classes/**/*.swift', 'libs/SmartStore/SmartStore/SmartStore.h'
       smartstore.public_header_files = 'libs/SmartStore/SmartStore/SmartStore.h'
       smartstore.exclude_files = 'libs/SmartStore/SmartStore/Classes/**/*.{h,m}'

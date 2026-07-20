@@ -240,8 +240,23 @@ Pre-approved gates (still PR-flag, do NOT re-ask): SQLCipher #4096; Localizable.
   MobileSync build green (0 new warnings in diff); 19 SDKCore tests pass (10 validation + 9 recovery). Escalation =
   login-UI + login-host failure-recovery behavior + L10n — flag in PR.
 
+### Unit 42 · #4096 — SQLCipher 4.16.0 → 4.17.0 (dependency bump, gate PRE-APPROVED)
+**Escalation class: dependency version bump (SQLCipher / SmartStore encryption stack).** Gate was PRE-APPROVED
+(Feedback #4) — no re-ask — but per policy every SQLCipher/dependency change is flagged for PR review.
+**What changed:** SQLCipher `4.16.0 → 4.17.0` (bundled SQLite `3.53.1 → 3.53.3` at runtime), a mechanical version bump
+across the four dependency-declaration sites — `SmartStore.podspec` (CocoaPods), `mobilesdk_pods.rb` (consuming-app
+Podfile helper), and the two SPM `XCRemoteSwiftPackageReference` pins (`SmartStore.xcodeproj`, `MobileSyncExplorer.xcodeproj`,
+`kind = exactVersion`) — plus the version-assertion tests and the maintenance skill doc.
+**Reviewer notes:** (1) No API changes in the SQLCipher 4.17 bump for our usage — SmartStore + MobileSync (top of the
+dependency chain) both build clean and the SQLCipher-linked encryption path is unchanged. (2) The version assertions live
+in the **compiled Swift twin** `SFSmartStoreTests.swift` (`testSqliteVersion` → `3.53.3`, `testSqlCipherVersion` →
+`4.17.0 community`); the de-referenced ObjC `SFSmartStoreTests.m` (0-in-Sources) was ref-synced verbatim for clean future
+merges. (3) `SKILL.md` update is byte-identical to upstream (`SQLLite`→`SQLite` typo + a template-placeholder assertion).
+(4) The version swap required a one-time full DerivedData Build-dir wipe (stale precompiled `sqlite3.h` module) — a local
+build-cache artifact, not a code issue. SmartStore/MobileSync TEST BUILD green; 3 version tests pass (runtime-confirmed
+`4.17.0 community` / SQLite `3.53.3`). **Escalation = SQLCipher dependency bump — flag in PR (pre-approved).**
+
 ## Pending escalation units (upcoming — port in order)
-- **42 · #4096 — dependency bump (gate PRE-APPROVED):** SQLCipher 4.16 → 4.17 (SmartStore.podspec, mobilesdk_pods.rb).
 - **43 · #4098 — OAuth/scene:** nil-sceneId crash fix on advanced-auth browser callback.
 - **44 · #4087 — OAuth/token (LIVE-AUTH UNBLOCKER):** token-refresh coordinator; 18 files. Unblocks Phase 2.
 - **45 · #4102 — OAuth/token:** improve token-refresh error handling.

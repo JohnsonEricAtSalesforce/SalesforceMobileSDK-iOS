@@ -93,13 +93,13 @@ class SFSmartStoreTests: SFSmartStoreTestCase {
 
     func testSqliteVersion() {
         let version = String(cString: sqlite3_libversion())
-        XCTAssertEqual(version, "3.53.1")
+        XCTAssertEqual(version, "3.53.3")
     }
 
     func testSqlCipherVersion() {
         guard let store = store else { return XCTFail("Store should not be nil") }
         let version = store.versionOfSQLCipher()
-        XCTAssertEqual(version, "4.16.0 community")
+        XCTAssertEqual(version, "4.17.0 community")
     }
 
     func testCipherProviderVersion() {
