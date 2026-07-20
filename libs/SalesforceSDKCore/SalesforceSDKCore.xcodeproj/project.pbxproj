@@ -438,6 +438,7 @@
 		F6D7CD4D23972D853941817E /* SFCryptoStreamTestUtils.swift in Sources */ = {isa = PBXBuildFile; fileRef = EDC1C65044525FFDB7DC39C5 /* SFCryptoStreamTestUtils.swift */; };
 		F9A99DC04C207BF6D8CA7E86 /* SFSDKAppConfig.swift in Sources */ = {isa = PBXBuildFile; fileRef = 57635D1A31C6384AF7CC4307 /* SFSDKAppConfig.swift */; };
 		F9DBB091D4BE15575F4F6009 /* SFUserAccountManagerNotificationsTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 089CB8D1701BD87FFBDD922A /* SFUserAccountManagerNotificationsTests.swift */; };
+		42996EA8CCEB33EF9E258033 /* SFUserAccountThreadSafetyTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0DB0265069ECCAE8F59F5CD0 /* SFUserAccountThreadSafetyTests.swift */; };
 		FA88D064AA9CDC6E3EEC2E1C /* SFSDKAdvancedAuthURLHandler.swift in Sources */ = {isa = PBXBuildFile; fileRef = 14EA0EE7401600DCD01327F7 /* SFSDKAdvancedAuthURLHandler.swift */; };
 		FC3048785A5A2ACE29406388 /* SFSDKLoginHostListViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1D2B1887E7C66BF12D180549 /* SFSDKLoginHostListViewController.swift */; };
 		FD595F22A6EF19E447317576 /* SFPreferences.swift in Sources */ = {isa = PBXBuildFile; fileRef = D3D5914E221896DE063FBEDF /* SFPreferences.swift */; };
@@ -547,6 +548,7 @@
 		06E9D0D0F8D77CE4771F2E10 /* NSURL+SFAdditions.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = "NSURL+SFAdditions.swift"; sourceTree = "<group>"; };
 		07923D9EC77BA4BD680DF149 /* SFSDKUserSelectionTableViewController.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = SFSDKUserSelectionTableViewController.swift; sourceTree = "<group>"; };
 		089CB8D1701BD87FFBDD922A /* SFUserAccountManagerNotificationsTests.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = SFUserAccountManagerNotificationsTests.swift; sourceTree = "<group>"; };
+		0DB0265069ECCAE8F59F5CD0 /* SFUserAccountThreadSafetyTests.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = SFUserAccountThreadSafetyTests.swift; sourceTree = "<group>"; };
 		0A218415C740CEF1F8C1B2C3 /* SFSDKAuthRootController.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = SFSDKAuthRootController.swift; sourceTree = "<group>"; };
 		0A9B184F19BEA3C9358EE938 /* SFSDKAuthConfigUtilTests.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = SFSDKAuthConfigUtilTests.swift; sourceTree = "<group>"; };
 		0C3C602C39797E6698D205FB /* SFDefaultUserManagementViewController.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = SFDefaultUserManagementViewController.swift; sourceTree = "<group>"; };
@@ -1319,6 +1321,7 @@
 				1FB6F1FC6495FCB6A11F7CBB /* SFSDKWindowManagerTests.swift */,
 				44598499B4D8E24EF2596B8C /* SFTestSDKManagerFlow.swift */,
 				089CB8D1701BD87FFBDD922A /* SFUserAccountManagerNotificationsTests.swift */,
+				0DB0265069ECCAE8F59F5CD0 /* SFUserAccountThreadSafetyTests.swift */,
 				867B011AF39B07F104ABE596 /* SFUserAccountManagerPersisterTests.swift */,
 				7C71AC6E6C172778D270B12B /* SFUserAccountManagerTests.swift */,
 				63DBA2A6E98E18DDC693B500 /* SFUserAccountPersisterEphemeral.swift */,
@@ -2565,6 +2568,7 @@
 				673D4DDFC63BB4A735535198 /* SFSDKWindowManagerTests.swift in Sources */,
 				E3A4A5E9486B40552683DDC0 /* SFTestSDKManagerFlow.swift in Sources */,
 				F9DBB091D4BE15575F4F6009 /* SFUserAccountManagerNotificationsTests.swift in Sources */,
+				42996EA8CCEB33EF9E258033 /* SFUserAccountThreadSafetyTests.swift in Sources */,
 				AA561AF8BDC740A2041975F2 /* SFUserAccountManagerPersisterTests.swift in Sources */,
 				C50F2906B615B50382E2D802 /* SFUserAccountPersisterEphemeral.swift in Sources */,
 				0263D721CE2D1522B10CEEE9 /* SFUserAccountPhotoTests.swift in Sources */,

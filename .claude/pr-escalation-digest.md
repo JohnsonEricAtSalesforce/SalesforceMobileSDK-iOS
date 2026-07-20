@@ -143,8 +143,23 @@ Pre-approved gates (still PR-flag, do NOT re-ask): SQLCipher #4096; Localizable.
   manager). All 3 lib schemes build green; 17 AppFeatureMarkers + 4 manager/UA tests pass (fixture-based). Escalation
   = feature-flags + OAuth/login + new public API — flag in PR.
 
+- **Unit 36 · #4091 · `9de77c7e2` — thread-safety.** Guards the last unsynchronized `SFUserAccount`
+  accessor. `notificationTypes` now reads under a serialized queue and writes via a barrier, taking a
+  defensive snapshot copy of the assigned array — closing a read/write data race (concurrent readers could
+  observe a torn array; a set racing an in-flight encode could crash). Ported into the compiled twin
+  **SFUserAccount.swift** using the file's existing `syncQueue.sync` (get) / `syncQueue.async(flags: .barrier)`
+  (set) idiom already used by `accessScopes`/`credentials` (upstream ObjC used `dispatch_sync` /
+  `dispatch_barrier_async` on `_syncQueue`); de-ref `SFUserAccount.m` ref-synced to the post-image verbatim.
+  New byte-faithful test `SFUserAccountThreadSafetyTests.swift` (4 tests: concurrent read/write stress,
+  snapshot isolation, assigned-value-after-drain, encode-under-contention) added and wired additively into
+  the SDKCore test target pbxproj. **Reviewer note:** one test-only line adapted to the migration's
+  class-cluster→factory change — `OAuthCredentials(identifier:clientId:encrypted:)!` (returns nil for the
+  base class under `.keychain`) → `OAuthCredentials.credentials(identifier:…)!` (builds the
+  `OAuthKeychainCredentials` subclass); production behavior unchanged. SDKCore builds green (0 new warnings);
+  all 4 tests pass (fixture-based). Escalation = thread-safety / concurrency on a user-account accessor —
+  flag in PR.
+
 ## Pending escalation units (upcoming — port in order)
-- **36 · #4091 — thread-safety:** notification-types thread safety on SFUserAccount.
 - **37 · #4092 — feature-flag/OAuth:** iOS RTR feature flag (SFOAuthSessionRefresher).
 - **38 · #4094 — OAuth:** OAuth error-code enum (new SFOAuthErrorCode.swift, SFSDKOAuth2, SFOAuthCoordinator).
 - **39 · #4093 — PUBLIC API + advanced-auth default flip + L10n(pre-appr):** make advanced-auth the default & deprecate `forceAdvancedAuthentication`; 24 files incl. Localizable.strings.

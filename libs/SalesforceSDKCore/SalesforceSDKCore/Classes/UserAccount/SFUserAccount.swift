@@ -204,8 +204,14 @@ public func SFKeyForUserIdAndScope(_ userId: String?, _ orgId: String?, _ commun
 
     /// The notification types for this user.
     @objc public var notificationTypes: [NotificationType]? {
-        get { return _notificationTypes }
-        set { _notificationTypes = newValue?.map { $0 } }
+        get {
+            var result: [NotificationType]?
+            syncQueue.sync { result = _notificationTypes }
+            return result
+        }
+        set {
+            syncQueue.async(flags: .barrier) { self._notificationTypes = newValue?.map { $0 } }
+        }
     }
 
     /// Feature flags persisted for this user (e.g. BW, QR). Populated from SFSDKAppFeatureMarkers.
