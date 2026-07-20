@@ -174,6 +174,7 @@
 		695E86B929EF8D6E002BDEA6 /* SFSDKIDPAuthCodeLoginRequestCommand.h in Headers */ = {isa = PBXBuildFile; fileRef = 695E86B729EF8D6E002BDEA6 /* SFSDKIDPAuthCodeLoginRequestCommand.h */; };
 		695E86BD29EF9312002BDEA6 /* SFSDKIDPAuthCodeLoginRequestHandler.h in Headers */ = {isa = PBXBuildFile; fileRef = 695E86BB29EF9312002BDEA6 /* SFSDKIDPAuthCodeLoginRequestHandler.h */; };
 		696D6C3E2DD7E0AD00138888 /* NewLoginHostTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 696D6C3D2DD7E0AD00138888 /* NewLoginHostTests.swift */; };
+		E40A1C012DD7E0AD00138888 /* SFUserAccountManagerLoginHostRecoveryTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = E40A1C022DD7E0AD00138888 /* SFUserAccountManagerLoginHostRecoveryTests.swift */; };
 		696E91472AD0A14A00205884 /* BiometricAuthenticationManagerTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 696E91452AD0A14A00205884 /* BiometricAuthenticationManagerTests.swift */; };
 		696E914A2AD0A68600205884 /* PrivacyInfo.xcprivacy in Resources */ = {isa = PBXBuildFile; fileRef = 696E91492AD0A68600205884 /* PrivacyInfo.xcprivacy */; };
 		697A91A02363C3D800D2836F /* SFSDKPushNotificationDecryption.h in Headers */ = {isa = PBXBuildFile; fileRef = 697A919E2363C3D800D2836F /* SFSDKPushNotificationDecryption.h */; settings = {ATTRIBUTES = (Public, ); }; };
@@ -817,6 +818,7 @@
 		695E86BB29EF9312002BDEA6 /* SFSDKIDPAuthCodeLoginRequestHandler.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = SFSDKIDPAuthCodeLoginRequestHandler.h; sourceTree = "<group>"; };
 		695E86BC29EF9312002BDEA6 /* SFSDKIDPAuthCodeLoginRequestHandler.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = SFSDKIDPAuthCodeLoginRequestHandler.m; sourceTree = "<group>"; };
 		696D6C3D2DD7E0AD00138888 /* NewLoginHostTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = NewLoginHostTests.swift; path = SalesforceSDKCoreTests/NewLoginHostTests.swift; sourceTree = SOURCE_ROOT; };
+		E40A1C022DD7E0AD00138888 /* SFUserAccountManagerLoginHostRecoveryTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = SFUserAccountManagerLoginHostRecoveryTests.swift; path = SalesforceSDKCoreTests/SFUserAccountManagerLoginHostRecoveryTests.swift; sourceTree = SOURCE_ROOT; };
 		696E91452AD0A14A00205884 /* BiometricAuthenticationManagerTests.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; name = BiometricAuthenticationManagerTests.swift; path = SalesforceSDKCoreTests/BiometricAuthenticationManagerTests.swift; sourceTree = SOURCE_ROOT; };
 		696E91462AD0A14A00205884 /* ScreenLockManagerTests.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = ScreenLockManagerTests.m; path = SalesforceSDKCoreTests/ScreenLockManagerTests.m; sourceTree = SOURCE_ROOT; };
 		696E91492AD0A68600205884 /* PrivacyInfo.xcprivacy */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.xml; path = PrivacyInfo.xcprivacy; sourceTree = "<group>"; };
@@ -1215,6 +1217,7 @@
 				23CAB0F82DCBE51F00B8929B /* Mocks */,
 				23A4C7482D0CAFCF00DF55EB /* NativeLoginManagerTests.swift */,
 				696D6C3D2DD7E0AD00138888 /* NewLoginHostTests.swift */,
+				E40A1C022DD7E0AD00138888 /* SFUserAccountManagerLoginHostRecoveryTests.swift */,
 				4F755F4120D48D6700CE4E0E /* NSString+SFAdditionsTests.m */,
 				4F06AF5D1C49A16A00F70798 /* NSURL+SFStringUtilsTests.h */,
 				4F06AF5E1C49A16A00F70798 /* NSURL+SFStringUtilsTests.m */,
@@ -2506,6 +2509,7 @@
 				238AA5802D827AF80036667C /* PushNotificationManagerTests.swift in Sources */,
 				4F5A49582E98B0F800C89DDD /* ScopeParserTests.swift in Sources */,
 				696D6C3E2DD7E0AD00138888 /* NewLoginHostTests.swift in Sources */,
+				E40A1C012DD7E0AD00138888 /* SFUserAccountManagerLoginHostRecoveryTests.swift in Sources */,
 				4F06AF8A1C49A18E00F70798 /* SalesforceOAuthUnitTests.swift in Sources */,
 				23A4C7462D0CAFA000DF55EB /* ScreenLockManagerTests.swift in Sources */,
 				23EED88A2E2ACD3300646B10 /* SFOAuthCoordinatorTests.swift in Sources */,

@@ -215,8 +215,32 @@ Pre-approved gates (still PR-flag, do NOT re-ask): SQLCipher #4096; Localizable.
   SDKCore/SmartStore/MobileSync build green (0 new warnings in diff); 135 SDKCore tests across the 5 touched classes
   pass (25 new). Escalation = public-API deprecation + advanced-auth default behavior flip + login-UI + L10n — flag in PR.
 
+- **Unit 40 · #4088 · `a2a271cca` — login-host input validation + failure recovery + L10n.**
+  Two related behavior changes to custom-login-host handling. **(1) Input validation (Add Login Host screen):**
+  `NewLoginHostView.save(...)` now rejects a host that is empty, lacks a `.`, contains whitespace, or does not
+  parse as `https://<host>`, showing an inline red per-field error (`LOGIN_INVALID_HOST`) instead of saving a
+  bogus host; the error clears as the user edits. **(2) Connection-failure recovery (`hostConnectionErrorHandlerBlock`):**
+  when auth against the current host fails, the SDK now (a) captures the *previous* login host on every user-initiated
+  host change (`previousLoginHost`) and recovers to it (falling back to storage index 0, guarded against empty
+  storage to avoid a range trap), and (b) **auto-removes the failing host from storage only on a strong "host is
+  unusable" signal** — an OAuth invalid-URL (`kSFOAuthErrorInvalidURL`) or a URL-layer error
+  (`NSURLErrorBadURL`/`UnsupportedURL`/`AppTransportSecurityRequiresSecureConnection`). **Captive-portal safety
+  invariant (test-locked):** ambiguous errors — DNS lookup failure, timeout, connection-lost — must NOT remove the
+  host, because hotel/airport/coffee-shop Wi-Fi routinely hijacks DNS for valid enterprise hosts; deleting on those
+  would permanently strip a user's custom org the first time they open the app behind a captive portal. Non-deletable
+  built-in hosts are never removed. **L10n:** new `LOGIN_INVALID_HOST` string (en.lproj, **pre-approved gate**).
+  **Reviewer notes:** (1) All production changes land in the compiled Swift twins (`NewLoginHostView.swift`,
+  `SFUserAccountManager.swift`); `previousLoginHost` is an `internal` Swift property (upstream declared it in the ObjC
+  `+Internal.h`, which is a dead header region in the migration — no compiled consumer — but was ref-synced verbatim
+  for clean future merges). (2) `SFSDKLoginHostStorage.loginHostList` was relaxed `private`→`internal` for `@testable`
+  test access (empty-storage snapshot/restore) — mirrors the ObjC test's KVC reach into the private ivar; **no new
+  public API**. (3) The new ObjC test file `SFUserAccountManagerLoginHostRecoveryTests.m` was ported to a Swift twin
+  (no new ObjC), preserving the `method_exchangeImplementations` swizzle of `restartAuthentication:` and adding a real
+  `UIScene` to the request (the migrated `showErrorAlert` skips presentation on a nil scene). SDKCore/SmartStore/
+  MobileSync build green (0 new warnings in diff); 19 SDKCore tests pass (10 validation + 9 recovery). Escalation =
+  login-UI + login-host failure-recovery behavior + L10n — flag in PR.
+
 ## Pending escalation units (upcoming — port in order)
-- **40 · #4088 — login-host + L10n(pre-appr):** invalid login-host recovery; Localizable.strings.
 - **42 · #4096 — dependency bump (gate PRE-APPROVED):** SQLCipher 4.16 → 4.17 (SmartStore.podspec, mobilesdk_pods.rb).
 - **43 · #4098 — OAuth/scene:** nil-sceneId crash fix on advanced-auth browser callback.
 - **44 · #4087 — OAuth/token (LIVE-AUTH UNBLOCKER):** token-refresh coordinator; 18 files. Unblocks Phase 2.

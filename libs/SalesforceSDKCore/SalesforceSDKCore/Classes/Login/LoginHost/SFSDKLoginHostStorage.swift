@@ -39,7 +39,10 @@ public class SFSDKLoginHostStorage: NSObject {
 
     @objc public static let sharedInstance = SFSDKLoginHostStorage()
 
-    private var loginHostList: [SalesforceLoginHost] = []
+    // `internal` (not `private`) so `@testable` tests can snapshot/replace the backing list to
+    // exercise edge cases such as empty storage. Mirrors the ObjC tests' KVC reach into the
+    // private ivar; no new public API. Not accessible to SDK consumers.
+    var loginHostList: [SalesforceLoginHost] = []
 
     private override init() {
         super.init()

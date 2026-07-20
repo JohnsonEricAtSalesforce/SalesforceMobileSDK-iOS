@@ -267,6 +267,10 @@ open class UserAccountManager: NSObject {
         set { authPreferences.loginHost = newValue }
     }
 
+    /// The previous login host, captured before a user-initiated host change. Used to
+    /// recover the active login host when the current host fails to connect.
+    var previousLoginHost: String?
+
     /// Whether to retry login after failure (default: true).
     @objc public var retriesLoginAfterFailure: Bool = true
 
@@ -559,10 +563,68 @@ open class UserAccountManager: NSObject {
                 if let creds = session.oauthCoordinator.credentials {
                     self.notifyUserCancelledOrDismissedAuth(creds, andAuthInfo: session.oauthCoordinator.authInfo)
                 }
-                let host = SFSDKLoginHostStorage.sharedInstance.loginHost(at: 0).host
-                session.oauthRequest.loginHost = host
-                self.loginHost = host
-                self.restartAuthentication(session)
+                let failingHost = session.oauthRequest.loginHost
+                let storage = SFSDKLoginHostStorage.sharedInstance
+                let failing = storage.loginHostForHostAddress(failingHost)
+                // Only auto-remove the host when the error is a strong signal that the host itself
+                // is unusable: a URL-syntax problem, an ATS rejection, or an OAuth invalid-URL.
+                // These are reliably under our control and not produced by network conditions.
+                //
+                // Codes that look host-specific but are actually ambiguous on real networks are
+                // intentionally NOT treated as strong signals:
+                //   - NSURLErrorCannotFindHost / NSURLErrorDNSLookupFailed — captive portals
+                //     (hotel / airport / coffee-shop Wi-Fi) routinely hijack DNS and return these
+                //     for perfectly valid enterprise hosts. Auto-removing on DNS errors would
+                //     silently and permanently delete a user's custom org host the first time
+                //     they open the app behind a captive portal.
+                //   - NSURLErrorTimedOut / NSURLErrorCannotConnectToHost / NSURLErrorNotConnectedToInternet
+                //     / NSURLErrorNetworkConnectionLost / roaming-off / data-not-allowed —
+                //     transient connectivity failures against a host that is otherwise fine.
+                //
+                // Both buckets fall through to the "leave the host in storage" branch.
+                let nsError = error as NSError
+                var strongBadHostSignal = false
+                if nsError.domain == kSFOAuthErrorDomain && nsError.code == Int(kSFOAuthErrorInvalidURL) {
+                    strongBadHostSignal = true
+                } else if nsError.domain == NSURLErrorDomain {
+                    switch nsError.code {
+                    case NSURLErrorBadURL,
+                         NSURLErrorUnsupportedURL,
+                         NSURLErrorAppTransportSecurityRequiresSecureConnection:
+                        strongBadHostSignal = true
+                    default:
+                        break
+                    }
+                }
+                if let failing, failing.deletable, strongBadHostSignal {
+                    let index = storage.indexOfLoginHost(failing)
+                    if index != UInt(NSNotFound) {
+                        storage.removeLoginHost(at: index)
+                    }
+                } else if failing == nil {
+                    SFSDKCoreLogger.w(type(of: self), message: "Failing host not found in storage; skipping removal.")
+                } else if let failing, failing.deletable, !strongBadHostSignal {
+                    SFSDKCoreLogger.d(type(of: self), message: "Failing host left in storage; error \(nsError.domain)/\(nsError.code) is ambiguous (likely transient).")
+                }
+                // Choose a recovery host. Prefer the snapshot of the host the user was working on before
+                // the bad host change; fall back to the first entry in storage. The fallback can be unsafe
+                // in one edge case: if the failing host was just removed above AND it was the only entry,
+                // or if MDM `onlyShowAuthorizedHosts` is enabled with an empty MDM host list, storage may
+                // be empty here — `loginHost(at: 0)` would raise NSRangeException. Guard the index call.
+                let prev = self.previousLoginHost
+                var recoveryHost: String?
+                if let prev, storage.loginHostForHostAddress(prev) != nil {
+                    recoveryHost = prev
+                } else if storage.numberOfLoginHosts > 0 {
+                    recoveryHost = storage.loginHost(at: 0).host
+                }
+                if let recoveryHost {
+                    session.oauthRequest.loginHost = recoveryHost
+                    self.loginHost = recoveryHost
+                    self.restartAuthentication(session)
+                } else {
+                    SFSDKCoreLogger.e(type(of: self), message: "No recovery host available; skipping restart.")
+                }
             }
         }
 
@@ -1153,6 +1215,7 @@ extension UserAccountManager: LoginHostDelegate {
             Self.kNotificationPreviousLoginHost: loginHost,
             Self.kNotificationCurrentLoginHost: newLoginHost.host
         ]
+        previousLoginHost = loginHost
         loginHost = newLoginHost.host
         let notification = Notification(name: .didChangeLoginHost, object: self, userInfo: userInfo)
         NotificationCenter.default.post(notification)
