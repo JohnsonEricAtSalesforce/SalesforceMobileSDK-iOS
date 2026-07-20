@@ -22,8 +22,7 @@
 
 /* Begin PBXBuildFile section */
 		41614EF0CAA053DD18CFEFAF /* SFSDKAILTNTransform.swift in Sources */ = {isa = PBXBuildFile; fileRef = 438803CF2DED8E325CD725E9 /* SFSDKAILTNTransform.swift */; };
-		4B6C4B30F4747D76F245767B /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 41EA72988E233E48DCF725FD /* AppDelegate.swift */; };
-		5DFE0C3EBFAFE14CC4B25CAD /* ViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = A2E0ECE15592AF4DF146FAD2 /* ViewController.swift */; };
+		695583B12FE4DB6C0042CF82 /* SalesforceAnalyticsTestApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 695583B02FE4DB5E0042CF82 /* SalesforceAnalyticsTestApp.swift */; };
 		696E91442AD0A10300205884 /* PrivacyInfo.xcprivacy in Resources */ = {isa = PBXBuildFile; fileRef = 696E91432AD0A10300205884 /* PrivacyInfo.xcprivacy */; };
 		6BB1B61B972B4806C5EA37F7 /* InstrumentationEventBuilderTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6732BF77D09E17FE676B4FCE /* InstrumentationEventBuilderTests.swift */; };
 		7E2CBEAAC683FD45CB2F2A0A /* SFSDKInstrumentationEvent.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA30E7EB0475C18AA3AA00F8 /* SFSDKInstrumentationEvent.swift */; };
@@ -45,8 +44,6 @@
 		CEF371AC1D0E58070004A237 /* UIKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = CEF371A91D0E57F50004A237 /* UIKit.framework */; };
 		CEF371AF1D0E58260004A237 /* Foundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = CEF371A71D0E57ED0004A237 /* Foundation.framework */; };
 		CEF371B01D0E582C0004A237 /* UIKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = CEF371A91D0E57F50004A237 /* UIKit.framework */; };
-		CEF371E51D10D7E60004A237 /* Main_iPad.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = CEF371E31D10D7E60004A237 /* Main_iPad.storyboard */; };
-		CEF371E61D10D7E60004A237 /* Main_iPhone.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = CEF371E41D10D7E60004A237 /* Main_iPhone.storyboard */; };
 		DF725AB4898BCA46BC28B4C9 /* SFSDKDeviceAppAttributes.swift in Sources */ = {isa = PBXBuildFile; fileRef = F99246DA21A607C085D2946A /* SFSDKDeviceAppAttributes.swift */; };
 		E327DA873327652C3EDED0D2 /* EventStoreManagerTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 868BC3AF27C553181A03F47E /* EventStoreManagerTests.swift */; };
 		F52AD8AA36254B08F5A3F694 /* SFSDKEventStoreManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 09B615531C13E97B415AE48E /* SFSDKEventStoreManager.swift */; };
@@ -115,14 +112,13 @@
 /* Begin PBXFileReference section */
 		08A3EEBD09F0B76D27026D0C /* AnalyticsTestUtil.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = AnalyticsTestUtil.swift; sourceTree = "<group>"; };
 		09B615531C13E97B415AE48E /* SFSDKEventStoreManager.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = SFSDKEventStoreManager.swift; path = Classes/Store/SFSDKEventStoreManager.swift; sourceTree = "<group>"; };
-		41EA72988E233E48DCF725FD /* AppDelegate.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = AppDelegate.swift; sourceTree = "<group>"; };
+		695583B02FE4DB5E0042CF82 /* SalesforceAnalyticsTestApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SalesforceAnalyticsTestApp.swift; sourceTree = "<group>"; };
 		438803CF2DED8E325CD725E9 /* SFSDKAILTNTransform.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = SFSDKAILTNTransform.swift; path = Classes/Transform/SFSDKAILTNTransform.swift; sourceTree = "<group>"; };
 		487E1F27723B4F7245E2BFEB /* SFSDKInstrumentationEventBuilder.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = SFSDKInstrumentationEventBuilder.swift; path = Classes/Model/SFSDKInstrumentationEventBuilder.swift; sourceTree = "<group>"; };
 		6732BF77D09E17FE676B4FCE /* InstrumentationEventBuilderTests.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = InstrumentationEventBuilderTests.swift; sourceTree = "<group>"; };
 		696E91432AD0A10300205884 /* PrivacyInfo.xcprivacy */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.xml; path = PrivacyInfo.xcprivacy; sourceTree = "<group>"; };
 		851F7A4B0BCC397CA7956E8C /* SFSDKTransform.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = SFSDKTransform.swift; path = Classes/Transform/SFSDKTransform.swift; sourceTree = "<group>"; };
 		868BC3AF27C553181A03F47E /* EventStoreManagerTests.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = EventStoreManagerTests.swift; sourceTree = "<group>"; };
-		A2E0ECE15592AF4DF146FAD2 /* ViewController.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = ViewController.swift; sourceTree = "<group>"; };
 		A5B336430BD9122662BDB9DF /* SFSDKAnalyticsLogger.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = SFSDKAnalyticsLogger.swift; path = Classes/Util/SFSDKAnalyticsLogger.swift; sourceTree = "<group>"; };
 		AA30E7EB0475C18AA3AA00F8 /* SFSDKInstrumentationEvent.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = SFSDKInstrumentationEvent.swift; path = Classes/Model/SFSDKInstrumentationEvent.swift; sourceTree = "<group>"; };
 		B716A371218F5D60009D407F /* SalesforceSDKCommon.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; name = SalesforceSDKCommon.xcodeproj; path = ../SalesforceSDKCommon/SalesforceSDKCommon.xcodeproj; sourceTree = "<group>"; };
@@ -133,13 +129,8 @@
 		CE2B8BD21CE900F500C6FC6A /* SalesforceAnalytics.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = SalesforceAnalytics.h; sourceTree = "<group>"; };
 		CE2B8BD91CE900F500C6FC6A /* SalesforceAnalyticsTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = SalesforceAnalyticsTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		CE2B8C2A1CE9218900C6FC6A /* SalesforceAnalyticsTestApp.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = SalesforceAnalyticsTestApp.app; sourceTree = BUILT_PRODUCTS_DIR; };
-		CE2B8C2D1CE9218900C6FC6A /* main.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = main.m; sourceTree = "<group>"; };
-		CE2B8C2F1CE9218900C6FC6A /* AppDelegate.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = AppDelegate.h; sourceTree = "<group>"; };
-		CE2B8C301CE9218900C6FC6A /* AppDelegate.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = AppDelegate.m; sourceTree = "<group>"; };
 		CE2B8C3B1CE9218900C6FC6A /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		CE2B8C4B1CE9243600C6FC6A /* SalesforceAnalyticsTestApp-Prefix.pch */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = "SalesforceAnalyticsTestApp-Prefix.pch"; sourceTree = "<group>"; };
-		CE2B8C4C1CE9243600C6FC6A /* ViewController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ViewController.h; sourceTree = "<group>"; };
-		CE2B8C4D1CE9243600C6FC6A /* ViewController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = ViewController.m; sourceTree = "<group>"; };
 		CE2B8C501CE9245B00C6FC6A /* en.lproj */ = {isa = PBXFileReference; lastKnownFileType = folder; path = en.lproj; sourceTree = "<group>"; };
 		CE2B8C521CE9245B00C6FC6A /* SalesforceAnalyticsTestApp-Info.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; path = "SalesforceAnalyticsTestApp-Info.plist"; sourceTree = "<group>"; };
 		CE2B8CA71CE9281F00C6FC6A /* SalesforceAnalytics-Common-Dynamic.xcconfig */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.xcconfig; name = "SalesforceAnalytics-Common-Dynamic.xcconfig"; path = "Configuration/SalesforceAnalytics-Common-Dynamic.xcconfig"; sourceTree = "<group>"; };
@@ -160,8 +151,6 @@
 		CEF371A71D0E57ED0004A237 /* Foundation.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Foundation.framework; path = System/Library/Frameworks/Foundation.framework; sourceTree = SDKROOT; };
 		CEF371A91D0E57F50004A237 /* UIKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = UIKit.framework; path = System/Library/Frameworks/UIKit.framework; sourceTree = SDKROOT; };
 		CEF371B31D0F6E6D0004A237 /* SFSDKInstrumentationEvent+Internal.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = "SFSDKInstrumentationEvent+Internal.h"; path = "Classes/Model/SFSDKInstrumentationEvent+Internal.h"; sourceTree = "<group>"; };
-		CEF371E31D10D7E60004A237 /* Main_iPad.storyboard */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = file.storyboard; name = Main_iPad.storyboard; path = Base.lproj/Main_iPad.storyboard; sourceTree = "<group>"; };
-		CEF371E41D10D7E60004A237 /* Main_iPhone.storyboard */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = file.storyboard; name = Main_iPhone.storyboard; path = Base.lproj/Main_iPhone.storyboard; sourceTree = "<group>"; };
 		CEF371E71D11B76E0004A237 /* EventStoreManagerTests.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = EventStoreManagerTests.m; sourceTree = "<group>"; };
 		CEF372441D120FEE0004A237 /* AnalyticsTestUtil.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = AnalyticsTestUtil.h; sourceTree = "<group>"; };
 		CEF372451D12100D0004A237 /* AnalyticsTestUtil.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = AnalyticsTestUtil.m; sourceTree = "<group>"; };
@@ -270,30 +259,14 @@
 		CE2B8C2B1CE9218900C6FC6A /* SalesforceAnalyticsTestApp */ = {
 			isa = PBXGroup;
 			children = (
+				695583B02FE4DB5E0042CF82 /* SalesforceAnalyticsTestApp.swift */,
 				B7282F401D8C711100475F79 /* SalesforceAnalyticsTestApp.entitlements */,
-				CEF371E31D10D7E60004A237 /* Main_iPad.storyboard */,
-				CEF371E41D10D7E60004A237 /* Main_iPhone.storyboard */,
 				CE2B8C501CE9245B00C6FC6A /* en.lproj */,
 				CE2B8C521CE9245B00C6FC6A /* SalesforceAnalyticsTestApp-Info.plist */,
 				CE2B8C4B1CE9243600C6FC6A /* SalesforceAnalyticsTestApp-Prefix.pch */,
-				CE2B8C4C1CE9243600C6FC6A /* ViewController.h */,
-				CE2B8C4D1CE9243600C6FC6A /* ViewController.m */,
-				CE2B8C2F1CE9218900C6FC6A /* AppDelegate.h */,
-				CE2B8C301CE9218900C6FC6A /* AppDelegate.m */,
 				CE2B8C3B1CE9218900C6FC6A /* Assets.xcassets */,
-				CE2B8C2C1CE9218900C6FC6A /* Supporting Files */,
-				41EA72988E233E48DCF725FD /* AppDelegate.swift */,
-				A2E0ECE15592AF4DF146FAD2 /* ViewController.swift */,
 			);
 			path = SalesforceAnalyticsTestApp;
-			sourceTree = "<group>";
-		};
-		CE2B8C2C1CE9218900C6FC6A /* Supporting Files */ = {
-			isa = PBXGroup;
-			children = (
-				CE2B8C2D1CE9218900C6FC6A /* main.m */,
-			);
-			name = "Supporting Files";
 			sourceTree = "<group>";
 		};
 		CE2B8CA61CE9281300C6FC6A /* Configuration */ = {
@@ -496,6 +469,7 @@
 					};
 					CE2B8C291CE9218900C6FC6A = {
 						CreatedOnToolsVersion = 7.3.1;
+						LastSwiftMigration = 2630;
 						ProvisioningStyle = Manual;
 						SystemCapabilities = {
 							com.apple.Keychain = {
@@ -576,8 +550,6 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				CEF371E51D10D7E60004A237 /* Main_iPad.storyboard in Resources */,
-				CEF371E61D10D7E60004A237 /* Main_iPhone.storyboard in Resources */,
 				CE2B8E111CE9352B00C6FC6A /* en.lproj in Resources */,
 				CE2B8E131CE9352B00C6FC6A /* Assets.xcassets in Resources */,
 			);
@@ -659,8 +631,7 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				4B6C4B30F4747D76F245767B /* AppDelegate.swift in Sources */,
-				5DFE0C3EBFAFE14CC4B25CAD /* ViewController.swift in Sources */,
+				695583B12FE4DB6C0042CF82 /* SalesforceAnalyticsTestApp.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

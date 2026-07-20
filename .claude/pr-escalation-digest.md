@@ -76,9 +76,16 @@ Pre-approved gates (still PR-flag, do NOT re-ask): SQLCipher #4096; Localizable.
   `UIApplicationSceneManifest` + `UILaunchScreen`. pbxproj surgical (UUID set −14, plutil OK). **Test-app target
   only — not shipped in any SDK framework.** SmartStore TEST BUILD SUCCEEDED.
 
+- **Unit 29 · #4081 · `ec26a5666` — build-system (test-app scene lifecycle).** Last of the test-app cluster; same
+  migration as units 26/27/28 for the `SalesforceAnalyticsTestApp` target. Retired the UIKit storyboard launch
+  (AppDelegate + ViewController + `main.m` + `Main_iPad` / `Main_iPhone` storyboards) → single SwiftUI `@main struct
+  SalesforceAnalyticsTestApp: App`; removed the migration's Swift twins so there is exactly one `@main`. Info.plist
+  storyboard keys → `UIApplicationSceneManifest` + `UILaunchScreen`. pbxproj surgical (plutil OK). **Test-app target
+  only — not shipped in any SDK framework.** SalesforceAnalytics TEST BUILD SUCCEEDED. Test-app cluster (units 26–29)
+  complete.
+
 ## Pending escalation units (upcoming — port in order)
 
-- **29 · #4081 — build-system:** SalesforceAnalytics test-app scene-lifecycle conversion + pbxproj.
 - **32 · #4078 — login/OAuth:** Login-for-Admin + Welcome-Discovery incompatibility fix (SFLoginViewController, DomainDiscoveryCoordinator, SFOAuthCoordinator, SFUserAccountManager).
 - **35 · #4086 — feature-flags + podspec + multi-lib:** per-user feature flags across Core/MobileSync/SmartStore + SalesforceSDKCore.podspec.
 - **36 · #4091 — thread-safety:** notification-types thread safety on SFUserAccount.
