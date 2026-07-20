@@ -62,9 +62,16 @@ Pre-approved gates (still PR-flag, do NOT re-ask): SQLCipher #4096; Localizable.
   twins too, so there is exactly one `@main`. pbxproj edited surgically (UUID-set verified −13 net, plutil OK); no
   library production code touched. **Test-app target only — not shipped in any SDK framework.** TEST BUILD SUCCEEDED.
 
+- **Unit 27 · #4082 · `6741d365b` — build-system (test-app scene lifecycle).** Same migration as unit 26, for the
+  `MobileSyncTestApp` target: retired the UIKit storyboard launch (AppDelegate + ViewController + `main.m` + `Main` /
+  `LaunchScreen` storyboards) in favor of a single SwiftUI `@main struct MobileSyncTestApp: App`; removed the
+  migration's pre-existing Swift twins so there is exactly one `@main`. Info.plist storyboard keys →
+  `UIApplicationSceneManifest` + `UILaunchScreen`. pbxproj surgical (UUID set −14, plutil OK). **Test-app target
+  only — not shipped in any SDK framework.** MobileSync TEST BUILD SUCCEEDED.
+
 ## Pending escalation units (upcoming — port in order)
 
-- **27–29 · #4082/#4083/#4081 — build-system:** MobileSync + SmartStore + Analytics new/updated test-app targets + pbxproj.
+- **28–29 · #4083/#4081 — build-system:** SmartStore + Analytics test-app scene-lifecycle conversions + pbxproj.
 - **32 · #4078 — login/OAuth:** Login-for-Admin + Welcome-Discovery incompatibility fix (SFLoginViewController, DomainDiscoveryCoordinator, SFOAuthCoordinator, SFUserAccountManager).
 - **35 · #4086 — feature-flags + podspec + multi-lib:** per-user feature flags across Core/MobileSync/SmartStore + SalesforceSDKCore.podspec.
 - **36 · #4091 — thread-safety:** notification-types thread safety on SFUserAccount.
