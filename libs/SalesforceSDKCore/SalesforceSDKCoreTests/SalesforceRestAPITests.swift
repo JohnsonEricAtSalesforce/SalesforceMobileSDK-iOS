@@ -1713,8 +1713,10 @@ class SalesforceRestAPITests: XCTestCase {
     }
 
     func testFailedRequestRemovedFromQueue() {
+        // Use localhost with an unlikely port to get an immediate connection-refused error
+        // (non-existent DNS domains can hang for tens of seconds depending on the network).
         guard let origInstanceUrl = currentUser?.credentials.instanceUrl else { return }
-        currentUser?.credentials.instanceUrl = URL(string: "https://some.non-existent-domain-blafhsdfh")
+        currentUser?.credentials.instanceUrl = URL(string: "https://localhost:2")
         currentExpectation = expectation(description: "performRequestToFail")
 
         let failWithExpectedFail: (Any?, Error?, URLResponse?) -> Void = { _, _, _ in

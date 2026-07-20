@@ -1,6 +1,6 @@
 # Upstream Sync Backlog Ledger
 
-Marker (done floor): `7d9a91bfa` (units 1-30 done)  ·  forcedotcom/dev HEAD (target): `b5d37d807`  ·  **19 units remaining**  ·  Re-seeded: 2026-07-19 (Phase 0 of the resume-porting plan).
+Marker (done floor): `7b6201360` (units 1-31 done)  ·  forcedotcom/dev HEAD (target): `b5d37d807`  ·  **18 units remaining**  ·  Re-seeded: 2026-07-19 (Phase 0 of the resume-porting plan).
 
 > **Direction:** we port changes **FROM** `forcedotcom/dev` **INTO** our ObjC→Swift migration branch
 > (`feature/objc-to-swift-test-migration`). Each unit is a *semantic re-implementation* against the current
@@ -17,7 +17,7 @@ Marker (done floor): `7d9a91bfa` (units 1-30 done)  ·  forcedotcom/dev HEAD (ta
 > non-libs (CI, docs, skills, sample apps). Live progress bar = subject of lead task #9.
 
 ## Migration status
-▓▓▓▓▓▓▓▓▓▓▓▓░░░░░░░░  30/49 units done (61%)   ·   libs-production-impacting: 8/21   ·   Phase 1 porting (units 1-30 ✅)
+▓▓▓▓▓▓▓▓▓▓▓▓▓░░░░░░░  31/49 units done (63%)   ·   libs-production-impacting: 8/21   ·   Phase 1 porting (units 1-31 ✅)
 
 | Bucket | Count | Notes |
 |--------|-------|-------|
@@ -61,7 +61,7 @@ Marker (done floor): `7d9a91bfa` (units 1-30 done)  ·  forcedotcom/dev HEAD (ta
 | 28 | #4083 SmartStore test app | 453232268 | C+D | ⚠ build-system | ✅ done (commit 62289435c) | SmartStoreTestApp → SwiftUI scene lifecycle (conversion, NOT new target). IDENTICAL to units 26/27. Migration had Swiftified twins (AppDelegate.swift/ViewController.swift; .m/.h de-ref). Upstream removes ALL scaffolding + BOTH storyboards → one `@main struct SmartStoreTestApp: App` (UUIDs 695583B0/B1 suffix …CF83). git-rm'd both twins + AppDelegate.h/.m + ViewController.h/.m + main.m + Main/LaunchScreen.storyboard; dropped now-empty "Supporting Files" subgroup. Info.plist = upstream post-image (byte-identical to pre-image). pbxproj SURGICAL, UUID 248→234 (net −14), plutil OK, LastSwiftMigration=2630. SmartStore TEST BUILD SUCCEEDED 0-err. Test-app-only → gate=build-green; baseline unchanged. |
 | 29 | #4081 Analytics test app | ec26a5666 | C+D | ⚠ build-system | ✅ done (commit 9af5b3e02) | SalesforceAnalyticsTestApp → SwiftUI scene lifecycle (conversion, NOT new target). LAST of the test-app cluster; IDENTICAL to units 26/27/28. Migration had Swiftified twins (AppDelegate.swift/ViewController.swift; .m/.h de-ref). Upstream removes ALL scaffolding + Main_iPad/iPhone storyboards → one `@main struct SalesforceAnalyticsTestApp: App` (UUIDs 695583B0/B1 suffix …CF82). git-rm'd both twins + AppDelegate.h/.m + ViewController.h/.m + main.m + both storyboards; dropped now-empty "Supporting Files" subgroup. NO PBXVariantGroup here (storyboards were plain file refs). Info.plist = upstream post-image (byte-identical to pre-image). pbxproj SURGICAL, UUID 158→146, plutil OK, LastSwiftMigration=2630. SalesforceAnalytics TEST BUILD SUCCEEDED 0-err. Test-app-only → gate=build-green; baseline unchanged. |
 | 30 | #4079 statuses write permission | 7d9a91bfa | F | ⚠ build-system/CI | ✅ done (commit b1d0fc7fd10b755d957b167648724103e6794afb) | CI-only: `.github/workflows/pr.yaml` — added `statuses: write` to the two Danger jobs' `permissions` (so Danger can post required PR commit statuses). Our file was byte-identical to upstream pre-image → applied post-image verbatim (2-line add, 2 hunks). Not compiled → NO build gate; baseline unchanged. PR-flag CI (escalation batch pre-approved). |
-| 31 | #4084 fix test failure | 7b6201360 | A | — | ⬜ pending | 1 test file. |
+| 31 | #4084 fix test failure | 7b6201360 | A | — | ✅ done (commit a151d0157de98fe9efb2bbc2015aff16a35588e4) | `testFailedRequestRemovedFromQueue` URL swap `https://some.non-existent-domain-blafhsdfh` → `https://localhost:2` (+2-line comment) for an immediate connection-refused instead of a multi-second DNS hang. Ported into the compiled `SalesforceRestAPITests.swift` twin (line ~1717); de-ref `.m` hunk-applied surgically (our `.m` diverges from upstream pre-image due to the dropped-test restoration `d0480a667`, but the target region matched → clean hunk). Test class is LIVE-GATED (`XCTSkipUnless authRefreshDidSucceed`) → gate = build-green. SDKCore TEST BUILD SUCCEEDED, 0 err/0 new warn; baseline unchanged. |
 | 32 | #4078 fix Login-for-Admin + Welcome-Discovery incompatibility | 29439f0bb | B | ⚠⚠ login/OAuth | ⬜ pending | `SFLoginViewController.m`, `DomainDiscoveryCoordinator.swift`, `SFOAuthCoordinator.m`, `SFSDKAuthRequest.h`, `SFUserAccountManager.h/.m` + tests + bridging. |
 | 33 | #4089 run all UI tests on AuthFlowTester change | 3379fb272 | F | — | ⬜ pending | CI config. |
 | 34 | #4090 fix iOS18/macOS15 runner | 6a8a47717 | F | — | ⬜ pending | CI config. |
