@@ -426,13 +426,17 @@ open class OAuthCredentials: NSObject, NSSecureCoding, NSCopying {
     }
 
     @objc public func overrideDomainIfNeeded() -> URL {
-        let domainStr = communityId != nil ? communityUrl?.absoluteString ?? domain : domain
-        let protocolHost: String
-        if communityId != nil {
-            protocolHost = domainStr ?? ""
-        } else {
-            protocolHost = "\(self.protocol ?? kSFOAuthProtocolHttps)://\(domainStr ?? "")"
+        // Precedence: communityUrl > instanceUrl > domain. instanceUrl is populated only after the first
+        // token response, so a nil instanceUrl naturally identifies the code-exchange path.
+        if communityId != nil, let communityUrl = communityUrl {
+            return communityUrl
         }
+
+        if let instanceUrl = instanceUrl {
+            return instanceUrl
+        }
+
+        let protocolHost = "\(self.protocol ?? kSFOAuthProtocolHttps)://\(domain ?? "")"
         // Force unwrap is safe here because the protocol+domain combination always forms a valid URL
         return URL(string: protocolHost) ?? URL(string: "\(kSFOAuthProtocolHttps)://\(kSFOAuthDefaultDomain)")!
     }

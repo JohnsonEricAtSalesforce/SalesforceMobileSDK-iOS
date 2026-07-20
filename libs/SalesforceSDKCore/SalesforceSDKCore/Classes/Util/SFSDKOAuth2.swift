@@ -395,7 +395,8 @@ public protocol SFSDKOAuthProtocol: NSObjectProtocol {
         let request = prepareBasicRequest(endpointReq)
         var params = "\(kSFOAuthFormat)=json&\(kSFOAuthRedirectUri)=\(endpointReq.redirectURI)&\(kSFOAuthClientId)=\(endpointReq.clientID)&\(kSFOAuthDeviceId)=\(UIDevice.current.identifierForVendor?.uuidString ?? "")"
 
-        SFSDKCoreLogger.i(SFSDKOAuth2.self, message: "\(#function): Initiating refresh token flow.")
+        let targetHost = endpointReq.serverURL.host ?? "<unknown>"
+        SFSDKCoreLogger.i(SFSDKOAuth2.self, message: "\(#function): Initiating refresh token flow to host: \(targetHost)")
         let grantType = SalesforceSDKManager.shared.useHybridAuthentication ? kSFOAuthGrantTypeHybridRefresh : kSFOAuthGrantTypeRefresh
         params += "&\(kSFOAuthGrantType)=\(grantType)&\(kSFOAuthRefreshToken)=\(endpointReq.refreshToken)"
 
@@ -604,7 +605,8 @@ public protocol SFSDKOAuthProtocol: NSObjectProtocol {
 
     // MARK: - Private Methods
 
-    private func prepareBasicRequest(_ endpointReq: SFSDKOAuthTokenEndpointRequest) -> NSMutableURLRequest {
+    // Exposed to tests (mirrors upstream's SFSDKOAuth2+Internal.h declaration of -prepareBasicRequest:).
+    func prepareBasicRequest(_ endpointReq: SFSDKOAuthTokenEndpointRequest) -> NSMutableURLRequest {
         let protocolHost = endpointReq.serverURL.absoluteString
         var urlString = "\(protocolHost)\(kSFOAuthEndPointToken)"
         if !urlString.hasPrefix("http") {
