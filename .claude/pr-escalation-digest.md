@@ -115,6 +115,15 @@ Pre-approved gates (still PR-flag, do NOT re-ask): SQLCipher #4096; Localizable.
   nothing compiled; all three files byte-match the upstream post-image. Escalation = CI-config (pre-approved in the
   Phase-0 batch; still PR-flagged here).
 
+- **Unit 34 · #4090 · `6a8a47717` — build-system / CI.** Pins the iOS 18 / Xcode 16 CI matrix leg to the
+  `macos-15` runner (the iOS 18 simulator is not available on `macos-latest`, which is now macOS 26). Adds
+  `macos: macos-15` to the `ios: ^18 / xcode: ^16` matrix `include` and threads `macos: ${{ matrix.macos }}`
+  into the reusable-workflow `with:` calls across three top-level workflows: `nightly.yaml` (test + build jobs),
+  `pr.yaml` (ios-pr test + native-samples-pr build + ui-tests-pr), and `ui-test-nightly.yaml`. The three reusable
+  workflows already declare a `macos` input, so no change was needed there. **Reviewer note:** CI-config only — no
+  library or app code touched, nothing compiled; all three files byte-match the upstream post-image. Escalation =
+  CI-config (pre-approved in the Phase-0 batch; still PR-flagged here).
+
 ## Pending escalation units (upcoming — port in order)
 - **35 · #4086 — feature-flags + podspec + multi-lib:** per-user feature flags across Core/MobileSync/SmartStore + SalesforceSDKCore.podspec.
 - **36 · #4091 — thread-safety:** notification-types thread safety on SFUserAccount.
