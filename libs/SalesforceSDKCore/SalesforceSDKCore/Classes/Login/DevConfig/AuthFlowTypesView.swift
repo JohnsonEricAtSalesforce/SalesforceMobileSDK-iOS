@@ -31,17 +31,20 @@ import SwiftUI
 public struct AuthFlowTypesJSONKeys {
     public static let useWebServerFlow = "useWebServerFlow"
     public static let useHybridFlow = "useHybridFlow"
+    public static let forceAdvancedAuthentication = "forceAdvancedAuthentication"
 }
 
 public struct AuthFlowTypesView: View {
     @State private var useWebServerFlow: Bool
     @State private var useHybridFlow: Bool
+    @State private var forceAdvancedAuth: Bool
     @State private var showImportAlert: Bool = false
     @State private var importJSONText: String = ""
 
     public init() {
         _useWebServerFlow = State(initialValue: SalesforceSDKManager.shared.useWebServerAuthentication)
         _useHybridFlow = State(initialValue: SalesforceSDKManager.shared.useHybridAuthentication)
+        _forceAdvancedAuth = State(initialValue: Self.readForceAdvancedAuthentication())
     }
 
     public var body: some View {
@@ -82,6 +85,16 @@ public struct AuthFlowTypesView: View {
                     SalesforceSDKManager.shared.useHybridAuthentication = newValue
                 }
                 .padding(.horizontal)
+
+                Toggle(isOn: $forceAdvancedAuth) {
+                    Text(SFSDKResourceUtils.localizedString("LOGIN_OPTIONS_FORCE_ADVANCED_AUTH"))
+                        .font(.body)
+                }
+                .accessibilityIdentifier("forceAdvancedAuthToggle")
+                .onChange(of: forceAdvancedAuth) { _, newValue in
+                    Self.writeForceAdvancedAuthentication(newValue)
+                }
+                .padding(.horizontal)
             }
         }
         .padding(.vertical)
@@ -92,7 +105,7 @@ public struct AuthFlowTypesView: View {
             }
             Button("Cancel", role: .cancel) { }
         } message: {
-            Text("Paste JSON with useWebServerFlow and useHybridFlow")
+            Text("Paste JSON with useWebServerFlow, useHybridFlow and forceAdvancedAuthentication")
         }
     }
 
@@ -112,6 +125,25 @@ public struct AuthFlowTypesView: View {
             useHybridFlow = hybridFlow
             SalesforceSDKManager.shared.useHybridAuthentication = hybridFlow
         }
+        if let forceAdvancedAuthentication = json[AuthFlowTypesJSONKeys.forceAdvancedAuthentication] as? Bool {
+            forceAdvancedAuth = forceAdvancedAuthentication
+            Self.writeForceAdvancedAuthentication(forceAdvancedAuthentication)
+        }
+    }
+
+    // MARK: - forceAdvancedAuthentication access
+    //
+    // `SalesforceManager.forceAdvancedAuthentication` is deprecated (14.0, removed in 15.0). This
+    // dev-only toggle reaches the same backing storage through the non-deprecated
+    // `forceAdvancedAuthenticationInternal` accessor (the migration's Swift equivalent of upstream's
+    // `sdk_forceAdvancedAuthentication`), so it stays warning-free without deprecating this view's
+    // public API. Remove these helpers when the property is removed in 15.0.
+    private static func readForceAdvancedAuthentication() -> Bool {
+        SalesforceSDKManager.shared.forceAdvancedAuthenticationInternal
+    }
+
+    private static func writeForceAdvancedAuthentication(_ newValue: Bool) {
+        SalesforceSDKManager.shared.forceAdvancedAuthenticationInternal = newValue
     }
 }
 

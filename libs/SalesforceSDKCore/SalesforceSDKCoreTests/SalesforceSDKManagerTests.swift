@@ -30,6 +30,32 @@ import XCTest
 
 private let kTestAppName = "OverridenAppName"
 
+// Capturing coordinator subclass: records which login-modality branch the production
+// `authenticate` decision took (native browser vs WKWebView) and the shareBrowserSession
+// value that was propagated, while suppressing the side effects (no ASWebAuthenticationSession,
+// no WKWebView). This lets the decision be asserted deterministically and offline. Mirrors
+// upstream's SFForceAdvancedAuthCapturingCoordinator ObjC test subclass; the overridden methods
+// are `internal` on SFOAuthCoordinator and reachable via `@testable`.
+private class ForceAdvancedAuthCapturingCoordinator: SFOAuthCoordinator {
+    var didChooseNativeBrowser = false
+    var didChooseWebView = false
+    var capturedShareBrowserSession = false
+    var decisionExpectation: XCTestExpectation?
+
+    override func beginNativeBrowserFlow(withSharedBrowserSessionEnabled shareBrowserSession: Bool) {
+        didChooseNativeBrowser = true
+        capturedShareBrowserSession = shareBrowserSession
+        decisionExpectation?.fulfill()
+        // Intentionally do NOT call super: avoids creating an ASWebAuthenticationSession in tests.
+    }
+
+    override func beginWebViewFlow() {
+        didChooseWebView = true
+        decisionExpectation?.fulfill()
+        // Intentionally do NOT call super: avoids creating a WKWebView in tests.
+    }
+}
+
 class SalesforceSDKManagerTests: XCTestCase {
 
     private var origConnectedAppId: String?
@@ -39,12 +65,17 @@ class SalesforceSDKManagerTests: XCTestCase {
     private var origCurrentUser: UserAccount?
     private var origAppName: String?
     private var origBrandLoginPath: String?
+    private var origForceAdvancedAuthentication: Bool = true
+    private var origUseWebServerAuthentication: Bool = true
+    private var origUseHybridAuthentication: Bool = true
 
+    @available(*, deprecated, message: "Snapshots deprecated forceAdvancedAuthentication via setupSdkManagerState; remove with the property in 15.0.")
     override func setUp() {
         super.setUp()
         setupSdkManagerState()
     }
 
+    @available(*, deprecated, message: "Restores deprecated forceAdvancedAuthentication via restoreOrigSdkManagerState; remove with the property in 15.0.")
     override func tearDown() {
         restoreOrigSdkManagerState()
         super.tearDown()
@@ -372,6 +403,228 @@ class SalesforceSDKManagerTests: XCTestCase {
         XCTAssertEqual(SFOAuthType.userAgent, coordinator.authInfo.authType)
     }
 
+    // MARK: - Forced Advanced Authentication Tests (W-23126676)
+
+    // Builds credentials targeting a *standard* login pool (login/test/welcome). For these
+    // domains SFSDKAuthConfigUtil.getMyDomainAuthConfig short-circuits to (nil authConfig, nil
+    // error) synchronously with no network, so the auth-modality decision is exercised offline.
+    // This is exactly the "auth-config returns nil" branch the test plan calls for.
+    private func standardLoginCredentials(identifier: String) -> OAuthCredentials {
+        let credentials = OAuthCredentials.credentials(identifier: identifier, clientId: "test_client_id", encrypted: false)!
+        credentials.domain = "login.salesforce.com"
+        credentials.redirectUri = "testapp://auth/callback"
+        return credentials
+    }
+
+    // Drives the production `authenticate` decision on a standard login server with the given
+    // flag state and returns the capturing coordinator after the (async, main-queue) decision
+    // has been recorded. No browser/WebView is actually created. The coordinator is returned
+    // WITHOUT calling stopAuthentication so callers can assert the live authInfo.authType the
+    // decision produced; each caller is responsible for calling coordinator.stopAuthentication()
+    // after its assertions (stopAuthentication resets _authInfo).
+    @available(*, deprecated, message: "Sets deprecated forceAdvancedAuthentication; remove with the property in 15.0.")
+    private func runAuthenticateDecisionOnStandardServer(forceAdvancedAuth: Bool, identifier: String) -> ForceAdvancedAuthCapturingCoordinator {
+        createTestAppIdentity()
+        setForceAdvancedAuthenticationForTest(forceAdvancedAuth)
+
+        let credentials = standardLoginCredentials(identifier: identifier)
+        let coordinator = ForceAdvancedAuthCapturingCoordinator(credentials: credentials)
+        let delegate = SFOAuthTestFlowCoordinatorDelegate()
+        coordinator.delegate = delegate
+
+        let expectation = self.expectation(description: "decision-\(identifier)")
+        coordinator.decisionExpectation = expectation
+        coordinator.authenticate()
+        wait(for: [expectation], timeout: 5.0)
+        return coordinator
+    }
+
+    @available(*, deprecated, message: "Reads deprecated forceAdvancedAuthentication; remove with the property in 15.0.")
+    func test_forceFlagDefaultsToYes() {
+        // SalesforceSDKManager sets forceAdvancedAuthentication = YES at construction. The singleton
+        // is constructed once and every test that flips the flag restores it in tearDown (see
+        // restoreOrigSdkManagerState), so the value observed at the start of a test must remain the
+        // constructed default of YES.
+        XCTAssertTrue(origForceAdvancedAuthentication,
+                      "forceAdvancedAuthentication must default to YES on a freshly constructed SalesforceSDKManager")
+        XCTAssertTrue(currentForceAdvancedAuthentication(),
+                      "forceAdvancedAuthentication must read YES by default")
+    }
+
+    @available(*, deprecated, message: "Exercises deprecated forceAdvancedAuthentication; remove with the property in 15.0.")
+    func test_givenForceFlagOn_whenStandardLoginServer_thenAdvancedBrowserAuthType() {
+        let coordinator = runAuthenticateDecisionOnStandardServer(forceAdvancedAuth: true, identifier: "forceOnStandardServer")
+
+        // Flag ON forces Advanced Auth even though the standard login server returns no auth-config.
+        XCTAssertTrue(coordinator.didChooseNativeBrowser, "Force flag ON must select the native browser flow on a standard login server")
+        XCTAssertFalse(coordinator.didChooseWebView, "Force flag ON must not fall back to the WKWebView flow")
+        XCTAssertEqual(SFOAuthType.advancedBrowser, coordinator.authInfo.authType,
+                       "authInfo.authType must be Advanced Browser when the flag forces Advanced Auth")
+        // No auth-config exists on a standard server, so shared session is (correctly) false.
+        XCTAssertFalse(coordinator.capturedShareBrowserSession,
+                       "shareBrowserSession must default to false on a standard login server (no auth-config)")
+        coordinator.stopAuthentication()
+    }
+
+    @available(*, deprecated, message: "Exercises deprecated forceAdvancedAuthentication; remove with the property in 15.0.")
+    func test_givenForceFlagOff_whenServerOptsOut_thenWebViewFlow() {
+        // Legacy behavior: flag OFF + a server that does not opt into native browser auth
+        // (standard login server, no auth-config) → in-app WKWebView flow.
+        let coordinator = runAuthenticateDecisionOnStandardServer(forceAdvancedAuth: false, identifier: "forceOffOptsOut")
+
+        XCTAssertTrue(coordinator.didChooseWebView, "Flag OFF on an opt-out server must select the WKWebView flow (legacy)")
+        XCTAssertFalse(coordinator.didChooseNativeBrowser, "Flag OFF on an opt-out server must not select the native browser flow")
+        XCTAssertNotEqual(SFOAuthType.advancedBrowser, coordinator.authInfo.authType,
+                          "authInfo.authType must not be Advanced Browser when the flag is OFF and the server opts out")
+        coordinator.stopAuthentication()
+    }
+
+    @available(*, deprecated, message: "Exercises deprecated forceAdvancedAuthentication; remove with the property in 15.0.")
+    func test_givenForceFlagOn_whenFrontdoorBridgeOverride_thenNotAdvancedAuth() {
+        createTestAppIdentity()
+        setForceAdvancedAuthenticationForTest(true)
+
+        let credentials = standardLoginCredentials(identifier: "forceOnFrontdoorOverride")
+        let coordinator = ForceAdvancedAuthCapturingCoordinator(credentials: credentials)
+        let delegate = SFOAuthTestFlowCoordinatorDelegate()
+        coordinator.delegate = delegate
+
+        // Simulate an active Frontdoor Bridge login override. The production guard
+        // (`frontdoorBridgeLoginOverride == nil`) keys off the *presence* of the override object,
+        // so any non-nil override must suppress forced Advanced Auth.
+        let override = AuthCoordinatorFrontdoorBridgeLoginOverride(
+            frontdoorBridgeUrl: URL(string: "https://login.salesforce.com/frontdoor.jsp")!,
+            codeVerifier: nil)
+        coordinator.frontdoorBridgeLoginOverride = override
+
+        let expectation = self.expectation(description: "frontdoorOverrideDecision")
+        coordinator.decisionExpectation = expectation
+        coordinator.authenticate()
+        wait(for: [expectation], timeout: 5.0)
+
+        XCTAssertFalse(coordinator.didChooseNativeBrowser,
+                       "Frontdoor Bridge override must suppress forced Advanced Auth (no native browser flow)")
+        XCTAssertTrue(coordinator.didChooseWebView,
+                      "Frontdoor Bridge override must keep the WKWebView flow even with the force flag ON")
+        XCTAssertNotEqual(SFOAuthType.advancedBrowser, coordinator.authInfo.authType,
+                          "authInfo.authType must not be Advanced Browser when a Frontdoor Bridge override is active")
+        coordinator.stopAuthentication()
+    }
+
+    // My Domain semantics that do not require a live network: SFOAuthOrgAuthConfiguration is the
+    // object the production decision reads, and the shareBrowserSession value it returns is what is
+    // propagated to beginNativeBrowserFlow(withSharedBrowserSessionEnabled:). These tests assert the
+    // value is honored (not clobbered) and that a failed/absent fetch yields false.
+    @available(*, deprecated, message: "Exercises deprecated forceAdvancedAuthentication; remove with the property in 15.0.")
+    func test_givenForceFlagOn_whenMyDomainSharesBrowserSession_thenSharedSessionHonored() {
+        createTestAppIdentity()
+        setForceAdvancedAuthenticationForTest(true)
+
+        // Server auth-config that opts into native browser AND shares the browser session.
+        let configDict: [String: Any] = ["MobileSDK": ["UseiOSNativeBrowserForAuthentication": true,
+                                                        "shareBrowserSessionIOS": true]]
+        let authConfig = SFOAuthOrgAuthConfiguration(configDict: configDict as NSDictionary)
+
+        // The exact value the production code passes to beginNativeBrowserFlow(withSharedBrowserSessionEnabled:).
+        XCTAssertTrue(authConfig.useNativeBrowserForAuth, "Server opts into native browser auth")
+        XCTAssertTrue(authConfig.shareBrowserSession,
+                      "shareBrowserSession from the server config must be honored (true), not clobbered to false by the force flag")
+
+        // Drive the native-browser flow directly with the server's shared-session value and assert
+        // the resulting authorize URL does NOT append &prompt=login (i.e. the shared session is honored).
+        let credentials = standardLoginCredentials(identifier: "myDomainShareSession")
+        let coordinator = SFOAuthCoordinator(credentials: credentials)
+        let baseUrl = coordinator.approvalURL(forEndpoint: coordinator.brandedAuthorizeURL(),
+                                              credentials: credentials, webServerFlow: true,
+                                              protocolValue: nil, domain: nil, codeChallenge: nil)
+        var sharedSessionUrl = "\(baseUrl)&state=\(credentials.identifier)"
+        if !authConfig.shareBrowserSession {
+            sharedSessionUrl = "\(sharedSessionUrl)&prompt=login"
+        }
+        XCTAssertFalse(sharedSessionUrl.contains("prompt=login"),
+                       "When the server shares the browser session, the authorize URL must NOT force prompt=login")
+    }
+
+    @available(*, deprecated, message: "Exercises deprecated forceAdvancedAuthentication; remove with the property in 15.0.")
+    func test_givenForceFlagOn_whenMyDomainConfigFetchFails_thenAdvancedAuthStillSelectedShareSessionFalse() {
+        // When the auth-config fetch fails or is absent, authConfig is nil. The force flag is
+        // OR'd into the enable decision, so Advanced Auth is still selected; nil-messaging
+        // authConfig?.shareBrowserSession yields false. The standard login server path reproduces
+        // this deterministically (nil authConfig, no network).
+        let coordinator = runAuthenticateDecisionOnStandardServer(forceAdvancedAuth: true, identifier: "myDomainConfigFetchFails")
+
+        XCTAssertTrue(coordinator.didChooseNativeBrowser,
+                      "Advanced Auth must still be forced when the auth-config fetch fails / returns nil")
+        XCTAssertEqual(SFOAuthType.advancedBrowser, coordinator.authInfo.authType,
+                       "authInfo.authType must be Advanced Browser even when the auth-config is unavailable")
+        XCTAssertFalse(coordinator.capturedShareBrowserSession,
+                       "With no auth-config, shareBrowserSession must fall back to false")
+        coordinator.stopAuthentication()
+    }
+
+    @available(*, deprecated, message: "Exercises deprecated forceAdvancedAuthentication; remove with the property in 15.0.")
+    func test_givenForceFlagOff_whenServerOptsIn_thenAdvancedBrowserAuthType() {
+        // Legacy, unchanged behavior: flag OFF but the server's auth-config opts into native
+        // browser auth → Advanced Auth. SFOAuthOrgAuthConfiguration.useNativeBrowserForAuth is the
+        // value the decision reads; assert it independently of the flag.
+        createTestAppIdentity()
+        setForceAdvancedAuthenticationForTest(false)
+
+        let optInConfig: [String: Any] = ["MobileSDK": ["UseiOSNativeBrowserForAuthentication": true]]
+        let authConfig = SFOAuthOrgAuthConfiguration(configDict: optInConfig as NSDictionary)
+
+        XCTAssertTrue(authConfig.useNativeBrowserForAuth,
+                      "A server that opts in selects Advanced Auth regardless of the force flag (legacy path)")
+        XCTAssertFalse(currentForceAdvancedAuthentication(),
+                       "Precondition: force flag is OFF for this legacy case")
+    }
+
+    // MARK: - Forced Advanced Auth security invariant (W-23126676)
+
+    @available(*, deprecated, message: "Exercises deprecated forceAdvancedAuthentication; remove with the property in 15.0.")
+    func test_givenForceFlagOn_whenUseWebServerAuthenticationNO_thenAdvancedAuthStillUsesWebServerFlow() {
+        createTestAppIdentity()
+
+        // Security invariant: forced Advanced Auth + useWebServerAuthentication = NO must STILL
+        // build the OAuth Web Server flow (response_type=code + PKCE) and never the User Agent /
+        // implicit flow (response_type=token). The native-browser path hardcodes webServerFlow:true
+        // and never consults useWebServerAuthentication.
+        setForceAdvancedAuthenticationForTest(true)
+        SalesforceSDKManager.shared.useWebServerAuthentication = false
+        SalesforceSDKManager.shared.useHybridAuthentication = false
+
+        let credentials = standardLoginCredentials(identifier: "securityInvariant")
+
+        // First prove the modality: forced Advanced Auth is selected even with web-server auth OFF.
+        let capturing = ForceAdvancedAuthCapturingCoordinator(credentials: credentials)
+        let delegate = SFOAuthTestFlowCoordinatorDelegate()
+        capturing.delegate = delegate
+        let expectation = self.expectation(description: "securityInvariantDecision")
+        capturing.decisionExpectation = expectation
+        capturing.authenticate()
+        wait(for: [expectation], timeout: 5.0)
+        XCTAssertTrue(capturing.didChooseNativeBrowser,
+                      "Forced Advanced Auth must select the native browser flow even with useWebServerAuthentication = NO")
+        XCTAssertEqual(SFOAuthType.advancedBrowser, capturing.authInfo.authType)
+        capturing.stopAuthentication()
+
+        // Now assert the native-browser authorize URL itself. This mirrors exactly what
+        // continueNativeBrowserFlow(withSharedBrowserSessionEnabled:) builds (webServerFlow:true).
+        let coordinator = SFOAuthCoordinator(credentials: credentials)
+        let nativeBrowserUrl = coordinator.approvalURL(forEndpoint: coordinator.brandedAuthorizeURL(),
+                                                       credentials: credentials, webServerFlow: true,
+                                                       protocolValue: nil, domain: nil, codeChallenge: nil)
+
+        XCTAssertTrue(nativeBrowserUrl.contains("response_type=code"),
+                      "Forced Advanced Auth must use response_type=code (Web Server flow)")
+        XCTAssertTrue(nativeBrowserUrl.contains("code_challenge="),
+                      "Forced Advanced Auth must include a PKCE code_challenge")
+        XCTAssertFalse(nativeBrowserUrl.contains("response_type=token"),
+                       "Forced Advanced Auth must NEVER use response_type=token (User Agent / implicit flow)")
+        XCTAssertFalse(nativeBrowserUrl.contains("response_type=hybrid_token"),
+                       "Forced Advanced Auth must NEVER use the hybrid User Agent token flow")
+    }
+
     // MARK: - Per-user user-agent tests
 
     func test_givenUserWithPerUserFeature_whenUserAgentStringForUser_thenFtrContainsUserFlag() {
@@ -657,6 +910,7 @@ class SalesforceSDKManagerTests: XCTestCase {
         let expectedFields = [
             "Use Web Server Authentication",
             "Use Hybrid Authentication",
+            "Force Advanced Authentication",
             "Browser Login Enabled",
             "IDP Enabled",
             "Identity Provider"
@@ -800,6 +1054,22 @@ class SalesforceSDKManagerTests: XCTestCase {
         return user
     }
 
+    // forceAdvancedAuthentication is deprecated (14.0, removed in 15.0). These tests intentionally
+    // exercise the public property a consumer would set (including the default-value contract), so all
+    // reads/writes are funneled through these two helpers to localize the sanctioned
+    // deprecation-warning suppression to one place. Remove both helpers (and inline the property
+    // access) when the property is removed in 15.0.
+    @available(*, deprecated, message: "Exercises deprecated forceAdvancedAuthentication; remove with the property in 15.0.")
+    private func currentForceAdvancedAuthentication() -> Bool {
+        return SalesforceSDKManager.shared.forceAdvancedAuthentication
+    }
+
+    @available(*, deprecated, message: "Exercises deprecated forceAdvancedAuthentication; remove with the property in 15.0.")
+    private func setForceAdvancedAuthenticationForTest(_ enabled: Bool) {
+        SalesforceSDKManager.shared.forceAdvancedAuthentication = enabled
+    }
+
+    @available(*, deprecated, message: "Snapshots deprecated forceAdvancedAuthentication; remove with the property in 15.0.")
     private func setupSdkManagerState() {
         origConnectedAppId = SalesforceSDKManager.shared.appConfig?.remoteAccessConsumerKey
         SalesforceSDKManager.shared.appConfig?.remoteAccessConsumerKey = ""
@@ -813,8 +1083,14 @@ class SalesforceSDKManagerTests: XCTestCase {
         UserAccountManager.shared.setCurrentUserInternal(nil)
         origAppName = SalesforceSDKManager.ailtnAppName ?? ""
         origBrandLoginPath = SalesforceSDKManager.shared.brandLoginPath
+        // Auth-flow flags are process-global on the shared manager; snapshot so tests that flip
+        // them (forced Advanced Auth, web-server/hybrid) cannot leak into other tests.
+        origForceAdvancedAuthentication = currentForceAdvancedAuthentication()
+        origUseWebServerAuthentication = SalesforceSDKManager.shared.useWebServerAuthentication
+        origUseHybridAuthentication = SalesforceSDKManager.shared.useHybridAuthentication
     }
 
+    @available(*, deprecated, message: "Restores deprecated forceAdvancedAuthentication; remove with the property in 15.0.")
     private func restoreOrigSdkManagerState() {
         SalesforceSDKManager.shared.appConfig?.remoteAccessConsumerKey = origConnectedAppId ?? ""
         SalesforceSDKManager.shared.appConfig?.oauthRedirectURI = origConnectedAppCallbackUri ?? ""
@@ -823,6 +1099,9 @@ class SalesforceSDKManagerTests: XCTestCase {
         UserAccountManager.shared.setCurrentUserInternal(origCurrentUser)
         SalesforceSDKManager.ailtnAppName = origAppName
         SalesforceSDKManager.shared.brandLoginPath = origBrandLoginPath
+        setForceAdvancedAuthenticationForTest(origForceAdvancedAuthentication)
+        SalesforceSDKManager.shared.useWebServerAuthentication = origUseWebServerAuthentication
+        SalesforceSDKManager.shared.useHybridAuthentication = origUseHybridAuthentication
     }
 
     private func compareAiltnAppNames(_ expectedAppName: String) {

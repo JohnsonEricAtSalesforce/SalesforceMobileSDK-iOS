@@ -242,10 +242,14 @@ public class SFOAuthCoordinator: NSObject, WKNavigationDelegate, WKUIDelegate {
                 SFSDKAuthConfigUtil.getMyDomainAuthConfig({ [weak self] authConfig, _ in
                     guard let self = self else { return }
                     DispatchQueue.main.async {
-                        if self.frontdoorBridgeLoginOverride == nil && (authConfig?.useNativeBrowserForAuth ?? false) {
+                        if self.frontdoorBridgeLoginOverride == nil &&
+                            ((authConfig?.useNativeBrowserForAuth ?? false) ||
+                             SalesforceSDKManager.shared.forceAdvancedAuthenticationInternal) {
                             SFSDKAppFeatureMarkers.registerAppFeature(kSFAppFeatureSafariBrowserForLogin)
                             self.authInfo = SFOAuthInfo(authType: .advancedBrowser)
                             self.notifyDelegateOfBeginAuthentication()
+                            // shareBrowserSession is honored for My Domain; nil-messaging yields false
+                            // for standard servers, which is the correct default there.
                             self.beginNativeBrowserFlow(withSharedBrowserSessionEnabled: authConfig?.shareBrowserSession ?? false)
                         } else {
                             SFSDKAppFeatureMarkers.unregisterAppFeature(kSFAppFeatureSafariBrowserForLogin)
@@ -382,7 +386,10 @@ public class SFOAuthCoordinator: NSObject, WKNavigationDelegate, WKUIDelegate {
         }
     }
 
-    private func beginNativeBrowserFlow(withSharedBrowserSessionEnabled shareBrowserSession: Bool) {
+    // internal (not private) so `@testable` capturing subclasses can override the login-modality
+    // branch to assert the forced-advanced-auth decision offline (mirrors upstream's ObjC test
+    // category over the same method). Not part of the public API.
+    func beginNativeBrowserFlow(withSharedBrowserSessionEnabled shareBrowserSession: Bool) {
         if delegate?.responds(to: #selector(SFOAuthCoordinatorDelegate.oauthCoordinator(_:willBeginBrowserAuthentication:))) ?? false {
             delegate?.oauthCoordinator?(self, willBeginBrowserAuthentication: { [weak self] proceed in
                 if proceed {
@@ -632,7 +639,9 @@ public class SFOAuthCoordinator: NSObject, WKNavigationDelegate, WKUIDelegate {
         return approvalURL(forEndpoint: brandedAuthorizeURL(), credentials: credentials, webServerFlow: useBrowserAuth || SalesforceSDKManager.shared.useWebServerAuthentication, protocolValue: nil, domain: nil, codeChallenge: nil)
     }
 
-    private func approvalURL(forEndpoint authorizeEndpoint: String, credentials creds: OAuthCredentials?, webServerFlow: Bool, protocolValue: String?, domain: String?, codeChallenge: String?) -> String {
+    // internal (not private) so `@testable` tests can assert the native-browser authorize URL
+    // (webServerFlow:true) directly, mirroring upstream's ObjC test category. Not public API.
+    func approvalURL(forEndpoint authorizeEndpoint: String, credentials creds: OAuthCredentials?, webServerFlow: Bool, protocolValue: String?, domain: String?, codeChallenge: String?) -> String {
         let proto = protocolValue ?? creds?.protocol ?? "https"
         let dom = domain ?? creds?.domain ?? ""
 
@@ -695,7 +704,9 @@ public class SFOAuthCoordinator: NSObject, WKNavigationDelegate, WKUIDelegate {
         authenticate()
     }
 
-    private func brandedAuthorizeURL() -> String {
+    // internal (not private) so `@testable` tests can build the native-browser authorize URL to
+    // assert the forced-advanced-auth PKCE / response_type invariant. Not public API.
+    func brandedAuthorizeURL() -> String {
         var brandedUrl = kSFOAuthEndPointAuthorize
         if !brandLoginPath.isEmpty && !brandLoginPath.sfsdk_isEmptyOrWhitespaceAndNewlines() {
             var path = brandLoginPath

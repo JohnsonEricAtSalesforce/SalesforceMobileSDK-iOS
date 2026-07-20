@@ -188,8 +188,34 @@ Pre-approved gates (still PR-flag, do NOT re-ask): SQLCipher #4096; Localizable.
   2 new/changed test files wired into the SDKCore target. No live-org dependency. SDKCore builds green (0 new
   warnings); 13 tests pass. Escalation = OAuth error-handling surface — flag in PR.
 
+- **Unit 39 · #4093 · `a2c4ee4d5` — PUBLIC API deprecation + advanced-auth default flip + login-UI + L10n.**
+  Makes browser-based **Advanced Authentication the default for interactive login** (previously used only when
+  the server's My Domain auth-config opted in), and **deprecates** the public toggle that gated it.
+  **New default behavior:** on a standard login server (login/test.salesforce.com), first-time interactive login
+  now launches the native browser (ASWebAuthenticationSession) instead of the in-app WKWebView. A Frontdoor Bridge
+  login override still suppresses it; refresh-token, JWT, native-login, and shared-session (My Domain) paths are
+  unchanged. Security invariant preserved and test-locked: forced Advanced Auth **always** builds the OAuth Web
+  Server flow (`response_type=code` + PKCE), never the implicit/`response_type=token` flow, regardless of
+  `useWebServerAuthentication`. **Public API deprecation:** `SalesforceManager.forceAdvancedAuthentication`
+  (`@objc`, deprecate MSDK 14.0 → remove 15.0, `@available(*, deprecated)`), backed by a non-deprecated internal
+  accessor (`forceAdvancedAuthenticationInternal`, default `true`) so internal SDK reads/writes stay warning-free —
+  the Swift equivalent of upstream's `sdk_forceAdvancedAuthentication`, mirroring the migration's existing
+  `showAuthWindowWhileLoading` precedent. **Login-UI:** in the forced-advanced-auth path (where SFLoginViewController
+  is never created), the login-host list becomes a standalone login screen (`presentedAsLoginScreen`) that surfaces
+  the back button and the dev-only gear / "Login Options" menu formerly owned by SFLoginViewController; new
+  `LoginHostDelegate.hostListViewControllerDidChangeLoginOptions` restarts auth so changed options take effect.
+  **L10n:** new `LOGIN_OPTIONS_FORCE_ADVANCED_AUTH` string (en.lproj, **pre-approved gate**). **Reviewer notes:**
+  (1) all changes land in the compiled Swift twins (SalesforceSDKManager/SFOAuthCoordinator/SFSDKLoginHostListViewController/
+  SFUserAccountManager); de-ref `.m`/`.h` ref-synced (verbatim where matched, surgical otherwise); four migration
+  tombstone/stub headers have no compiled region (documented in the ledger). (2) Three `SFOAuthCoordinator` helpers
+  (`beginNativeBrowserFlow`, `approvalURL`, `brandedAuthorizeURL`) were relaxed `private`→`internal` for `@testable`
+  test access — mirroring upstream's ObjC test category and the migration's already-`internal` `beginWebViewFlow`/
+  `generateApprovalUrlString`; **no new public API**. (3) Two ObjC test files ported to their Swift twins; all
+  deprecated-property-touching test code is `@available(*, deprecated)`-guarded → zero deprecation warnings.
+  SDKCore/SmartStore/MobileSync build green (0 new warnings in diff); 135 SDKCore tests across the 5 touched classes
+  pass (25 new). Escalation = public-API deprecation + advanced-auth default behavior flip + login-UI + L10n — flag in PR.
+
 ## Pending escalation units (upcoming — port in order)
-- **39 · #4093 — PUBLIC API + advanced-auth default flip + L10n(pre-appr):** make advanced-auth the default & deprecate `forceAdvancedAuthentication`; 24 files incl. Localizable.strings.
 - **40 · #4088 — login-host + L10n(pre-appr):** invalid login-host recovery; Localizable.strings.
 - **42 · #4096 — dependency bump (gate PRE-APPROVED):** SQLCipher 4.16 → 4.17 (SmartStore.podspec, mobilesdk_pods.rb).
 - **43 · #4098 — OAuth/scene:** nil-sceneId crash fix on advanced-auth browser callback.

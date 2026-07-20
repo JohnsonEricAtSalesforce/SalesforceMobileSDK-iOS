@@ -36,6 +36,21 @@ public class LoginHostListViewController: UITableViewController, UINavigationCon
     @objc public weak var delegate: LoginHostDelegate?
     @objc public var hidesCancelButton: Bool = false
     @objc public var hidesAddButton: Bool = false
+
+    /// Marks this host list as a standalone login screen rather than a sub-sheet of another login
+    /// screen. This is the case in the forced-advanced-auth path, where the host list is the screen
+    /// the user lands on and SFLoginViewController (which would otherwise own this chrome) is never
+    /// created.
+    ///
+    /// When set, this screen takes on the chrome that normally lives on SFLoginViewController: the
+    /// navigation-bar back button (shown when there is an account or flow to return to) and the
+    /// dev-only gear / "Login Options" menu. The two are gated independently — the back button by
+    /// the account/flow logic in `shouldShowBackButton()`, the gear by dev-support being enabled —
+    /// this flag only distinguishes the standalone-screen role from the sub-sheet role.
+    ///
+    /// Defaults to `false` so the transient "Choose Connection" sub-sheet and the IdP flow, which
+    /// are presented on top of a screen that already owns this chrome, are unaffected.
+    @objc public var presentedAsLoginScreen: Bool = false
     @objc public var config: SFSDKViewControllerConfig?
 
     // MARK: - Private helpers
@@ -99,13 +114,28 @@ public class LoginHostListViewController: UITableViewController, UINavigationCon
     }
 
     public override func viewDidLoad() {
+        // Right bar buttons. In the forced-advanced-auth path the gear / "Login Options" menu
+        // is shown alongside the Add button (matching the in-app login screen). The 'Add Server'
+        // button is shown only if the MDM policy allows it.
+        var rightItems: [UIBarButtonItem] = []
+        if let settingsButton = loginOptionsButton() {
+            rightItems.append(settingsButton)
+        }
         let managedPreferences = SFManagedPreferences.sharedPreferences
         if !(managedPreferences.hasManagedPreferences && managedPreferences.onlyShowAuthorizedHosts) && !hidesAddButton {
-            navigationItem.rightBarButtonItem = UIBarButtonItem(barButtonSystemItem: .add, target: self, action: #selector(showAddLoginHost(_:)))
+            rightItems.append(UIBarButtonItem(barButtonSystemItem: .add, target: self, action: #selector(showAddLoginHost(_:))))
+        }
+        if !rightItems.isEmpty {
+            navigationItem.rightBarButtonItems = rightItems
         }
         title = SFSDKResourceUtils.localizedString("LOGIN_CHOOSE_SERVER")
         navigationItem.backBarButtonItem = UIBarButtonItem(title: "", style: .plain, target: nil, action: nil)
-        if !hidesCancelButton {
+
+        // Left bar button. In the forced-advanced-auth path the back button replaces Cancel when
+        // there is an account to return to (matching the WebView screen); otherwise Cancel is used.
+        if presentedAsLoginScreen && shouldShowBackButton() {
+            navigationItem.leftBarButtonItem = createBackButton()
+        } else if !hidesCancelButton {
             navigationItem.leftBarButtonItem = UIBarButtonItem(barButtonSystemItem: .cancel, target: self, action: #selector(cancelLoginPicker(_:)))
         }
 
@@ -151,6 +181,90 @@ public class LoginHostListViewController: UITableViewController, UINavigationCon
         delegateDidCancelLoginHost()
     }
 
+    @objc private func backToPreviousHost(_ sender: Any?) {
+        handleBackButtonAction()
+    }
+
+    // MARK: - Forced Advanced Auth Chrome
+    // The back button and gear / "Login Options" menu below mirror SFLoginViewController. They are
+    // added when presentedAsLoginScreen is set, i.e. when the host list is the screen the user lands
+    // on in the forced-advanced-auth path (SFLoginViewController is never created there). The two are
+    // gated independently: the back button by shouldShowBackButton() (account/flow state), the gear
+    // by dev support. presentedAsLoginScreen only gates whether this screen owns that chrome at all.
+
+    /// Mirrors SFLoginViewController.shouldShowBackButton(): shows the back button when there is an
+    /// account to return to, or when an idp / web-auth-fallback flow is in progress.
+    @objc public func shouldShowBackButton() -> Bool {
+        if BiometricAuthenticationManagerInternal.shared.locked {
+            return false
+        }
+
+        let accountManager = UserAccountManager.shared
+        if presentedAsLoginScreen,
+           let loginConfig = config as? SalesforceLoginViewControllerConfig,
+           loginConfig.shouldDisplayBackButton {
+            return true
+        }
+        if accountManager.isIDPEnabled || accountManager.shouldFallbackToWebAuthentication {
+            return true
+        }
+        let totalAccounts = accountManager.userAccounts()?.count ?? 0
+        return totalAccounts > 0 && accountManager.currentUserAccount != nil
+    }
+
+    @objc public func createBackButton() -> UIBarButtonItem {
+        let image = SFSDKResourceUtils.imageNamed("globalheader-back-arrow")?.withRenderingMode(.alwaysTemplate)
+        return UIBarButtonItem(image: image, style: .plain, target: self, action: #selector(backToPreviousHost(_:)))
+    }
+
+    /// Mirrors SFLoginViewController.handleBackButtonAction(): stops the in-flight auth and dismisses
+    /// the auth window so the user returns to the account list.
+    @objc public func handleBackButtonAction() {
+        let scene = view.window?.windowScene
+        let accountManager = UserAccountManager.shared
+        accountManager.stopCurrentAuthentication(nil)
+
+        if accountManager.shouldFallbackToWebAuthentication {
+            accountManager.shouldFallbackToWebAuthentication = false
+            _ = accountManager.loginWithCompletion(nil, failure: nil)
+        }
+
+        if !accountManager.isIDPEnabled {
+            SFSDKWindowManager.shared.authWindow(scene).viewController?.presentedViewController?.dismiss(animated: false) {
+                SFSDKWindowManager.shared.authWindow(scene).dismissWindow()
+            }
+        } else {
+            SFSDKWindowManager.shared.authWindow(scene).viewController?.dismiss(animated: false, completion: nil)
+        }
+    }
+
+    /// Builds the gear menu hosting the debug-only "Login Options" entry. Returns nil unless this is
+    /// the forced-advanced-auth host list and dev support is enabled; the menu's only purpose here is
+    /// to surface Login Options (the WebView-specific clear-cookies/cache/reload actions do not apply
+    /// to the host list, where no in-app WebView is shown).
+    @objc public func loginOptionsButton() -> UIBarButtonItem? {
+        guard presentedAsLoginScreen, SalesforceSDKManager.shared.isDevSupportEnabled else {
+            return nil
+        }
+
+        let image = SFSDKResourceUtils.imageNamed("login-window-gear")?.withRenderingMode(.alwaysTemplate)
+        let loginOptions = UIAction(title: SFSDKResourceUtils.localizedString("LOGIN_OPTIONS"), image: nil, identifier: nil) { [weak self] _ in
+            guard let self = self else { return }
+            let configPicker = LoginOptionsViewController.makeViewController {
+                self.dismiss(animated: true) {
+                    self.delegateDidChangeLoginOptions()
+                }
+            }
+            self.present(configPicker, animated: true, completion: nil)
+        }
+
+        let menu = UIMenu(title: "", children: [loginOptions])
+        let settingsButton = UIBarButtonItem(image: image, menu: menu)
+        settingsButton.accessibilityLabel = SFSDKResourceUtils.localizedString("LOGIN_SETTINGS_BUTTON")
+        settingsButton.accessibilityIdentifier = "settings"
+        return settingsButton
+    }
+
     // MARK: - Delegate wrappers
 
     private func delegateDidAddLoginHost() {
@@ -163,6 +277,10 @@ public class LoginHostListViewController: UITableViewController, UINavigationCon
 
     private func delegateDidCancelLoginHost() {
         delegate?.hostListViewControllerDidCancelLoginHost?(self)
+    }
+
+    private func delegateDidChangeLoginOptions() {
+        delegate?.hostListViewControllerDidChangeLoginOptions?(self)
     }
 
     // MARK: - UITableViewDataSource

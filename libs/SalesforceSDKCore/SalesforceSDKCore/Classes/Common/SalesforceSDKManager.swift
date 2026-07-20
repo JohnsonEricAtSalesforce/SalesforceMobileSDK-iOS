@@ -352,6 +352,26 @@ open class SalesforceSDKManager: NSObject {
     @objc public var useEphemeralSessionForAdvancedAuth: Bool = true
     @objc public var useWebServerAuthentication: Bool = true
     @objc public var useHybridAuthentication: Bool = true
+
+    /// Non-deprecated internal backing for the deprecated public `forceAdvancedAuthentication`
+    /// property. Internal SDK code (e.g. SFOAuthCoordinator, the dev-info dump) reads/writes the
+    /// flag through this accessor so its own use does not trip a deprecation warning. This is the
+    /// Swift equivalent of upstream's `sdk_forceAdvancedAuthentication` accessor in
+    /// SalesforceSDKManager+Internal.h. Delete alongside the public property in 15.0. Defaults to
+    /// `true` (Advanced Authentication is the default).
+    var forceAdvancedAuthenticationInternal: Bool = true
+
+    /// Whether Advanced Authentication (browser-based OAuth) should always be used for interactive
+    /// login, regardless of the target server's My Domain auth-configuration. When `true` (the
+    /// default), Advanced Auth is used even on standard login servers such as login.salesforce.com.
+    /// When `false`, Advanced Auth is used only when the server's My Domain auth-configuration opts
+    /// into it (legacy behavior). Defaults to `true`.
+    @available(*, deprecated, message: "Advanced Authentication is becoming mandatory; this flag will be removed in Salesforce Mobile SDK 15.0.")
+    @objc public var forceAdvancedAuthentication: Bool {
+        get { forceAdvancedAuthenticationInternal }
+        set { forceAdvancedAuthenticationInternal = newValue }
+    }
+
     @objc public var blockSalesforceIntegrationUser: Bool = false
     @objc public var customDomainInferencePattern: NSRegularExpression?
 
@@ -436,7 +456,13 @@ open class SalesforceSDKManager: NSObject {
         var actions: [DevAction] = []
         let userAccountManager = UserAccountManager.shared
         let currentUser = userAccountManager.currentUserAccount
-        let isShowingLogin = presentedViewController is SalesforceLoginViewController
+        // Check if we're showing a login screen. This is the in-app WebView screen
+        // (SalesforceLoginViewController) or, in the forced-advanced-auth path where
+        // SalesforceLoginViewController is never created, the host list
+        // (LoginHostListViewController) the user lands on.
+        let isShowingWebViewLogin = presentedViewController is SalesforceLoginViewController
+        let isShowingHostList = (presentedViewController as? LoginHostListViewController)?.presentedAsLoginScreen ?? false
+        let isShowingLogin = isShowingWebViewLogin || isShowingHostList
 
         actions.append(DevAction(name: "Show dev info") {
             let devInfo = DevInfoViewController.makeViewController()
@@ -447,8 +473,11 @@ open class SalesforceSDKManager: NSObject {
             actions.append(DevAction(name: "Login Options") {
                 let configPicker = LoginOptionsViewController.makeViewController {
                     presentedViewController.dismiss(animated: true) {
+                        // Restart authentication with the updated configuration
                         if let loginVC = presentedViewController as? SalesforceLoginViewController {
                             UserAccountManager.shared.restartAuthenticationForViewController(loginVC, recreateAuthRequest: true)
+                        } else if let hostListVC = presentedViewController as? LoginHostListViewController {
+                            UserAccountManager.shared.hostListViewControllerDidChangeLoginOptions(hostListVC)
                         }
                     }
                 }
@@ -499,6 +528,7 @@ open class SalesforceSDKManager: NSObject {
         devInfos.append(contentsOf: [
             "Use Web Server Authentication", useWebServerAuthentication ? "YES" : "NO",
             "Use Hybrid Authentication", useHybridAuthentication ? "YES" : "NO",
+            "Force Advanced Authentication", forceAdvancedAuthenticationInternal ? "YES" : "NO",
             "Browser Login Enabled", UserAccountManager.shared.usesAdvancedAuthentication ? "YES" : "NO",
             "IDP Enabled", idpEnabled ? "YES" : "NO",
             "Identity Provider", isIdentityProvider ? "YES" : "NO"

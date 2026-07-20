@@ -1007,6 +1007,11 @@ extension UserAccountManager: SFOAuthCoordinatorDelegate {
             hostListViewController.delegate = self
             let controller = SFSDKNavigationController(rootViewController: hostListViewController)
             hostListViewController.hidesCancelButton = true
+            // This is the screen the user lands on in the forced-advanced-auth path (e.g. after
+            // cancelling the browser), where SFLoginViewController is never created. Mark it as the
+            // standalone login screen so it surfaces the back button and gear / "Login Options"
+            // menu that would otherwise live on SFLoginViewController.
+            hostListViewController.presentedAsLoginScreen = true
             controller.modalPresentationStyle = .fullScreen
 
             let authWindow = SFSDKWindowManager.shared.authWindow(authSession.oauthRequest.scene)
@@ -1160,6 +1165,17 @@ extension UserAccountManager: LoginHostDelegate {
 
     public func hostListViewControllerDidAddLoginHost(_ hostListViewController: LoginHostListViewController) {
         loginHostSelected(hostListViewController)
+    }
+
+    public func hostListViewControllerDidChangeLoginOptions(_ hostListViewController: LoginHostListViewController) {
+        // Reached from the host list's gear menu in the forced-advanced-auth path. Recreate the
+        // auth request and restart so changed login options (e.g. forceAdvancedAuthentication) take
+        // effect, mirroring loginViewControllerDidChangeLoginOptions on the WebView screen.
+        if let sceneId = hostListViewController.view.window?.windowScene?.session.persistentIdentifier,
+           let session = authSessions[sceneId] as? SFSDKAuthSession {
+            session.oauthRequest = defaultAuthRequest(withLoginHost: session.oauthRequest.loginHost)
+            restartAuthentication(session)
+        }
     }
 
     private func loginHostSelected(_ hostListViewController: LoginHostListViewController) {
