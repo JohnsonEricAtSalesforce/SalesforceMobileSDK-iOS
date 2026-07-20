@@ -106,6 +106,15 @@ Pre-approved gates (still PR-flag, do NOT re-ask): SQLCipher #4096; Localizable.
   intentionally omitted (target class is now Swift; the helper is reachable via `@testable`). 44/44 new+touched
   tests pass; no live-org dependency.
 
+- **Unit 33 · #4089 · `3379fb272` — build-system / CI.** When a PR touches `native/SampleApps/AuthFlowTester/`,
+  run the full AuthFlowTester UI test suite instead of the single fixed PR smoke test. Danger `TestOrchestrator.rb`
+  now emits a `run_all_ui_tests` job output (true when any AuthFlowTester file is modified/added); `pr.yaml` threads
+  that output into the reusable UI-test workflow call; `reusable-ui-test-workflow.yaml` gains a `run_all_ui_tests`
+  boolean input that gates the fixed-`pr_test` step off and a new full-suite `xcodebuild test` step on (archive-logs
+  condition widened to cover both step ids). **Reviewer note:** CI-config only — no library or app code touched,
+  nothing compiled; all three files byte-match the upstream post-image. Escalation = CI-config (pre-approved in the
+  Phase-0 batch; still PR-flagged here).
+
 ## Pending escalation units (upcoming — port in order)
 - **35 · #4086 — feature-flags + podspec + multi-lib:** per-user feature flags across Core/MobileSync/SmartStore + SalesforceSDKCore.podspec.
 - **36 · #4091 — thread-safety:** notification-types thread safety on SFUserAccount.
