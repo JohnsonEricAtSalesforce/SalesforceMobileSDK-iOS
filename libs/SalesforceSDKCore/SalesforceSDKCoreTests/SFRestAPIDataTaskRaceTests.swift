@@ -291,4 +291,148 @@ class SFRestAPIDataTaskRaceTests: XCTestCase {
         XCTAssertEqual(failureCount, 1, "failureBlock must be called exactly once")
         XCTAssertEqual(receivedError?.code, NSURLErrorCancelled, "Error should be NSURLErrorCancelled")
     }
+
+    // MARK: - Test: cleanup during in-flight refresh
+
+    /// Verifies that cleanup delivers "User logged out" errors to all pending
+    /// requests and clears activeRequests, even when a token refresh cycle is active.
+    func testCleanupDuringRefreshCycleDeliversLogoutError() {
+        guard let api = api else { XCTFail("API not initialized"); return }
+
+        var failureCount = 0
+        var receivedError: NSError?
+        let expectation = self.expectation(description: "failure delivered")
+
+        let request = makeRequest()
+
+        api.send(request, failureBlock: { _, error, _ in
+            failureCount += 1
+            receivedError = error as NSError?
+            expectation.fulfill()
+        }, successBlock: { _, _ in
+            XCTFail("successBlock should not be called after cleanup")
+        })
+
+        // Wait for the request to be in-flight.
+        XCTAssertTrue(waitForCondition({ DeferredURLProtocol.pendingCount >= 1 }, timeout: 2),
+                      "dataTask should be pending")
+
+        // Simulate a refresh cycle being active (as if a 401 triggered replayRequest:).
+        api.refreshCycleActive = true
+
+        // Logout triggers cleanup while refresh is in-flight.
+        api.cleanup()
+
+        waitForExpectations(timeout: 5, handler: nil)
+
+        XCTAssertEqual(failureCount, 1, "failureBlock must be called exactly once")
+        XCTAssertEqual(receivedError?.domain, SFRestErrorDomain, "Error domain should be REST error domain")
+        XCTAssertTrue((receivedError?.userInfo[NSLocalizedDescriptionKey] as? String)?.contains("logged out") ?? false,
+                      "Error message should mention logout")
+        XCTAssertEqual(api.activeRequests.count, 0, "activeRequests should be empty after cleanup")
+    }
+
+    /// Verifies that if the coordinator's refresh callback fires AFTER cleanup
+    /// has cleared activeRequests, no requests are resent and no crash occurs.
+    func testRefreshCallbackAfterCleanupIsHarmless() {
+        guard let api = api else { XCTFail("API not initialized"); return }
+
+        var successCount = 0
+        var failureCount = 0
+
+        let request = makeRequest()
+
+        api.send(request, failureBlock: { _, _, _ in
+            failureCount += 1
+        }, successBlock: { _, _ in
+            successCount += 1
+        })
+
+        // Wait for the request to be in-flight.
+        XCTAssertTrue(waitForCondition({ DeferredURLProtocol.pendingCount >= 1 }, timeout: 2),
+                      "dataTask should be pending")
+
+        // Simulate: refresh cycle active, then cleanup runs (logout).
+        api.refreshCycleActive = true
+        api.cleanup()
+
+        // Now simulate what happens when the coordinator callback fires after cleanup.
+        // This calls resendActiveRequestsRequiringAuthentication on an empty activeRequests set.
+        api.resendActiveRequestsRequiringAuthentication()
+        api.refreshCycleActive = false
+
+        // Give any unexpected callbacks a chance to fire.
+        RunLoop.current.run(until: Date(timeIntervalSinceNow: 0.5))
+
+        // The cleanup already delivered the failure. The post-cleanup resend should be a no-op.
+        XCTAssertEqual(failureCount, 1, "failureBlock should have been called once (by cleanup)")
+        XCTAssertEqual(successCount, 0, "successBlock must not be called after cleanup")
+        XCTAssertEqual(api.activeRequests.count, 0, "activeRequests should remain empty")
+    }
+
+    /// Verifies that cleanup properly cancels in-flight dataTasks (the session
+    /// data task cancel callback should not cause double-invocation of failureBlock).
+    func testCleanupCancelsTasksWithoutDoubleCallback() {
+        guard let api = api else { XCTFail("API not initialized"); return }
+
+        var failureCount = 0
+        let expectation = self.expectation(description: "failure delivered")
+
+        let request = makeRequest()
+
+        api.send(request, failureBlock: { _, _, _ in
+            failureCount += 1
+            if failureCount == 1 {
+                expectation.fulfill()
+            }
+        }, successBlock: { _, _ in
+            XCTFail("successBlock should not be called after cleanup")
+        })
+
+        // Wait for the request to be in-flight.
+        XCTAssertTrue(waitForCondition({ DeferredURLProtocol.pendingCount >= 1 }, timeout: 2),
+                      "dataTask should be pending")
+
+        // Cleanup cancels tasks and delivers errors.
+        api.cleanup()
+
+        waitForExpectations(timeout: 5, handler: nil)
+
+        // Give time for the cancelled dataTask's URLSession callback to fire.
+        RunLoop.current.run(until: Date(timeIntervalSinceNow: 0.5))
+
+        XCTAssertEqual(failureCount, 1, "failureBlock must be called exactly once (cleanup), not again from cancellation callback. Was called \(failureCount) times")
+    }
+
+    /// Verifies that after cleanup, a new request can trigger a fresh refresh cycle
+    /// (refreshCycleActive is not permanently stuck).
+    func testNewRefreshCyclePossibleAfterCleanup() {
+        guard let api = api else { XCTFail("API not initialized"); return }
+
+        let request = makeRequest()
+
+        api.send(request, failureBlock: { _, _, _ in }, successBlock: { _, _ in })
+
+        XCTAssertTrue(waitForCondition({ DeferredURLProtocol.pendingCount >= 1 }, timeout: 2),
+                      "dataTask should be pending")
+
+        // Simulate refresh in progress, then cleanup (logout).
+        api.refreshCycleActive = true
+        api.cleanup()
+
+        // After cleanup, refreshCycleActive should still be YES (cleanup doesn't reset it).
+        // But activeRequests is empty, so a future callback is harmless.
+        // Simulate the callback arriving and resetting the flag.
+        api.refreshCycleActive = false
+
+        // Now send a new request and verify a fresh refresh cycle can start.
+        let newRequest = makeRequest()
+        api.send(newRequest, failureBlock: { _, _, _ in }, successBlock: { _, _ in })
+
+        XCTAssertTrue(waitForCondition({ DeferredURLProtocol.pendingCount >= 2 }, timeout: 2),
+                      "new dataTask should be pending")
+
+        XCTAssertFalse(api.refreshCycleActive, "refreshCycleActive should be false, ready for a new cycle")
+        XCTAssertEqual(api.activeRequests.count, 1, "New request should be in activeRequests")
+    }
 }

@@ -43,16 +43,8 @@ public class SFSDKTestRequestListener: NSObject, SFIdentityCoordinatorDelegate, 
 
     @objc public var dataResponse: Any?
     @objc public var lastError: NSError?
-    @objc public var returnStatus: String? {
-        didSet {
-            if returnStatus != kTestRequestStatusWaiting {
-                completionSemaphore.signal()
-            }
-        }
-    }
+    @objc public var returnStatus: String?
     @objc public var maxWaitTime: TimeInterval = 30.0
-
-    private let completionSemaphore = DispatchSemaphore(value: 0)
 
     public override init() {
         super.init()
@@ -62,9 +54,15 @@ public class SFSDKTestRequestListener: NSObject, SFIdentityCoordinatorDelegate, 
     /// Wait for the request to complete (success or fail).
     /// Waits for up to maxWaitTime.
     @objc public func waitForCompletion() -> String {
-        // Wait for completion signal with timeout
-        let result = completionSemaphore.wait(timeout: .now() + maxWaitTime)
-        if result == .timedOut {
+        // Spin the run loop so that blocks dispatched to the main queue (e.g. by
+        // SFSDKTokenRefreshCoordinator) can execute while we wait. A plain
+        // dispatch_semaphore_wait would block the main thread and deadlock.
+        let timeoutDate = Date(timeIntervalSinceNow: maxWaitTime)
+        while returnStatus == kTestRequestStatusWaiting && timeoutDate.timeIntervalSinceNow > 0 {
+            RunLoop.current.run(mode: .default, before: Date(timeIntervalSinceNow: 0.1))
+        }
+
+        if returnStatus == kTestRequestStatusWaiting {
             SFSDKCoreLogger.d(SFSDKTestRequestListener.self, message: "Request took too long (> \(maxWaitTime) secs) to complete.")
             return kTestRequestStatusDidFail
         }

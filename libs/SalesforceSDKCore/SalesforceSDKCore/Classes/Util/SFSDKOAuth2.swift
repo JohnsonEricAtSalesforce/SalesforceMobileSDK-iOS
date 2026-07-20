@@ -385,9 +385,7 @@ public protocol SFSDKOAuthProtocol: NSObjectProtocol {
                     endpointResponse = SFSDKOAuthTokenEndpointResponse(withError: error as NSError)
                 }
                 SFSDKCoreLogger.d(SFSDKOAuth2.self, message: "SFOAuth2 session failed with error: error code: \((error as NSError).code), description: \(error.localizedDescription), URL: \(errorUrlString)")
-                DispatchQueue.main.async {
-                    completionBlock(endpointResponse)
-                }
+                completionBlock(endpointResponse)
                 return
             }
 
@@ -429,9 +427,7 @@ public protocol SFSDKOAuthProtocol: NSObjectProtocol {
                 }
 
                 SFSDKCoreLogger.d(SFSDKOAuth2.self, message: "SFOAuth2 session failed with error: error code: \((error as NSError).code), description: \(error.localizedDescription), URL: \(errorUrlString)")
-                DispatchQueue.main.async {
-                    completionBlock(endpointResponse)
-                }
+                completionBlock(endpointResponse)
                 return
             }
 
@@ -441,9 +437,7 @@ public protocol SFSDKOAuthProtocol: NSObjectProtocol {
                 strongSelf.handleTokenEndpointResponse(completionBlock, request: endpointReq, data: data, urlResponse: urlResponse)
             } else {
                 SFSDKCoreLogger.d(SFSDKOAuth2.self, message: "Token endpoint response handler skipped because self was deallocated.")
-                DispatchQueue.main.async {
-                    completionBlock(nil)
-                }
+                completionBlock(nil)
             }
         }
     }

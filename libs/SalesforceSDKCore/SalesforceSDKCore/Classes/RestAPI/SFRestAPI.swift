@@ -100,9 +100,8 @@ open class RestClient: NSObject {
 
     // MARK: - Private Properties
 
-    private var sessionRefreshInProgress = false
-    private var pendingRequestsBeingProcessed = false
-    private var oauthSessionRefresher: SFOAuthSessionRefresher?
+    // `internal` (not `private`) so the data-task race tests can drive it via `@testable import`.
+    var refreshCycleActive = false
 
     // MARK: - Singleton Accessors
 
@@ -205,7 +204,24 @@ open class RestClient: NSObject {
 
     /// Perform cleanup due to a host change or logout.
     @objc public func cleanup() {
+        objc_sync_enter(self)
+        defer { objc_sync_exit(self) }
+
+        let pendingRequests = activeRequests.asSet() as? Set<AnyHashable> ?? []
+        for case let request as RestRequest in pendingRequests {
+            // Nil sessionDataTask BEFORE cancelling: the network callback ignores responses where
+            // dataTask != request.sessionDataTask, so clearing this ensures the cancellation callback
+            // won't double-deliver failureBlock.
+            let oldTask = request.sessionDataTask
+            request.sessionDataTask = nil
+            oldTask?.cancel()
+            let logoutError = NSError(domain: SFRestErrorDomain,
+                                      code: SFRestErrorCode,
+                                      userInfo: [NSLocalizedDescriptionKey: "User logged out"])
+            request.failureBlock?(nil as Any?, logoutError, nil)
+        }
         activeRequests.removeAllObjects()
+        refreshCycleActive = false
     }
 
     /// Cancel all requests that are waiting to be executed.
@@ -419,45 +435,42 @@ open class RestClient: NSObject {
 
     // MARK: - Session Refresh
 
-    private func sessionRefresher(for user: UserAccount) -> SFOAuthSessionRefresher {
-        objc_sync_enter(self)
-        defer { objc_sync_exit(self) }
-
-        if oauthSessionRefresher == nil {
-            oauthSessionRefresher = SFOAuthSessionRefresher(credentials: user.credentials)
-        }
-        return oauthSessionRefresher!
-    }
-
     private func replayRequest(_ request: RestRequest, response: URLResponse?) {
         SFSDKCoreLogger.i(RestClient.self, message: "\(#function): REST request failed due to expired credentials. Attempting to refresh credentials.")
 
-        objc_sync_enter(self)
-        defer { objc_sync_exit(self) }
+        do {
+            objc_sync_enter(self)
+            defer { objc_sync_exit(self) }
+            if refreshCycleActive {
+                // A refresh is already in-flight for this SFRestAPI instance. This request is in
+                // activeRequests and will be resent when the single completion block calls
+                // resendActiveRequestsRequiringAuthentication.
+                return
+            }
+            refreshCycleActive = true
+        }
 
-        guard !sessionRefreshInProgress else { return }
-        sessionRefreshInProgress = true
+        guard let credentials = user?.credentials else {
+            objc_sync_enter(self)
+            flushPendingRequestQueue(nil, rawResponse: response)
+            refreshCycleActive = false
+            objc_sync_exit(self)
+            return
+        }
 
-        let refresher = sessionRefresher(for: user ?? UserAccount())
-        refresher.refreshSession(withCompletion: { [weak self] updatedCredentials in
+        SFSDKTokenRefreshCoordinator.shared.refreshSession(forCredentials: credentials, completion: { [weak self] updatedCredentials in
             guard let self = self else { return }
             SFSDKCoreLogger.i(RestClient.self, message: "\(#function): Credentials refresh successful. Replaying original REST request.")
             objc_sync_enter(self)
-            self.sessionRefreshInProgress = false
-            self.oauthSessionRefresher = nil
-            if !self.pendingRequestsBeingProcessed {
-                self.pendingRequestsBeingProcessed = true
-                self.resendActiveRequestsRequiringAuthentication()
-            }
+            self.resendActiveRequestsRequiringAuthentication()
+            self.refreshCycleActive = false
             objc_sync_exit(self)
         }, error: { [weak self] refreshError in
             guard let self = self else { return }
             SFSDKCoreLogger.e(RestClient.self, message: "Failed to refresh expired session. Error: \(String(describing: refreshError))")
             objc_sync_enter(self)
-            self.pendingRequestsBeingProcessed = true
             self.flushPendingRequestQueue(refreshError, rawResponse: response)
-            self.sessionRefreshInProgress = false
-            self.oauthSessionRefresher = nil
+            self.refreshCycleActive = false
             objc_sync_exit(self)
 
             if let error = refreshError as NSError?,
@@ -483,7 +496,6 @@ open class RestClient: NSObject {
             oldTask?.cancel()
             request.failureBlock?(nil as Any?, error, rawResponse)
         }
-        pendingRequestsBeingProcessed = false
     }
 
     // @objc so the ObjC runtime exposes it; invoked by the data-task race tests via
@@ -495,7 +507,6 @@ open class RestClient: NSObject {
             send(request, failureBlock: request.failureBlock ?? { _, _, _ in }, successBlock: request.successBlock ?? { _, _ in }, shouldRetry: false)
             oldTask?.cancel()
         }
-        pendingRequestsBeingProcessed = false
     }
 
     // MARK: - Delegate Notification

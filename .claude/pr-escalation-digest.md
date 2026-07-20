@@ -275,7 +275,44 @@ sessions shared the empty-string key). This port fixes that collision too, match
 Swift twin. SDKCore/SmartStore/MobileSync build green (0 new warnings — 2 pre-existing unrelated warnings confirmed
 unchanged); 6 SFOAuthCoordinatorTests pass. **Escalation = OAuth advanced-auth/scene callback behavior — flag in PR.**
 
+### Unit 44 · #4087 — centralized token-refresh coordinator (OAuth/token + public-API deprecation) — LIVE-AUTH UNBLOCKER
+**Escalation class: OAuth/token-refresh control flow + public-API deprecation of `SFOAuthSessionRefresher`.** This is the
+biggest unit in the queue (18 upstream files) and the gate that unblocks Phase 2.
+**What it does:** introduces `SFSDKTokenRefreshCoordinator` — a process-wide singleton that coalesces concurrent
+token-refresh requests per credential (keyed by `credentials.identifier`) so at most one refresh is in-flight at a time.
+This fixes the double-spend race with single-use (rotating) refresh tokens, where concurrent refreshes would invalidate
+each other's tokens. Callbacks are delivered on the main queue; the in-flight refresh is wrapped in a background task.
+**Reviewer notes:**
+1. **No new ObjC.** Upstream added `SFSDKTokenRefreshCoordinator.h/.m`; the migration rule forbids new ObjC, so it is
+   ported as a NEW `@objc` Swift class (`SFSDKTokenRefreshCoordinator.swift`) wired into the framework target. The new
+   test file (`SFSDKTokenRefreshCoordinatorTests.m`, +602) is ported to Swift (`SFSDKTokenRefreshCoordinatorTests.swift`,
+   11 tests). Both wired to pbxproj additively (`plutil -lint` OK).
+2. **Behavior lives in the compiled Swift twins.** `SFRestAPI.swift` collapses three coordination flags
+   (`sessionRefreshInProgress` / `pendingRequestsBeingProcessed` / `oauthSessionRefresher`) into a single
+   `refreshCycleActive` and routes refresh through the coordinator; `cleanup()` now delivers a "User logged out" REST
+   error to every pending request and nils-then-cancels their data tasks (was a bare `removeAllObjects`).
+   `SFIdentityCoordinator` / `SFUserAccountManager.refreshCredentials` route through the coordinator;
+   `UserAccountManager` gains an `async` `refresh(credentials:)`; `SFSDKOAuth2` drops three redundant main-queue
+   completion hops; `SFSDKTestRequestListener` switches semaphore→run-loop-spin (a blocking semaphore-wait on the main
+   thread would deadlock now that the coordinator delivers on main); `WebSocketClient`'s `TokenRefreshCoordinator` actor
+   is renamed `WebSocketReconnectCoordinator` (it only gates reconnection; token dedup moved to the process coordinator).
+3. **Public-API deprecation of `SFOAuthSessionRefresher` (14.0 → 15.0).** Upstream marks the class + its init +
+   `refreshSessionWithCompletion:error:` deprecated (they bypass the centralized coordinator). Carried into the Swift twin
+   via `@available(*, deprecated)` on the public init and `refreshSession(withCompletion:error:)` that external consumers
+   call, plus **non-deprecated internal seams** (`init(internalCredentials:)` / `refreshSessionInternal(...)`) that the
+   coordinator, the ported tests, and the test mock use — so the SDK's own code paths stay warning-free ("warnings are
+   bugs"). Mirrors the unit-39 `forceAdvancedAuthenticationInternal` precedent. (Upstream expresses this with the ObjC
+   `SFSDK_DEPRECATED` macro on `SFOAuthSessionRefresher.h`, which is a migration tombstone with no compiled home.)
+4. **De-ref mirrors:** the non-compiled `.m`/`.h` mirrors (`SFRestAPI.m`, `SFIdentityCoordinator.m`, `SFSDKOAuth2.m`,
+   `SFSDKTestRequestListener.m`, `SFOAuthSessionRefresher.m`, and the two test `.m`) were ref-synced to the upstream
+   post-image on top of the migrated pre-image (retaining the migration's `@import`/`-Swift.h` deltas + the deprecation
+   `SFSDK_USE_DEPRECATED_BEGIN/END` wraps). Tombstone headers (`SFOAuthSessionRefresher.h/+Internal.h`,
+   `SFIdentityCoordinator+Internal.h`) skipped; `SFUserAccountManager.m` had nothing to sync (method lives in the twin).
+**Gate:** SDKCore / SmartStore / MobileSync `build-for-testing` all GREEN, 0 new warnings (2 pre-existing unrelated
+warnings confirmed unchanged); 22 targeted tests pass (11 coordinator + 7 data-task-race + 4 refresher). Live-org
+auth-util end-to-end tests remain `XCTSkip`-gated pending Phase 2. **Escalation = OAuth/token-refresh + public-API
+deprecation — flag in PR.**
+
 ## Pending escalation units (upcoming — port in order)
-- **44 · #4087 — OAuth/token (LIVE-AUTH UNBLOCKER):** token-refresh coordinator; 18 files. Unblocks Phase 2.
 - **45 · #4102 — OAuth/token:** improve token-refresh error handling.
 - **46 · #4105 — login-host:** iOS26 login-host classifier fix.

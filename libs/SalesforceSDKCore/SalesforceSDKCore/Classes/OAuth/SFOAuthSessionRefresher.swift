@@ -30,6 +30,17 @@ public enum SFOAuthSessionRefreshErrorCode: UInt {
 }
 
 /// This class refreshes stale OAuth sessions, if possible.
+///
+/// - Note: The public entry points (`init(credentials:)` and `refreshSession(withCompletion:error:)`)
+///   are deprecated (14.0, to be removed in 15.0): they bypass the centralized
+///   ``SFSDKTokenRefreshCoordinator``, which coalesces concurrent refreshes so single-use (rotating)
+///   refresh tokens are not double-spent. External consumers should use `UserAccountManager.refresh(credentials:)`.
+///   The SDK's own code paths call the non-deprecated internal seams (`init(internalCredentials:)` /
+///   `refreshSessionInternal(withCompletion:error:)`) so the centralized path stays warning-free.
+///   (Upstream carries this deprecation via the ObjC `SFSDK_DEPRECATED` macro on `SFOAuthSessionRefresher.h`;
+///   in the migration that header is a tombstone, so the deprecation is expressed on the Swift members
+///   consumers actually call. The class itself is not annotated to avoid warning on the SDK's own
+///   internal subclass/reference sites — mirrors the unit-39 `forceAdvancedAuthenticationInternal` seam.)
 @objc(SFOAuthSessionRefresher)
 @objcMembers
 public class SFOAuthSessionRefresher: NSObject, SFOAuthCoordinatorDelegate {
@@ -38,18 +49,32 @@ public class SFOAuthSessionRefresher: NSObject, SFOAuthCoordinatorDelegate {
     var completionBlock: ((OAuthCredentials) -> Void)?
     var errorBlock: ((Error) -> Void)?
 
-    /// Initializes the object with the given credentials.
-    @objc public init(credentials: OAuthCredentials?) {
+    /// Non-deprecated designated initializer used internally by ``SFSDKTokenRefreshCoordinator``
+    /// (and test mocks) so the SDK's centralized refresh path does not trip the public-API deprecation.
+    init(internalCredentials credentials: OAuthCredentials?) {
         self.credentials = credentials
         super.init()
     }
 
+    /// Initializes the object with the given credentials.
+    @available(*, deprecated, message: "Deprecated in Salesforce Mobile SDK 14.0 and will be removed in 15.0. This bypasses the centralized token refresh coordinator; use UserAccountManager.refresh(credentials:) instead.")
+    @objc public convenience init(credentials: OAuthCredentials?) {
+        self.init(internalCredentials: credentials)
+    }
+
     public override convenience init() {
-        self.init(credentials: nil)
+        self.init(internalCredentials: nil)
     }
 
     /// Refreshes the expired session.
+    @available(*, deprecated, message: "Deprecated in Salesforce Mobile SDK 14.0 and will be removed in 15.0. Use UserAccountManager.refresh(credentials:) instead.")
     @objc public func refreshSession(withCompletion completionBlock: @escaping (OAuthCredentials) -> Void, error errorBlock: @escaping (Error) -> Void) {
+        refreshSessionInternal(withCompletion: completionBlock, error: errorBlock)
+    }
+
+    /// Non-deprecated internal implementation of the refresh flow. Test mocks override this method
+    /// so the coordinator can invoke it polymorphically without tripping the public deprecation.
+    func refreshSessionInternal(withCompletion completionBlock: @escaping (OAuthCredentials) -> Void, error errorBlock: @escaping (Error) -> Void) {
         self.completionBlock = completionBlock
         self.errorBlock = errorBlock
 
@@ -115,26 +140,26 @@ public class SFOAuthSessionRefresher: NSObject, SFOAuthCoordinatorDelegate {
     private func completeWithSuccess() {
         SFSDKCoreLogger.i(Self.self, format: "%@ Session was successfully refreshed.", #function)
         if let block = completionBlock, let creds = credentials {
-            DispatchQueue.main.async {
-                let account = UserAccountManager.shared.userAccount(for: creds)
-                var userInfo: [String: Any] = [:]
-                if let account = account {
-                    userInfo[UserAccountManager.userInfoAccountKey] = account
-                } else {
-                    SFSDKCoreLogger.e(Self.self, format: "%@ No account for credentials", #function)
-                }
-                NotificationCenter.default.post(name: UserAccountManager.didRefreshToken, object: self, userInfo: userInfo)
-                block(creds)
+            // No main-queue hop here: SFSDKTokenRefreshCoordinator now owns main-queue delivery of
+            // the caller callbacks, and this method runs on that coordinator's completion path.
+            let account = UserAccountManager.shared.userAccount(for: creds)
+            var userInfo: [String: Any] = [:]
+            if let account = account {
+                userInfo[UserAccountManager.userInfoAccountKey] = account
+            } else {
+                SFSDKCoreLogger.e(Self.self, format: "%@ No account for credentials", #function)
             }
+            let authInfo = SFOAuthInfo(authType: .refresh)
+            userInfo[UserAccountManager.userInfoAuthenticationTypeKey] = authInfo
+            NotificationCenter.default.post(name: UserAccountManager.didRefreshToken, object: UserAccountManager.shared, userInfo: userInfo)
+            block(creds)
         }
     }
 
     private func completeWithError(_ error: Error) {
         SFSDKCoreLogger.e(Self.self, format: "%@ Refresh failed with error: %@", #function, error.localizedDescription)
         if let block = errorBlock {
-            DispatchQueue.main.async {
-                block(error)
-            }
+            block(error)
         }
     }
 

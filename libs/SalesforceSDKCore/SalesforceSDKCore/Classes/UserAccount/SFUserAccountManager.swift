@@ -1675,40 +1675,24 @@ extension UserAccountManager {
                                           failure failureBlock: ((SFOAuthInfo, Error) -> Void)?) -> Bool {
         assert((credentials.refreshToken?.count ?? 0) > 0, "Refresh token required to refresh credentials.")
 
-        let request = SFSDKOAuthTokenEndpointRequest()
-        request.additionalOAuthParameterKeys = additionalOAuthParameterKeys
-        request.additionalTokenRefreshParams = additionalTokenRefreshParameters as NSDictionary
-        request.clientID = credentials.clientId ?? ""
-        request.refreshToken = credentials.refreshToken ?? ""
-        request.redirectURI = credentials.redirectUri ?? ""
-        request.serverURL = credentials.overrideDomainIfNeeded()
-
-        let authClient = self.authClient()
-        authClient.accessToken(forRefresh: request) { [weak self] response in
-            guard let self = self, let response = response else { return }
+        // Route through the centralized coordinator so concurrent refreshes for the same credential
+        // are coalesced into a single network call (protects single-use / rotating refresh tokens).
+        // The coordinator (via SFOAuthSessionRefresher) posts the SFUserAccountManagerDidRefreshToken
+        // notification, so this method no longer posts it directly.
+        SFSDKTokenRefreshCoordinator.shared.refreshSession(forCredentials: credentials, completion: { [weak self] updatedCredentials in
             let authInfo = SFOAuthInfo(authType: .refresh)
-            if response.hasError {
-                failureBlock?(authInfo, response.error?.error ?? NSError(domain: "com.salesforce.oauth", code: -1))
-            } else {
-                credentials.update(response.asDictionary() as! [AnyHashable: Any])
-                if let additionalFields = response.additionalOAuthFields {
-                    credentials.setValue(additionalFields, forKey: "additionalOAuthFields")
-                }
-                var userAccount = self.userAccount(for: credentials)
-                if userAccount == nil {
-                    userAccount = self.applyCredentials(credentials)
-                }
-                if let account = userAccount {
-                    self.retrieveUserPhotoIfNeeded(account)
-                }
-                let notifUserInfo: [String: Any] = [
-                    Self.userInfoAccountKey: userAccount as Any,
-                    Self.userInfoAuthenticationTypeKey: authInfo
-                ]
-                NotificationCenter.default.post(name: .SFUserAccountManagerDidRefreshToken, object: self, userInfo: notifUserInfo)
-                completionBlock?(authInfo, userAccount)
+            var userAccount = self?.userAccount(for: updatedCredentials)
+            if userAccount == nil {
+                userAccount = self?.applyCredentials(updatedCredentials)
             }
-        }
+            if let account = userAccount {
+                self?.retrieveUserPhotoIfNeeded(account)
+            }
+            completionBlock?(authInfo, userAccount)
+        }, error: { error in
+            let authInfo = SFOAuthInfo(authType: .refresh)
+            failureBlock?(authInfo, error)
+        })
         return true
     }
 

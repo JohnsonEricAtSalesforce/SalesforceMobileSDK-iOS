@@ -72,7 +72,6 @@ public class SFIdentityCoordinator: NSObject {
     // Internal properties
     var retrievingData: Bool = false
     var session: URLSession?
-    var oauthSessionRefresher: SFOAuthSessionRefresher?
     weak var authSession: SFSDKAuthSession?
     private var networkIdentifier: String?
 
@@ -173,8 +172,11 @@ public class SFIdentityCoordinator: NSObject {
             let statusCode = (response as? HTTPURLResponse)?.statusCode ?? 0
             if statusCode == 401 || statusCode == 403 {
                 SFSDKCoreLogger.i(Self.self, format: "%@: Identity request failed due to expired credentials. Attempting to refresh credentials.", #function)
-                self.oauthSessionRefresher = SFOAuthSessionRefresher(credentials: self.credentials)
-                self.oauthSessionRefresher?.refreshSession(withCompletion: { [weak self] updatedCredentials in
+                guard let credentials = self.credentials else {
+                    self.notifyDelegateOfFailure(self.error(withType: kSFIdentityErrorTypeBadHttpResponse, description: "Cannot refresh: no credentials."))
+                    return
+                }
+                SFSDKTokenRefreshCoordinator.shared.refreshSession(forCredentials: credentials, completion: { [weak self] updatedCredentials in
                     guard let self = self else { return }
                     SFSDKCoreLogger.d(Self.self, format: "%@: Credentials refresh successful. Replaying original identity request.", #function)
                     self.credentials = updatedCredentials
@@ -217,7 +219,6 @@ public class SFIdentityCoordinator: NSObject {
         }
         networkIdentifier = nil
         session = nil
-        oauthSessionRefresher = nil
         retrievingData = false
     }
 

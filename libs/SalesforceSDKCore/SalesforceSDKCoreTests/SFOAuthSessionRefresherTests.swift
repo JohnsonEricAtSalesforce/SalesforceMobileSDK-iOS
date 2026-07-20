@@ -64,7 +64,7 @@ class SFOAuthSessionRefresherTests: XCTestCase {
         var invalidInputExpectation = expectation(description: "Refresh with invalid Instance URL")
         let origUrl = credentials.instanceUrl
         credentials.instanceUrl = nil
-        refresher.refreshSession(withCompletion: { _ in
+        refresher.refreshSessionInternal(withCompletion: { _ in
             invalidInputExpectation.fulfill()
         }, error: { refreshError in
             inputError = refreshError as NSError
@@ -83,7 +83,7 @@ class SFOAuthSessionRefresherTests: XCTestCase {
         invalidInputExpectation = expectation(description: "Refresh with invalid Client ID")
         let origClientId = credentials.clientId
         credentials.clientId = nil
-        refresher.refreshSession(withCompletion: { _ in
+        refresher.refreshSessionInternal(withCompletion: { _ in
             invalidInputExpectation.fulfill()
         }, error: { refreshError in
             inputError = refreshError as NSError
@@ -103,7 +103,7 @@ class SFOAuthSessionRefresherTests: XCTestCase {
         let origRefreshToken = credentials.refreshToken
         credentials.refreshToken = nil
         credentials.instanceUrl = origUrl  // Nil'ed out as side effect of nil refresh token in OAuthCredentials.
-        refresher.refreshSession(withCompletion: { _ in
+        refresher.refreshSessionInternal(withCompletion: { _ in
             invalidInputExpectation.fulfill()
         }, error: { refreshError in
             inputError = refreshError as NSError
@@ -126,7 +126,7 @@ class SFOAuthSessionRefresherTests: XCTestCase {
 
         var refreshFailsError: NSError?
         let refreshAccessTokenExpectation = expectation(description: "Refresh Access Token fails")
-        refresher.refreshSession(withCompletion: { _ in
+        refresher.refreshSessionInternal(withCompletion: { _ in
             refreshAccessTokenExpectation.fulfill()
         }, error: { refreshError in
             refreshFailsError = refreshError as NSError
@@ -163,7 +163,7 @@ class SFOAuthSessionRefresherTests: XCTestCase {
         SFSDKAppFeatureMarkers.unregisterAppFeature(kSFAppFeatureRTR, forUser: account)
 
         let expectation = self.expectation(description: "Refresh with rotated token")
-        refresher.refreshSession(withCompletion: { _ in
+        refresher.refreshSessionInternal(withCompletion: { _ in
             expectation.fulfill()
         }, error: { error in
             XCTFail("Refresh should not fail: \(error)")
@@ -202,7 +202,7 @@ class SFOAuthSessionRefresherTests: XCTestCase {
         UserAccountManager.shared.authClient = { stub }
 
         let expectation = self.expectation(description: "Refresh without rotation")
-        refresher.refreshSession(withCompletion: { _ in
+        refresher.refreshSessionInternal(withCompletion: { _ in
             expectation.fulfill()
         }, error: { error in
             XCTFail("Refresh should not fail: \(error)")
@@ -239,7 +239,7 @@ class SFOAuthSessionRefresherTests: XCTestCase {
         // (sfsdk_entityId18 returns nil for non-conforming strings, making isEqualToString:nil == NO.)
         creds.userId = "005000000000001"
         creds.organizationId = "00D000000000001"
-        oauthSessionRefresher = SFOAuthSessionRefresher(credentials: creds)
+        oauthSessionRefresher = SFOAuthSessionRefresher(internalCredentials: creds)
     }
 
     private func tearDownCoordinatorFlow() {

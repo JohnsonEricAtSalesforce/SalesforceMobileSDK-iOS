@@ -89,6 +89,18 @@ extension UserAccountManager: UserAccountManaging {
         })
     }
 
+    /// Refresh the session for the given credentials.
+    /// - Parameter credentials: The credentials to refresh.
+    /// - Returns: A tuple of the updated `UserAccount` and `SFOAuthInfo` on success.
+    /// - Throws: `UserAccountManagerError.refreshFailed` if the refresh fails.
+    public func refresh(credentials: OAuthCredentials) async throws -> (UserAccount, SFOAuthInfo) {
+        try await withCheckedThrowingContinuation { continuation in
+            _ = self.refresh(credentials: credentials) { result in
+                continuation.resume(with: result.mapError { $0 })
+            }
+        }
+    }
+
     /// Switch to a new user. Kicks off the login flow. Once complete switches to a new user on success else does not change the current user.
     /// - Parameter completionBlock: completion block to invoke with a  UserAccount on success or  UserAccountManagerError on  failure wrapped in a Result type.
     public func switchToNewUserAccount(_ completionBlock: @escaping (Result<UserAccount, UserAccountManagerError>) -> Void) {
