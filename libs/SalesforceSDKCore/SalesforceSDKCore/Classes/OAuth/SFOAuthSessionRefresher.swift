@@ -91,10 +91,20 @@ public class SFOAuthSessionRefresher: NSObject, SFOAuthCoordinatorDelegate {
             if response.hasError {
                 self.completeWithError(response.error?.error ?? NSError(domain: kSFOAuthErrorDomain, code: -1, userInfo: nil))
             } else {
+                let oldRefreshToken = self.credentials?.refreshToken
                 self.credentials?.update(response.asDictionary() as? [AnyHashable: Any] ?? [:])
                 if let additionalFields = response.additionalOAuthFields as? [AnyHashable: Any] {
                     self.credentials?.setValue(additionalFields, forKey: "additionalOAuthFields")
                 }
+
+                // Detect Refresh Token Rotation: server sent a new, different refresh token
+                if let newRefreshToken = self.credentials?.refreshToken, newRefreshToken.count > 0,
+                   newRefreshToken != oldRefreshToken,
+                   let creds = self.credentials,
+                   let account = UserAccountManager.shared.userAccount(for: creds) {
+                    SFSDKAppFeatureMarkers.registerAppFeature(kSFAppFeatureRTR, forUser: account)
+                }
+
                 self.completeWithSuccess()
             }
         }

@@ -52,6 +52,7 @@ class SFSDKAppFeatureMarkersTests: XCTestCase {
         SFSDKAppFeatureMarkers.unregisterAppFeature(kSFAppFeatureSafariBrowserForLogin, forUser: userA)
         SFSDKAppFeatureMarkers.unregisterAppFeature(kSFAppFeatureWelcomeDiscovery, forUser: userA)
         SFSDKAppFeatureMarkers.unregisterAppFeature(kSFAppFeatureQrCodeLogin, forUser: userA)
+        SFSDKAppFeatureMarkers.unregisterAppFeature(kSFAppFeatureRTR, forUser: userA)
         userA = nil
         userB = nil
         clearExistingMarkers()
@@ -236,6 +237,25 @@ class SFSDKAppFeatureMarkersTests: XCTestCase {
         SFSDKAppFeatureMarkers.unregisterAppFeature(kSFAppFeatureQrCodeLogin, forUser: userA)
 
         XCTAssertFalse(SFSDKAppFeatureMarkers.appFeatures(forUser: userA).contains(kSFAppFeatureQrCodeLogin), "QR should NOT be per-user when global QR was not set")
+    }
+
+    // MARK: - Refresh Token Rotation (RTR) flag tests
+
+    func test_givenRTRDetected_whenRTFlagRegistered_thenFlagAppearsInPerUserFeaturesNotGlobal() {
+        // Arrange: use userA as the account that experienced token rotation
+
+        // Act: simulate RTR detection registering the flag
+        SFSDKAppFeatureMarkers.registerAppFeature(kSFAppFeatureRTR, forUser: userA)
+
+        // Assert: RT in per-user features (union with global)
+        let features = SFSDKAppFeatureMarkers.appFeatures(forUser: userA)
+        XCTAssertTrue(features.contains(kSFAppFeatureRTR), "RT flag should appear in per-user feature set after rotation")
+
+        // Assert: RT NOT in global-only set
+        XCTAssertFalse(SFSDKAppFeatureMarkers.appFeatures().contains(kSFAppFeatureRTR), "RT flag should not bleed into global feature set")
+
+        // Cleanup
+        SFSDKAppFeatureMarkers.unregisterAppFeature(kSFAppFeatureRTR, forUser: userA)
     }
 
     // MARK: - Private helpers

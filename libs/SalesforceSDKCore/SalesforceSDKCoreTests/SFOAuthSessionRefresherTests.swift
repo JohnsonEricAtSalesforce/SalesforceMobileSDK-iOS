@@ -27,6 +27,18 @@
 import XCTest
 @testable import SalesforceSDKCore
 
+// Minimal SFSDKOAuthProtocol stub that immediately calls the completion block with a preset response.
+class SFSDKOAuthClientStub: NSObject, SFSDKOAuthProtocol {
+    var stubbedResponse: SFSDKOAuthTokenEndpointResponse?
+
+    func accessToken(forRefresh endpointReq: SFSDKOAuthTokenEndpointRequest, completion completionBlock: @escaping (SFSDKOAuthTokenEndpointResponse?) -> Void) {
+        completionBlock(stubbedResponse)
+    }
+    func accessToken(forApprovalCode endpointReq: SFSDKOAuthTokenEndpointRequest, completion completionBlock: @escaping (SFSDKOAuthTokenEndpointResponse?) -> Void) {}
+    func openIDToken(forRefresh endpointReq: SFSDKOAuthTokenEndpointRequest, completion completionBlock: @escaping (String?) -> Void) {}
+    func revokeRefreshToken(_ credentials: OAuthCredentials, reason: SFLogoutReason) {}
+}
+
 class SFOAuthSessionRefresherTests: XCTestCase {
 
     var oauthSessionRefresher: SFOAuthSessionRefresher?
@@ -127,6 +139,87 @@ class SFOAuthSessionRefresherTests: XCTestCase {
         }
     }
 
+    func test_givenRotatedRefreshToken_whenRefreshSucceeds_thenRTFlagRegisteredPerUser() {
+        // Arrange: register a user account whose credentials match the refresher's.
+        guard let refresher = oauthSessionRefresher, let creds = refresher.credentials else {
+            XCTFail("Refresher or credentials not set up")
+            return
+        }
+        let account = UserAccount(credentials: creds)
+        _ = UserAccountManager.shared.upsert(account)
+
+        let newRefreshToken = "rotated_token_\(arc4random())"
+        let responseDict: NSDictionary = [
+            kSFOAuthAccessToken: "new_access_token",
+            kSFOAuthRefreshToken: newRefreshToken,
+        ]
+        let response = SFSDKOAuthTokenEndpointResponse(dictionary: responseDict, parseAdditionalFields: nil)
+        let stub = SFSDKOAuthClientStub()
+        stub.stubbedResponse = response
+        let originalFactory = UserAccountManager.shared.authClient
+        UserAccountManager.shared.authClient = { stub }
+
+        // Pre-condition: RT flag not set
+        SFSDKAppFeatureMarkers.unregisterAppFeature(kSFAppFeatureRTR, forUser: account)
+
+        let expectation = self.expectation(description: "Refresh with rotated token")
+        refresher.refreshSession(withCompletion: { _ in
+            expectation.fulfill()
+        }, error: { error in
+            XCTFail("Refresh should not fail: \(error)")
+            expectation.fulfill()
+        })
+
+        waitForExpectations(timeout: 2.0, handler: nil)
+
+        // Assert: RT flag registered for the user
+        let features = SFSDKAppFeatureMarkers.appFeatures(forUser: account)
+        XCTAssertTrue(features.contains(kSFAppFeatureRTR), "RT flag should be registered after refresh token rotation")
+
+        // Cleanup
+        UserAccountManager.shared.authClient = originalFactory
+        SFSDKAppFeatureMarkers.unregisterAppFeature(kSFAppFeatureRTR, forUser: account)
+        _ = UserAccountManager.shared.delete(account)
+    }
+
+    func test_givenUnchangedRefreshToken_whenRefreshSucceeds_thenRTFlagNotRegistered() {
+        // Arrange: same refresh token in response — no rotation
+        guard let refresher = oauthSessionRefresher, let creds = refresher.credentials else {
+            XCTFail("Refresher or credentials not set up")
+            return
+        }
+        let account = UserAccount(credentials: creds)
+        _ = UserAccountManager.shared.upsert(account)
+
+        let responseDict: NSDictionary = [
+            kSFOAuthAccessToken: "new_access_token",
+            kSFOAuthRefreshToken: creds.refreshToken ?? "",  // same token — no rotation
+        ]
+        let response = SFSDKOAuthTokenEndpointResponse(dictionary: responseDict, parseAdditionalFields: nil)
+        let stub = SFSDKOAuthClientStub()
+        stub.stubbedResponse = response
+        let originalFactory = UserAccountManager.shared.authClient
+        UserAccountManager.shared.authClient = { stub }
+
+        let expectation = self.expectation(description: "Refresh without rotation")
+        refresher.refreshSession(withCompletion: { _ in
+            expectation.fulfill()
+        }, error: { error in
+            XCTFail("Refresh should not fail: \(error)")
+            expectation.fulfill()
+        })
+
+        waitForExpectations(timeout: 2.0, handler: nil)
+
+        // Assert: RT flag NOT registered
+        let features = SFSDKAppFeatureMarkers.appFeatures(forUser: account)
+        XCTAssertFalse(features.contains(kSFAppFeatureRTR), "RT flag should not be registered when refresh token did not rotate")
+
+        // Cleanup
+        UserAccountManager.shared.authClient = originalFactory
+        _ = UserAccountManager.shared.delete(account)
+    }
+
     // MARK: - Private methods
 
     private func setupCoordinatorFlow() {
@@ -142,6 +235,10 @@ class SFOAuthSessionRefresherTests: XCTestCase {
         creds.instanceUrl = URL(string: "https://cs1.salesforce.com")
         creds.accessToken = credsAccessToken
         creds.refreshToken = credsRefreshToken
+        // Set userId and orgId as valid 15-char Salesforce entity IDs so matchesCredentials: can compare them.
+        // (sfsdk_entityId18 returns nil for non-conforming strings, making isEqualToString:nil == NO.)
+        creds.userId = "005000000000001"
+        creds.organizationId = "00D000000000001"
         oauthSessionRefresher = SFOAuthSessionRefresher(credentials: creds)
     }
 

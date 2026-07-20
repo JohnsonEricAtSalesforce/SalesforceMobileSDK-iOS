@@ -159,8 +159,22 @@ Pre-approved gates (still PR-flag, do NOT re-ask): SQLCipher #4096; Localizable.
   all 4 tests pass (fixture-based). Escalation = thread-safety / concurrency on a user-account accessor —
   flag in PR.
 
+- **Unit 37 · #4092 · `ab84f31bd` — feature-flag + OAuth/token-refresh.** Adds the iOS Refresh-Token-Rotation
+  (RTR) feature flag `RT`. During a successful session refresh, `SFOAuthSessionRefresher` now compares the
+  refresh token returned by the server against the pre-refresh token; if it changed (server rotated the refresh
+  token), the `RT` app-feature marker is registered **per-user** for the account that owns those credentials, so
+  the user's User-Agent advertises RTR. New global constant `kSFAppFeatureRTR = "RT"` in `SFSDKAppFeatureMarkers`.
+  Ported into the compiled Swift twins (SFSDKAppFeatureMarkers.swift, SFOAuthSessionRefresher.swift); de-ref
+  `.h`/`.m` ref-synced. **Reviewer notes:** (1) production behavior is exactly upstream's — the flag is only set
+  when the token actually rotates, never on an unchanged token (both cases covered by new tests). (2) Tests ported
+  to the migrated surface: the new refresher tests use an in-test `SFSDKOAuthProtocol` stub swapped in via the
+  `UserAccountManager.shared.authClient` factory var, the internal `SFSDKOAuthTokenEndpointResponse(dictionary:parseAdditionalFields:)`
+  initializer (`@testable`), and `upsert(_:)`/`delete(_:)` for account save/delete (upstream used
+  `saveAccountForUser:`/`deleteAccountForUser:`, which live only on the persister in the migrated surface). No
+  live-org dependency. SDKCore builds green (0 new warnings); 22 tests pass (2 new RTR refresher tests + 1 new
+  per-user RTR marker test). Escalation = feature-flag + OAuth token-refresh path — flag in PR.
+
 ## Pending escalation units (upcoming — port in order)
-- **37 · #4092 — feature-flag/OAuth:** iOS RTR feature flag (SFOAuthSessionRefresher).
 - **38 · #4094 — OAuth:** OAuth error-code enum (new SFOAuthErrorCode.swift, SFSDKOAuth2, SFOAuthCoordinator).
 - **39 · #4093 — PUBLIC API + advanced-auth default flip + L10n(pre-appr):** make advanced-auth the default & deprecate `forceAdvancedAuthentication`; 24 files incl. Localizable.strings.
 - **40 · #4088 — login-host + L10n(pre-appr):** invalid login-host recovery; Localizable.strings.

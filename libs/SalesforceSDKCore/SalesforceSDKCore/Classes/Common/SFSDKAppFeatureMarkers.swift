@@ -40,6 +40,7 @@ public let kSFAppFeatureAiltnEnabled: String = "AI"
 public let kSFSPAppFeatureIDPLogin: String = "SP"
 public let kSFIDPAppFeatureIDPLogin: String = "IP"
 public let kSFAppFeatureQrCodeLogin: String = "QR"
+public let kSFAppFeatureRTR: String = "RT"
 
 // MARK: - SFSDKAppFeatureMarkers
 

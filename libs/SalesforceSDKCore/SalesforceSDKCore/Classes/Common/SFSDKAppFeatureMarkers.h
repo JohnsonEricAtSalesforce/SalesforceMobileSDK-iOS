@@ -22,5 +22,6 @@ extern NSString * const kSFAppFeatureAiltnEnabled;
 extern NSString * const kSFSPAppFeatureIDPLogin;
 extern NSString * const kSFIDPAppFeatureIDPLogin;
 extern NSString * const kSFAppFeatureQrCodeLogin;
+extern NSString * const kSFAppFeatureRTR;
 
 NS_ASSUME_NONNULL_END

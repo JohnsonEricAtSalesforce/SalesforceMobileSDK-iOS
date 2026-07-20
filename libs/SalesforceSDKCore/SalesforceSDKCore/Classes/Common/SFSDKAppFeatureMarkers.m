@@ -39,6 +39,7 @@ NSString * const kSFAppFeatureAiltnEnabled = @"AI";
 NSString * const kSFSPAppFeatureIDPLogin = @"SP";
 NSString * const kSFIDPAppFeatureIDPLogin = @"IP";
 NSString * const kSFAppFeatureQrCodeLogin = @"QR";
+NSString * const kSFAppFeatureRTR = @"RT";
 
 // Implementation moved to SFSDKAppFeatureMarkers.swift
 // This file retained only for C-linkage constant definitions.
