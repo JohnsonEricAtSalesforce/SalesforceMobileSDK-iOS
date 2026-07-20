@@ -152,11 +152,15 @@ let kSFOAuthReponseBufferLength: Int            = 512
     @objc public private(set) var tokenEndpointErrorCode: String?
     @objc public private(set) var tokenEndpointErrorDescription: String?
     @objc public private(set) var error: NSError?
+    /// Typed enum representation of ``tokenEndpointErrorCode``.
+    /// Use this property instead of string-comparing ``tokenEndpointErrorCode``.
+    @objc public private(set) var errorCode: SFOAuthErrorCode = .unknown
 
     init(errorType: String, description: String) {
         self.tokenEndpointErrorCode = errorType
         self.tokenEndpointErrorDescription = description
         self.error = SFSDKOAuth2.error(withType: errorType, description: description) as NSError
+        self.errorCode = SFOAuthErrorCode.from(errorType)
         super.init()
     }
 

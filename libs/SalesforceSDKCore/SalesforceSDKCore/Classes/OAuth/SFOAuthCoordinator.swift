@@ -611,7 +611,7 @@ public class SFOAuthCoordinator: NSObject, WKNavigationDelegate, WKUIDelegate {
                     SFSDKCoreLogger.d(Self.self, format: "Refresh attempt timed out after %f seconds.", timeout)
                     stopAuthentication()
                 }
-                let isUnsupportedGrantType = response.error?.tokenEndpointErrorCode == kSFOAuthErrorTypeUnsupportedGrantType
+                let isUnsupportedGrantType = response.error?.errorCode == .unsupportedGrantType
                 let isLightningURL = credentials?.domain?.contains(".lightning.") ?? false
                 if isUnsupportedGrantType && isLightningURL {
                     SFSDKCoreLogger.e(Self.self, format: "Code exchange failed with unsupported_grant_type against Lightning URL: %@. Lightning URLs do not support authorization_code grant type. Use a My Domain login server URL instead.", credentials?.domain ?? "")

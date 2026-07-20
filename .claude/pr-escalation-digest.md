@@ -174,8 +174,21 @@ Pre-approved gates (still PR-flag, do NOT re-ask): SQLCipher #4096; Localizable.
   live-org dependency. SDKCore builds green (0 new warnings); 22 tests pass (2 new RTR refresher tests + 1 new
   per-user RTR marker test). Escalation = feature-flag + OAuth token-refresh path — flag in PR.
 
+- **Unit 38 · #4094 · `6993d6ba8` — OAuth error handling.** Introduces a typed `SFOAuthErrorCode` enum
+  (45 server error values + `.unknown`, with `from(_:)` parser and `wireValue` mapping) to replace fragile
+  string comparisons against the OAuth token-endpoint `error` field. `SFSDKOAuthTokenEndpointErrorResponse`
+  gains an `errorCode` property (typed enum in Swift, `NSInteger` from ObjC); `SFOAuthCoordinator`'s
+  Lightning-URL diagnostic now branches on `errorCode == .unsupportedGrantType` instead of a raw string
+  compare. The legacy `kSFOAuthErrorType*` string constants are marked `__deprecated_msg("Use SFOAuthErrorCode
+  enum instead")` but retained (no removal). **Reviewer notes:** (1) no behavior change — the enum parses the
+  same wire strings the string constants held; the 45-value round-trip and the Lightning-URL diagnostic paths
+  are covered by tests. (2) The migrated `SFSDKOAuth2.swift` already carried its own Swift error-type constants
+  and `errorWithType` mapping, so upstream's ObjC inline-literal churn is cosmetic for the compiled path; the
+  material change ported is the enum + `errorCode` property. New `SFOAuthErrorCode.swift` added verbatim and the
+  2 new/changed test files wired into the SDKCore target. No live-org dependency. SDKCore builds green (0 new
+  warnings); 13 tests pass. Escalation = OAuth error-handling surface — flag in PR.
+
 ## Pending escalation units (upcoming — port in order)
-- **38 · #4094 — OAuth:** OAuth error-code enum (new SFOAuthErrorCode.swift, SFSDKOAuth2, SFOAuthCoordinator).
 - **39 · #4093 — PUBLIC API + advanced-auth default flip + L10n(pre-appr):** make advanced-auth the default & deprecate `forceAdvancedAuthentication`; 24 files incl. Localizable.strings.
 - **40 · #4088 — login-host + L10n(pre-appr):** invalid login-host recovery; Localizable.strings.
 - **42 · #4096 — dependency bump (gate PRE-APPROVED):** SQLCipher 4.16 → 4.17 (SmartStore.podspec, mobilesdk_pods.rb).
