@@ -43,9 +43,19 @@ Pre-approved gates (still PR-flag, do NOT re-ask): SQLCipher #4096; Localizable.
 
 ---
 
+## Ported (units 25+)
+
+- **Unit 25 · #4077 · `269223600` — build-system (xcconfig/pbxproj).** Centralized `SWIFT_VERSION = 5.0`
+  into `configuration/Common.xcconfig`; removed per-target duplicates from the projects whose xcconfig chain
+  reaches Common, and fixed two stale `SWIFT_VERSION = 4.0` values (RestAPIExplorer + MobileSyncExplorer app).
+  Touches all 7 project files (4 libs + 3 sample apps). **Reviewer note:** SDKCore/SmartStore/MobileSyncExplorer
+  retain explicit per-target `SWIFT_VERSION = 5.0` (functionally identical to the centralized value; a deliberate
+  cosmetic divergence from upstream to avoid corrupting the migration-divergent pbxproj — MobileSyncExplorer in
+  particular has no Common xcconfig chain, so removal there would break it). Net: centralized source + zero `4.0`
+  stragglers. All 4 lib schemes + RestAPIExplorer + MobileSyncExplorer build green.
+
 ## Pending escalation units (upcoming — port in order)
 
-- **25 · #4077 — build-system:** Common.xcconfig + ALL 7 pbxproj (4 libs + 3 sample). Genuine multi-scheme merge.
 - **26–29 · #4076/#4082/#4083/#4081 — build-system:** SDKCore test-app scene migration + 4 new test-app targets + pbxproj.
 - **32 · #4078 — login/OAuth:** Login-for-Admin + Welcome-Discovery incompatibility fix (SFLoginViewController, DomainDiscoveryCoordinator, SFOAuthCoordinator, SFUserAccountManager).
 - **35 · #4086 — feature-flags + podspec + multi-lib:** per-user feature flags across Core/MobileSync/SmartStore + SalesforceSDKCore.podspec.
