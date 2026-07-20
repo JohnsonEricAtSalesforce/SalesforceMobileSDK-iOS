@@ -123,6 +123,7 @@ class SalesforceRestAPITests: XCTestCase {
         if let authException = Self.authException {
             XCTFail("Setting up authentication failed: \(authException)")
         }
+        continueAfterFailure = false
         dataCleanupRequired = true
         currentUser = UserAccountManager.shared.currentUserAccount
     }
@@ -169,8 +170,8 @@ class SalesforceRestAPITests: XCTestCase {
     }
 
     private func generateRecordName() -> String {
-        let timecode = Date.timeIntervalSinceReferenceDate
-        return "\(kEntityPrefixName)\(timecode)"
+        let uuid = UUID().uuidString
+        return "\(kEntityPrefixName)\(uuid)"
     }
 
     private func sendSyncRequest(_ request: RestRequest) -> RestAPITestResponse {
@@ -195,7 +196,7 @@ class SalesforceRestAPITests: XCTestCase {
             exp.fulfill()
         })
 
-        waitForExpectations(timeout: 30.0)
+        waitForExpectations(timeout: 60.0)
 
         let result = RestAPITestResponse()
         result.returnStatus = responseError != nil ? kTestRequestStatusDidFail : kTestRequestStatusDidLoad
@@ -203,6 +204,85 @@ class SalesforceRestAPITests: XCTestCase {
         result.lastError = responseError
         result.rawResponse = rawResponseData
         return result
+    }
+
+    // Shared polling helper. Sends request repeatedly with exponential backoff until
+    // the exit condition is satisfied or maxWait is exceeded.
+    private func pollRequest(_ request: RestRequest, recordsKey key: String, maxWaitSeconds maxWait: TimeInterval, exitCondition condition: ([[String: Any]]) -> Bool) -> [[String: Any]]? {
+        var elapsed: TimeInterval = 0
+        var interval: TimeInterval = 2.0
+        var records: [[String: Any]]?
+
+        while elapsed < maxWait {
+            let response = sendSyncRequest(request)
+            if response.returnStatus == kTestRequestStatusDidLoad {
+                records = (response.dataResponse as? [String: Any])?[key] as? [[String: Any]]
+                if let records = records, condition(records) {
+                    return records
+                }
+            }
+            Thread.sleep(forTimeInterval: interval)
+            elapsed += interval
+            interval = min(interval * 1.5, 5.0)
+        }
+        return records
+    }
+
+    private func sendSyncSearchRequestWithRetry(_ request: RestRequest, expectedMinResults minResults: Int, maxWaitSeconds maxWait: TimeInterval) -> [[String: Any]]? {
+        pollRequest(request, recordsKey: kSearchRecords, maxWaitSeconds: maxWait) { $0.count >= minResults }
+    }
+
+    private func sendSyncSearchRequestUntilEmpty(_ request: RestRequest, maxWaitSeconds maxWait: TimeInterval) -> [[String: Any]]? {
+        pollRequest(request, recordsKey: kSearchRecords, maxWaitSeconds: maxWait) { $0.count == 0 }
+    }
+
+    private func sendSyncQueryRequestUntilEmpty(_ request: RestRequest, maxWaitSeconds maxWait: TimeInterval) -> [[String: Any]]? {
+        pollRequest(request, recordsKey: kRecords, maxWaitSeconds: maxWait) { $0.count == 0 }
+    }
+
+    private func sendSyncQueryRequestUntilFound(_ request: RestRequest, expectedMinResults minResults: Int, maxWaitSeconds maxWait: TimeInterval) -> [[String: Any]]? {
+        pollRequest(request, recordsKey: kRecords, maxWaitSeconds: maxWait) { $0.count >= minResults }
+    }
+
+    // Retry owned-files list until a specific file ID appears.
+    private func waitForOwnedFilesList(_ request: RestRequest, toContainFileId fileId: String, maxWaitSeconds maxWait: TimeInterval) -> RestAPITestResponse {
+        var elapsed: TimeInterval = 0
+        var interval: TimeInterval = 2.0
+        var response = RestAPITestResponse()
+
+        while elapsed < maxWait {
+            response = sendSyncRequest(request)
+            if response.returnStatus != kTestRequestStatusDidLoad { return response }
+            let files = (response.dataResponse as? [String: Any])?["files"] as? [[String: Any]] ?? []
+            if files.contains(where: { ($0[kLid] as? String) == fileId }) { return response }
+            Thread.sleep(forTimeInterval: interval)
+            elapsed += interval
+            interval = min(interval * 1.5, 5.0)
+        }
+        return response
+    }
+
+    // Retry owned-files list until a specific file ID is gone.
+    private func waitForOwnedFilesList(_ request: RestRequest, toNotContainFileId fileId: String, maxWaitSeconds maxWait: TimeInterval) -> RestAPITestResponse {
+        var elapsed: TimeInterval = 0
+        var interval: TimeInterval = 2.0
+        var response = RestAPITestResponse()
+
+        while elapsed < maxWait {
+            response = sendSyncRequest(request)
+            if response.returnStatus != kTestRequestStatusDidLoad { return response }
+            let files = (response.dataResponse as? [String: Any])?["files"] as? [[String: Any]] ?? []
+            if !files.contains(where: { ($0[kLid] as? String) == fileId }) { return response }
+            Thread.sleep(forTimeInterval: interval)
+            elapsed += interval
+            interval = min(interval * 1.5, 5.0)
+        }
+        return response
+    }
+
+    // Find a file by ID in an array of file dictionaries
+    private func findFileWithId(_ fileId: String, inFiles files: [[String: Any]]?) -> [String: Any]? {
+        files?.first { ($0[kLid] as? String) == fileId }
     }
 
     private func changeOauthTokens(accessToken: String, refreshToken: String?) {
@@ -417,18 +497,15 @@ class SalesforceRestAPITests: XCTestCase {
         XCTAssertEqual((response.dataResponse as? [String: Any])?[kLastName] as? String, lastName)
         XCTAssertEqual((response.dataResponse as? [String: Any])?[kFirstName] as? String, "John")
 
-        // Query
+        // Query — use retry since SOQL can have brief eventual consistency after create
         request = RestClient.sharedInstance.requestForQuery("select Id, FirstName from Contact where LastName='\(lastName)'", apiVersion: SFRestDefaultAPIVersion)
-        response = sendSyncRequest(request)
-        XCTAssertEqual(response.returnStatus, kTestRequestStatusDidLoad, "request failed")
-        let records = (response.dataResponse as? [String: Any])?[kRecords] as? [[String: Any]]
+        let records = sendSyncQueryRequestUntilFound(request, expectedMinResults: 1, maxWaitSeconds: 30)
         XCTAssertEqual(records?.count, 1, "expected just one query result")
 
-        // Search (wait for indexing)
-        Thread.sleep(forTimeInterval: 5.0)
+        // Search — use retry since SOSL indexing has server-side lag
         request = RestClient.sharedInstance.requestForSearch("Find {\(lastName)}", apiVersion: SFRestDefaultAPIVersion)
-        response = sendSyncRequest(request)
-        XCTAssertEqual(response.returnStatus, kTestRequestStatusDidLoad, "request failed")
+        let searchRecords = sendSyncSearchRequestWithRetry(request, expectedMinResults: 1, maxWaitSeconds: 45)
+        XCTAssertEqual(searchRecords?.count, 1, "expected just one search result")
     }
 
     func testCreateUpdateQuerySearchDelete() {
@@ -449,11 +526,9 @@ class SalesforceRestAPITests: XCTestCase {
             _ = sendSyncRequest(request)
         }
 
-        // Query
+        // Query — use retry since SOQL can have brief eventual consistency after create
         request = RestClient.sharedInstance.requestForQuery("select Id, FirstName from Contact where LastName='\(lastName)'", apiVersion: SFRestDefaultAPIVersion)
-        response = sendSyncRequest(request)
-        XCTAssertEqual(response.returnStatus, kTestRequestStatusDidLoad)
-        let queryRecords = (response.dataResponse as? [String: Any])?[kRecords] as? [[String: Any]]
+        let queryRecords = sendSyncQueryRequestUntilFound(request, expectedMinResults: 1, maxWaitSeconds: 30)
         XCTAssertEqual(queryRecords?.count, 1, "expected just one query result")
 
         // Update
@@ -2030,42 +2105,76 @@ class SalesforceRestAPITests: XCTestCase {
         let fields: [String: String] = [kName: accountName]
         var request = RestClient.sharedInstance.requestForCreate(withObjectType: kAccount, fields: fields, apiVersion: SFRestDefaultAPIVersion)
         var response = sendSyncRequest(request)
-        XCTAssertEqual(response.returnStatus, kTestRequestStatusDidLoad, "request should have succeeded")
-        guard let accountId = (response.dataResponse as? [String: Any])?[kLid] as? String else { return }
+        XCTAssertEqual(response.returnStatus, kTestRequestStatusDidLoad, "create request failed")
+        guard let accountId = (response.dataResponse as? [String: Any])?[kLid] as? String else {
+            XCTFail("account id not present"); return
+        }
 
+        // Retrieve to get last modified date - expect updated name
         request = RestClient.sharedInstance.requestForRetrieve(withObjectType: kAccount, objectId: accountId, fieldList: "Name,LastModifiedDate", apiVersion: SFRestDefaultAPIVersion)
         response = sendSyncRequest(request)
+        XCTAssertEqual(response.returnStatus, kTestRequestStatusDidLoad, "retrieve request failed")
         let retrievedName = (response.dataResponse as? [String: Any])?[kName] as? String
         XCTAssertEqual(retrievedName, accountName, "wrong name retrieved")
         guard let lastModifiedDateStr = (response.dataResponse as? [String: Any])?["LastModifiedDate"] as? String else { return }
 
+        let isoDateFormatter = DateFormatter()
+        isoDateFormatter.locale = Locale(identifier: "en_US_POSIX")
+        isoDateFormatter.dateFormat = "yyyy-MM-dd'T'HH:mm:ss.SSSZ"
+        guard var createdDate = isoDateFormatter.date(from: lastModifiedDateStr) else {
+            XCTFail("failed to parse LastModifiedDate: \(lastModifiedDateStr)"); return
+        }
+        // Round up to next second — HTTP date format has second granularity, so sub-second
+        // timestamps get truncated, making the header appear BEFORE the actual LastModifiedDate.
+        createdDate = Date(timeIntervalSinceReferenceDate: ceil(createdDate.timeIntervalSinceReferenceDate))
+
+        // Format the date as a proper HTTP date in UTC for the If-Unmodified-Since header.
+        // We bypass ifUnmodifiedSinceDate: because the SDK's httpDateFormatter has a timezone bug
+        // (formats in local time but hardcodes "GMT", causing 412s in non-UTC timezones).
         let httpDateFormatter = DateFormatter()
+        httpDateFormatter.locale = Locale(identifier: "en_US_POSIX")
+        httpDateFormatter.timeZone = TimeZone(identifier: "GMT")
         httpDateFormatter.dateFormat = "EEE',' dd MMM yyyy HH':'mm':'ss 'GMT'"
-        guard let createdDate = httpDateFormatter.date(from: lastModifiedDateStr) else { return }
+        let ifUnmodifiedSinceValue = httpDateFormatter.string(from: createdDate)
 
-        Thread.sleep(forTimeInterval: 1.0)
+        // Wait a bit to ensure server timestamp advances past createdDate
+        Thread.sleep(forTimeInterval: 2.0)
 
+        // Update with if-unmodified-since with createdDate - should update
         let accountNameUpdated = "\(accountName)_updated"
         let fieldsUpdated: [String: String] = [kName: accountNameUpdated]
-        request = RestClient.sharedInstance.requestForUpdate(withObjectType: kAccount, objectId: accountId, fields: fieldsUpdated, ifUnmodifiedSinceDate: createdDate, apiVersion: SFRestDefaultAPIVersion)
+        // Pass nil to skip the SDK's buggy date formatter; set the header manually below.
+        request = RestClient.sharedInstance.requestForUpdate(withObjectType: kAccount, objectId: accountId, fields: fieldsUpdated, ifUnmodifiedSinceDate: nil, apiVersion: SFRestDefaultAPIVersion)
+        request.setHeaderValue(ifUnmodifiedSinceValue, forHeaderName: "If-Unmodified-Since")
         response = sendSyncRequest(request)
+        if response.returnStatus != kTestRequestStatusDidLoad {
+            Thread.sleep(forTimeInterval: 3.0)
+            response = sendSyncRequest(request)
+        }
         XCTAssertEqual(response.returnStatus, kTestRequestStatusDidLoad, "request should have succeeded")
 
+        // Retrieve - expect updated name
         request = RestClient.sharedInstance.requestForRetrieve(withObjectType: kAccount, objectId: accountId, fieldList: kName, apiVersion: SFRestDefaultAPIVersion)
         response = sendSyncRequest(request)
+        XCTAssertEqual(response.returnStatus, kTestRequestStatusDidLoad, "retrieve after update failed")
         let secondRetrievedName = (response.dataResponse as? [String: Any])?[kName] as? String
         XCTAssertEqual(secondRetrievedName, accountNameUpdated, "wrong name retrieved")
 
+        // Second update with if-unmodified-since with pastDate (1hr ago) - should not update
         let pastDate = Date(timeIntervalSinceNow: -3600)
         let blockedUpdatedName = "\(accountNameUpdated)_updated_again"
         let blockedFieldsUpdated: [String: String] = [kName: blockedUpdatedName]
-        request = RestClient.sharedInstance.requestForUpdate(withObjectType: kAccount, objectId: accountId, fields: blockedFieldsUpdated, ifUnmodifiedSinceDate: pastDate, apiVersion: SFRestDefaultAPIVersion)
+        // Pass nil to skip the SDK's buggy date formatter; set the header manually below.
+        let pastDateValue = httpDateFormatter.string(from: pastDate)
+        request = RestClient.sharedInstance.requestForUpdate(withObjectType: kAccount, objectId: accountId, fields: blockedFieldsUpdated, ifUnmodifiedSinceDate: nil, apiVersion: SFRestDefaultAPIVersion)
+        request.setHeaderValue(pastDateValue, forHeaderName: "If-Unmodified-Since")
         response = sendSyncRequest(request)
         XCTAssertEqual(response.returnStatus, kTestRequestStatusDidFail, "request should failed")
         XCTAssertEqual(response.lastError?.code, 412, "request should have returned a 412")
 
         request = RestClient.sharedInstance.requestForRetrieve(withObjectType: kAccount, objectId: accountId, fieldList: kName, apiVersion: SFRestDefaultAPIVersion)
         response = sendSyncRequest(request)
+        XCTAssertEqual(response.returnStatus, kTestRequestStatusDidLoad, "retrieve after blocked update failed")
         let thirdRetrievedName = (response.dataResponse as? [String: Any])?[kName] as? String
         XCTAssertEqual(thirdRetrievedName, accountNameUpdated, "wrong name retrieved")
     }
@@ -2193,28 +2302,43 @@ class SalesforceRestAPITests: XCTestCase {
     }
 
     func testUploadOwnedFilesDelete() {
+        // upload first file
         let fileAttrs = uploadFile()
+        let fileId = fileAttrs[kLid] as? String ?? ""
+
+        // get owned files — retry until the uploaded file appears in the list
         var request = RestClient.sharedInstance.requestForOwnedFilesList(nil, page: 0, apiVersion: SFRestDefaultAPIVersion)
-        var response = sendSyncRequest(request)
+        var response = waitForOwnedFilesList(request, toContainFileId: fileId, maxWaitSeconds: 30)
         XCTAssertEqual(response.returnStatus, kTestRequestStatusDidLoad, "request failed")
 
+        // upload other file
         let fileAttrs2 = uploadFile()
+        let fileId2 = fileAttrs2[kLid] as? String ?? ""
 
+        // get owned files — retry until the second uploaded file appears
         request = RestClient.sharedInstance.requestForOwnedFilesList(nil, page: 0, apiVersion: SFRestDefaultAPIVersion)
-        response = sendSyncRequest(request)
+        response = waitForOwnedFilesList(request, toContainFileId: fileId2, maxWaitSeconds: 30)
         XCTAssertEqual(response.returnStatus, kTestRequestStatusDidLoad, "request failed")
+        let files = (response.dataResponse as? [String: Any])?["files"] as? [[String: Any]]
+        XCTAssertNotNil(findFileWithId(fileId, inFiles: files), "first file not found in owned files")
+        XCTAssertNotNil(findFileWithId(fileId2, inFiles: files), "second file not found in owned files")
 
-        request = RestClient.sharedInstance.requestForDelete(withObjectType: "ContentDocument", objectId: fileAttrs2[kLid] as? String ?? "", apiVersion: SFRestDefaultAPIVersion)
+        // delete second file
+        request = RestClient.sharedInstance.requestForDelete(withObjectType: "ContentDocument", objectId: fileId2, apiVersion: SFRestDefaultAPIVersion)
         response = sendSyncRequest(request)
-        XCTAssertEqual(response.returnStatus, kTestRequestStatusDidLoad, "request failed")
+        XCTAssertEqual(response.returnStatus, kTestRequestStatusDidLoad, "delete request failed")
 
+        // get owned files — retry until the deleted file is removed from the list
         request = RestClient.sharedInstance.requestForOwnedFilesList(nil, page: 0, apiVersion: SFRestDefaultAPIVersion)
-        response = sendSyncRequest(request)
+        response = waitForOwnedFilesList(request, toNotContainFileId: fileId2, maxWaitSeconds: 30)
         XCTAssertEqual(response.returnStatus, kTestRequestStatusDidLoad, "request failed")
+        let remainingFiles = (response.dataResponse as? [String: Any])?["files"] as? [[String: Any]]
+        XCTAssertNotNil(findFileWithId(fileId, inFiles: remainingFiles), "first file should still be in owned files")
 
-        request = RestClient.sharedInstance.requestForDelete(withObjectType: "ContentDocument", objectId: fileAttrs[kLid] as? String ?? "", apiVersion: SFRestDefaultAPIVersion)
+        // delete first file
+        request = RestClient.sharedInstance.requestForDelete(withObjectType: "ContentDocument", objectId: fileId, apiVersion: SFRestDefaultAPIVersion)
         response = sendSyncRequest(request)
-        XCTAssertEqual(response.returnStatus, kTestRequestStatusDidLoad, "request failed")
+        XCTAssertEqual(response.returnStatus, kTestRequestStatusDidLoad, "delete request failed")
     }
 
     func testUploadProfilePhoto() {

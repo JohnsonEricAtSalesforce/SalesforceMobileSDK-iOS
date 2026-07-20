@@ -95,7 +95,25 @@ public class TestSetupUtils: NSObject {
     }
 
     @objc public class func synchronousAuthRefresh() {
-        synchronousAuthRefresh(withUserDidLoginNotification: false)
+        synchronousAuthRefresh(withRetries: 3)
+    }
+
+    /// Upstream #4053 wraps `synchronousAuthRefresh` in a bounded retry loop to stabilize flaky
+    /// live-org auth setup. Upstream retries when the underlying refresh THROWS (its `NSAssert` on a
+    /// non-`didLoad` status). This migration branch does not throw — the underlying refresh records
+    /// its outcome in `authRefreshDidSucceed` (see the divergence note above) — so we retry while the
+    /// flag is `false` instead of catching an exception, capped at `maxRetries` with a 3s backoff.
+    @objc public class func synchronousAuthRefresh(withRetries maxRetries: Int) {
+        for attempt in 1...max(1, maxRetries) {
+            synchronousAuthRefresh(withUserDidLoginNotification: false)
+            if authRefreshDidSucceed {
+                return
+            }
+            if attempt < maxRetries {
+                SFSDKCoreLogger.w(TestSetupUtils.self, message: "Auth refresh attempt \(attempt) did not complete with a live session. Retrying in 3s...")
+                Thread.sleep(forTimeInterval: 3.0)
+            }
+        }
     }
 
     @objc public class func synchronousAuthRefresh(withUserDidLoginNotification postUserDidLogIn: Bool) {

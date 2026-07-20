@@ -65,7 +65,7 @@ class SFSDKAuthUtilTests: XCTestCase {
             endpointResponse = response
             expectation.fulfill()
         }
-        self.wait(for: [expectation], timeout: 30)
+        self.wait(for: [expectation], timeout: 60)
         let response = try XCTUnwrap(endpointResponse)
         XCTAssertFalse(response.hasError)
         XCTAssertNotNil(response.accessToken)
