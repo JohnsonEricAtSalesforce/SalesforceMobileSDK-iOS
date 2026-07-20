@@ -423,7 +423,7 @@ public class SFOAuthCoordinator: NSObject, WKNavigationDelegate, WKUIDelegate {
         _asWebAuthenticationSession = ASWebAuthenticationSession(url: nativeBrowserUrl, callbackURLScheme: redirectScheme) { [weak self] callbackURL, error in
             guard let self = self else { return }
             if error == nil, let url = callbackURL, SFSDKURLHandlerManager.sharedInstance.canHandleRequest(url, options: nil) {
-                let options: [AnyHashable: Any] = [UserAccountManager.IDPSceneKey: self.authSession?.sceneId ?? ""]
+                let options = self.browserCallbackOptions(forSceneId: self.authSession?.sceneId)
                 SFSDKURLHandlerManager.sharedInstance.processRequest(url, options: options, completion: nil, failure: nil)
             } else {
                 self.delegate?.oauthCoordinatorDidCancelBrowserAuthentication(self)
@@ -433,6 +433,18 @@ public class SFOAuthCoordinator: NSObject, WKNavigationDelegate, WKUIDelegate {
         if let session = _asWebAuthenticationSession {
             delegate?.oauthCoordinator(self, didBeginAuthenticationWithSession: session)
         }
+    }
+
+    /// Builds the options dictionary handed to the URL handler on the advanced-auth browser callback.
+    /// Guards against a nil sceneId so nil is never inserted into the dictionary.
+    /// - Parameter sceneId: The auth session's scene id, or nil if no scene was connected / the session deallocated.
+    /// - Returns: A dictionary keyed by `UserAccountManager.IDPSceneKey` when sceneId is non-nil, or an empty dictionary otherwise.
+    func browserCallbackOptions(forSceneId sceneId: String?) -> [AnyHashable: Any] {
+        // Guard against a nil sceneId so we never insert nil into the options dictionary; omit the
+        // key and let the URL handler fall back to the default scene. sceneId can be nil if the weak
+        // authSession has deallocated by the time the browser callback fires.
+        guard let sceneId else { return [:] }
+        return [UserAccountManager.IDPSceneKey: sceneId]
     }
 
     func beginWebViewFlow() {

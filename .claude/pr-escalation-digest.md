@@ -256,8 +256,26 @@ merges. (3) `SKILL.md` update is byte-identical to upstream (`SQLLite`→`SQLite
 build-cache artifact, not a code issue. SmartStore/MobileSync TEST BUILD green; 3 version tests pass (runtime-confirmed
 `4.17.0 community` / SQLite `3.53.3`). **Escalation = SQLCipher dependency bump — flag in PR (pre-approved).**
 
+### Unit 43 · #4098 — nil-sceneId crash on advanced-auth browser callback (OAuth/scene)
+**Escalation class: OAuth advanced-authentication flow / scene routing.** No public API change; behavior fix in the
+native-browser (`ASWebAuthenticationSession`) login path.
+**The bug:** when advanced-auth login starts before any `UIScene` has connected (cold launch, extension-driven login) —
+or the weak `authSession` deallocates before the browser callback fires — the callback built its URL-handler options
+dictionary as `@{kSFIDPSceneIdKey : sceneId}` with a nil `sceneId`, crashing on the nil insert and dropping the session.
+**The fix (2 parts):** (1) `SFSDKAuthSession` synthesizes a unique per-session scene id (`com.salesforce.mobilesdk.unscopedAuthSession-<UUID>`)
+when no scene is connected, so every session gets its own `authSessions[]` key; (2) `SFOAuthCoordinator.browserCallbackOptions(forSceneId:)`
+omits the key entirely when the id is nil, letting the URL handler fall back to the default scene.
+**Reviewer notes:** (1) All production changes land in the compiled Swift twins (`SFSDKAuthSession.swift`,
+`SFOAuthCoordinator.swift`); the de-referenced `.m` files were ref-synced byte-faithful for clean future merges;
+`SFOAuthCoordinator+Internal.h` is a migration tombstone (no class-ext body) so the helper decl lives on the Swift class
+as `internal` (visible to `@testable`, no new public API). (2) **Migration-specific extra:** the migrated `sceneId` was a
+non-optional `String` defaulting to `""`, so it never *crashed* — but it had a latent **collision** bug (all scene-less
+sessions shared the empty-string key). This port fixes that collision too, matching upstream's per-session-unique intent.
+(3) The 4 new tests were both ref-synced into the de-ref `SFOAuthCoordinatorTests.m` (verbatim) and ported to the compiled
+Swift twin. SDKCore/SmartStore/MobileSync build green (0 new warnings — 2 pre-existing unrelated warnings confirmed
+unchanged); 6 SFOAuthCoordinatorTests pass. **Escalation = OAuth advanced-auth/scene callback behavior — flag in PR.**
+
 ## Pending escalation units (upcoming — port in order)
-- **43 · #4098 — OAuth/scene:** nil-sceneId crash fix on advanced-auth browser callback.
 - **44 · #4087 — OAuth/token (LIVE-AUTH UNBLOCKER):** token-refresh coordinator; 18 files. Unblocks Phase 2.
 - **45 · #4102 — OAuth/token:** improve token-refresh error handling.
 - **46 · #4105 — login-host:** iOS26 login-host classifier fix.

@@ -25,6 +25,9 @@ import Foundation
 @objcMembers
 public class SFSDKAuthSession: NSObject {
 
+    // Prefix for the synthesized scene id used when a login starts before any UIScene has connected.
+    static let unscopedSceneIdPrefix = "com.salesforce.mobilesdk.unscopedAuthSession-"
+
     public var isAuthenticating: Bool = false
     public var credentials: OAuthCredentials
     public var oauthCoordinator: SFOAuthCoordinator
@@ -52,7 +55,9 @@ public class SFSDKAuthSession: NSObject {
         resolvedCredentials.setValue(request.jwtToken, forKey: "jwt")
         self.credentials = resolvedCredentials
         self.spAppCredentials = spAppCredentials
-        self.sceneId = request.scene?.session.persistentIdentifier ?? ""
+        // When no scene is connected yet, persistentIdentifier is nil; synthesize a unique per-session id
+        // so this session gets its own authSessions[] key and the browser callback can key back to it.
+        self.sceneId = request.scene?.session.persistentIdentifier ?? "\(SFSDKAuthSession.unscopedSceneIdPrefix)\(UUID().uuidString)"
 
         // Temp init — coordinator requires self
         self.oauthCoordinator = SFOAuthCoordinator(credentials: resolvedCredentials)
