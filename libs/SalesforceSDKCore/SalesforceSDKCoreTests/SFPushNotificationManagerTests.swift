@@ -25,9 +25,6 @@
 import XCTest
 @testable import SalesforceSDKCore
 
-// Needs to match what is defined in PushNotificationManager
-private let kSFDeviceSalesforceId = "deviceSalesforceId"
-
 class SFPushNotificationManagerTests: XCTestCase {
 
     private var manager: PushNotificationManager?
@@ -38,7 +35,6 @@ class SFPushNotificationManagerTests: XCTestCase {
         super.setUp()
         let mgr = PushNotificationManager()
         mgr.isSimulator = false
-        mgr.deviceSalesforceId = "pretending-we-registered"
         guard let credentials = OAuthCredentials.credentials(identifier: "happy-user", clientId: UserAccountManager.shared.oauthClientID, encrypted: true) else {
             XCTFail("Failed to create credentials")
             return
@@ -63,9 +59,6 @@ class SFPushNotificationManagerTests: XCTestCase {
     }
 
     func testRegisterSalesforceNotifications_NoDeviceIdPref() {
-        guard let user = user else { return }
-        let pref = SFPreferences.sharedPreferences(forScope: .user, user: user)
-        pref?.removeObject(forKey: kSFDeviceSalesforceId)
         let result = manager?.registerSalesforceNotifications(completionBlock: nil, failBlock: nil) ?? true
         XCTAssertFalse(result)
     }
@@ -77,9 +70,6 @@ class SFPushNotificationManagerTests: XCTestCase {
     }
 
     func testUnregisterSalesforceNotifications_NoDeviceIdPref() {
-        guard let user = user else { return }
-        let pref = SFPreferences.sharedPreferences(forScope: .user, user: user)
-        pref?.removeObject(forKey: kSFDeviceSalesforceId)
         let result = manager?.unregisterSalesforceNotifications(completionBlock: nil) ?? true
         XCTAssertFalse(result)
     }
