@@ -48,6 +48,7 @@ private let kUser_ACCESS_RESTRICTIONS = "accessRestrictions"
 private let kCredentialsUserIdPropName = "userId"
 private let kCredentialsOrgIdPropName = "organizationId"
 private let kUser_NOTIFICATION_TYPES = "notificationTypes"
+private let kUser_FEATURE_FLAGS = "featureFlags"
 private let kGlobalScopingKey = "-global-"
 
 public let kUserAccountPhotoEncryptionKeyLabel: String = "com.salesforce.userAccount.photos.encryptionKey"
@@ -207,6 +208,9 @@ public func SFKeyForUserIdAndScope(_ userId: String?, _ orgId: String?, _ commun
         set { _notificationTypes = newValue?.map { $0 } }
     }
 
+    /// Feature flags persisted for this user (e.g. BW, QR). Populated from SFSDKAppFeatureMarkers.
+    @objc public var persistedFeatureFlags: Set<String>?
+
     /// The identity data associated with this user.
     @objc public var idData: SFIdentityData? {
         get {
@@ -312,6 +316,8 @@ public func SFKeyForUserIdAndScope(_ userId: String?, _ orgId: String?, _ commun
 
         let notifClasses: [AnyClass] = [NSArray.self, NotificationType.self]
         _notificationTypes = decoder.decodeObject(of: notifClasses, forKey: kUser_NOTIFICATION_TYPES) as? [NotificationType]
+
+        persistedFeatureFlags = decoder.decodeObject(of: [NSSet.self, NSString.self], forKey: kUser_FEATURE_FLAGS) as? Set<String>
     }
 
     public func encode(with encoder: NSCoder) {
@@ -327,6 +333,7 @@ public func SFKeyForUserIdAndScope(_ userId: String?, _ orgId: String?, _ commun
             encoder.encode(_customData, forKey: kUser_CUSTOM_DATA)
             encoder.encode(Int(accessRestrictions.rawValue), forKey: kUser_ACCESS_RESTRICTIONS)
             encoder.encode(_notificationTypes, forKey: kUser_NOTIFICATION_TYPES)
+            encoder.encode(persistedFeatureFlags, forKey: kUser_FEATURE_FLAGS)
         }
     }
 

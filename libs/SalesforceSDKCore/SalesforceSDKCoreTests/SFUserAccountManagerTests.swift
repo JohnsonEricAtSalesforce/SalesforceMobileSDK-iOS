@@ -482,6 +482,33 @@ class SFUserAccountManagerTests: XCTestCase {
         XCTAssertEqual(userIn.accessRestrictions, userOut?.accessRestrictions)
     }
 
+    func test_givenPersistedFeatureFlags_whenEncodeAndDecode_thenFlagsRoundtrip() {
+        guard let credentials = OAuthCredentials.credentials(identifier: "identifier-ff-roundtrip", clientId: "fakeClientIdForTesting", encrypted: false) else {
+            XCTFail("Failed to create credentials")
+            return
+        }
+        credentials.identityUrl = URL(string: "https://test.salesforce.com/id/00DS0000000IDdtWAH/005S0000004y9JkCAF")
+        let userIn = UserAccount(credentials: credentials)
+        userIn.persistedFeatureFlags = Set(["BW", "QR"])
+
+        let archiver = NSKeyedArchiver(requiringSecureCoding: true)
+        archiver.encode(userIn, forKey: "account")
+        archiver.finishEncoding()
+        let data = archiver.encodedData
+
+        guard let unarchiver = try? NSKeyedUnarchiver(forReadingFrom: data) else {
+            XCTFail("Could not create unarchiver")
+            return
+        }
+        unarchiver.requiresSecureCoding = true
+        let userOut = unarchiver.decodeObject(of: UserAccount.self, forKey: "account")
+
+        XCTAssertNotNil(userOut, "Should unarchive successfully")
+        XCTAssertEqual(userOut?.persistedFeatureFlags?.count, 2, "Should decode both feature flags")
+        XCTAssertTrue(userOut?.persistedFeatureFlags?.contains("BW") ?? false, "BW flag should roundtrip")
+        XCTAssertTrue(userOut?.persistedFeatureFlags?.contains("QR") ?? false, "QR flag should roundtrip")
+    }
+
     func testMigrateRefreshAuthRequest() {
         let testConsumerKey = "TestConsumerKey123"
         let testRedirectURI = "testapp://oauth/callback"

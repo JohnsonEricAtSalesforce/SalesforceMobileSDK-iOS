@@ -50,8 +50,9 @@ public class SFSDKAppFeatureMarkers: NSObject {
 
     private static let queue = DispatchQueue(label: "com.salesforce.mobilesdk.appFeaturesQueue")
     private static var markersSet = Set<String>()
+    private static var perUserMarkersMap = [String: Set<String>]()
 
-    /// Register a particular app feature.
+    /// Register a particular app feature (global — all users).
     /// - Parameter appFeature: The string representation of the feature to register.
     @objc public static func registerAppFeature(_ appFeature: String) {
         queue.sync {
@@ -59,7 +60,7 @@ public class SFSDKAppFeatureMarkers: NSObject {
         }
     }
 
-    /// Unregister a particular app feature.
+    /// Unregister a particular app feature (global — all users).
     /// - Parameter appFeature: The string representation of the feature to unregister.
     @objc public static func unregisterAppFeature(_ appFeature: String) {
         queue.sync {
@@ -67,12 +68,83 @@ public class SFSDKAppFeatureMarkers: NSObject {
         }
     }
 
-    /// The current set of registered features.
+    /// The current set of globally registered features.
     @objc public static func appFeatures() -> Set<String> {
         var result = Set<String>()
         queue.sync {
             result = markersSet
         }
         return result
+    }
+
+    /// Register a feature for a specific user. If user is nil, registers globally.
+    /// - Parameters:
+    ///   - appFeature: The string representation of the feature to register.
+    ///   - user: The user account to register the feature for, or nil for global registration.
+    @objc public static func registerAppFeature(_ appFeature: String, forUser user: UserAccount?) {
+        guard let user = user else {
+            registerAppFeature(appFeature)
+            return
+        }
+        guard let key = SFKeyForUserAndScope(user, .user) else { return }
+        var snapshot = Set<String>()
+        queue.sync {
+            var set = perUserMarkersMap[key] ?? Set<String>()
+            set.insert(appFeature)
+            perUserMarkersMap[key] = set
+            snapshot = set
+        }
+        user.persistedFeatureFlags = snapshot
+        _ = UserAccountManager.shared.upsert(user)
+    }
+
+    /// Unregister a feature for a specific user. If user is nil, unregisters globally.
+    /// - Parameters:
+    ///   - appFeature: The string representation of the feature to unregister.
+    ///   - user: The user account to unregister the feature for, or nil for global unregistration.
+    @objc public static func unregisterAppFeature(_ appFeature: String, forUser user: UserAccount?) {
+        guard let user = user else {
+            unregisterAppFeature(appFeature)
+            return
+        }
+        guard let key = SFKeyForUserAndScope(user, .user) else { return }
+        var snapshot = Set<String>()
+        queue.sync {
+            var set = perUserMarkersMap[key] ?? Set<String>()
+            set.remove(appFeature)
+            perUserMarkersMap[key] = set
+            snapshot = set
+        }
+        user.persistedFeatureFlags = snapshot
+        _ = UserAccountManager.shared.upsert(user)
+    }
+
+    /// Returns the union of global features and per-user features for the given user.
+    /// - Parameter user: The user account, or nil to return global features only.
+    /// - Returns: The combined set of registered features.
+    @objc public static func appFeatures(forUser user: UserAccount?) -> Set<String> {
+        guard let user = user, let key = SFKeyForUserAndScope(user, .user) else {
+            return appFeatures()
+        }
+        var combined = Set<String>()
+        queue.sync {
+            combined = markersSet
+            if let userSet = perUserMarkersMap[key] {
+                combined.formUnion(userSet)
+            }
+        }
+        return combined
+    }
+
+    /// Populates the in-memory per-user map from persisted flags without triggering a save.
+    /// Called during SDK startup after accounts are loaded.
+    /// - Parameters:
+    ///   - features: The set of persisted feature flags.
+    ///   - user: The user account to load flags for.
+    @objc public static func loadPersistedFeatures(_ features: Set<String>, forUser user: UserAccount) {
+        guard !features.isEmpty, let key = SFKeyForUserAndScope(user, .user) else { return }
+        queue.sync {
+            perUserMarkersMap[key] = features
+        }
     }
 }

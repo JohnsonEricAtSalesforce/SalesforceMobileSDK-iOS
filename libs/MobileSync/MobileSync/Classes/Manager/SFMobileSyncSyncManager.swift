@@ -115,7 +115,7 @@ open class SFMobileSyncSyncManager: NSObject {
         }
         let syncMgr = self.init(store: store)
         syncMgrList[key] = syncMgr
-        SFSDKAppFeatureMarkers.registerAppFeature(kSFAppFeatureMobileSync)
+        SFSDKAppFeatureMarkers.registerAppFeature(kSFAppFeatureMobileSync, forUser: store.userAccount)
         return syncMgr
     }
 

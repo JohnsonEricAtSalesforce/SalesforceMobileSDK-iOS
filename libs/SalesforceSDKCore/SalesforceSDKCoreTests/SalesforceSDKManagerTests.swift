@@ -372,6 +372,63 @@ class SalesforceSDKManagerTests: XCTestCase {
         XCTAssertEqual(SFOAuthType.userAgent, coordinator.authInfo.authType)
     }
 
+    // MARK: - Per-user user-agent tests
+
+    func test_givenUserWithPerUserFeature_whenUserAgentStringForUser_thenFtrContainsUserFlag() {
+        createTestAppIdentity()
+        let user = createUserAccount()
+        UserAccountManager.shared.setCurrentUserInternal(user)
+
+        // Register a per-user flag for our user.
+        SFSDKAppFeatureMarkers.registerAppFeature("XY", forUser: user)
+
+        let ua = SalesforceSDKManager.shared.userAgent(qualifier: "", for: user)
+
+        XCTAssertTrue(ua.contains("ftr_"), "User agent should contain the ftr_ segment")
+        XCTAssertTrue(ua.contains("XY"), "User agent for user should include their per-user flag XY")
+
+        // Cleanup
+        SFSDKAppFeatureMarkers.unregisterAppFeature("XY", forUser: user)
+        _ = UserAccountManager.shared.delete(user)
+        UserAccountManager.shared.setCurrentUserInternal(nil)
+    }
+
+    func test_givenNilUser_whenUserAgentStringForUser_thenFallsBackToCurrentUser() {
+        createTestAppIdentity()
+        let user = createUserAccount()
+        UserAccountManager.shared.setCurrentUserInternal(user)
+
+        SFSDKAppFeatureMarkers.registerAppFeature("CU", forUser: user)
+
+        let uaForNil = SalesforceSDKManager.shared.userAgent(qualifier: "", for: nil)
+        let uaForUser = SalesforceSDKManager.shared.userAgent(qualifier: "", for: user)
+
+        XCTAssertEqual(uaForNil, uaForUser, "userAgent(qualifier:for: nil) should produce same result as for: currentUser")
+
+        // Cleanup
+        SFSDKAppFeatureMarkers.unregisterAppFeature("CU", forUser: user)
+        _ = UserAccountManager.shared.delete(user)
+        UserAccountManager.shared.setCurrentUserInternal(nil)
+    }
+
+    func test_givenAccountWithPersistedFlags_whenHydratePerUserFeatureFlags_thenFlagsLoadedIntoMarkers() {
+        createTestAppIdentity()
+        let user = createUserAccount()
+        user.persistedFeatureFlags = Set(["BW"])
+
+        // Simulate what happens on SDK startup: save the account then hydrate.
+        XCTAssertTrue(UserAccountManager.shared.upsert(user), "Should save account without error")
+
+        SalesforceSDKManager.shared.hydratePerUserFeatureFlags()
+
+        let features = SFSDKAppFeatureMarkers.appFeatures(forUser: user)
+        XCTAssertTrue(features.contains("BW"), "BW should be in appFeatures(forUser:) after hydratePerUserFeatureFlags")
+
+        // Cleanup
+        SFSDKAppFeatureMarkers.unregisterAppFeature("BW", forUser: user)
+        _ = UserAccountManager.shared.delete(user)
+    }
+
     // MARK: - Display Name Tests
 
     func testDefaultDisplayName() {

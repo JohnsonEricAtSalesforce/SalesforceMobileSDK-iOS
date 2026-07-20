@@ -2277,7 +2277,7 @@ extension UserAccountManager {
                         bioAuthManager.unlockPostProcessing()
                     }
 
-                    SFSDKAppFeatureMarkers.registerAppFeature(kSFAppFeatureBioAuth)
+                    SFSDKAppFeatureMarkers.registerAppFeature(kSFAppFeatureBioAuth, forUser: self.currentUserAccount)
                     if let currentUser = self.currentUserAccount {
                         bioAuthManager.storePolicy(userAccount: currentUser, hasMobilePolicy: hasBioAuthPolicy, sessionTimeout: Int32(sessionTimeout))
                     }
@@ -2295,7 +2295,7 @@ extension UserAccountManager {
                         authClient.revokeRefreshToken(preCreds, reason: .refreshTokenRotated)
                     }
                 } else if hasMobilePolicy {
-                    SFSDKAppFeatureMarkers.registerAppFeature(kSFAppFeatureScreenLock)
+                    SFSDKAppFeatureMarkers.registerAppFeature(kSFAppFeatureScreenLock, forUser: self.currentUserAccount)
                     if let currentUser = self.currentUserAccount {
                         ScreenLockManagerInternal.shared.storeMobilePolicy(userAccount: currentUser, hasMobilePolicy: hasMobilePolicy, lockTimeout: Int32(lockTimeout))
                     }
@@ -2396,6 +2396,38 @@ extension UserAccountManager {
         // Notify the session is ready.
         initAnalyticsManager()
         handleAnalyticsAddUserEvent(authSession, account: userAccount)
+
+        // Promote auth-method feature flags to the now-known user account.
+        // Write the per-user flag and clear the transient global flag so it does not
+        // bleed into other users' User-Agent strings.
+        let completedAuthType = authSession.oauthCoordinator.authInfo.authType
+        if completedAuthType == .advancedBrowser {
+            SFSDKAppFeatureMarkers.registerAppFeature(kSFAppFeatureSafariBrowserForLogin, forUser: userAccount)
+        } else {
+            SFSDKAppFeatureMarkers.unregisterAppFeature(kSFAppFeatureSafariBrowserForLogin, forUser: userAccount)
+        }
+        SFSDKAppFeatureMarkers.unregisterAppFeature(kSFAppFeatureSafariBrowserForLogin)
+        if completedAuthType != .refresh {
+            // Check the transient global flag rather than re-deriving from credentials.domain, which by
+            // this point has been replaced with the resolved org domain (no longer contains "/discovery").
+            let usedWelcomeDiscovery = SFSDKAppFeatureMarkers.appFeatures().contains(kSFAppFeatureWelcomeDiscovery)
+            if usedWelcomeDiscovery {
+                SFSDKAppFeatureMarkers.registerAppFeature(kSFAppFeatureWelcomeDiscovery, forUser: userAccount)
+            } else {
+                SFSDKAppFeatureMarkers.unregisterAppFeature(kSFAppFeatureWelcomeDiscovery, forUser: userAccount)
+            }
+            // WD: clear the transient global flag after promoting to per-user
+            SFSDKAppFeatureMarkers.unregisterAppFeature(kSFAppFeatureWelcomeDiscovery)
+
+            // QR: write per-user and clear the transient global flag
+            let usedQrLogin = SFSDKAppFeatureMarkers.appFeatures().contains(kSFAppFeatureQrCodeLogin)
+            if usedQrLogin {
+                SFSDKAppFeatureMarkers.registerAppFeature(kSFAppFeatureQrCodeLogin, forUser: userAccount)
+                SFSDKAppFeatureMarkers.unregisterAppFeature(kSFAppFeatureQrCodeLogin)
+            } else {
+                SFSDKAppFeatureMarkers.unregisterAppFeature(kSFAppFeatureQrCodeLogin, forUser: userAccount)
+            }
+        }
 
         // Async call, ignore if there's a failure. If success save the user photo locally.
         retrieveUserPhotoIfNeededImpl(userAccount)

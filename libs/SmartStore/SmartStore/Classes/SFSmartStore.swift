@@ -308,7 +308,7 @@ public class SmartStore: NSObject {
             SFSDKAppFeatureMarkers.registerAppFeature(kSFAppFeatureSmartStoreGlobal)
         } else {
             self.dbMgr = SmartStoreDatabaseManager.shared(forUser: user) ?? SmartStoreDatabaseManager.sharedGlobal()
-            SFSDKAppFeatureMarkers.registerAppFeature(kSFAppFeatureSmartStoreUser)
+            SFSDKAppFeatureMarkers.registerAppFeature(kSFAppFeatureSmartStoreUser, forUser: user)
         }
 
         self.soupNameToTableName.countLimit = CACHES_COUNT_LIMIT

@@ -28,15 +28,32 @@ import XCTest
 class SFSDKAppFeatureMarkersTests: XCTestCase {
 
     private var existingMarkers = Set<String>()
+    private var userA: UserAccount!
+    private var userB: UserAccount!
 
     override func setUp() {
         super.setUp()
         existingMarkers = Set<String>()
         persistExistingMarkers()
         clearExistingMarkers()
+        userA = fakeUser(orgId: "org1", userId: "user1", credentialsIdentifier: "test-creds-A")
+        userB = fakeUser(orgId: "org2", userId: "user2", credentialsIdentifier: "test-creds-B")
     }
 
     override func tearDown() {
+        SFSDKAppFeatureMarkers.unregisterAppFeature("XY", forUser: userA)
+        SFSDKAppFeatureMarkers.unregisterAppFeature("XY", forUser: userB)
+        SFSDKAppFeatureMarkers.unregisterAppFeature("GL", forUser: nil)
+        SFSDKAppFeatureMarkers.unregisterAppFeature("PU", forUser: userA)
+        SFSDKAppFeatureMarkers.unregisterAppFeature("NL", forUser: nil)
+        SFSDKAppFeatureMarkers.unregisterAppFeature("RM", forUser: userA)
+        SFSDKAppFeatureMarkers.unregisterAppFeature("HY", forUser: userA)
+        SFSDKAppFeatureMarkers.unregisterAppFeature("PS", forUser: userA)
+        SFSDKAppFeatureMarkers.unregisterAppFeature(kSFAppFeatureSafariBrowserForLogin, forUser: userA)
+        SFSDKAppFeatureMarkers.unregisterAppFeature(kSFAppFeatureWelcomeDiscovery, forUser: userA)
+        SFSDKAppFeatureMarkers.unregisterAppFeature(kSFAppFeatureQrCodeLogin, forUser: userA)
+        userA = nil
+        userB = nil
         clearExistingMarkers()
         resetPreviousMarkers()
         existingMarkers = Set<String>()
@@ -64,7 +81,171 @@ class SFSDKAppFeatureMarkersTests: XCTestCase {
         SFSDKAppFeatureMarkers.unregisterAppFeature(someFeature)
     }
 
+    // MARK: - Per-user feature flag tests
+
+    func test_givenTwoUsers_whenRegisterFeatureForUserA_thenOnlyUserAHasFlag() {
+        SFSDKAppFeatureMarkers.registerAppFeature("XY", forUser: userA)
+
+        XCTAssertTrue(SFSDKAppFeatureMarkers.appFeatures(forUser: userA).contains("XY"), "userA should have feature XY")
+        XCTAssertFalse(SFSDKAppFeatureMarkers.appFeatures(forUser: userB).contains("XY"), "userB should NOT have feature XY")
+        XCTAssertFalse(SFSDKAppFeatureMarkers.appFeatures().contains("XY"), "Global set should NOT contain per-user feature XY")
+    }
+
+    func test_givenGlobalAndPerUserFlags_whenAppFeaturesForUser_thenUnionReturned() {
+        SFSDKAppFeatureMarkers.registerAppFeature("GL")
+        SFSDKAppFeatureMarkers.registerAppFeature("PU", forUser: userA)
+
+        let featuresForA = SFSDKAppFeatureMarkers.appFeatures(forUser: userA)
+        XCTAssertTrue(featuresForA.contains("GL"), "appFeatures(forUser: userA) should include global feature GL")
+        XCTAssertTrue(featuresForA.contains("PU"), "appFeatures(forUser: userA) should include per-user feature PU")
+
+        let featuresForB = SFSDKAppFeatureMarkers.appFeatures(forUser: userB)
+        XCTAssertTrue(featuresForB.contains("GL"), "appFeatures(forUser: userB) should include global feature GL")
+        XCTAssertFalse(featuresForB.contains("PU"), "appFeatures(forUser: userB) should NOT include userA's per-user feature PU")
+    }
+
+    func test_givenNilUser_whenRegisterForUser_thenFlagGoesToGlobalSet() {
+        SFSDKAppFeatureMarkers.registerAppFeature("NL", forUser: nil)
+
+        XCTAssertTrue(SFSDKAppFeatureMarkers.appFeatures().contains("NL"), "Registering with nil user should fall back to global set")
+    }
+
+    func test_givenUserWithFlag_whenUnregisterForUser_thenFlagRemovedFromUser() {
+        // Register RM only per-user for userA; do not add to global set
+        SFSDKAppFeatureMarkers.registerAppFeature("RM", forUser: userA)
+        XCTAssertTrue(SFSDKAppFeatureMarkers.appFeatures(forUser: userA).contains("RM"), "Feature RM should be present for userA before unregister")
+
+        SFSDKAppFeatureMarkers.unregisterAppFeature("RM", forUser: userA)
+
+        XCTAssertFalse(SFSDKAppFeatureMarkers.appFeatures(forUser: userA).contains("RM"), "Feature RM should be removed from userA after per-user unregister")
+        XCTAssertFalse(SFSDKAppFeatureMarkers.appFeatures().contains("RM"), "Global set should not contain RM (it was never registered globally)")
+    }
+
+    func test_givenLoadPersistedFeatures_whenAppFeaturesForUser_thenFlagsPresent() {
+        SFSDKAppFeatureMarkers.loadPersistedFeatures(["HY"], forUser: userA)
+
+        XCTAssertTrue(SFSDKAppFeatureMarkers.appFeatures(forUser: userA).contains("HY"), "Hydrated feature HY should be visible via appFeatures(forUser:)")
+        XCTAssertFalse(userA.persistedFeatureFlags?.contains("HY") ?? false, "loadPersistedFeatures should NOT write back to persistedFeatureFlags")
+    }
+
+    func test_givenPersistedFlagsOnUser_whenRegisterForUser_thenPersistedFlagsUpdated() {
+        SFSDKAppFeatureMarkers.registerAppFeature("PS", forUser: userA)
+
+        XCTAssertTrue(userA.persistedFeatureFlags?.contains("PS") ?? false, "registerAppFeature(_:forUser:) should save PS to user.persistedFeatureFlags")
+    }
+
+    func test_givenNilUser_whenAppFeaturesForUser_thenReturnsGlobalSet() {
+        SFSDKAppFeatureMarkers.registerAppFeature("GL")
+        SFSDKAppFeatureMarkers.registerAppFeature("PU", forUser: userA)
+
+        let forNil = SFSDKAppFeatureMarkers.appFeatures(forUser: nil)
+        let global = SFSDKAppFeatureMarkers.appFeatures()
+
+        XCTAssertEqual(forNil, global, "appFeatures(forUser: nil) should be identical to appFeatures()")
+        XCTAssertFalse(forNil.contains("PU"), "appFeatures(forUser: nil) should not include per-user features")
+    }
+
+    func test_givenPersistedFlagsOnUser_whenUnregisterForUser_thenPersistedFlagsUpdated() {
+        SFSDKAppFeatureMarkers.registerAppFeature("RM", forUser: userA)
+        XCTAssertTrue(userA.persistedFeatureFlags?.contains("RM") ?? false, "Precondition: RM should be in persistedFeatureFlags after register")
+
+        SFSDKAppFeatureMarkers.unregisterAppFeature("RM", forUser: userA)
+
+        XCTAssertFalse(userA.persistedFeatureFlags?.contains("RM") ?? false, "unregisterAppFeature(_:forUser:) should remove RM from user.persistedFeatureFlags")
+    }
+
+    // MARK: - Auth-completion promotion pattern tests
+
+    func test_givenAdvancedBrowserAuth_whenPromoteBW_thenUserHasBWAndGlobalCleared() {
+        // Simulates: authType == advancedBrowser path in auth completion
+        SFSDKAppFeatureMarkers.registerAppFeature(kSFAppFeatureSafariBrowserForLogin)
+
+        // Promotion sequence from auth completion
+        SFSDKAppFeatureMarkers.registerAppFeature(kSFAppFeatureSafariBrowserForLogin, forUser: userA)
+        SFSDKAppFeatureMarkers.unregisterAppFeature(kSFAppFeatureSafariBrowserForLogin)
+
+        XCTAssertTrue(SFSDKAppFeatureMarkers.appFeatures(forUser: userA).contains(kSFAppFeatureSafariBrowserForLogin), "BW should be registered per-user after advanced browser auth")
+        XCTAssertFalse(SFSDKAppFeatureMarkers.appFeatures().contains(kSFAppFeatureSafariBrowserForLogin), "BW should be cleared from global set after promotion")
+    }
+
+    func test_givenNonAdvancedBrowserAuth_whenPromoteBW_thenUserLacksBWAndGlobalCleared() {
+        // Simulates: authType != advancedBrowser path in auth completion
+        SFSDKAppFeatureMarkers.registerAppFeature(kSFAppFeatureSafariBrowserForLogin)
+
+        // Promotion sequence from auth completion (non-advanced path)
+        SFSDKAppFeatureMarkers.unregisterAppFeature(kSFAppFeatureSafariBrowserForLogin, forUser: userA)
+        SFSDKAppFeatureMarkers.unregisterAppFeature(kSFAppFeatureSafariBrowserForLogin)
+
+        XCTAssertFalse(SFSDKAppFeatureMarkers.appFeatures(forUser: userA).contains(kSFAppFeatureSafariBrowserForLogin), "BW should NOT be registered per-user after non-advanced auth")
+        XCTAssertFalse(SFSDKAppFeatureMarkers.appFeatures().contains(kSFAppFeatureSafariBrowserForLogin), "BW should be cleared from global set regardless of auth type")
+    }
+
+    func test_givenGlobalWDSet_whenPromoteWD_thenUserHasWDAndGlobalCleared() {
+        // Simulates: WelcomeDiscovery was used globally, authType != refresh
+        SFSDKAppFeatureMarkers.registerAppFeature(kSFAppFeatureWelcomeDiscovery)
+
+        // Promotion sequence from auth completion
+        let usedWelcomeDiscovery = SFSDKAppFeatureMarkers.appFeatures().contains(kSFAppFeatureWelcomeDiscovery)
+        XCTAssertTrue(usedWelcomeDiscovery, "Precondition: global WD should be set")
+
+        SFSDKAppFeatureMarkers.registerAppFeature(kSFAppFeatureWelcomeDiscovery, forUser: userA)
+        SFSDKAppFeatureMarkers.unregisterAppFeature(kSFAppFeatureWelcomeDiscovery)
+
+        XCTAssertTrue(SFSDKAppFeatureMarkers.appFeatures(forUser: userA).contains(kSFAppFeatureWelcomeDiscovery), "WD should be promoted to per-user when global WD was set")
+        XCTAssertFalse(SFSDKAppFeatureMarkers.appFeatures().contains(kSFAppFeatureWelcomeDiscovery), "WD should be cleared from global set after promotion")
+    }
+
+    func test_givenGlobalWDNotSet_whenPromoteWD_thenUserLacksWDAndGlobalCleared() {
+        // Simulates: WelcomeDiscovery was NOT used globally, authType != refresh
+        // Do NOT register WD globally
+
+        // Promotion sequence from auth completion
+        let usedWelcomeDiscovery = SFSDKAppFeatureMarkers.appFeatures().contains(kSFAppFeatureWelcomeDiscovery)
+        XCTAssertFalse(usedWelcomeDiscovery, "Precondition: global WD should NOT be set")
+
+        SFSDKAppFeatureMarkers.unregisterAppFeature(kSFAppFeatureWelcomeDiscovery, forUser: userA)
+        SFSDKAppFeatureMarkers.unregisterAppFeature(kSFAppFeatureWelcomeDiscovery)
+
+        XCTAssertFalse(SFSDKAppFeatureMarkers.appFeatures(forUser: userA).contains(kSFAppFeatureWelcomeDiscovery), "WD should NOT be per-user when global WD was not set")
+        XCTAssertFalse(SFSDKAppFeatureMarkers.appFeatures().contains(kSFAppFeatureWelcomeDiscovery), "Global WD should remain absent")
+    }
+
+    func test_givenGlobalQRSet_whenPromoteQR_thenUserHasQRAndGlobalCleared() {
+        // Simulates: QR login was used globally, authType != refresh
+        SFSDKAppFeatureMarkers.registerAppFeature(kSFAppFeatureQrCodeLogin)
+
+        // Promotion sequence from auth completion
+        let usedQrLogin = SFSDKAppFeatureMarkers.appFeatures().contains(kSFAppFeatureQrCodeLogin)
+        XCTAssertTrue(usedQrLogin, "Precondition: global QR should be set")
+
+        SFSDKAppFeatureMarkers.registerAppFeature(kSFAppFeatureQrCodeLogin, forUser: userA)
+        SFSDKAppFeatureMarkers.unregisterAppFeature(kSFAppFeatureQrCodeLogin)
+
+        XCTAssertTrue(SFSDKAppFeatureMarkers.appFeatures(forUser: userA).contains(kSFAppFeatureQrCodeLogin), "QR should be promoted to per-user when global QR was set")
+        XCTAssertFalse(SFSDKAppFeatureMarkers.appFeatures().contains(kSFAppFeatureQrCodeLogin), "QR should be cleared from global set after promotion")
+    }
+
+    func test_givenGlobalQRNotSet_whenPromoteQR_thenUserLacksQR() {
+        // Simulates: QR login was NOT used globally, authType != refresh
+        // Do NOT register QR globally
+
+        // Promotion sequence from auth completion
+        let usedQrLogin = SFSDKAppFeatureMarkers.appFeatures().contains(kSFAppFeatureQrCodeLogin)
+        XCTAssertFalse(usedQrLogin, "Precondition: global QR should NOT be set")
+
+        SFSDKAppFeatureMarkers.unregisterAppFeature(kSFAppFeatureQrCodeLogin, forUser: userA)
+
+        XCTAssertFalse(SFSDKAppFeatureMarkers.appFeatures(forUser: userA).contains(kSFAppFeatureQrCodeLogin), "QR should NOT be per-user when global QR was not set")
+    }
+
     // MARK: - Private helpers
+
+    private func fakeUser(orgId: String, userId: String, credentialsIdentifier identifier: String) -> UserAccount {
+        let credentials = OAuthCredentials.credentials(identifier: identifier, clientId: "fakeClientIdForTesting", encrypted: false)!
+        credentials.organizationId = orgId
+        credentials.userId = userId
+        return UserAccount(credentials: credentials)
+    }
 
     private func persistExistingMarkers() {
         for marker in SFSDKAppFeatureMarkers.appFeatures() {

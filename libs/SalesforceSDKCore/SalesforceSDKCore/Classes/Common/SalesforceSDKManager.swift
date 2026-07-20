@@ -204,6 +204,7 @@ open class SalesforceSDKManager: NSObject {
         } else {
             SFSDKAppFeatureMarkers.unregisterAppFeature(kSFAppFeatureMultiUser)
         }
+        manager.hydratePerUserFeatureFlags()
         return manager
     }()
 
@@ -781,19 +782,38 @@ open class SalesforceSDKManager: NSObject {
         UIPasteboard.general.colors = []
     }
 
+    /// Returns a user agent string that includes both global and per-user feature flags.
+    /// - Parameters:
+    ///   - qualifier: Optional string appended to the app type (e.g., "Local" for hybrid).
+    ///   - user: The user account whose per-user flags to include, or nil to use the current user.
+    /// - Returns: The user agent string for the given user.
+    @objc(userAgentString:forUser:) public func userAgent(qualifier: String, for user: UserAccount?) -> String {
+        let resolvedUser = user ?? UserAccountManager.shared.currentUserAccount
+        let curDevice = UIDevice.current
+        let appName = SalesforceSDKManager.appName ?? ""
+        let prodAppVersion = Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? ""
+        let buildNumber = Bundle.main.infoDictionary?[kCFBundleVersionKey as String] as? String ?? ""
+        let appVersion = "\(prodAppVersion)(\(buildNumber))"
+        let appTypeStr = self.getAppTypeAsString()
+        let features = SFSDKAppFeatureMarkers.appFeatures(forUser: resolvedUser).sorted { $0.caseInsensitiveCompare($1) == .orderedAscending }
+        let featuresStr = features.joined(separator: ".")
+        let webViewAgent = self.webViewUserAgent ?? ""
+        return "SalesforceMobileSDK/\(SALESFORCE_SDK_VERSION) \(curDevice.systemName)/\(curDevice.systemVersion) (\(curDevice.model)) \(appName)/\(appVersion) \(appTypeStr)\(qualifier) uid_\(SalesforceSDKManager.uid) ftr_\(featuresStr) \(webViewAgent)"
+    }
+
     private func defaultUserAgentString() -> UserAgentGeneratorBlock {
         return { [weak self] qualifier in
             guard let self = self else { return "" }
-            let curDevice = UIDevice.current
-            let appName = SalesforceSDKManager.appName ?? ""
-            let prodAppVersion = Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? ""
-            let buildNumber = Bundle.main.infoDictionary?[kCFBundleVersionKey as String] as? String ?? ""
-            let appVersion = "\(prodAppVersion)(\(buildNumber))"
-            let appTypeStr = self.getAppTypeAsString()
-            let features = SFSDKAppFeatureMarkers.appFeatures().sorted { $0.caseInsensitiveCompare($1) == .orderedAscending }
-            let featuresStr = features.joined(separator: ".")
-            let webViewAgent = self.webViewUserAgent ?? ""
-            return "SalesforceMobileSDK/\(SALESFORCE_SDK_VERSION) \(curDevice.systemName)/\(curDevice.systemVersion) (\(curDevice.model)) \(appName)/\(appVersion) \(appTypeStr)\(qualifier) uid_\(SalesforceSDKManager.uid) ftr_\(featuresStr) \(webViewAgent)"
+            return self.userAgent(qualifier: qualifier, for: nil)
+        }
+    }
+
+    @objc func hydratePerUserFeatureFlags() {
+        guard let allUsers = UserAccountManager.shared.userAccounts() else { return }
+        for account in allUsers {
+            if let flags = account.persistedFeatureFlags, !flags.isEmpty {
+                SFSDKAppFeatureMarkers.loadPersistedFeatures(flags, forUser: account)
+            }
         }
     }
 
