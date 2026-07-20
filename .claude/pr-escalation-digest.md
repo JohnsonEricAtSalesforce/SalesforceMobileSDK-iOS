@@ -54,9 +54,17 @@ Pre-approved gates (still PR-flag, do NOT re-ask): SQLCipher #4096; Localizable.
   particular has no Common xcconfig chain, so removal there would break it). Net: centralized source + zero `4.0`
   stragglers. All 4 lib schemes + RestAPIExplorer + MobileSyncExplorer build green.
 
+- **Unit 26 · #4076 · `d3fbf593c` — build-system (test-app scene lifecycle).** Migrated `SalesforceSDKCoreTestApp`
+  off the UIKit storyboard launch (AppDelegate + ViewController + `main.m` + `Main_iPhone/iPad.storyboard`) to a
+  single SwiftUI `@main struct ... : App`. Info.plist storyboard keys replaced by `UIApplicationSceneManifest` +
+  `UILaunchScreen`. **Reviewer note:** the migration branch had *already* partly Swiftified this test app (compiled
+  `AppDelegate.swift`/`ViewController.swift` twins); this unit converges to upstream's end-state by removing those
+  twins too, so there is exactly one `@main`. pbxproj edited surgically (UUID-set verified −13 net, plutil OK); no
+  library production code touched. **Test-app target only — not shipped in any SDK framework.** TEST BUILD SUCCEEDED.
+
 ## Pending escalation units (upcoming — port in order)
 
-- **26–29 · #4076/#4082/#4083/#4081 — build-system:** SDKCore test-app scene migration + 4 new test-app targets + pbxproj.
+- **27–29 · #4082/#4083/#4081 — build-system:** MobileSync + SmartStore + Analytics new/updated test-app targets + pbxproj.
 - **32 · #4078 — login/OAuth:** Login-for-Admin + Welcome-Discovery incompatibility fix (SFLoginViewController, DomainDiscoveryCoordinator, SFOAuthCoordinator, SFUserAccountManager).
 - **35 · #4086 — feature-flags + podspec + multi-lib:** per-user feature flags across Core/MobileSync/SmartStore + SalesforceSDKCore.podspec.
 - **36 · #4091 — thread-safety:** notification-types thread safety on SFUserAccount.
