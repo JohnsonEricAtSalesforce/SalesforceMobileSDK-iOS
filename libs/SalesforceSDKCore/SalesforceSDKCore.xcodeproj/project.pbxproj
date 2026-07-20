@@ -124,6 +124,7 @@
 		4FOAUTHEC012E98711600C89DDD /* SFOAuthErrorCode.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4FOAUTHEC002E98711600C89DDD /* SFOAuthErrorCode.swift */; };
 		4FOAUTHECT012E98711600C89DDD /* SFOAuthErrorCodeTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4FOAUTHECT002E98711600C89DDD /* SFOAuthErrorCodeTests.swift */; };
 		E40A1C032DD7E0AD00138888 /* SFSDKOAuth2TokenExchangeErrorTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = E40A1C042DD7E0AD00138888 /* SFSDKOAuth2TokenExchangeErrorTests.swift */; };
+		E40A1C052DD7E0AD00138888 /* SFRestAPIReplayRequestTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = E40A1C062DD7E0AD00138888 /* SFRestAPIReplayRequestTests.swift */; };
 		4F5A49582E98B0F800C89DDD /* ScopeParserTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4F5A49572E98B0F800C89DDD /* ScopeParserTests.swift */; };
 		4F7EB40D1BFFC88200768720 /* MessageUI.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 8280EC1716E15FFC00768DE8 /* MessageUI.framework */; };
 		4F7EB4101BFFC88200768720 /* Foundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 8220B74F16D804CA00EC3921 /* Foundation.framework */; };
@@ -665,6 +666,7 @@
 		4FOAUTHEC002E98711600C89DDD /* SFOAuthErrorCode.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SFOAuthErrorCode.swift; sourceTree = "<group>"; };
 		4FOAUTHECT002E98711600C89DDD /* SFOAuthErrorCodeTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = SFOAuthErrorCodeTests.swift; path = SalesforceSDKCoreTests/SFOAuthErrorCodeTests.swift; sourceTree = SOURCE_ROOT; };
 		E40A1C042DD7E0AD00138888 /* SFSDKOAuth2TokenExchangeErrorTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = SFSDKOAuth2TokenExchangeErrorTests.swift; path = SalesforceSDKCoreTests/SFSDKOAuth2TokenExchangeErrorTests.swift; sourceTree = SOURCE_ROOT; };
+		E40A1C062DD7E0AD00138888 /* SFRestAPIReplayRequestTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = SFRestAPIReplayRequestTests.swift; path = SalesforceSDKCoreTests/SFRestAPIReplayRequestTests.swift; sourceTree = SOURCE_ROOT; };
 		4F5A49572E98B0F800C89DDD /* ScopeParserTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = ScopeParserTests.swift; path = ../SalesforceSDKCoreTests/ScopeParserTests.swift; sourceTree = "<group>"; };
 		4F755F4120D48D6700CE4E0E /* NSString+SFAdditionsTests.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; name = "NSString+SFAdditionsTests.m"; path = "SalesforceSDKCoreTests/NSString+SFAdditionsTests.m"; sourceTree = SOURCE_ROOT; };
 		4F7EB3F71BFFC87600768720 /* SDKCommonNSDataTests.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = SDKCommonNSDataTests.m; path = SalesforceSDKCoreTests/SDKCommonNSDataTests.m; sourceTree = SOURCE_ROOT; };
@@ -1275,6 +1277,7 @@
 				4FOAUTHECT002E98711600C89DDD /* SFOAuthErrorCodeTests.swift */,
 				FE44A0440000000000000003 /* SFSDKTokenRefreshCoordinatorTests.swift */,
 				E40A1C042DD7E0AD00138888 /* SFSDKOAuth2TokenExchangeErrorTests.swift */,
+				E40A1C062DD7E0AD00138888 /* SFRestAPIReplayRequestTests.swift */,
 				2B4074A2C0DE44F19A0E3344 /* SFSDKOAuth2RefreshInstanceUrlTests.swift */,
 				4F9E052C2DD6A06F00548985 /* SFSDKOAuthTokenEndpointResponseTests.m */,
 				69848CBB2364063E00893E57 /* SFSDKPushNotificationDataProvider.h */,
@@ -2546,6 +2549,7 @@
 				4FOAUTHECT012E98711600C89DDD /* SFOAuthErrorCodeTests.swift in Sources */,
 				FE44A0440000000000000004 /* SFSDKTokenRefreshCoordinatorTests.swift in Sources */,
 				E40A1C032DD7E0AD00138888 /* SFSDKOAuth2TokenExchangeErrorTests.swift in Sources */,
+				E40A1C052DD7E0AD00138888 /* SFRestAPIReplayRequestTests.swift in Sources */,
 				2B4074A1C0DE44F19A0E1122 /* SFSDKOAuth2RefreshInstanceUrlTests.swift in Sources */,
 				237C186C2E44FCAE0008015C /* EncryptStreamTests.swift in Sources */,
 				4FARCHRT001234567890ABCD /* CredentialsArchiveRoundTripTests.swift in Sources */,

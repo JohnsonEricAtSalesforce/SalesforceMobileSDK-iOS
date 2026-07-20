@@ -53,5 +53,6 @@ typedef NS_ENUM(NSInteger, SFLogoutReason) {
     SFLogoutReasonUnexpectedResponse,
     SFLogoutReasonUnknown,
     SFLogoutReasonUserInitiated,
-    SFLogoutReasonRefreshTokenRotated
+    SFLogoutReasonRefreshTokenRotated,              // Refresh token rotated
+    SFLogoutReasonAppAttestationFailed              // App attestation permanently blocked this client
 };

@@ -596,6 +596,8 @@ public protocol SFSDKOAuthProtocol: NSObjectProtocol {
             return "unexpected_response"
         case .refreshTokenRotated:
             return "refresh_token_rotated"
+        case .appAttestationFailed:
+            return "app_attestation_failed"
         @unknown default:
             return "unknown"
         }

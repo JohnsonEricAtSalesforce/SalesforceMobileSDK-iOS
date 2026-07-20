@@ -313,6 +313,23 @@ warnings confirmed unchanged); 22 targeted tests pass (11 coordinator + 7 data-t
 auth-util end-to-end tests remain `XCTSkip`-gated pending Phase 2. **Escalation = OAuth/token-refresh + public-API
 deprecation — flag in PR.**
 
+### Unit 45 · #4102 — improve token-refresh error handling (OAuth/token + new public SFLogoutReason case)
+Adds **App Attestation** classification to the REST token-refresh replay path. When a token refresh fails with an
+OAuth-domain error, `SFRestAPI.swift replayRequest` now classifies the failure via the typed
+`SFOAuthErrorCode.from(error.userInfo[kSFOAuthError])` and branches through a shared `triggerLogout` closure:
+`.invalidGrant → logout(.tokenExpired)` (unchanged), `.appAttestationFailed → logout(.appAttestationFailed)` (NEW —
+permanent client block), `.appAttestationFailedRetry → log only, no logout` (NEW — transient, client should retry).
+This replaces the previous single `error.code == kSFOAuthErrorInvalidGrant` check. **Public-surface change:** a new
+`SFLogoutReason` enum case `SFLogoutReasonAppAttestationFailed` is added to `SFSDKOAuth2.h` (ObjC enum bridged to
+Swift; wire string `"app_attestation_failed"`). Because `SFLogoutReason` is a public ObjC-visible enum, adding a case
+is an additive public-API change — **flag in PR** (matches upstream #4102 exactly; no case reordering, appended at end).
+De-ref `.m` mirrors ref-synced (SFRestAPI.m +22/-7 byte-matches upstream, SFSDKOAuth2.m +2). Prereq typed error codes
+already landed in units 38/41. New ObjC test file ported to a **Swift twin** (`SFRestAPIReplayRequestTests.swift`, 3
+tests) per the no-new-ObjC rule; +2 verbatim tests in `SFSDKOAuth2TokenExchangeErrorTests.swift`.
+**Gate:** SDKCore / SmartStore / MobileSync `build-for-testing` all GREEN, 0 new warnings (5 pre-existing SFRestAPI.swift
+warnings confirmed outside the diff); 14 targeted tests pass (3 replay + 9 token-exchange), regression re-run of 11
+coordinator + 7 data-task-race all green (determinism confirmed ×2). **Escalation = OAuth/token-refresh error handling
++ new public SFLogoutReason enum case — flag in PR.**
+
 ## Pending escalation units (upcoming — port in order)
-- **45 · #4102 — OAuth/token:** improve token-refresh error handling.
 - **46 · #4105 — login-host:** iOS26 login-host classifier fix.

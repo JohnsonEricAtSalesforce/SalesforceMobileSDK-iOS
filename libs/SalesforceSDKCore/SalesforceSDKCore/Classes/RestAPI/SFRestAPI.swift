@@ -435,7 +435,9 @@ open class RestClient: NSObject {
 
     // MARK: - Session Refresh
 
-    private func replayRequest(_ request: RestRequest, response: URLResponse?) {
+    // @objc so the ObjC runtime exposes it (the ObjC original was a runtime-visible method); the
+    // replay-request tests invoke it via perform(NSSelectorFromString("replayRequest:response:")).
+    @objc private func replayRequest(_ request: RestRequest, response: URLResponse?) {
         SFSDKCoreLogger.i(RestClient.self, message: "\(#function): REST request failed due to expired credentials. Attempting to refresh credentials.")
 
         do {
@@ -474,13 +476,26 @@ open class RestClient: NSObject {
             objc_sync_exit(self)
 
             if let error = refreshError as NSError?,
-               error.domain == kSFOAuthErrorDomain,
-               error.code == kSFOAuthErrorInvalidGrant {
-                SFSDKCoreLogger.i(RestClient.self, message: "\(#function) Invalid grant error received, triggering logout.")
-                DispatchQueue.main.async {
-                    if let user = self.user {
-                        UserAccountManager.shared.logout(user, reason: .tokenExpired)
+               error.domain == kSFOAuthErrorDomain {
+                let user = self.user
+                let triggerLogout: (SFLogoutReason, String) -> Void = { reason, logMessage in
+                    SFSDKCoreLogger.i(RestClient.self, message: "\(#function) \(logMessage)")
+                    DispatchQueue.main.async {
+                        if let user = user {
+                            UserAccountManager.shared.logout(user, reason: reason)
+                        }
                     }
+                }
+                let errorCode = SFOAuthErrorCode.from(error.userInfo[kSFOAuthError] as? String)
+                switch errorCode {
+                case .invalidGrant:
+                    triggerLogout(.tokenExpired, "Invalid grant error received, triggering logout.")
+                case .appAttestationFailed:
+                    triggerLogout(.appAttestationFailed, "App attestation failed, triggering logout.")
+                case .appAttestationFailedRetry:
+                    SFSDKCoreLogger.i(RestClient.self, message: "\(#function) App attestation retry needed, no automatic logout.")
+                default:
+                    break
                 }
             }
         })
