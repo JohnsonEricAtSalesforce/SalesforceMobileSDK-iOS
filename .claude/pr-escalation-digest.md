@@ -331,5 +331,24 @@ warnings confirmed outside the diff); 14 targeted tests pass (3 replay + 9 token
 coordinator + 7 data-task-race all green (determinism confirmed ×2). **Escalation = OAuth/token-refresh error handling
 + new public SFLogoutReason enum case — flag in PR.**
 
+### Unit 46 · #4105 — fix iOS 26 login-host classifier (login-host / OAuth login-flow behavior)
+Fixes silent login hangs against an unreachable/non-existent login host on **iOS 26**. On iOS 26, DNS resolution moved
+to Network.framework, so a bad-host failure no longer carries the legacy `_kCFStreamError*` userInfo keys the host-
+connection classifier relied on — it surfaces as a bare `NSURLErrorDomain` code instead. The old classifier missed
+those, so `SFOAuthCoordinator`'s auth-config prefetch fell through to a WKWebView load against the same dead host,
+hanging on a blank screen and leaving the bad host set as the sticky loginHost across app restarts. Fix (compiled Swift
+twins): new `@objc SFSDKAuthErrorManager.errorIsHostConnectionFailure(_:)` — the single source of truth that now also
+recognizes the iOS 26 bare `NSURLErrorDomain` codes (CannotFindHost / DNSLookupFailed / CannotConnectToHost / TimedOut /
+NotConnectedToInternet / NetworkConnectionLost) alongside the legacy CFStream keys and `kSFOAuthErrorInvalidURL`. The
+host-connection error handler delegates to it, and `SFOAuthCoordinator.authenticate`'s prefetch callback now surfaces a
+host-connection failure to `notifyDelegateOfFailure` (rolling loginHost back to the previous good host) instead of the
+silent WKWebView hang. Non-host errors still fall through (auth-config is optional). New `SFSDKAuthErrorManager+Internal.h`
+declares the predicate (shared by coordinator + tests). **Behavior touches the login-host recovery / OAuth login flow —
+flag in PR** (though it strictly *improves* recovery: it converts a hang into a recoverable, user-visible error).
+**Gate:** SDKCore / SmartStore / MobileSync `build-for-testing` all GREEN, 0 new warnings (1 pre-existing
+SFOAuthCoordinator.swift warning confirmed outside the diff); 22 SFSDKErrorManagerTests pass (7 existing + 15 new).
+**Escalation = login-host / OAuth login-flow behavior change — flag in PR.**
+
 ## Pending escalation units (upcoming — port in order)
-- **46 · #4105 — login-host:** iOS26 login-host classifier fix.
+- _None._ Unit 46 (#4105) was the last escalation-class unit. Remaining units 47–49 (#4103 / #4111 / #4112) are
+  docs-only (Category F) — no escalation.

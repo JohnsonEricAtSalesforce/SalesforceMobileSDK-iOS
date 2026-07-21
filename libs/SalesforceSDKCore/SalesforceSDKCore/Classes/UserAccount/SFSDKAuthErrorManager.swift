@@ -97,6 +97,46 @@ private let kSFGenericFailureAuthErrorHandler = "GenericFailureErrorHandler"
         return false
     }
 
+    /// Evaluates an NSError to see if it represents a host-connection failure — an
+    /// unreachable or non-existent login host — rather than a transient network failure
+    /// on an otherwise reachable host.
+    ///
+    /// `@objc` (upstream declares this in `SFSDKAuthErrorManager+Internal.h`) so it is
+    /// reachable from the compiled `SFOAuthCoordinator` twin (auth-config prefetch gate)
+    /// and from `SFSDKErrorManagerTests` (direct predicate coverage) — a single
+    /// declaration keeps both call sites in sync.
+    /// - Parameter error: The NSError to evaluate.
+    /// - Returns: `true` if the error should trigger the host-connection recovery path.
+    @objc public class func errorIsHostConnectionFailure(_ error: Error?) -> Bool {
+        guard let nsError = error as NSError?, nsError.domain as String? != nil else {
+            return false
+        }
+        // Legacy iOS <= 18 shape: CFNetwork stream stack attached _kCFStreamError* keys to userInfo.
+        if nsError.userInfo["_kCFStreamErrorCodeKey"] != nil && nsError.userInfo["_kCFStreamErrorDomainKey"] != nil {
+            return true
+        }
+        // OAuth invalid-URL is a bad-host signal.
+        if nsError.domain == kSFOAuthErrorDomain && nsError.code == Int(kSFOAuthErrorInvalidURL) {
+            return true
+        }
+        // iOS 26+ shape: DNS resolution moved to Network.framework, so the CFStream keys are absent.
+        // NSURLErrorDomain surfaces these codes with a bare userInfo instead.
+        if nsError.domain == NSURLErrorDomain {
+            switch nsError.code {
+            case NSURLErrorCannotFindHost,            // -1003
+                 NSURLErrorDNSLookupFailed,           // -1006
+                 NSURLErrorCannotConnectToHost,       // -1004
+                 NSURLErrorTimedOut,                  // -1001
+                 NSURLErrorNotConnectedToInternet,    // -1009
+                 NSURLErrorNetworkConnectionLost:     // -1005
+                return true
+            default:
+                break
+            }
+        }
+        return false
+    }
+
     // MARK: - Private
 
     private class func errorIsNetworkFailure(_ error: Error) -> Bool {
@@ -188,11 +228,15 @@ private let kSFGenericFailureAuthErrorHandler = "GenericFailureErrorHandler"
         self.networkFailureAuthErrorHandler = networkHandler
         authHandlerList.addAuthErrorHandler(networkHandler)
 
-        // Host connection error handler
+        // Host connection error handler.
+        //
+        // NSURLErrorTimedOut / CannotConnectToHost / NetworkConnectionLost / NotConnectedToInternet
+        // also appear in errorIsNetworkFailure(_:). The network-failure handler runs first in the
+        // chain and claims those codes only on Refresh flows with an existing access token; all
+        // other contexts return false there and fall through to this handler. Ordering is guarded
+        // by testNetworkFailureClaimsFirst_RefreshWithToken.
         let hostHandler = SFAuthErrorHandler(name: kSFHostConnectionErrorHandler) { [weak self] error, authSession, options in
-            let nsError = error as NSError
-            if (nsError.userInfo["_kCFStreamErrorCodeKey"] != nil && nsError.userInfo["_kCFStreamErrorDomainKey"] != nil) ||
-                (nsError.domain == kSFOAuthErrorDomain && nsError.code == Int(kSFOAuthErrorInvalidURL)) {
+            if SFSDKAuthErrorManager.errorIsHostConnectionFailure(error) {
                 if let block = self?.hostConnectionErrorHandlerBlock {
                     block(error, authSession, options)
                     return true

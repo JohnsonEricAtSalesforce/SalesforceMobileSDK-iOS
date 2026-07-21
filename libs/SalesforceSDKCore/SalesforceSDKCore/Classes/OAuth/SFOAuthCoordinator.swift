@@ -239,9 +239,22 @@ public class SFOAuthCoordinator: NSObject, WKNavigationDelegate, WKUIDelegate {
                 } else {
                     loginDomain = credentials?.domain ?? ""
                 }
-                SFSDKAuthConfigUtil.getMyDomainAuthConfig({ [weak self] authConfig, _ in
+                SFSDKAuthConfigUtil.getMyDomainAuthConfig({ [weak self] authConfig, error in
                     guard let self = self else { return }
                     DispatchQueue.main.async {
+                        // A prefetch error against an unreachable login host is the earliest
+                        // authoritative signal that the host itself is bad. Falling through to
+                        // beginWebViewFlow would dispatch a WKWebView load against the same host
+                        // and hang silently, stranding the user on a blank screen and leaving the
+                        // bad host set as the sticky loginHost across app restarts. Surface it to
+                        // the failure delegate so the error manager's hostConnectionErrorHandler
+                        // can present an alert and roll loginHost back to the previous good host.
+                        // Non-host errors (parse failures, non-2xx responses, endpoint absent on
+                        // standard orgs) continue to fall through — auth-config is optional.
+                        if let error = error, SFSDKAuthErrorManager.errorIsHostConnectionFailure(error) {
+                            self.notifyDelegateOfFailure(error, authInfo: self.authInfo)
+                            return
+                        }
                         if self.frontdoorBridgeLoginOverride == nil &&
                             ((authConfig?.useNativeBrowserForAuth ?? false) ||
                              SalesforceSDKManager.shared.forceAdvancedAuthenticationInternal) {
