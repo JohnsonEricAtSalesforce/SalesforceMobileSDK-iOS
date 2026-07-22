@@ -156,9 +156,15 @@ open class SFSyncDownTarget: SFSyncTarget {
             if let remoteIds = remoteIds {
                 localIds.removeObjects(in: remoteIds)
             }
+            // Snapshot the GHOST ids AFTER removing the still-remote ones. The ObjC oracle captured
+            // `[localIds array]` before removal, but -[NSMutableOrderedSet array] returns a LIVE-backed
+            // proxy that reflected the subsequent removeObjectsInArray:. Swift's `localIds.array` bridges
+            // to a frozen snapshot, so reusing the pre-removal array here would delete every non-dirty
+            // local record (including ones still present on the server). Re-read after removal to match.
+            let ghostIds = localIds.array
             // Deletes extra IDs from SmartStore.
-            self.deleteRecordsFromLocalStore(syncManager, soupName: soupName, ids: localIdsArr, idField: self.idFieldName)
-            completeBlock(localIdsArr)
+            self.deleteRecordsFromLocalStore(syncManager, soupName: soupName, ids: ghostIds, idField: self.idFieldName)
+            completeBlock(ghostIds)
         }
     }
 
