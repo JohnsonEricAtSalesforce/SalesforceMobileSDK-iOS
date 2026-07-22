@@ -196,7 +196,13 @@ class SalesforceRestAPITests: XCTestCase {
             exp.fulfill()
         })
 
-        waitForExpectations(timeout: 60.0)
+        // Wait ONLY on this request's expectation (scoped), matching the oracle's
+        // `[self waitForExpectations:@[expectation] timeout:60.0]`. The global
+        // `waitForExpectations(timeout:)` waits on EVERY pending expectation, so a test that
+        // registers a notification expectation before calling sendSyncRequest (e.g.
+        // testRefreshNotificationWithValidGetRequest) would have its notification expectation
+        // consumed here, then hit "call made to wait without any expectations having been set".
+        wait(for: [exp], timeout: 60.0)
 
         let result = RestAPITestResponse()
         result.returnStatus = responseError != nil ? kTestRequestStatusDidFail : kTestRequestStatusDidLoad
