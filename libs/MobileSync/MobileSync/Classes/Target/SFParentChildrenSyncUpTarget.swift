@@ -301,8 +301,10 @@ open class SFParentChildrenSyncUpTarget: SFSyncUpTarget, SFAdvancedSyncUpTarget 
 
         if isLocallyDeleted(record) {
             if isLocallyCreated(record) || (response?.success == true) || (response?.recordDoesNotExist == true) {
-                if self.relationshipType == .masterDetail {
-                    SFParentChildrenSyncHelper.deleteChildren(fromLocalStore: syncManager.store, parentInfo: self.parentInfo, childrenInfo: self.childrenInfo, parentIds: [record[idFieldName] as Any])
+                if self.relationshipType == .masterDetail, let parentId = record[idFieldName] {
+                    // Pass the unwrapped id — boxing a Swift Optional (`as Any`) interpolates as `Optional("…")`
+                    // in the children-lookup SmartSQL and matches nothing. See SFParentChildrenSyncHelper.
+                    SFParentChildrenSyncHelper.deleteChildren(fromLocalStore: syncManager.store, parentInfo: self.parentInfo, childrenInfo: self.childrenInfo, parentIds: [parentId])
                 }
                 deleteFromLocalStore(syncManager: syncManager, soupName: soupName, record: record)
             } else {

@@ -113,7 +113,11 @@ public class SFParentChildrenSyncHelper: NSObject {
     }
 
     @objc public class func getMutableChildren(fromLocalStore store: SFSmartStore, parentInfo: SFParentInfo, childrenInfo: SFChildrenInfo, parent: [String: Any]) -> [NSMutableDictionary] {
-        guard let querySpec = getQueryForChildren(parentInfo, childrenInfo: childrenInfo, childFieldToSelect: "_soup", parentIds: [parent[parentInfo.idFieldName] as Any]) else { return [] }
+        // Unwrap the parent id before boxing into [Any] — `parent[key] as Any` boxes a Swift Optional,
+        // which interpolates as the literal `Optional("…")` in getQueryForChildren's SmartSQL predicate,
+        // matching zero children (oracle passes the raw id via ObjC `parent[key]`). See SFRefreshSyncDownTarget (Fix E).
+        guard let parentId = parent[parentInfo.idFieldName] else { return [] }
+        guard let querySpec = getQueryForChildren(parentInfo, childrenInfo: childrenInfo, childFieldToSelect: "_soup", parentIds: [parentId]) else { return [] }
         guard let rows = try? store.query(using: querySpec, startingFromPageIndex: 0) else { return [] }
         var children = [NSMutableDictionary]()
         for row in rows {
@@ -132,8 +136,25 @@ public class SFParentChildrenSyncHelper: NSObject {
     // MARK: - Private
 
     private class func getQueryForChildren(_ parentInfo: SFParentInfo, childrenInfo: SFChildrenInfo, childFieldToSelect: String, parentIds: [Any]) -> QuerySpec? {
-        let parentIdList = parentIds.map { "'\($0)'" }.joined(separator: ", ")
+        // Unwrap any boxed Optional before interpolating — a boxed Optional renders as `Optional("…")` in the
+        // predicate and matches nothing. Callers should pass unwrapped ids; this is a defensive backstop.
+        let parentIdList = parentIds.map { id -> String in
+            "'\(unwrapForSql(id))'"
+        }.joined(separator: ", ")
         let smartSql = "SELECT {\(childrenInfo.soupName):\(childFieldToSelect)} FROM {\(childrenInfo.soupName)},{\(parentInfo.soupName)} WHERE {\(childrenInfo.soupName):\(childrenInfo.parentIdFieldName)} = {\(parentInfo.soupName):\(parentInfo.idFieldName)} AND {\(parentInfo.soupName):\(parentInfo.idFieldName)} IN (\(parentIdList))"
         return QuerySpec.buildSmartQuerySpec(smartSql: smartSql, pageSize: UInt(INT_MAX))
+    }
+
+    /// Renders a value for SQL interpolation, stripping a boxed Optional wrapper if present so that a
+    /// value that arrived as `Optional("x")` (e.g. via `dict[key] as Any`) interpolates as `x`, not `Optional("x")`.
+    private class func unwrapForSql(_ value: Any) -> String {
+        let mirror = Mirror(reflecting: value)
+        if mirror.displayStyle == .optional {
+            if let first = mirror.children.first {
+                return "\(first.value)"
+            }
+            return ""
+        }
+        return "\(value)"
     }
 }
