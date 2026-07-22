@@ -192,7 +192,11 @@ class SFLayoutSyncManagerTests: SyncManagerTestCase {
         waitForExpectations(timeout: 30.0, handler: nil)
         validateResult(objectAPIName: objectAPINameBlock, formFactor: formFactorBlock, layoutType: layoutTypeBlock, mode: modeBlock, recordTypeId: recordTypeIdBlock, layout: layoutBlock)
 
-        let sql = String(format: Self.kQuery, Self.kSoupName, Self.kSoupName, Self.kSoupName, kAccount, Self.kMedium, Self.kCompact, Self.kEdit, "nil")
+        // A nil recordTypeId is stored/fetched by production as an empty segment (recordTypeId ?? ""), so the
+        // soup Id is "Account-Medium-Compact-Edit-". The ObjC oracle passed a real nil to stringWithFormat (→
+        // "(null)") on BOTH the store and this query, so they matched; the Swift port storage uses "" instead,
+        // and this query must match that. (Original port hardcoded the literal "nil" here → 0 rows.)
+        let sql = String(format: Self.kQuery, Self.kSoupName, Self.kSoupName, Self.kSoupName, kAccount, Self.kMedium, Self.kCompact, Self.kEdit, "")
         guard let querySpec = QuerySpec.buildSmartQuerySpec(smartSql: sql, pageSize: 2),
               let smartStore = layoutSyncManager?.smartStore else {
             XCTFail("Failed to build query spec or get smart store")

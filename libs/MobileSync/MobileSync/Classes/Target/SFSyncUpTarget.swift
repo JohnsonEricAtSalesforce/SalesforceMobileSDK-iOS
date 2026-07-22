@@ -182,7 +182,13 @@ open class SFSyncUpTarget: SFSyncTarget {
     @objc(createOnServer:record:fieldlist:onComplete:onFail:)
     open func createOnServer(syncManager: SFMobileSyncSyncManager, record: NSDictionary, fieldlist: [Any], completionBlock: @escaping SFSyncUpTargetCompleteBlock, failBlock: @escaping SFSyncUpTargetErrorBlock) {
         let effectiveFieldlist = self.createFieldlist ?? (fieldlist as? [String] ?? [])
-        let objectType = SFJsonUtils.project(intoJson:record, path: kObjectTypeField) as? String ?? ""
+        // A record with no attributes.type yields a nil object type. The ObjC oracle passed that nil straight
+        // to requestForCreateWithObjectType:, which formatted the path as `/sobjects/(null)` (server 404 =
+        // "resource does not exist"). Coercing nil to "" here instead built `/sobjects/` → 405 METHOD_NOT_ALLOWED,
+        // a non-modeled error. Coerce empty to "null" (same convention as RecordRequest.asRestRequest for the
+        // composite path) so the request targets `/sobjects/null` → "sObject type 'null' is not supported".
+        let rawObjectType = SFJsonUtils.project(intoJson:record, path: kObjectTypeField) as? String ?? ""
+        let objectType = rawObjectType.isEmpty ? "null" : rawObjectType
         let fields = buildFieldsMap(record, fieldlist: effectiveFieldlist)
         let externalId: String? = self.externalIdFieldName != nil ? record[self.externalIdFieldName ?? ""] as? String : nil
 
