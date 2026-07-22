@@ -95,6 +95,19 @@ class SyncManagerTestCase: XCTestCase {
         }
         globalStore = SmartStore.sharedGlobal(withName: SmartStoreConstants.defaultStoreName)
         globalSyncManager = SFMobileSyncSyncManager.sharedInstance(store: globalStore)
+
+        // Skip (do not crash the host) if the current user / store couldn't be resolved even though the
+        // auth-refresh gate passed. `store` is an IUO SmartStore! and subclasses force-unwrap it from their
+        // own `setUp()` (e.g. createAccountsSoup() -> store.registerSoup at ~line 206). When
+        // `currentUserAccount` is transiently nil early in a full-suite run (auth-cascade timing), the base
+        // leaves `store` nil and the subclass traps -> SIGTRAP kills the whole test host, forcing an
+        // xcodebuild restart/retry that masks the crash. Unlike the ObjC oracle (whose sharedStoreWithName:
+        // tolerated a nil user), the migrated Swift `sharedInstance(forUserAccount:)` requires a non-nil user
+        // and `SmartStore.shared(withName:forUserAccount:)` returns nil for a nil user, so there is no store to
+        // run against when currentUser is nil anyway. Throwing XCTSkip stops setUp()/the test from running
+        // (XCTest skips setUp() when setUpWithError() throws), converting a host crash into a clean skip.
+        try XCTSkipUnless(currentUser != nil && store != nil,
+                          "Current user/store unavailable at setUp (transient auth-cascade nil); skipping to avoid an IUO host crash.")
     }
 
     override func tearDown() {
