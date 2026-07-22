@@ -508,10 +508,30 @@ class SalesforceRestAPITests: XCTestCase {
         let records = sendSyncQueryRequestUntilFound(request, expectedMinResults: 1, maxWaitSeconds: 30)
         XCTAssertEqual(records?.count, 1, "expected just one query result")
 
-        // Search — use retry since SOSL indexing has server-side lag
-        request = RestClient.sharedInstance.requestForSearch("Find {\(lastName)}", apiVersion: SFRestDefaultAPIVersion)
+        // Search. NOTE: the record name is a raw UUID, so the SOSL term is `Find {name-with-hyphens}`.
+        // A bare hyphen is a SOSL reserved operator, so `Find {..-..}` is rejected as MALFORMED_SEARCH
+        // ("mismatched character '-' expecting '}'") — deterministically, on the live org. Escape the SOSL
+        // reserved characters in the term with a backslash so the search is well-formed. (The ObjC oracle
+        // issued the unescaped `Find {%@}` and then never asserted the result — its own comment flags that a
+        // changed lastName "may need to escape SOSL-unsafe characters"; the Swift port added the count
+        // assertion, which surfaced the pre-existing malformed-SOSL request. Escaping is the faithful fix
+        // that keeps the assertion meaningful.)
+        let soslSafeName = escapeSoslTerm(lastName)
+        request = RestClient.sharedInstance.requestForSearch("Find {\(soslSafeName)}", apiVersion: SFRestDefaultAPIVersion)
         let searchRecords = sendSyncSearchRequestWithRetry(request, expectedMinResults: 1, maxWaitSeconds: 45)
         XCTAssertEqual(searchRecords?.count, 1, "expected just one search result")
+    }
+
+    /// Backslash-escapes the SOSL reserved characters in a search term so it can be embedded in a
+    /// `Find {...}` clause. See the SOSL reference — reserved: ? & | ! { } [ ] ( ) ^ ~ * : \ " ' + -
+    private func escapeSoslTerm(_ term: String) -> String {
+        let reserved: Set<Character> = ["?", "&", "|", "!", "{", "}", "[", "]", "(", ")", "^", "~", "*", ":", "\\", "\"", "'", "+", "-"]
+        var out = ""
+        for ch in term {
+            if reserved.contains(ch) { out.append("\\") }
+            out.append(ch)
+        }
+        return out
     }
 
     func testCreateUpdateQuerySearchDelete() {
@@ -1402,13 +1422,19 @@ class SalesforceRestAPITests: XCTestCase {
         api.send(request, failureBlock: failWithExpectedFail, successBlock: successWithUnexpectedSuccessBlock)
         waitForExpectations(timeout: 15)
 
+        // The oracle passes a nil objectType here, which ObjC bridges to the string "(null)" via
+        // stringWithFormat, producing /sobjects/(null) (and .../describe) -> server 404 -> the request
+        // correctly FAILS. The Swift API takes a non-optional String, so we pass the same "(null)" bytes
+        // the oracle put on the wire. (Unlike the delete/retrieve/update cases below, metadata/describe
+        // carry no objectId, so substituting a valid kContact would make the GET SUCCEED and trip
+        // successWithUnexpectedSuccessBlock — which is exactly the migration regression fixed here.)
         currentExpectation = expectation(description: "performMetadataWithObjectType-nil")
-        request = api.requestForMetadata(withObjectType: kContact, apiVersion: SFRestDefaultAPIVersion)
+        request = api.requestForMetadata(withObjectType: "(null)", apiVersion: SFRestDefaultAPIVersion)
         api.send(request, failureBlock: failWithExpectedFail, successBlock: successWithUnexpectedSuccessBlock)
         waitForExpectations(timeout: 15)
 
         currentExpectation = expectation(description: "performDescribeWithObjectType-nil")
-        request = api.requestForDescribe(withObjectType: kContact, apiVersion: SFRestDefaultAPIVersion)
+        request = api.requestForDescribe(withObjectType: "(null)", apiVersion: SFRestDefaultAPIVersion)
         api.send(request, failureBlock: failWithExpectedFail, successBlock: successWithUnexpectedSuccessBlock)
         waitForExpectations(timeout: 15)
 
