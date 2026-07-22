@@ -39,7 +39,10 @@ open class SFRefreshSyncDownTarget: SFSyncDownTarget {
     open private(set) var soupName: String = ""
     open private(set) var objectType: String = ""
     open private(set) var fieldlist: [String] = []
-    private var countIdsPerSoql: UInt = kSFSyncTargetRefreshDefaultCountIdsPerSoql
+    // internal (not private) so `@testable import MobileSync` tests can force multiple SOQL round trips,
+    // matching the ObjC tests that re-declared it via a class-extension. Not exposed in the public header,
+    // so this is not a public-API change.
+    internal var countIdsPerSoql: UInt = kSFSyncTargetRefreshDefaultCountIdsPerSoql
     private var isResync: Bool = false
     private var page: UInt = 0
 
@@ -230,7 +233,10 @@ open class SFRefreshSyncDownTarget: SFSyncDownTarget {
 
     private func fetchFromServer(_ ids: [Any], fieldlist: [String], maxTimeStamp: Int64, errorBlock: @escaping SFSyncDownTargetFetchErrorBlock, completeBlock: @escaping SFSyncDownTargetFetchCompleteBlock) {
         let idsStrings = ids.map { "\($0)" }
-        let maxTimeStampStr = SFMobileSyncObjectUtils.getIsoString(fromMillis: maxTimeStamp)
+        // getIsoString returns String? (nil only for negative millis); guarded by maxTimeStamp > 0 here, so
+        // unwrap with "" — interpolating the Optional directly injects the literal `Optional("…")` into the
+        // SOQL and the server rejects it as MALFORMED_QUERY. The ObjC original used a non-nil NSString.
+        let maxTimeStampStr = SFMobileSyncObjectUtils.getIsoString(fromMillis: maxTimeStamp) ?? ""
         let andClause = maxTimeStamp > 0 ? " AND \(self.modificationDateFieldName) > \(maxTimeStampStr)" : ""
         let whereClause = "\(self.idFieldName) IN ('\(idsStrings.joined(separator: "','"))')\(andClause)"
         let soql = SFSDKSoqlBuilder.withFieldsArray(fieldlist)

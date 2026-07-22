@@ -31,6 +31,11 @@ public let kSyncManagerUnchanged: Int = -1
 @objcMembers
 open class SFSyncTask: NSObject {
 
+    // The -1 sentinel as an unsigned value. Swift's UInt(Int) initializer traps on negatives, whereas the
+    // original ObjC implicitly reinterpreted NSInteger(-1) as NSUIntegerMax when passed to an NSUInteger
+    // parameter. Reproduce that wrap with UInt(bitPattern:) so the sentinel comparison stays value-faithful.
+    private static let unchangedSentinel = UInt(bitPattern: kSyncManagerUnchanged)
+
     open private(set) var syncManager: SFMobileSyncSyncManager
     open private(set) var syncId: NSNumber
     private var sync: SFSyncState
@@ -64,7 +69,7 @@ open class SFSyncTask: NSObject {
     open func shouldStop() -> Bool {
         if !syncManager.checkAcceptingSyncs(nil) {
             sync.status = .stopped
-            updateSync(sync, countSynched: UInt(kSyncManagerUnchanged))
+            updateSync(sync, countSynched: Self.unchangedSentinel)
             return true
         }
         return false
@@ -81,14 +86,18 @@ open class SFSyncTask: NSObject {
         SFSDKMobileSyncLogger.e(type(of: self), message: "runSync failed:\(sync) cause:\(failureMessage) error:\(error)")
         sync.error = (error as NSError).userInfo.description
         sync.status = .failed
-        updateSync(sync, countSynched: UInt(kSyncManagerUnchanged))
+        updateSync(sync, countSynched: Self.unchangedSentinel)
     }
 
     @objc
     open func updateSync(_ sync: SFSyncState, countSynched: UInt) {
         // Update progress
-        if countSynched != UInt(kSyncManagerUnchanged) {
-            sync.progress = sync.totalSize == 0 ? 100 : Int(countSynched * 100 / UInt(sync.totalSize))
+        if countSynched != Self.unchangedSentinel {
+            // The original ObjC evaluated countSynched*100/totalSize entirely in NSUInteger arithmetic, so a
+            // negative totalSize (e.g. the -1 "unknown size" sentinel) wrapped to NSUIntegerMax and yielded a
+            // progress of 0 rather than trapping. Reproduce that with bit-pattern reinterpretation and wrapping
+            // multiply; Swift's plain UInt(Int) initializer would trap on the negative sentinel.
+            sync.progress = sync.totalSize == 0 ? 100 : Int(bitPattern: countSynched &* 100 / UInt(bitPattern: sync.totalSize))
         }
 
         // Update status

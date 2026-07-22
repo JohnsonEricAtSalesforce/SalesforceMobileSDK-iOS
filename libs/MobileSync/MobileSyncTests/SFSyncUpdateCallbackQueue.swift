@@ -32,6 +32,13 @@ private let MAX_WAIT_TIME: TimeInterval = 10.0
 class SFSyncUpdateCallbackQueue: NSObject {
 
     private var queue: [SFSyncState] = []
+    // NB: lock on a stable object, NOT on `queue`. `queue` is a Swift Array (value type); passing it to
+    // objc_sync_enter bridges it to a temporary NSArray, and an EMPTY array bridges to a process-global
+    // shared-empty singleton. After append(), the array bridges to a different object, so objc_sync_exit
+    // would release a different lock than the one entered — orphaning the singleton's lock and deadlocking
+    // every thread that later locks an empty array. The original ObjC locked a stable NSMutableArray whose
+    // identity was invariant under mutation. This NSLock restores that invariant.
+    private let lock = NSLock()
 
     override init() {
         super.init()
@@ -42,9 +49,9 @@ class SFSyncUpdateCallbackQueue: NSObject {
     func runSync(_ sync: SFSyncState, syncManager: SFMobileSyncSyncManager) {
         syncManager.runSync(sync) { [weak self] updatedSync in
             guard let self = self else { return }
-            objc_sync_enter(self.queue)
+            self.lock.lock()
             self.queue.append(updatedSync.copy() as! SFSyncState)
-            objc_sync_exit(self.queue)
+            self.lock.unlock()
         }
     }
 
@@ -55,27 +62,27 @@ class SFSyncUpdateCallbackQueue: NSObject {
     func runReSync(_ syncId: NSNumber, syncManager: SFMobileSyncSyncManager, error: ()) throws -> SFSyncState? {
         return try syncManager.reSync(id: syncId) { [weak self] updatedSync in
             guard let self = self else { return }
-            objc_sync_enter(self.queue)
+            self.lock.lock()
             self.queue.append(updatedSync.copy() as! SFSyncState)
-            objc_sync_exit(self.queue)
+            self.lock.unlock()
         }
     }
 
     func runReSyncByName(_ syncName: String, syncManager: SFMobileSyncSyncManager) throws -> SFSyncState? {
         return try syncManager.reSync(named: syncName) { [weak self] updatedSync in
             guard let self = self else { return }
-            objc_sync_enter(self.queue)
+            self.lock.lock()
             self.queue.append(updatedSync.copy() as! SFSyncState)
-            objc_sync_exit(self.queue)
+            self.lock.unlock()
         }
     }
 
     func restart(_ syncManager: SFMobileSyncSyncManager, restartStoppedSyncs: Bool) throws -> Bool {
         return try syncManager.restart(restartStoppedSyncs: restartStoppedSyncs) { [weak self] updatedSync in
             guard let self = self else { return }
-            objc_sync_enter(self.queue)
+            self.lock.lock()
             self.queue.append(updatedSync.copy() as! SFSyncState)
-            objc_sync_exit(self.queue)
+            self.lock.unlock()
         }
     }
 
@@ -101,8 +108,8 @@ class SFSyncUpdateCallbackQueue: NSObject {
     }
 
     private func getFirst() -> SFSyncState? {
-        objc_sync_enter(queue)
-        defer { objc_sync_exit(queue) }
+        lock.lock()
+        defer { lock.unlock() }
         if !queue.isEmpty {
             return queue.removeFirst()
         }

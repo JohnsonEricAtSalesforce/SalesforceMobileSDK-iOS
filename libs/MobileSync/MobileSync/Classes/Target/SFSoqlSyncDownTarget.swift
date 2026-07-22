@@ -213,7 +213,9 @@ open class SFSoqlSyncDownTarget: SFSyncDownTarget {
     open class func addFilterForReSync(_ query: String, modDateFieldName: String, maxTimeStamp: Int64) -> String {
         var queryToRun = query
         if maxTimeStamp > 0 {
-            let maxTimeStampStr = SFMobileSyncObjectUtils.getIsoString(fromMillis: maxTimeStamp)
+            // Unwrap the Optional (see SFRefreshSyncDownTarget) — interpolating it raw injects `Optional("…")`
+            // into the SOQL predicate → server MALFORMED_QUERY. Guarded by maxTimeStamp > 0 so never nil.
+            let maxTimeStampStr = SFMobileSyncObjectUtils.getIsoString(fromMillis: maxTimeStamp) ?? ""
             let extraPredicate = "\(modDateFieldName) > \(maxTimeStampStr)"
             queryToRun = SFSDKSoqlMutator.withSoql(query)
                 .addWherePredicates(extraPredicate)

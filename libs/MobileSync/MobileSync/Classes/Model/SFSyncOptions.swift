@@ -57,10 +57,13 @@ public class SFSyncOptions: NSObject {
 
     @objc public class func new(fromDict dict: [String: Any]?) -> SFSyncOptions? {
         guard let dict = dict, dict.count > 0 else { return nil }
-        return SFSyncOptions.newSyncOptions(
-            forSyncUp: dict[kSFSyncOptionsFieldlist] as? [Any] ?? [],
-            mergeMode: SFSyncState.mergeMode(fromString: dict[kSFSyncOptionsMergeMode] as? String ?? "")
-        )
+        let options = SFSyncOptions()
+        // Preserve a MISSING fieldlist as nil (not []). The original ObjC passed dict[fieldlist] straight
+        // through, so an absent key (sync-down options never store a fieldlist — see asDict) yielded nil.
+        // Coercing to [] here diverges from the archived representation and breaks equality with nil.
+        options.fieldlist = dict[kSFSyncOptionsFieldlist] as? [Any]
+        options.mergeMode = SFSyncState.mergeMode(fromString: dict[kSFSyncOptionsMergeMode] as? String ?? "")
+        return options
     }
 
     @objc public func asDict() -> [String: Any] {

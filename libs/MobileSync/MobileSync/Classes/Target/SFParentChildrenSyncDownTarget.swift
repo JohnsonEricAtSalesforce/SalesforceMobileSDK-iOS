@@ -212,7 +212,9 @@ open class SFParentChildrenSyncDownTarget: SFSoqlSyncDownTarget {
     }
 
     private func buildModificationDateFilter(_ modificationDateFieldName: String, maxTimeStamp: Int64) -> String {
-        return "\(modificationDateFieldName) > \(SFMobileSyncObjectUtils.getIsoString(fromMillis: maxTimeStamp))"
+        // Unwrap the Optional (see SFRefreshSyncDownTarget) — interpolating it raw injects `Optional("…")`
+        // into the SOQL predicate → server MALFORMED_QUERY. Caller guards maxTimeStamp > 0 so never nil.
+        return "\(modificationDateFieldName) > \(SFMobileSyncObjectUtils.getIsoString(fromMillis: maxTimeStamp) ?? "")"
     }
 
     private func getSoqlForRemoteChildrenIds() -> String {

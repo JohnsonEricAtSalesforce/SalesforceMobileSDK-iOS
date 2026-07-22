@@ -79,3 +79,46 @@ that deferral was based on." Traced the actual unblocker and its position in his
 **Net:** parity-with-oracle for the deferred tests = (a) port #4087 (large, ESCALATION) to make the 51
 live-org tests execute + oracle-compare (Task 10), and optionally (b) relocate the one unauth test now.
 Both are folded into the resume-porting plan; #4087 is a fresh-backlog unit, not a drained-queue leftover.
+
+---
+
+## LIVE EXECUTION + ORACLE COMPARE — 2026-07-20 (Phase 2, unit 44 landed → auth WORKS)
+
+**#4087 token-refresh coordinator is now ported (Phase 1 unit 44).** Ran the scoped live-org classes
+against a fresh operator token. **Live auth now completes** (`authRefreshDidSucceed` flips true; token is
+reusable — 121+ refreshes in one run). The whole premise of this ledger (pre-coordinator hang) is resolved.
+Oracle for compare = `.dev` clone @ `b155f785d` (has coordinator, runs live auth). Full detail:
+`$CLAUDE_JOB_DIR/tmp/phase2-findings.md` (job 3073ad5d). Operator decision 2026-07-20: **REPORT ONLY, fix
+nothing yet.** So NO code changed; ledger stays in force. Findings:
+
+### SDKCore (migration ran, oracle compared)
+- ✅ **RestClientTests 23/23 PASS**, **RestClientPublisherTests 4/4 PASS** — match oracle. These 2 classes
+  (27 tests) are CLEAN and could be un-gated first when fix work resumes. NOTE ledger name bug: it says
+  `RestClientTest`; the real class is **`RestClientTests`** (plural) — an `-only-testing` filter on the
+  singular silently matches nothing.
+- ✅ **SalesforceRestAPITests.testRedirect** = genuine BASELINE (401≠200 in BOTH oracle and migration).
+- ⚠️ **7 DETERMINISTIC REGRESSIONS** (pass in oracle, fail in migration, re-confirmed in isolation):
+  `SFSDKAuthUtilTests.testOpenIDToken` (memory P0.2e WRONGLY called this a baseline — oracle PASSES it),
+  `SalesforceRestAPITests.testBlocks`, `testCollectionCreateWithBadRecordAndAllOrNoneFalse`,
+  `…AllOrNoneTrue` (objectId `""`≠nil — type-narrowing smell), `testCreateQuerySearchDelete` (search nil≠1),
+  `testRefreshNotificationWithValidGetRequest` (expectation(forNotification:) not registering; body is
+  byte-faithful to the .m). Signatures lean test-port-fidelity, not necessarily prod regressions — each
+  needs individual diagnosis.
+
+### MobileSync (migration CRASHES; oracle compared)
+- 💥 **Systemic test-only crash**: every live MobileSync test dies with `Fatal error: Negative value is not
+  representable` — a Swift `UInt(negative)`/`Int(negative)` trap in a shared `SyncManagerTestCase` helper.
+  ObjC oracle (`NSUInteger`) silently WRAPS → never crashed. Crash cascades (host restart loop) → poisons
+  the whole suite → this is the SAME masking hazard we've fought (benign assert-fail becomes a whole-run abort).
+- Trigger = `testCleanResyncGhostsForMRUTarget`, whose `203 vs 200` size mismatch is an **oracle-baseline
+  data-pollution** issue (leftover accounts; FAILS in oracle too). Migration amplifies it into a fatal trap.
+- The other 5 live methods (`testRefreshReSyncWithMultipleRoundTrips`, `testStopRestartMultipleSyncDowns`,
+  `testStopRestartSingleSyncDown`, restored `testSyncUpManyLocallyCreatedRecords`, restored
+  `testSyncUpWithLocallyUpdatedRemotelyDeletedRecordsWithoutOverwrite`) **PASS in oracle** but crash in
+  migration (poisoned host). Fix the numeric-conversion trap (test-only) → their real pass/fail becomes readable.
+
+### Retirement status
+Ledger is NOT retired. Retire per-class as each matches oracle. Ready-now candidates (clean): RestClientTests,
+RestClientPublisherTests. Blocked pending fixes: the 7 SDKCore regressions + the MobileSync crash.
+Credential mechanic learned: `test_credentials.json` is a build-phase COPY → baked into the `.xctest` bundle;
+refresh the file THEN `build-for-testing` (test-without-building uses the baked copy).

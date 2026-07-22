@@ -395,7 +395,7 @@ class SyncManagerTests: SyncManagerTestCase {
         }
 
         let target = SFRefreshSyncDownTarget.newSyncTarget(ACCOUNTS_SOUP, objectType: ACCOUNT_TYPE, fieldlist: [ID, NAME, DESCRIPTION])
-        // target.countIdsPerSoql = 2 // private - skip in Swift
+        target.countIdsPerSoql = 2 // force multiple round trips (2 ids per soql query)
         trySyncDown(.overwrite, target: target, soupName: ACCOUNTS_SOUP, totalSize: UInt(idToFields.count), numberFetches: UInt(idToFields.count / 2))
         checkDb(idToFields)
     }
@@ -536,7 +536,9 @@ class SyncManagerTests: SyncManagerTestCase {
         let baseDateStr = "2015-02-05T13:12:03.956-0800"
         guard let date = isoDateFormatter.date(from: baseDateStr) else { return }
         let dateLong = Int64(date.timeIntervalSince1970 * 1000.0)
-        let dateStr = SFMobileSyncObjectUtils.getIsoString(fromMillis: dateLong)
+        // Unwrap the Optional so the EXPECTED query strings below don't embed the literal `Optional("…")`.
+        // (Production addFilterForReSync now unwraps too — the two must match.)
+        let dateStr = SFMobileSyncObjectUtils.getIsoString(fromMillis: dateLong) ?? ""
 
         let originalBasicQuery = "select Id from Account"
         let originalLimitQuery = "select Id from Account limit 100"
@@ -689,7 +691,7 @@ class SyncManagerTests: SyncManagerTestCase {
 
         // Running a refresh-sync-down for soup with one id per soql query (to force multiple round trips)
         let target = SFRefreshSyncDownTarget.newSyncTarget(ACCOUNTS_SOUP, objectType: ACCOUNT_TYPE, fieldlist: [ID, NAME, DESCRIPTION, LAST_MODIFIED_DATE])
-        // target.countIdsPerSoql = 1 // private - skip in Swift
+        target.countIdsPerSoql = 1 // force multiple round trips (one id per soql query)
         let syncId = NSNumber(value: trySyncDown(.overwrite, target: target, soupName: ACCOUNTS_SOUP, totalSize: UInt(idToFields.count), numberFetches: UInt(idToFields.count)))
 
         // Check sync time stamp
