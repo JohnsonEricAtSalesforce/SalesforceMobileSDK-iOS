@@ -298,3 +298,21 @@ testCleanResyncGhostsForRefreshTarget + testCleanResyncGhostsWithMultipleSyncs. 
 SyncManagerTests.testFetchLayoutMultipleTimes, SFLayoutSyncManagerTests.testFetchLayoutMultipleTimes,
 SyncUpTargetTests.testSyncUpWithNoType. NEXT: those 3, then a FULL-SUITE MobileSync run (also resolves the
 14 cross-class store-nil traps question — likely gone once all classes pass, or needs a setUp-order fix).
+
+## ✅ SCATTERED FAILS FIXED 2026-07-21 — commit 181386e4e (2 fixes) + cleanGhosts base fix already covered 2
+- **testCleanResyncGhostsForRefreshTarget + testCleanResyncGhostsWithMultipleSyncs (SyncManagerTests)**: FIXED
+  by the FINDING #3 base cleanGhosts fix (aae35c2d1) — no separate change needed.
+- **NOTE:** `SyncManagerTests/testFetchLayoutMultipleTimes` does NOT exist (only SFLayoutSyncManagerTests has it);
+  the earlier inventory double-counted. Real layout test is SFLayoutSyncManagerTests.testFetchLayoutMultipleTimes.
+- **FINDING #4 — testSyncUpWithNoType (PRODUCTION):** no-type record → nil objectType. Oracle passed nil to
+  requestForCreateWithObjectType: → path `/sobjects/(null)` → 404 (a modeled error). Migration coerced nil→""
+  → `/sobjects/` → 405 METHOD_NOT_ALLOWED (unmodeled). FIX: SFSyncUpTarget.createOnServer coerces empty→"null"
+  (same convention as RecordRequest.asRestRequest) → `/sobjects/null` → 404 like oracle. PROD → PR-flag.
+- **FINDING #5 — testFetchLayoutMultipleTimes (TEST-ONLY):** production stores/fetches nil recordTypeId as ""
+  (recordTypeId ?? ""), Id = "Account-Medium-Compact-Edit-". Oracle test passed real nil to stringWithFormat
+  (→ "(null)") matching oracle's "(null)" storage; Swift port hardcoded literal "nil" in the count query →
+  "...-Edit-nil" → 0 rows ≠ 1. Production self-consistent (validateResult passes) → pure test/query mismatch.
+  FIX: query with "" to match production storage. TEST-ONLY.
+
+Both verified vs live org (testSyncUpWithNoType now 404 like oracle). NEXT: FULL-SUITE MobileSync run to confirm
+total + resolve the 14 cross-class store-nil traps question. All individually-identified fails are now GREEN.
