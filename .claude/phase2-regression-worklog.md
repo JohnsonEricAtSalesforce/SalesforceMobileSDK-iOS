@@ -316,3 +316,21 @@ SyncUpTargetTests.testSyncUpWithNoType. NEXT: those 3, then a FULL-SUITE MobileS
 
 Both verified vs live org (testSyncUpWithNoType now 404 like oracle). NEXT: FULL-SUITE MobileSync run to confirm
 total + resolve the 14 cross-class store-nil traps question. All individually-identified fails are now GREEN.
+
+## ✅ FULL-SUITE MobileSync RUN #1 2026-07-21 — 202 tests / 0 failures, BUT 14 latent store-nil host-crashes
+Full `-only-testing:MobileSyncTests` finished **202 tests, 0 failures (595s)** — every individually-fixed test
+green in-suite. HOWEVER the log showed **14 `SyncManagerTestCase.swift:206` Fatal-error IUO traps** clustered at
+19:45–19:47 (early in the run). Each SIGTRAP killed the test host; xcodebuild auto-restarted and the RETRY
+passed → final tally green but a latent flaky crash was being retry-masked (the exact abort/mask hazard the
+SDKCore authRefreshDidSucceed work exists to prevent).
+
+### ✅ FINDING #6 — base setUp leaves IUO `store` nil on transient nil currentUser → subclass host-crash (TEST-ONLY) — FIXED, commit be37d24eb
+`SyncManagerTestCase.setUpWithError` assigned the IUO `store: SmartStore!` only inside `if let user =
+currentUser`; subclasses (ParentChildren etc.) force-unwrap `store` from their own `setUp()` (createTestData →
+createAccountsSoup → store.registerSoup @ line 206). When `UserAccountManager.currentUserAccount` is transiently
+nil early in a full-suite run (auth-cascade timing), store stays nil → subclass traps → host dies → retry masks.
+Oracle assigned store unconditionally & tolerated nil messaging, but migrated Swift APIs can't
+(sharedInstance(forUserAccount:) needs non-nil user; SmartStore.shared(withName:forUserAccount:) returns nil for
+nil user) → no store to run against when currentUser nil anyway. FIX: `XCTSkipUnless(currentUser != nil && store
+!= nil)` in setUpWithError (XCTest skips setUp() when setUpWithError() throws, so createTestData never runs → no
+crash). TEST-ONLY. Verification full-suite run #2 IN PROGRESS (expect 0 fatal traps; skips only if a cold nil).
