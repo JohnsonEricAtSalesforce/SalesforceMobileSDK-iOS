@@ -357,3 +357,17 @@ super.setUpWithError()` + XCTSkipUnless(store != nil). Verify run #4 IN PROGRESS
 - aae35c2d1 FINDING #3 cleanResyncGhosts frozen-array deletes non-ghosts [PROD]
 - 181386e4e FINDING #4 no-type sync-up 404 [PROD] + FINDING #5 layout count query [TEST]
 - be37d24eb + 8f9c0c545 + 5751605ca FINDING #6 store-nil host-crash hardening [TEST-ONLY]
+- 74567e3e7 BriefcaseSyncDownTests skip-gated [TEST-ONLY, live-org config baseline]
+
+## ✅✅ MOBILESYNC SUITE GREEN — verify run #4 = 234 tests, 0 fatal traps, 0 host restarts (2026-07-21)
+Run #4 (after the base soup guards + Briefcase super-chain fix): **0 fatal traps, 0 restarts** (was 14 traps
+retry-masked). Only failures were the 7 BriefcaseSyncDownTests, freshly unmasked by the super-chain fix.
+Classified vs oracle: the unmigrated .dev @ b155f785d fails all 7 IDENTICALLY (byte-for-byte: status 2≠3,
+progress 0≠100, totalSize 24≠0, records 12≠0) → **live-org CONFIG BASELINE** (Briefcase/Priming feature not
+provisioned in the shared test org), NOT a migration regression. Skip-gated (74567e3e7) with a documented
+XCTSkip; class now skips cleanly (7 skipped / 0 failures). **The MobileSync suite is now GREEN: every test
+passes or cleanly skips, no failures, no crashes, no host restarts.**
+
+NEXT (Phase 2 milestone 4): SDKCore regressions #2–#7 vs oracle (testOpenIDToken, testBlocks,
+testCollectionCreateWithBadRecord False/True, testCreateQuerySearchDelete, testRefreshNotificationWithValidGetRequest).
+Then un-gate/retire the ledger (milestones 3+5).
