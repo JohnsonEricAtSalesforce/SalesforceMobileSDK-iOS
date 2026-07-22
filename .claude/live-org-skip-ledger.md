@@ -160,3 +160,22 @@ The systemic UInt(negative) crash + all identified sync-engine regressions are F
 classes now pass or skip cleanly against the oracle. MobileSync side of the ledger is ready to retire (the
 XCTSkipUnless(authRefreshDidSucceed) gates remain as the live-auth guard, which is correct — they skip only
 when no live org is available). NEXT: SDKCore regressions #2–#7, then full ledger retirement.
+
+## SDKCORE REGRESSIONS #2–#7 RESOLVED — 2026-07-22 (Phase 2 milestone 4)
+All 7 flagged SDKCore live-org regressions resolved (6 pass + 1 documented skip, 0 failures).
+See `.claude/phase2-regression-worklog.md` "SDKCORE REGRESSIONS #2–#7 RESOLVED" for full root-cause
+detail + commit hashes. Summary:
+- testOpenIDToken (271836232): skip-gated — live-org config baseline (no openid scope); oracle only
+  passed via an ObjC→Swift non-nullable bridging quirk masking a genuine nil. NOT a regression.
+- testCollectionCreateWithBadRecordAndAllOrNoneFalse/True (a88baa778): PROD public-API fix —
+  restored SFSDKCollectionSubResponse.objectId to optional (String?), matching oracle's nullable
+  NSString*. Escalation: public API surface → PR-flag.
+- testRefreshNotificationWithValidGetRequest (bee3d8179): scoped sendSyncRequest wait (test fidelity).
+- testBlocks (3177f3980): pass literal "(null)" objectType for metadata/describe (test fidelity).
+- testCreateQuerySearchDelete (3177f3980): SOSL-escape the search term (test fidelity).
+- testRedirect: confirmed baseline (401≠200 both clones), unchanged.
+
+RestClientTests 23/23 + RestClientPublisherTests 4/4 already clean (documented 2026-07-20). The
+SDKCore live-org test surface is now GREEN (modulo the documented testOpenIDToken + Briefcase config
+baselines). NEXT: retire the MobileSync + SDKCore ledger classes per-class (task #17), then close
+Phase 2 (task #19).

@@ -371,3 +371,39 @@ passes or cleanly skips, no failures, no crashes, no host restarts.**
 NEXT (Phase 2 milestone 4): SDKCore regressions #2–#7 vs oracle (testOpenIDToken, testBlocks,
 testCollectionCreateWithBadRecord False/True, testCreateQuerySearchDelete, testRefreshNotificationWithValidGetRequest).
 Then un-gate/retire the ledger (milestones 3+5).
+
+## ✅✅ SDKCORE REGRESSIONS #2–#7 RESOLVED — 2026-07-22 (Phase 2 milestone 4, task #18)
+All 7 flagged SDKCore live-org "regressions" root-caused vs oracle (.dev @ b155f785d) with
+byte-level request/response instrumentation on BOTH clones. Result: 6 run + 1 skip, 0 failures.
+Commits (all pushed to fork feature/objc-to-swift-test-migration):
+
+- `271836232` **#7 testOpenIDToken** [TEST skip-gate] — NOT a regression. Server returns NO id_token
+  (test-org connected app lacks openid scope); oracle's real derived idToken is genuinely nil
+  (instrumented `isNil=1`). Oracle only "passes" via an ObjC→Swift nullability bridging quirk: its
+  un-annotated ObjC completion `void(^)(NSString *)` bridges to a Swift NON-optional `String`; ObjC
+  nil becomes a non-optional String secretly holding nil, and assigning into `var idToken: String?`
+  re-wraps as `.some` → XCTAssertNotNil passes against a nil. Migration's `(String?)->Void` propagates
+  the real nil → faithfully fails. Skip-gated (live-org config baseline, like Briefcase). **Corrects
+  the earlier reclassification — original p02e triage (baseline) was RIGHT.**
+- `a88baa778` **#4/#5 testCollectionCreateWithBadRecordAndAllOrNoneFalse/True** [PROD public-API] —
+  genuine regression. Migration narrowed public `SFSDKCollectionSubResponse.objectId` from oracle's
+  nullable `NSString*` (`_objectId = dict[@"id"]`) to non-optional `String=""` (`?? ""`), so a failed
+  sub-record reported "" not nil → `XCTAssertNil` always failed. Fix: `objectId: String?` +
+  `dict["id"] as? String`. Also fixes a latent MobileSync bug (parseIdsFromResponses filtered
+  `objectId != nil` then force-unwrapped — the "" default would slip an empty id through). 9 test
+  `.objectId.hasPrefix` sites → `.objectId?.hasPrefix(...) == true`. SDKCore+MobileSync build; PR-flag.
+- `bee3d8179` **#6 testRefreshNotificationWithValidGetRequest** [TEST fidelity] — shared sendSyncRequest
+  used the GLOBAL `waitForExpectations(timeout:)` (drains ALL pending expectations) instead of the
+  oracle's SCOPED `[self waitForExpectations:@[expectation] ...]`; it consumed the test's notification
+  expectation early → "call made to wait without any expectations having been set". Fix: `wait(for:[exp])`.
+- `3177f3980` **#2 testBlocks + #1 testCreateQuerySearchDelete** [TEST fidelity] —
+  (#2) 'should-fail' block: oracle passes nil objectType → `/sobjects/(null)` → 404; port substituted
+  valid `kContact` so metadata/describe (no objectId) SUCCEEDED → tripped unexpected-success. Fix: pass
+  literal "(null)". (#1) SOSL `Find {UUID-with-hyphens}` → server MALFORMED_SEARCH (bare '-' is a SOSL
+  operator), deterministic on BOTH clones; oracle performs the search but NEVER asserts its count (its
+  comment warns the term may need SOSL escaping), the port ADDED the assertion. Fix: backslash-escape
+  SOSL reserved chars (new escapeSoslTerm helper) → well-formed, returns 1 match in ~3s (no flake).
+
+Verified together: 6 pass + 1 skip, 0 failures, no cross-contamination (16.8s). `testRedirect`
+remains a confirmed baseline (401≠200 on both). NEXT: milestone 3 (un-gate/retire MobileSync ledger,
+task #17) + milestone 5 (retire full ledger, close Phase 2, task #19).
