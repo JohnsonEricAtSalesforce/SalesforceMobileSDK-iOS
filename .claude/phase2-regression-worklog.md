@@ -339,5 +339,21 @@ Verify run #2 STILL trapped (now at line 219, same createAccountsSoup — line m
 XCTest invokes ParentChildrenSyncTests's separately-overridden plain `setUp()` EVEN WHEN `setUpWithError()` threw
 XCTSkip, and that setUp() calls `createTestData()` → `createAccountsSoup()` → force-unwrap nil `store` → host
 SIGTRAP again. FIX: guard `createTestData()` behind `store != nil` in ParentChildrenSyncTests.setUp() (test is
-being skipped anyway when store is nil → nothing to set up). Only ParentChildren touches `store` in its setUp()
-override (verified: the other 4 subclass setUp() overrides don't). Verify run #3 IN PROGRESS.
+being skipped anyway when store is nil → nothing to set up).
+
+### ✅ FINDING #6 ROBUST FIX — cross-class, guarded at base + Briefcase super chaining — commit 5751605ca
+Verify run #3 STILL trapped at line 219 — the crash was CROSS-CLASS (not just ParentChildren), so per-subclass
+guarding was whack-a-mole. Root: several subclass setUp()/setUpWithError() overrides reach the base soup helpers
+(createAccountsSoup etc.) during the transient auth-cascade nil window, and those helpers force-unwrapped the IUO
+`store`. Also BriefcaseSyncDownTests.setUpWithError() chained `super.setUp()` (XCTestCase no-op) instead of
+`super.setUpWithError()`, bypassing BOTH the base store assignment AND the skip guard, then hit server+soups on a
+nil store. ROBUST SINGLE-POINT FIX: (a) base createAccountsSoup/createContactsSoup/dropAccountsSoup/
+dropContactsSoup guard on non-nil store (guard-let / optional-chaining); (b) Briefcase → `try
+super.setUpWithError()` + XCTSkipUnless(store != nil). Verify run #4 IN PROGRESS (expect 0 fatal traps).
+
+**Phase-2 MobileSync fix inventory so far (all commits pushed to fork feature/objc-to-swift-test-migration):**
+- c6045477e batch 1 (7 fixes A–E)
+- c20930fe1 FINDING #2 parent-children sync-up Optional("…") in children SmartSQL [PROD]
+- aae35c2d1 FINDING #3 cleanResyncGhosts frozen-array deletes non-ghosts [PROD]
+- 181386e4e FINDING #4 no-type sync-up 404 [PROD] + FINDING #5 layout count query [TEST]
+- be37d24eb + 8f9c0c545 + 5751605ca FINDING #6 store-nil host-crash hardening [TEST-ONLY]
