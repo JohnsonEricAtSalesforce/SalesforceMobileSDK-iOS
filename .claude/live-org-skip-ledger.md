@@ -122,3 +122,41 @@ Ledger is NOT retired. Retire per-class as each matches oracle. Ready-now candid
 RestClientPublisherTests. Blocked pending fixes: the 7 SDKCore regressions + the MobileSync crash.
 Credential mechanic learned: `test_credentials.json` is a build-phase COPY → baked into the `.xctest` bundle;
 refresh the file THEN `build-for-testing` (test-without-building uses the baked copy).
+
+---
+
+## MobileSync SUITE DRIVEN TO GREEN — 2026-07-21 (Phase 2, task #14)
+
+Full `-only-testing:MobileSyncTests` run after the Phase-2 fixes: **0 failures, 0 fatal traps, 0 host
+restarts** (was 234 tests / 43 failures + 14 latent store-nil host-crashes that xcodebuild retry-masked).
+
+Fixes landed (all pushed to fork `feature/objc-to-swift-test-migration`):
+- **c6045477e** batch 1 (7 fixes A–E: UInt(-1) trap, callback-queue deadlock, SFSyncOptions fieldlist,
+  countIdsPerSoql visibility, reSync SOQL Optional("…")).
+- **c20930fe1** [PROD] parent-children sync-UP was fully broken — `dict[key] as Any` boxed a Swift Optional
+  into the children-lookup SmartSQL → `IN ('Optional(local_…)')` → 0 children → nothing pushed → records
+  stayed dirty. Fixed at both call sites + defensive unwrapForSql() in getQueryForChildren.
+- **aae35c2d1** [PROD] cleanResyncGhosts deleted NON-ghost records for ALL sync-down targets — Swift
+  `NSMutableOrderedSet.array` is a frozen snapshot, but the code captured it BEFORE removeObjects(in:) (the
+  ObjC oracle's `[localIds array]` was a live proxy). Snapshot ghost ids AFTER removal.
+- **181386e4e** [PROD] no-type sync-up hit `/sobjects/` → 405; coerce empty objectType→"null" → 404 like
+  oracle. [TEST] layout idempotency count query used literal "nil"; production stores "" → query with "".
+- **be37d24eb / 8f9c0c545 / 5751605ca / 74567e3e7** [TEST-ONLY isolation hardening] store-nil host-crash:
+  base setUp left IUO `store` nil on transient auth-cascade nil currentUser; subclasses force-unwrapped it in
+  their own setUp → SIGTRAP killed the host (retry-masked). Guarded base soup helpers + skip guard + fixed
+  Briefcase super-chaining.
+
+### BriefcaseSyncDownTests — LIVE-ORG CONFIG BASELINE (skip-gated, NOT a regression)
+All 7 BriefcaseSyncDownTests fail IDENTICALLY on the unmigrated oracle (.dev @ b155f785d): byte-for-byte
+`sync status 2≠3`, `progress 0≠100`, `totalSize 24≠0`, `records 12≠0`. Cause: Briefcase / Priming Records is
+an org feature that must be provisioned; the shared test org doesn't have it enabled, so every
+BriefcaseSyncDownTarget sync-down returns totalSize 0 / no records. NOT a migration regression. This class
+had never actually run before (its setUpWithError chained `super.setUp()` instead of
+`super.setUpWithError()`, silently bypassing setUp); fixing that chaining unmasked the baseline. Skip-gated
+with a documented XCTSkip (commit 74567e3e7) until the org is provisioned for Briefcase.
+
+### MobileSync retirement status
+The systemic UInt(negative) crash + all identified sync-engine regressions are FIXED; the MobileSync live
+classes now pass or skip cleanly against the oracle. MobileSync side of the ledger is ready to retire (the
+XCTSkipUnless(authRefreshDidSucceed) gates remain as the live-auth guard, which is correct — they skip only
+when no live org is available). NEXT: SDKCore regressions #2–#7, then full ledger retirement.
