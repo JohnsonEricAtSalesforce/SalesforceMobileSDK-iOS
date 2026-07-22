@@ -266,3 +266,35 @@ suite. This is the same "hidden failure" hazard the ledger exists to surface. Br
 one masked class). Fixing all of them is a large scope expansion beyond the 6 scoped tests. Awaiting direction:
 (a) continue and fix the whole MobileSync suite to green, (b) fix just the ParentChildren store-nil trap cluster
 (likely one shared cause) then reassess, or (c) bank the 7 fixes + this inventory and pivot to SDKCore #2–#7.
+**OPERATOR CHOSE (a): drive the whole MobileSync suite to green, commit+push per logical fix.**
+
+## ✅ PARENTCHILDRENSYNCTESTS → 60/60 GREEN 2026-07-21 (was 39 fails in isolation)
+Isolation diagnosis first settled the store-nil question: `testGetQuery` PASSES solo (store non-nil, auth OK),
+and the whole class run in isolation had **0 store-nil traps** — so the 14 `SyncManagerTestCase.swift:206`
+IUO traps are CROSS-CLASS contamination (a different earlier class leaves currentUser nil in full-suite), NOT a
+ParentChildren setUp defect. In isolation the class still had 39 real failures = two more PRODUCTION regressions:
+
+### ✅ FINDING #2 — parent-children sync-UP fully broken: `Optional("…")` in children SmartSQL (PRODUCTION) — FIXED, commit c20930fe1
+All 39 fails were sync-UP (sync-down passed). Live log showed the children-lookup query as
+`{accounts:Id} IN ('Optional(local_731264390)')` → matched zero children → advanced sync-up pushed nothing →
+records stayed dirty (checkDbStateFlags false≠true). Root cause: `SFParentChildrenSyncHelper.getMutableChildren`
+(line 116) and `SFParentChildrenSyncUpTarget.deleteChildren` call site (line 305) boxed a Swift Optional into
+`[Any]` via `dict[key] as Any` / `record[idField] as Any`; `getQueryForChildren` interpolated it raw. Oracle
+passes the raw unboxed id via ObjC `parent[key]`. Same Optional("…") class as Fix E, now in SmartSQL. Fix:
+guard-unwrap at both call sites + defensive `unwrapForSql()` backstop in getQueryForChildren. Result: 39→3 fails.
+**PROD sync-engine → PR-flag.**
+
+### ✅ FINDING #3 — cleanResyncGhosts deletes NON-ghost records: NSMutableOrderedSet.array frozen-vs-live (PRODUCTION) — FIXED, commit aae35c2d1
+Remaining 3 fails were `testCleanResyncGhostsForParentChildren{Target,WithMultipleSyncs}` — BOTH PASS on oracle
+(built + ran oracle to classify: genuine regression, NOT a data-pollution baseline like the MRU sibling). Root
+cause in BASE `SFSyncDownTarget.cleanGhosts` (affects ALL sync-down targets): oracle captured
+`[localIds array]` BEFORE `removeObjectsInArray:` but that returns a LIVE-backed proxy reflecting the removal;
+Swift `localIds.array` is a FROZEN snapshot, so the migration deleted the PRE-removal set = every non-dirty
+local record incl. still-remote ones. Fix: snapshot ghost ids AFTER `removeObjects(in:)`, delete/return that.
+This base fix ALSO fixed 2 of the scattered task-#16 fails: SyncManagerTests
+testCleanResyncGhostsForRefreshTarget + testCleanResyncGhostsWithMultipleSyncs. **PROD sync-engine → PR-flag.**
+
+**ParentChildrenSyncTests full class: 60 tests, 0 failures (228s).** Remaining scattered MobileSync fails:
+SyncManagerTests.testFetchLayoutMultipleTimes, SFLayoutSyncManagerTests.testFetchLayoutMultipleTimes,
+SyncUpTargetTests.testSyncUpWithNoType. NEXT: those 3, then a FULL-SUITE MobileSync run (also resolves the
+14 cross-class store-nil traps question — likely gone once all classes pass, or needs a setUp-order fix).
