@@ -734,10 +734,10 @@ class SalesforceRestAPITests: XCTestCase {
         let parsedResponse = CollectionResponse(array: response.dataResponse as? [[String: Any]] ?? [])
 
         XCTAssertEqual(parsedResponse.subResponses.count, 3)
-        XCTAssertTrue(parsedResponse.subResponses[0].objectId.hasPrefix("001"))
+        XCTAssertTrue(parsedResponse.subResponses[0].objectId?.hasPrefix("001") == true)
         XCTAssertTrue(parsedResponse.subResponses[0].success)
         XCTAssertTrue(parsedResponse.subResponses[1].success)
-        XCTAssertTrue(parsedResponse.subResponses[2].objectId.hasPrefix("003"))
+        XCTAssertTrue(parsedResponse.subResponses[2].objectId?.hasPrefix("003") == true)
         XCTAssertTrue(parsedResponse.subResponses[2].success)
     }
 
@@ -1542,7 +1542,7 @@ class SalesforceRestAPITests: XCTestCase {
         XCTAssertFalse(parsedCreateResponse.subResponses[0].success)
         XCTAssertEqual(parsedCreateResponse.subResponses[0].errors.count, 1)
         XCTAssertEqual(parsedCreateResponse.subResponses[0].errors[0].statusCode, "INVALID_FIELD")
-        XCTAssertTrue(parsedCreateResponse.subResponses[1].objectId.hasPrefix("003"))
+        XCTAssertTrue(parsedCreateResponse.subResponses[1].objectId?.hasPrefix("003") == true)
         XCTAssertTrue(parsedCreateResponse.subResponses[1].success)
         XCTAssertEqual(parsedCreateResponse.subResponses[1].errors.count, 0)
     }
@@ -1602,10 +1602,10 @@ class SalesforceRestAPITests: XCTestCase {
         let parsedUpdateResponse = CollectionResponse(array: response.dataResponse as? [[String: Any]] ?? [])
 
         XCTAssertEqual(parsedUpdateResponse.subResponses.count, 2)
-        XCTAssertTrue(parsedUpdateResponse.subResponses[0].objectId.hasPrefix("001"))
+        XCTAssertTrue(parsedUpdateResponse.subResponses[0].objectId?.hasPrefix("001") == true)
         XCTAssertTrue(parsedUpdateResponse.subResponses[0].success)
         XCTAssertEqual(parsedUpdateResponse.subResponses[0].errors.count, 0)
-        XCTAssertTrue(parsedUpdateResponse.subResponses[1].objectId.hasPrefix("003"))
+        XCTAssertTrue(parsedUpdateResponse.subResponses[1].objectId?.hasPrefix("003") == true)
         XCTAssertTrue(parsedUpdateResponse.subResponses[1].success)
         XCTAssertEqual(parsedUpdateResponse.subResponses[1].errors.count, 0)
 
@@ -1653,10 +1653,10 @@ class SalesforceRestAPITests: XCTestCase {
         let parsedUpsertResponse = CollectionResponse(array: response.dataResponse as? [[String: Any]] ?? [])
 
         XCTAssertEqual(parsedUpsertResponse.subResponses.count, 2)
-        XCTAssertTrue(parsedUpsertResponse.subResponses[0].objectId.hasPrefix("001"))
+        XCTAssertTrue(parsedUpsertResponse.subResponses[0].objectId?.hasPrefix("001") == true)
         XCTAssertTrue(parsedUpsertResponse.subResponses[0].success)
         XCTAssertEqual(parsedUpsertResponse.subResponses[0].errors.count, 0)
-        XCTAssertTrue(parsedUpsertResponse.subResponses[1].objectId.hasPrefix("001"))
+        XCTAssertTrue(parsedUpsertResponse.subResponses[1].objectId?.hasPrefix("001") == true)
         XCTAssertTrue(parsedUpsertResponse.subResponses[1].success)
         XCTAssertEqual(parsedUpsertResponse.subResponses[1].errors.count, 0)
 
@@ -1684,10 +1684,10 @@ class SalesforceRestAPITests: XCTestCase {
         let parsedUpsertResponse = CollectionResponse(array: response.dataResponse as? [[String: Any]] ?? [])
 
         XCTAssertEqual(parsedUpsertResponse.subResponses.count, 2)
-        XCTAssertTrue(parsedUpsertResponse.subResponses[0].objectId.hasPrefix("001"))
+        XCTAssertTrue(parsedUpsertResponse.subResponses[0].objectId?.hasPrefix("001") == true)
         XCTAssertTrue(parsedUpsertResponse.subResponses[0].success)
         XCTAssertEqual(0, parsedUpsertResponse.subResponses[0].errors.count)
-        XCTAssertTrue(parsedUpsertResponse.subResponses[1].objectId.hasPrefix("001"))
+        XCTAssertTrue(parsedUpsertResponse.subResponses[1].objectId?.hasPrefix("001") == true)
         XCTAssertTrue(parsedUpsertResponse.subResponses[1].success)
         XCTAssertEqual(0, parsedUpsertResponse.subResponses[1].errors.count)
     }

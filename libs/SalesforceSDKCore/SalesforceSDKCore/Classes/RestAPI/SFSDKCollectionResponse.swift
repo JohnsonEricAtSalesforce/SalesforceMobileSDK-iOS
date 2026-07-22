@@ -67,8 +67,12 @@ public class CollectionErrorResponse: NSObject {
 @objcMembers
 public class CollectionSubResponse: NSObject {
 
-    /// The object ID from the response.
-    public private(set) var objectId: String = ""
+    /// The object ID from the response. `nil` when the sub-response carries no `id` (e.g. a failed
+    /// record, or one rolled back under all-or-none). Mirrors the original ObjC `NSString *objectId`
+    /// nullable property — narrowing this to a non-optional `""` was a migration regression that made
+    /// failed sub-responses report an empty id instead of nil (breaks `objectId == nil` checks in
+    /// callers such as MobileSync's CompositeRequestHelper.parseIdsFromResponses).
+    public private(set) var objectId: String?
 
     /// Whether this sub-response was successful.
     public private(set) var success: Bool = false
@@ -83,7 +87,7 @@ public class CollectionSubResponse: NSObject {
     @objc public init(dictionary dict: [String: Any]) {
         super.init()
         self.json = dict
-        self.objectId = (dict["id"] as? String) ?? ""
+        self.objectId = dict["id"] as? String
         self.success = (dict["success"] as? NSNumber)?.boolValue ?? false
         if let rawErrors = dict["errors"] as? [[String: Any]] {
             var parsedErrors: [CollectionErrorResponse] = []
