@@ -35,7 +35,12 @@ let briefcaseContactInfo = BriefcaseObjectInfo(soupName: CONTACTS_SOUP, sobjectT
 class BriefcaseSyncDownTests: SyncManagerTestCase {
 
     override func setUpWithError() throws {
-        super.setUp()
+        // Chain to the base setUpWithError() (NOT XCTestCase.setUp()) so the live-org skip guard runs and
+        // `currentUser`/`store` get assigned. Calling `super.setUp()` here bypassed both, leaving `store` nil
+        // and force-unwrap crashes on the auth cascade. If the base skipped (nil store), stop before touching
+        // the server or soups.
+        try super.setUpWithError()
+        try XCTSkipUnless(store != nil, "Current user/store unavailable at setUp; skipping live Briefcase tests.")
         try cleanRecordsOnServer()
         createAccountsSoup()
         createContactsSoup()

@@ -208,7 +208,14 @@ class SyncManagerTestCase: XCTestCase {
 
     // MARK: - Soup creation/deletion
 
+    // NB: the soup-creation helpers below guard on a non-nil `store`. They are invoked from various subclass
+    // setUp()/setUpWithError() overrides (some of which chain `super.setUp()` rather than
+    // `super.setUpWithError()`, bypassing the base skip guard). When the live-org auth cascade leaves
+    // `currentUser`/`store` transiently nil early in a full-suite run, force-unwrapping the IUO `store` here
+    // would SIGTRAP and kill the whole test host (masked only by xcodebuild's restart/retry). The affected
+    // tests are skipped anyway (see setUpWithError), so a nil store means there's nothing to set up.
     func createAccountsSoup() {
+        guard let store = store else { return }
         let indexSpecs: [SoupIndex] = [
             SoupIndex(path: ID, indexType: kSoupIndexTypeString, columnName: nil),
             SoupIndex(path: NAME, indexType: kSoupIndexTypeString, columnName: nil),
@@ -220,10 +227,11 @@ class SyncManagerTestCase: XCTestCase {
     }
 
     func dropAccountsSoup() {
-        store.removeSoup(ACCOUNTS_SOUP)
+        store?.removeSoup(ACCOUNTS_SOUP)
     }
 
     func createContactsSoup() {
+        guard let store = store else { return }
         let indexSpecs: [SoupIndex] = [
             SoupIndex(path: ID, indexType: kSoupIndexTypeString, columnName: nil),
             SoupIndex(path: LAST_NAME, indexType: kSoupIndexTypeString, columnName: nil),
@@ -235,7 +243,7 @@ class SyncManagerTestCase: XCTestCase {
     }
 
     func dropContactsSoup() {
-        store.removeSoup(CONTACTS_SOUP)
+        store?.removeSoup(CONTACTS_SOUP)
     }
 
     // MARK: - Server operations
