@@ -43,6 +43,12 @@ class ParentChildrenSyncTests: SyncManagerTestCase {
 
     override func setUp() {
         super.setUp()
+        // Guard createTestData() on a resolved store. XCTest still invokes this plain setUp() even when the
+        // base setUpWithError() threw XCTSkip (transient nil currentUser/store early in a full-suite run), and
+        // createTestData() -> createAccountsSoup() force-unwraps the IUO `store`, which would SIGTRAP and kill
+        // the whole test host (masked only by xcodebuild's restart/retry). When store is nil the test is being
+        // skipped anyway, so there is nothing to set up. See SyncManagerTestCase.setUpWithError().
+        guard store != nil else { return }
         createTestData()
     }
 
