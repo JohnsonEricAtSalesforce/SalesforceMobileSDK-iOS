@@ -332,5 +332,12 @@ nil early in a full-suite run (auth-cascade timing), store stays nil → subclas
 Oracle assigned store unconditionally & tolerated nil messaging, but migrated Swift APIs can't
 (sharedInstance(forUserAccount:) needs non-nil user; SmartStore.shared(withName:forUserAccount:) returns nil for
 nil user) → no store to run against when currentUser nil anyway. FIX: `XCTSkipUnless(currentUser != nil && store
-!= nil)` in setUpWithError (XCTest skips setUp() when setUpWithError() throws, so createTestData never runs → no
-crash). TEST-ONLY. Verification full-suite run #2 IN PROGRESS (expect 0 fatal traps; skips only if a cold nil).
+!= nil)` in setUpWithError. TEST-ONLY.
+
+### ⚠️→✅ FINDING #6 FOLLOW-UP — XCTSkip in setUpWithError does NOT stop a subclass's plain setUp() — FIXED, commit 8f9c0c545
+Verify run #2 STILL trapped (now at line 219, same createAccountsSoup — line moved with the added comment).
+XCTest invokes ParentChildrenSyncTests's separately-overridden plain `setUp()` EVEN WHEN `setUpWithError()` threw
+XCTSkip, and that setUp() calls `createTestData()` → `createAccountsSoup()` → force-unwrap nil `store` → host
+SIGTRAP again. FIX: guard `createTestData()` behind `store != nil` in ParentChildrenSyncTests.setUp() (test is
+being skipped anyway when store is nil → nothing to set up). Only ParentChildren touches `store` in its setUp()
+override (verified: the other 4 subclass setUp() overrides don't). Verify run #3 IN PROGRESS.
