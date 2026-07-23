@@ -94,7 +94,14 @@ extension RestClient {
         guard !fields.isEmpty else { return nil }
         guard !sObject.isEmpty else { return nil }
 
-        let uniqueFields = Array(Set(fields))
+        // De-duplicate while preserving the caller's field order. `Array(Set(fields))` produced a
+        // NON-deterministic order (Swift `Set` uses a per-process randomized hash seed), which reordered
+        // the generated SOQL field list unpredictably from run to run. The original ObjC used
+        // `[[NSSet setWithArray:fields] allObjects]` — also unordered, but stable enough in practice that
+        // its test happened to pass. Preserve insertion order so the query is deterministic and matches
+        // the fields the caller supplied.
+        var seenFields = Set<String>()
+        let uniqueFields = fields.filter { seenFields.insert($0).inserted }
         var query = "select \(uniqueFields.joined(separator: ",")) from \(sObject)"
 
         if let whereClause = whereClause, !whereClause.isEmpty {

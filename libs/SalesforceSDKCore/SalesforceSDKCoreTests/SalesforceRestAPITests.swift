@@ -2323,10 +2323,20 @@ class SalesforceRestAPITests: XCTestCase {
         var urlString = urlRequest?.url?.absoluteString ?? ""
         XCTAssertTrue(urlString.range(of: "connect/communities/COMMUNITYID/") != nil, "The URL must have communities path")
 
+        // NOTE (migration fidelity): a delete-by-sObject request builds a standard
+        // `/services/data/vXX/sobjects/ContentDocument/<id>` URL, which is NOT community-scoped and
+        // structurally has no `connect/communities/` path. The unmigrated oracle (.dev @ b155f785d)
+        // "asserts" `rangeOfString:@"connect/communities/COMMUNITYID/"].location >= 0` here — but
+        // `NSRange.location` is an unsigned `NSUInteger`, so `>= 0` is ALWAYS true (a not-found range
+        // returns `location == NSNotFound == NSIntegerMax`). That assertion is a vacuous tautology that
+        // never actually validated the delete URL. The straightforward Swift port turned it into a real
+        // `range(of:) != nil` check, which correctly fails because the delete URL has no community path.
+        // Assert the true state (no community path on the sObject-delete request), matching the oracle's
+        // effective behavior. See .claude/live-org-skip-ledger.md.
         request = restAPI.requestForDelete(withObjectType: "ContentDocument", objectId: fileAttrs[kLid] as? String ?? "", apiVersion: SFRestDefaultAPIVersion)
         urlRequest = request.prepareRequestForSend(account)
         urlString = urlRequest?.url?.absoluteString ?? ""
-        XCTAssertTrue(urlString.range(of: "connect/communities/COMMUNITYID/") != nil, "The URL must have communities path")
+        XCTAssertNil(urlString.range(of: "connect/communities/COMMUNITYID/"), "A delete-by-sObject request is not community-scoped and has no communities path")
 
         request = restAPI.requestForFileContents(fileAttrs[kLid] as? String ?? "", version: nil, apiVersion: SFRestDefaultAPIVersion)
         urlRequest = request.prepareRequestForSend(account)
