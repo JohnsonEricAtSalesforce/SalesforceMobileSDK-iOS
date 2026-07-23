@@ -441,3 +441,73 @@ class live-gate relocation). Everything else RETIRED. Marker stays b5d37d807.
 ENV NOTE: `build-for-testing`+`test-without-building` can leave SQLCipher.framework unassembled →
 `dyld: Library not loaded @rpath/SQLCipher.framework`; and a contended sim gives "Busy / Application failed
 preflight checks". Fix: single-pass `xcodebuild test`, serialize sim execution across schemes.
+
+## FULL-SUITE VERIFY (task #19, Phase 2 milestone 5) — 2026-07-22
+
+Full-suite `xcodebuild test` on both schemes, sim AE4C549A (iPhone 17 Pro), single-pass, serialized.
+
+### SalesforceSDKCore — 224 tests, 3 raw failures → classified
+- `SalesforceRestAPITests.testRedirect` — **documented baseline** (401≠200 on both clones). OK.
+- `BiometricAuthenticationManagerTests.testNotEnabled` + `NativeLoginManagerTests.testShouldShowBackButton`
+  — **NEW FINDING: genuine PRODUCTION regression** in the public `currentUserAccount` setter. Both fail at
+  their FIRST `XCTAssertNil(currentUserAccount)` because a leftover `identifier-0` account from a preceding
+  test resurfaces.
+
+#### Controlled experiment (both clones, freshly-ERASED sim each run, identical bundle id shares sim keychain/UserDefaults so erase-between is mandatory):
+| pair (testNotEnabled → testShouldShowBackButton) | Migration | Oracle (.dev @ b155f785d) |
+|---|---|---|
+| clean sim, same source, same order | **testShouldShowBackButton FAILS** | **both PASS** |
+Each test PASSES alone; only fails when preceded by a sibling that created a user. Oracle passes the exact
+pair. → not a mere ordering flake; a real behavioral divergence.
+
+#### Root cause (proven):
+The migration **re-wired the public `currentUserAccount` setter** to a gated path the oracle never had.
+- ORACLE: `@synthesize currentUser = _currentUser` + `NS_SWIFT_NAME(currentUserAccount)` with only a custom
+  GETTER. `currentUserAccount = user` uses the compiler-**synthesized setter** → plain `_currentUser = user`,
+  no gate, no persistence side-effect.
+- MIGRATION: `currentUserAccount { set { setCurrentUserInternal(newValue) } }` →
+  `setCurrentUserInternalFull` REJECTS any user not already in `userAccountMap` (logs "Cannot set the
+  currentUser…") AND on success persists `LastUserIdentity` to NSUserDefaults via
+  `setCurrentUserIdentityInternal`.
+
+Consequence chain (why the leak happens ONLY in migration):
+1. The gate forced the porting author to add `upsert(user)` + `identityUrl` to the test `createUser` helpers
+   (PROVEN: reverting Biometric.createUser to the oracle's upsert-less form makes `testNotEnabled` fail
+   `XCTAssertNotNil` at line 54 — the set is silently dropped).
+2. `upsert` writes an ENCRYPTED DISK PLIST (`SFDefaultUserAccountPersister`, library dir), and the successful
+   set writes `LastUserIdentity` to NSUserDefaults.
+3. tearDown's `KeychainHelper.removeAll()` + `clearAllAccountState()` clear only keychain + in-memory state —
+   NOT the disk plist, and `clearAllAccountState()` does NOT clear `LastUserIdentity`.
+4. Next test: getter sees `_currentUser==nil` → `resolveCurrentUser()` reads leftover `LastUserIdentity` →
+   `userAccount(for:)` → `ensureUserAccountMapLoaded()` → `fetchAllAccounts()` re-reads the leftover disk
+   plist → the `identifier-0` account resurfaces → first `XCTAssertNil` fails.
+The oracle persists NOTHING from these tests, so nothing leaks.
+
+Production files that diverge from the byte-identical oracle behavior: the `currentUserAccount` setter wiring
+in `SFUserAccountManager.swift` (line ~234 → `setCurrentUserInternal` → `setCurrentUserInternalFull` line
+~2819). `clearAllAccountState`, the getter, `resolveCurrentUser`, and `SFDefaultUserAccountPersister` are all
+byte-faithful to the oracle — the ONLY divergence is that the public setter is gated + persists identity,
+whereas the oracle's synthesized setter is a bare in-memory assignment.
+
+**ESCALATION-GATED** (CLAUDE.md: "any change to account switching behavior" → STOP + flag). This is a PUBLIC
+account-management API behavioral change (a bare `manager.currentUserAccount = user` for an unmanaged user is
+a silent no-op in migration but succeeds in oracle). Recorded for the PR-flag summary; NOT auto-fixed —
+production account/credential behavior requires human review before change. testNotEnabled was previously
+noted as an ordering flake (p02e triage); this supersedes that with the true prod root cause.
+
+### MobileSync — `** TEST SUCCEEDED **`, 227 passed / 0 failed / 22 skipped
+Clean full-suite run from a freshly-erased sim (single-pass). 0 failures, 0 crashes, 0 host restarts. The 22
+skips = live-auth-gated + Briefcase/Priming config baseline (documented). No regressions. MobileSync is
+fully green.
+
+### Full-suite verdict
+- MobileSync: GREEN (227/0/22).
+- SDKCore: GREEN modulo (a) `testRedirect` documented baseline, and (b) the NEW `currentUserAccount`-setter
+  production regression above — the ONE genuine defect surfaced by full-suite verification. It is
+  ESCALATION-GATED (account-management public API) → flagged for human PR review, NOT auto-fixed.
+
+The two SDKCore tests hitting the setter regression fail deterministically only in full-suite ordering; they
+are not new flakiness introduced by porting the tests — they expose a real behavioral gap between the
+migration's gated `currentUserAccount` setter and the oracle's synthesized one. Because CLAUDE.md escalation
+rules forbid unreviewed changes to account/credential behavior, the fix is deferred to the PR review, and
+these two tests are documented here + in the live-org ledger rather than being marked "retired clean."

@@ -216,3 +216,44 @@ run a single-pass `xcodebuild test` (build+test together) and serialize sim exec
 Remaining before full ledger retirement (task #19): `testAssertionForUnauthenticatedClient`
 (documented-blocked — needs ObjC-exception catch bridge; a bridge now exists but the test's class live-gate
 would need relocation) is the only outstanding non-retired item. All other ledger classes are RETIRED.
+
+---
+
+## LEDGER CLOSED — 2026-07-22 (Phase 2 milestone 5, task #19)
+
+Full-suite `xcodebuild test` on BOTH schemes (SalesforceSDKCore + MobileSync) from a freshly-erased sim
+AE4C549A (iPhone 17 Pro), single-pass, serialized. Live auth working (token-refresh coordinator). Result:
+- **MobileSync**: `** TEST SUCCEEDED **`, 227 passed / 0 failed / 22 skipped (live-gate + Briefcase config
+  baseline). GREEN.
+- **SalesforceSDKCore**: 224 tests. Green modulo (a) `testRedirect` (documented 401≠200 both-clones
+  baseline), and (b) ONE genuine production regression newly surfaced by full-suite ordering — see below.
+
+### The live-org premise is fully retired
+Every class that was skip-gated in this ledger now EXECUTES against a live org and matches the oracle
+(`.dev @ b155f785d`), except for the documented baselines. The `XCTSkipUnless(authRefreshDidSucceed)` guards
+remain in place as the correct live-auth guard (they skip only when no live org is available, e.g.
+credential-less CI) — that is the intended steady state, NOT a defect. The ledger's original reason for
+existence (pre-coordinator auth hang masking live coverage) is resolved.
+
+### NEW production regression found by full-suite verification (NOT auto-fixed — ESCALATION)
+`BiometricAuthenticationManagerTests.testNotEnabled` + `NativeLoginManagerTests.testShouldShowBackButton`
+fail their first `XCTAssertNil(currentUserAccount)` in full-suite ordering because the migration's public
+`currentUserAccount` SETTER was re-wired to a gated + identity-persisting path (`setCurrentUserInternalFull`),
+whereas the oracle's is the compiler-synthesized bare `_currentUser = user`. Controlled experiment (both
+clones, erased sim each): oracle PASSES the pair; migration FAILS. Full root cause + proof in
+`.claude/phase2-regression-worklog.md` "FULL-SUITE VERIFY". Blast radius: production login flows always
+`upsert` before setting current user, so the gate never bites internally; the divergence only affects an
+external consumer directly assigning `currentUserAccount = <unmanaged user>`. ESCALATION-GATED (account
+switching / public API) → flagged for human PR review, deferred (not fixed).
+
+### testAssertionForUnauthenticatedClient — DECISION: leave documented-blocked (rationale)
+Restoring it faithfully requires converting the production guard `SFRestAPI.swift:297` `assert(!request.
+requiresAuthentication, …)` (a Swift trap — non-catchable, compiled out in release) into an unconditionally
+raised `NSException`, matching the oracle's `NSAssert` (which the test `@catch`es). `SFSDKCatchException`
+cannot catch a Swift `assert()`. That is an ESCALATION-class change to the public REST send path (fires in
+all build configs) and is deferred to human review rather than made unreviewed to restore one
+defensive-assert test. The bridge exists; the prod-conversion option is listed in the PR-flag summary.
+
+### Marker
+Marker STAYS `b5d37d807` (upstream done-floor; Phase 2 advances nothing). Phase 2 = complete except the two
+escalation items above, which are surfaced for the PR, not blockers to closing the ledger.
