@@ -18,7 +18,7 @@ are "compare-when-live" on both sides.
 
 ### SalesforceSDKCore (gate: `XCTSkipUnless(TestSetupUtils.authRefreshDidSucceed)` in each class)
 - `RestClientPublisherTests`
-- `RestClientTest`
+- `RestClientTests`  ← class is `RestClientTests` (plural); the file is named `RestClientTest.swift` (singular). Also `RestClientWebSocketTests` lives in the same file. `-only-testing` filters must use the class name, not the file name.
 - `SFSDKAuthUtilTests`
 - `SalesforceRestAPITests`  ← includes the 45 restored dropped methods (2026-07-17) + `testAssertionForUnauthenticatedClient` (see below)
 
@@ -179,3 +179,40 @@ RestClientTests 23/23 + RestClientPublisherTests 4/4 already clean (documented 2
 SDKCore live-org test surface is now GREEN (modulo the documented testOpenIDToken + Briefcase config
 baselines). NEXT: retire the MobileSync + SDKCore ledger classes per-class (task #17), then close
 Phase 2 (task #19).
+
+## PER-CLASS RETIREMENT — 2026-07-22 (Phase 2 milestone 3, task #17)
+Full per-class live-auth verification against the shared test org (both schemes rebuilt + run;
+oracle `.dev @ b155f785d`). RETIRED = the class runs live, matches oracle, and its only non-passes are
+documented config baselines (clean XCTSkip) — the `XCTSkipUnless(authRefreshDidSucceed)` live-auth guard
+STAYS on every class (correct: it skips only when no live org is available, e.g. credential-less CI).
+
+**The full-class verify caught 2 failures the #18 method-targeted run had missed** (both fixed in commit
+2df73b842) — evidence that per-class re-runs are worth doing before retiring:
+- [PROD] `SFRestAPI+QueryBuilder.soqlQuery` used `Array(Set(fields))` → non-deterministic SOQL field order
+  (Swift Set per-process randomized hash seed). `testSOQL` flipped pass↔fail between two runs. Fixed with
+  order-preserving dedup. ESCALATION: public REST query-builder output → PR-flag.
+- [TEST] `testUploadDownloadDeleteFileWithCommunity` — oracle's delete-by-sObject assertion was a vacuous
+  unsigned-`NSUInteger` `.location >= 0` tautology; the Swift port made it a real check that correctly
+  failed (delete-by-sObject URL is not community-scoped). Assert the true state.
+
+### SDKCore — RETIRED (4 classes)
+- `RestClientTests` — green (note: class is plural; file is `RestClientTest.swift`; `RestClientWebSocketTests` shares the file).
+- `RestClientPublisherTests` — green.
+- `SFSDKAuthUtilTests` — green; `testOpenIDToken` clean-skips (no-openid-scope config baseline).
+- `SalesforceRestAPITests` — green modulo `testRedirect` (documented both-sides 401≠200 baseline).
+
+### MobileSync — RETIRED (7 classes)
+Full run 2026-07-22: `** TEST SUCCEEDED **`, 141 passed / 0 failed / 0 crash.
+- `SyncManagerTests`, `SyncUpTargetTests`, `ParentChildrenSyncTests`, `SFSDKSyncsConfigTests`,
+  `SFLayoutSyncManagerTests`, `SFMetadataSyncManagerTests` — all green.
+- `BriefcaseSyncDownTests` — green; 7 methods clean-skip (Briefcase/Priming not provisioned = config baseline).
+
+### Retirement environment note
+`build-for-testing` + `test-without-building` can leave the SPM package framework (`SQLCipher.framework`)
+unassembled in the products dir → `dyld: Library not loaded @rpath/SQLCipher.framework` at launch, and a
+"Busy (Application failed preflight checks)" launch denial if the sim is contended by a prior run. Fix:
+run a single-pass `xcodebuild test` (build+test together) and serialize sim execution across schemes.
+
+Remaining before full ledger retirement (task #19): `testAssertionForUnauthenticatedClient`
+(documented-blocked — needs ObjC-exception catch bridge; a bridge now exists but the test's class live-gate
+would need relocation) is the only outstanding non-retired item. All other ledger classes are RETIRED.

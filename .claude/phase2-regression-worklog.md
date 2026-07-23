@@ -407,3 +407,37 @@ Commits (all pushed to fork feature/objc-to-swift-test-migration):
 Verified together: 6 pass + 1 skip, 0 failures, no cross-contamination (16.8s). `testRedirect`
 remains a confirmed baseline (401≠200 on both). NEXT: milestone 3 (un-gate/retire MobileSync ledger,
 task #17) + milestone 5 (retire full ledger, close Phase 2, task #19).
+
+## PER-CLASS LEDGER RETIREMENT — 2026-07-22 (Phase 2 milestone 3, task #17)
+Full per-class live-auth verification (both schemes, single-pass `xcodebuild test`, oracle `.dev @ b155f785d`).
+RETIRED = runs live + matches oracle + only documented config baselines remain as clean XCTSkip. The
+`XCTSkipUnless(authRefreshDidSucceed)` live-auth guard STAYS on every class (skips only when no live org).
+
+**Full-class verify caught 2 failures the #18 method-targeted run missed → both fixed (commit 2df73b842):**
+- `2df73b842` **[PROD] SFRestAPI+QueryBuilder.soqlQuery** — `Array(Set(fields))` gave NON-deterministic SOQL
+  field order (Swift Set per-process randomized hash seed); `testSOQL` flipped pass↔fail across two runs and
+  real callers got unpredictable ordering. Fix: order-preserving dedup (`filter { seen.insert($0).inserted }`).
+  ESCALATION: public REST query-builder output changes → PR-flag.
+- `2df73b842` **[TEST] testUploadDownloadDeleteFileWithCommunity** — oracle's delete-by-sObject assertion was a
+  vacuous tautology (`NSRange.location >= 0` on unsigned NSUInteger is always true); the straightforward Swift
+  port made it a real `range(of:) != nil` check that correctly failed (delete-by-sObject URL isn't
+  community-scoped). Fix: assert the true state (`XCTAssertNil`), matching the oracle's effective behavior.
+
+KEY LESSON (reinforced): method-targeted `-only-testing` runs can hide (a) order/seed-dependent
+non-determinism that only manifests across a full class run, and (b) failures in methods outside the
+targeted set. Always re-run the WHOLE class before declaring it retired.
+
+### RETIRED classes
+- SDKCore (4): RestClientTests, RestClientPublisherTests, SFSDKAuthUtilTests (testOpenIDToken clean-skip),
+  SalesforceRestAPITests (green modulo testRedirect = documented both-sides 401≠200 baseline).
+- MobileSync (7): SyncManagerTests, SyncUpTargetTests, ParentChildrenSyncTests, SFSDKSyncsConfigTests,
+  SFLayoutSyncManagerTests, SFMetadataSyncManagerTests, BriefcaseSyncDownTests (7 clean-skips = config baseline).
+  Full MobileSync run: ** TEST SUCCEEDED **, 141 passed / 0 fail / 0 crash.
+
+### Outstanding for task #19 (full ledger retirement)
+Only `testAssertionForUnauthenticatedClient` remains documented-blocked (needs ObjC-exception catch bridge +
+class live-gate relocation). Everything else RETIRED. Marker stays b5d37d807.
+
+ENV NOTE: `build-for-testing`+`test-without-building` can leave SQLCipher.framework unassembled →
+`dyld: Library not loaded @rpath/SQLCipher.framework`; and a contended sim gives "Busy / Application failed
+preflight checks". Fix: single-pass `xcodebuild test`, serialize sim execution across schemes.
