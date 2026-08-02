@@ -22,18 +22,24 @@ Last updated: 2026-07-29. Prepared at session close for a fresh agent to continu
   (flagged, deliberately not changed) — see "Awaiting human decision" below.
 
 ### Git state at handoff (verify these on resume)
-- HEAD: `aa1c9347e` (was `559eee97d` when this doc first written; HEAD advanced by the HANDOFF commit)
+- HEAD: `b15e03e42` (the 6-test port commit; parent `aa1c9347e` = the HANDOFF commit)
 - Branch: `feature/objc-to-swift-test-migration`
-- Working tree: **DIRTY (uncommitted)** — 2 modified source files + 2 new `.claude` docs (see below)
-- Remote: **0 ahead / 0 behind** `origin/…` at last push (the 6-test port is NOT yet committed)
+- Working tree: clean after the port commit (a follow-up doc-only commit updates this file)
+- Remote: **1+ ahead** of `origin/…` — the 6-test port is committed but **NOT pushed** (awaiting operator)
 - Sync marker: `b5d37d807` present — **do not advance it**
 
 ---
 
-## ⏸️ RESUME HERE (2026-08-01 session, pre-compact) — on "Continue" = COMMIT
+## ✅ COMMITTED (2026-08-01) — `b15e03e42` on `feature/objc-to-swift-test-migration`
 
-**Standing instruction:** the operator said on the word **"Continue"** we COMMIT the work below.
-Nothing else is pending after that commit unless the operator directs it.
+**The 6-test port below is now COMMITTED** (operator said "Continue"). Commit `b15e03e42`,
+5 files (2 Swift + 3 `.claude` docs), escalation-flagged. Working tree clean.
+**NOT pushed** — push is a separate outward action awaiting operator direction.
+Sync marker `b5d37d807` unchanged. Nothing else pending unless the operator directs it.
+
+The section below is retained as the record of what that commit contained.
+
+---
 
 ### What this session did
 1. **Static parity re-analysis** of migration test suite vs the unmigrated oracle **at the marker
