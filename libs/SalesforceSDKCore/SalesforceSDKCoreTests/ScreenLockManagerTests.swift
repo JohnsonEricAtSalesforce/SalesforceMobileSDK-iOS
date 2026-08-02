@@ -30,6 +30,7 @@ import XCTest
 
 class ScreenLockManagerTests: XCTestCase {
     override func setUpWithError() throws {
+        _ = KeychainHelper.removeAll()
         ScreenLockManagerInternal.shared.backgroundTimestamp = 0
     }
 
@@ -48,6 +49,54 @@ class ScreenLockManagerTests: XCTestCase {
         ScreenLockManagerInternal.shared.configuration = config
         XCTAssertEqual(ScreenLockManagerInternal.shared.configuration.icon, config.icon)
         XCTAssertEqual(ScreenLockManagerInternal.shared.configuration.iconSize, config.iconSize)
+    }
+
+    // MARK: - getTimeout() Aggregation Tests
+
+    func testShouldNotLock() {
+        XCTAssertNil(ScreenLockManagerInternal.shared.getTimeout(), "App should not lock by default.")
+    }
+
+    func testShouldLockMultiuser() throws {
+        let user0 = try createNewUserAccount(index: 0)
+        ScreenLockManagerInternal.shared.storeMobilePolicy(userAccount: user0, hasMobilePolicy: true, lockTimeout: 1)
+        let user1 = try createNewUserAccount(index: 1)
+        ScreenLockManagerInternal.shared.storeMobilePolicy(userAccount: user1, hasMobilePolicy: false, lockTimeout: 0)
+        XCTAssertEqual(ScreenLockManagerInternal.shared.getTimeout(), NSNumber(value: 1), "App should lock.")
+    }
+
+    func testShouldLockMultiuserDifferentTimeouts() throws {
+        let user0 = try createNewUserAccount(index: 0)
+        ScreenLockManagerInternal.shared.storeMobilePolicy(userAccount: user0, hasMobilePolicy: true, lockTimeout: 1)
+        let user1 = try createNewUserAccount(index: 1)
+        ScreenLockManagerInternal.shared.storeMobilePolicy(userAccount: user1, hasMobilePolicy: true, lockTimeout: 5)
+        let user2 = try createNewUserAccount(index: 2)
+        ScreenLockManagerInternal.shared.storeMobilePolicy(userAccount: user2, hasMobilePolicy: true, lockTimeout: 15)
+        XCTAssertEqual(ScreenLockManagerInternal.shared.getTimeout(), NSNumber(value: 1), "App should lock with most restrictive timeout")
+    }
+
+    func testShouldLockMultiuserDifferentTimeoutsReverseOrder() throws {
+        let user0 = try createNewUserAccount(index: 0)
+        ScreenLockManagerInternal.shared.storeMobilePolicy(userAccount: user0, hasMobilePolicy: true, lockTimeout: 15)
+        let user1 = try createNewUserAccount(index: 1)
+        ScreenLockManagerInternal.shared.storeMobilePolicy(userAccount: user1, hasMobilePolicy: true, lockTimeout: 5)
+        let user2 = try createNewUserAccount(index: 2)
+        ScreenLockManagerInternal.shared.storeMobilePolicy(userAccount: user2, hasMobilePolicy: true, lockTimeout: 1)
+        XCTAssertEqual(ScreenLockManagerInternal.shared.getTimeout(), NSNumber(value: 1), "App should lock with most restrictive timeout")
+    }
+
+    func testLogoutScreenLockUsers() throws {
+        let user0 = try createNewUserAccount(index: 0)
+        ScreenLockManagerInternal.shared.storeMobilePolicy(userAccount: user0, hasMobilePolicy: true, lockTimeout: 15)
+        let user1 = try createNewUserAccount(index: 1)
+        ScreenLockManagerInternal.shared.storeMobilePolicy(userAccount: user1, hasMobilePolicy: false, lockTimeout: 0)
+        let user2 = try createNewUserAccount(index: 2)
+        ScreenLockManagerInternal.shared.storeMobilePolicy(userAccount: user2, hasMobilePolicy: true, lockTimeout: 5)
+        XCTAssertEqual(ScreenLockManagerInternal.shared.getTimeout(), NSNumber(value: 5), "App should lock.")
+
+        ScreenLockManagerInternal.shared.logoutScreenLockUsers()
+        XCTAssertNil(ScreenLockManagerInternal.shared.getTimeout(), "App not should lock.")
+        // Can't test the users are actually logged out because it is a test.
     }
 
 // TODO: Add back after fixing Flappiness

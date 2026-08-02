@@ -121,6 +121,68 @@ class SFOAuthCoordinatorTests: XCTestCase {
 
         XCTAssertEqual(options.count, 0, "A nil sceneId must yield an empty options dictionary so nil is never inserted and the handler falls back to the default scene")
     }
+
+    // MARK: - Refresh-token migration
+
+    // migrateRefreshToken(_:) must synchronously set the auth type to .refreshTokenMigration and reset
+    // initialRequestLoaded before the REST call, then invoke the session's failure callback when the
+    // (not-properly-logged-in) user's request fails. Ported from the ObjC oracle
+    // (SFOAuthCoordinatorTests.m testMigrateRefreshTokenSetup); the oracle waited on a fixed
+    // dispatch_after(1s) — here we wait on the failure callback directly (no hardcoded delay) per the
+    // repo's no-sleeps testing standard.
+    func testMigrateRefreshTokenSetup() throws {
+        // Create test credentials
+        let credentials = try XCTUnwrap(OAuthCredentials.credentials(identifier: "testIdentifier",
+                                                                     clientId: "testClientId",
+                                                                     encrypted: false))
+        credentials.redirectUri = "testapp://callback"
+        credentials.domain = "test.salesforce.com"
+        credentials.accessToken = "testAccessToken"
+        credentials.refreshToken = "testRefreshToken"
+        credentials.instanceUrl = URL(string: "https://test.salesforce.com")
+
+        // Create a test user account (not fully logged in to avoid actual API calls)
+        let userAccount = UserAccount(credentials: credentials)
+
+        // Create auth request and session
+        let authRequest = SFSDKAuthRequest()
+        authRequest.oauthClientId = "newClientId"
+        authRequest.oauthCompletionUrl = "newapp://callback"
+        authRequest.loginHost = "login.salesforce.com"
+
+        let authSession = SFSDKAuthSession(with: authRequest, credentials: nil)
+
+        // Track the failure callback (fires because the user isn't logged in properly).
+        let failureExpectation = expectation(description: "Wait for failure callback")
+        var capturedAuthInfo: SFOAuthInfo?
+        var capturedError: Error?
+        authSession.authFailureCallback = { authInfo, error in
+            capturedAuthInfo = authInfo
+            capturedError = error
+            failureExpectation.fulfill()
+        }
+
+        // Create coordinator
+        let coordinator = SFOAuthCoordinator(authSession: authSession)
+        coordinator.credentials = credentials
+
+        // Verify initial state
+        XCTAssertNotNil(coordinator.credentials)
+        XCTAssertEqual(coordinator.credentials?.clientId, "testClientId")
+
+        // Call migrateRefreshToken - this attempts a REST API call which fails because the user is not
+        // properly logged in.
+        coordinator.migrateRefreshToken(userAccount)
+
+        // The auth info / initialRequestLoaded are set synchronously before the REST call.
+        XCTAssertEqual(coordinator.authInfo.authType, .refreshTokenMigration, "Auth type should be refresh token migration")
+        XCTAssertFalse(coordinator.initialRequestLoaded, "Initial request loaded should be false")
+
+        // The failure callback should be invoked when the REST API fails.
+        wait(for: [failureExpectation], timeout: 10.0)
+        XCTAssertNotNil(capturedError, "Should have captured an error")
+        XCTAssertEqual(capturedAuthInfo?.authType, .refreshTokenMigration, "AuthInfo type should be refresh token migration")
+    }
 }
 
 // MARK: - SFOAuthCoordinatorDelegate conformance for tests

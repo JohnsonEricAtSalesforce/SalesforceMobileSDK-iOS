@@ -22,11 +22,69 @@ Last updated: 2026-07-29. Prepared at session close for a fresh agent to continu
   (flagged, deliberately not changed) — see "Awaiting human decision" below.
 
 ### Git state at handoff (verify these on resume)
-- HEAD: `559eee97d` (`559eee97dae10cdcd2fe1e926bc3a5ecef384f02`)
+- HEAD: `aa1c9347e` (was `559eee97d` when this doc first written; HEAD advanced by the HANDOFF commit)
 - Branch: `feature/objc-to-swift-test-migration`
-- Working tree: **clean** (0 uncommitted)
-- Remote: **0 ahead / 0 behind** `origin/feature/objc-to-swift-test-migration` (all pushed)
+- Working tree: **DIRTY (uncommitted)** — 2 modified source files + 2 new `.claude` docs (see below)
+- Remote: **0 ahead / 0 behind** `origin/…` at last push (the 6-test port is NOT yet committed)
 - Sync marker: `b5d37d807` present — **do not advance it**
+
+---
+
+## ⏸️ RESUME HERE (2026-08-01 session, pre-compact) — on "Continue" = COMMIT
+
+**Standing instruction:** the operator said on the word **"Continue"** we COMMIT the work below.
+Nothing else is pending after that commit unless the operator directs it.
+
+### What this session did
+1. **Static parity re-analysis** of migration test suite vs the unmigrated oracle **at the marker
+   `b5d37d807`** (correct baseline; NOT the old merge-base `6ed0ab408`, NOT the `.dev` clone
+   `b155f785d` which is 8 behind). Result: near-total parity — 1203/1206 methods compiled; 11 real
+   SDKCore drops (4 superseded, 1 = B2 blocked, **6 actionable**). Doc: `.claude/oracle-parity-at-marker.md`.
+   (Caught + fixed my own parser bug: migration uses non-hex/variable-length synthetic pbxproj UUIDs.)
+2. **Execution parity** — built & ran the oracle @ marker vs the migration, both schemes, from
+   freshly-erased sims, with a **fresh live token** (operator-provided 2026-08-01, verified working).
+   Result: **no new migration regressions.** SDKCore: oracle 803/1 vs migration 792/3 — the 1 shared
+   failure `testRedirect` = baseline; the 2 extra migration failures are the **B1** `currentUserAccount`
+   setter divergence, now PROVEN by live A/B (oracle passes both, migration fails both, identical erased
+   sims + same token). MobileSync: migration 227/0/7 green; oracle's only failures are all
+   `BriefcaseSyncDownTests` (org-side Briefcase rules absent) which the migration correctly SKIPS →
+   migration is strictly MORE robust. Doc: `.claude/oracle-execution-parity-at-marker.md`.
+3. **Ported the 6 actionable coverage gaps** (operator: "Port them now"). ALL 6 pass; full-suite
+   regression gate clean.
+
+### Uncommitted changes to commit on "Continue"
+- **`libs/SalesforceSDKCore/SalesforceSDKCoreTests/ScreenLockManagerTests.swift`** (+49): 5 `getTimeout()`
+  multi-user aggregation tests (`testShouldNotLock`, `testShouldLockMultiuser`,
+  `testShouldLockMultiuserDifferentTimeouts`, `…ReverseOrder`, `testLogoutScreenLockUsers`) merged into
+  the existing compiled class; added `KeychainHelper.removeAll()` to `setUp` for oracle-matching isolation.
+- **`libs/SalesforceSDKCore/SalesforceSDKCoreTests/SFOAuthCoordinatorTests.swift`** (+62):
+  `testMigrateRefreshTokenSetup` ported; waits on the failure callback directly (NOT the oracle's
+  `dispatch_after(1s)` — no-sleeps standard).
+- **`.claude/oracle-parity-at-marker.md`** + **`.claude/oracle-execution-parity-at-marker.md`** (new docs).
+- NO pbxproj change (merged into already-compiled `.swift`). NO credential file in git (gitignored,
+  verified). Both ports are test-only, but touch escalation-class surfaces (multi-user account state;
+  OAuth token path) → **call out in PR**.
+
+### Verification already done (evidence, don't redo unless suspicious)
+- SDKCore `build-for-testing`: **TEST BUILD SUCCEEDED**.
+- Targeted run of the 2 classes: **14/14 pass** (all 6 new included).
+- Full SDKCore suite, erased sim, live token: **798 pass / 3 fail / 1 skip** — the 3 fails are EXACTLY
+  the pre-existing baselines (`testRedirect` + B1 pair `testNotEnabled`/`testShouldShowBackButton`);
+  passed rose 792→798 (+6 = the ports). **No new failures.**
+
+### On "Continue" — commit steps
+1. `git add` the 2 source files + the 2 new `.claude` docs (NOT `shared/test/test_credentials.json` —
+   gitignored; never stage it).
+2. Commit to the fork feature branch `feature/objc-to-swift-test-migration` with an escalation-flagged
+   message (test-only additions; multi-user + OAuth surfaces flagged for PR). Do NOT commit to `dev`.
+   Do NOT advance the sync marker. Push only if operator says so (they said commit; confirm push).
+3. Attribution/commit-format per global memory conventions.
+
+### Environment note for any re-run
+- Fresh live token is in BOTH clones' `shared/test/test_credentials.json` (gitignored). Oracle clone
+  `../SalesforceMobileSDK-iOS.forcedotcom.dev` was restored to `dev` (@ `0af97e7b4`) + its seeded creds
+  removed; only the migration clone retains the working creds file. Analysis logs (if still present):
+  `/tmp/oracle-analysis.OgVvt7/`.
 
 ---
 
