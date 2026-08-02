@@ -30,14 +30,31 @@ Last updated: 2026-07-29. Prepared at session close for a fresh agent to continu
 
 ---
 
-## ✅ COMMITTED (2026-08-01) — `b15e03e42` on `feature/objc-to-swift-test-migration`
+## ✅ COMMITTED + PUSHED (2026-08-01) — 6-test port + B1/B2 fixes
 
-**The 6-test port below is now COMMITTED** (operator said "Continue"). Commit `b15e03e42`,
-5 files (2 Swift + 3 `.claude` docs), escalation-flagged. Working tree clean.
-**NOT pushed** — push is a separate outward action awaiting operator direction.
+**Two batches of work committed on `feature/objc-to-swift-test-migration`, both PUSHED to `origin`:**
+
+1. **6-test port** — `b15e03e42` (+ doc follow-up `1e090a7df`). 5 latent oracle coverage-gap tests
+   (ScreenLock `getTimeout()` aggregation) + `testMigrateRefreshTokenSetup`. Detail below.
+2. **B1 + B2 escalation fixes** — operator + reviewer approved option (i) for B1 and the assertions-gated
+   catchable-exception approach for B2. Both byte-faithful to the oracle:
+   - **B1:** `SFUserAccountManager.swift` public `currentUserAccount` setter reverted to the bare synthesized
+     setter (`willChange/_currentUser = newValue/didChange`) — no managed-account gate, no `LastUserIdentity`
+     persistence. Gate/persistence still live in `setCurrentUserInternal(_:)` (internal login/switch paths +
+     `TestSetupUtils` unchanged). Fixes `testNotEnabled` + `testShouldShowBackButton`.
+   - **B2:** `SFRestAPI.swift` `send(...)` now raises a catchable `NSInternalInconsistencyException` gated to
+     assertions-enabled builds (detected via the public `assert()` autoclosure side-effect — `#if DEBUG` is
+     unusable, the framework target lacks DEBUG in SWIFT_ACTIVE_COMPILATION_CONDITIONS). Restored
+     `testAssertionForUnauthenticatedClient` via the `SFSDKCatchException` bridge.
+   - **Verify:** full SDKCore suite, freshly-erased sim + live token = **230 executed / 1 failure**; the sole
+     failure is `testRedirect` (§D baseline, fails on the oracle too). The former B1 pair + restored B2 test
+     all PASS. Tracked failures 3 → 1.
+   - Both remain escalation-class (account switching / public REST) → flag in the PR, but are no longer open
+     decisions. See `.claude/phase2-pr-escalation-summary.md` §B (both marked RESOLVED).
+
 Sync marker `b5d37d807` unchanged. Nothing else pending unless the operator directs it.
 
-The section below is retained as the record of what that commit contained.
+The section below is retained as the record of what the 6-test-port commit contained.
 
 ---
 

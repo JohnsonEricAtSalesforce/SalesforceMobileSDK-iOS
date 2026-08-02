@@ -34,7 +34,14 @@ Notes:
 
 ---
 
-## B. Production regression FOUND but deliberately NOT fixed (needs human decision)
+## B. Production regressions — RESOLVED 2026-08-01 (operator + reviewer approved; still flag in PR)
+
+> **STATUS UPDATE 2026-08-01:** both B1 and B2 have been FIXED with operator + reviewer approval (byte-faithful
+> to the oracle). Still escalation-class (account switching / public REST path) → call out in the PR, but they
+> are no longer open decisions. Full SDKCore suite after both fixes (freshly-erased sim, live token):
+> **230 executed / 1 failure** — the sole remaining failure is `testRedirect` (§D baseline, fails identically
+> on the oracle). The former B1 pair (`testNotEnabled`, `testShouldShowBackButton`) and the restored B2 test
+> (`testAssertionForUnauthenticatedClient`) all PASS. See each item's RESOLUTION below.
 
 ### B1. `currentUserAccount` public setter is gated + persists identity (account switching / public API)
 - **Where:** `SFUserAccountManager.swift` — public `currentUserAccount` setter (line ~234) routes to
@@ -59,6 +66,15 @@ Notes:
   migration setter accept an unmanaged user like the oracle's synthesized setter (closest to shipped
   behavior); or (ii) keep the gate as an intentional hardening and instead adjust the two tests' teardown to
   clear the disk plist. Recommendation: (i), to preserve byte-faithful public behavior.
+- **RESOLUTION (2026-08-01) — option (i) applied.** `SFUserAccountManager.swift` public `currentUserAccount`
+  setter no longer routes through `setCurrentUserInternal`; it is now the bare, byte-faithful synthesized
+  setter: `willChangeValue(forKey:"currentUser"); _currentUser = newValue; didChangeValue(...)` — no managed-
+  account gate, no `LastUserIdentity` persistence, KVO preserved. The gate + persistence still live in
+  `setCurrentUserInternal(_:)`/`setCurrentUserInternalFull(_:)`, which the internal login/switch paths call
+  directly (unchanged), and which `TestSetupUtils` still reaches via `perform(NSSelectorFromString("setCurrent
+  UserInternal:"))` — so login/switch hardening is fully preserved; only the *public* setter is now bare.
+  **Verified:** `testNotEnabled` and `testShouldShowBackButton` both PASS in full-suite order on a freshly-
+  erased sim. Tracked failures 3 → 1 (only `testRedirect` remains).
 
 ### B2. `testAssertionForUnauthenticatedClient` — restore requires a prod assert→NSException change
 - **Where:** `SFRestAPI.swift:297` `assert(!request.requiresAuthentication, "Use RestClient sharedInstance
@@ -73,9 +89,29 @@ Notes:
 - **Option for reviewer:** if desired, change `SFRestAPI.send(...)` to raise a catchable
   `NSException(.internalInconsistencyException)` (mirrors the OAuth NSAssert→catchable fix already done in
   `SFOAuthCoordinator.swift`, see [[project_oauth_nsassert_fix]]), then restore the test using the existing
-  `SFSDKCatchException` bridge. Behavior change: the precondition would then fire in all build configs
+  `SFSDKCatchException` bridge. Behavior change: an *unconditional* throw would fire in all build configs
   (release included), which is stricter than both the Swift `assert` and ObjC's `NSAssert` under
   `NS_BLOCK_ASSERTIONS`.
+- **RECOMMENDATION + DECISION (2026-08-01):** for maximum oracle fidelity, raise the catchable
+  `NSInternalInconsistencyException` **gated to assertions-enabled (debug/test) builds**, NOT unconditionally.
+  `NSAssert` is a no-op under `NS_BLOCK_ASSERTIONS` (release), so an assertions-gated throw matches the
+  oracle's runtime behavior in *every* build config: debug → catchable exception (test restores via
+  `SFSDKCatchException`); release → no-op, zero delta from oracle. An unconditional throw would be stricter
+  than the oracle in release and is therefore NOT byte-faithful. Operator + reviewer approved this gated
+  approach.
+- **RESOLUTION (2026-08-01) — applied.** `SFRestAPI.swift` `send(...)` replaced the Swift `assert()` with a
+  catchable `NSException(name: .internalInconsistencyException, …).raise()`, gated to assertions-enabled
+  builds. **Gate implementation note:** `#if DEBUG` is NOT usable here — the `SalesforceSDKCore` *framework*
+  target does not define `DEBUG` in `SWIFT_ACTIVE_COMPILATION_CONDITIONS` even in the Debug configuration
+  (only the ObjC `GCC_PREPROCESSOR_DEFINITIONS` carries `DEBUG=1`), so a `#if DEBUG` guard compiled to nothing
+  in the framework and the first attempt failed the restored test. Fixed by detecting assertions-enabled at
+  runtime via the *public* `assert(_:)` intrinsic itself (`var enabled=false; assert({enabled=true;return
+  true}())`) — its autoclosure runs only when assertions are active, which is exactly the `NS_BLOCK_ASSERTIONS`
+  condition `NSAssert` keys off, and avoids the underscored `_isDebugAssertConfiguration()` SPI. Restored
+  `testAssertionForUnauthenticatedClient` in `SalesforceRestAPITests.swift` using the `SFSDKCatchException`
+  bridge (asserts the raised exception's name is `.internalInconsistencyException`). **Verified:** the test
+  PASSES (targeted + full-suite); zero release-behavior delta from the oracle. Still escalation-class (public
+  REST send path) — flag in PR.
 
 ---
 

@@ -294,7 +294,27 @@ open class RestClient: NSObject {
         request.successBlock = successBlock
 
         if !requiresAuthentication {
-            assert(!request.requiresAuthentication, "Use RestClient sharedInstance for authenticated requests")
+            // Oracle parity (SFRestAPI.m used `NSAssert` here): raise a *catchable*
+            // NSInternalInconsistencyException so a global (unauthenticated) client refuses to
+            // send a request that requires authentication. Gated to assertions-enabled
+            // (debug/test) builds to mirror `NSAssert`, which is compiled out under
+            // `NS_BLOCK_ASSERTIONS` (release). We detect assertions-enabled with the *public*
+            // `assert(_:)` itself — its autoclosure runs only when assertions are active, so the
+            // side effect flips the flag exactly in the builds where `NSAssert` would fire. (This
+            // avoids both the underscored `_isDebugAssertConfiguration()` SPI and `#if DEBUG`,
+            // which is unusable here because the SalesforceSDKCore framework target does not
+            // define DEBUG in SWIFT_ACTIVE_COMPILATION_CONDITIONS even in the Debug config.) Net
+            // effect: debug/test → catchable exception; release → no-op, i.e. zero
+            // release-behavior delta from the oracle. The prior Swift `assert()` was an
+            // uncatchable process trap; the catchable NSException lets test code intercept it via
+            // the SFSDKCatchException bridge (matches the ObjC test's @try/@catch).
+            var assertionsEnabled = false
+            assert({ assertionsEnabled = true; return true }())
+            if assertionsEnabled, request.requiresAuthentication {
+                NSException(name: .internalInconsistencyException,
+                            reason: "Use RestClient sharedInstance for authenticated requests",
+                            userInfo: nil).raise()
+            }
         }
 
         activeRequests.add(request)

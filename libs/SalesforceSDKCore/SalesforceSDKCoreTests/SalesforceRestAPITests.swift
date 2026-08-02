@@ -307,10 +307,29 @@ class SalesforceRestAPITests: XCTestCase {
         dataCleanupRequired = false
     }
 
-    // NOTE: This test verifies that using an unauthenticated (global) client to make
-    // authenticated requests raises an assertion. Since ObjC NSExceptions cannot be
-    // caught natively in Swift without a bridging helper, this test is preserved in
-    // the .m file. The Swift equivalent would require an ObjC exception catcher utility.
+    // Ported from the ObjC oracle (SalesforceRestAPITests.m testAssertionForUnauthenticatedClient).
+    // Sending a request that requiresAuthentication through the *global* (unauthenticated) client must
+    // raise a catchable NSInternalInconsistencyException. The oracle used @try/@catch; Swift cannot
+    // catch NSException natively, so we bridge it via the header-only SFSDKCatchException helper (the
+    // same pattern used in SalesforceOAuthUnitTests). The production guard lives in SFRestAPI.send and
+    // is gated to DEBUG builds to mirror the oracle's NSAssert (compiled out under NS_BLOCK_ASSERTIONS),
+    // so this test is likewise only meaningful in debug/test builds.
+    func testAssertionForUnauthenticatedClient() throws {
+        let request = RestClient.sharedGlobalInstance.requestForResources(SFRestDefaultAPIVersion)
+        request.requiresAuthentication = true
+
+        let exception = SFSDKCatchException {
+            RestClient.sharedGlobalInstance.send(request, failureBlock: { _, _, _ in
+                // Should not reach here — the precondition raises before the request is sent.
+            }, successBlock: { _, _ in
+                // Should not reach here.
+            })
+        }
+
+        XCTAssertNotNil(exception, "Expected an NSException to be raised for an authenticated request on the unauthenticated global client")
+        XCTAssertEqual(exception?.name, NSExceptionName.internalInconsistencyException)
+        dataCleanupRequired = false
+    }
 
     func testGetVersion_SetDelegate() {
         let request = RestClient.sharedInstance.requestForVersions()

@@ -224,6 +224,16 @@ open class UserAccountManager: NSObject {
     @objc public var authCancelledByUserHandlerBlock: (() -> Void)?
 
     /// The current user account. May be nil if no user is logged in.
+    ///
+    /// The public setter mirrors the (unmigrated) ObjC oracle, where `currentUser` is a plain
+    /// `@synthesize currentUser = _currentUser` property with a custom getter only: assigning
+    /// `currentUserAccount = user` uses the compiler-**synthesized** setter — a bare
+    /// `_currentUser = user` with KVO notifications, and NO validation or persistence. The gated,
+    /// identity-persisting behavior lives in `setCurrentUserInternal(_:)`, which the internal login
+    /// and switch paths call directly. An earlier migration pass incorrectly routed this public
+    /// setter through the gate, which silently dropped assignments of not-yet-managed accounts
+    /// (a public-behavior divergence from the shipped ObjC SDK). Restored to the bare synthesized
+    /// setter here for byte-faithful parity.
     @objc public var currentUserAccount: UserAccount? {
         get {
             if _currentUser == nil {
@@ -232,7 +242,11 @@ open class UserAccountManager: NSObject {
             return _currentUser
         }
         set {
-            setCurrentUserInternal(newValue)
+            // Matches the ObjC synthesized setter: bare assignment with KVO for "currentUser",
+            // no managed-account gate and no LastUserIdentity persistence.
+            willChangeValue(forKey: "currentUser")
+            _currentUser = newValue
+            didChangeValue(forKey: "currentUser")
         }
     }
     var _currentUser: UserAccount?
