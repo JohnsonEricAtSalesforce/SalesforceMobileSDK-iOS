@@ -22,9 +22,11 @@ Last updated: 2026-08-15. Prepared at session close for a fresh agent to continu
   (flagged, deliberately not changed) — see "Awaiting human decision" below.
 
 ### Git state at handoff (verify these on resume)
-- HEAD: `077a019b0` (this close-out doc-sync commit; chain: `b15e03e42` 6-test port → `1e090a7df` doc → `fd7c21f07` B1/B2 fixes → `077a019b0` doc-sync)
+- Last substantive commit: `fd7c21f07` (B1/B2 fixes). Chain: `b15e03e42` 6-test port →
+  `1e090a7df` doc → `fd7c21f07` B1/B2 fixes → then doc-sync close-out commit(s) on top.
+  HEAD is whatever the latest doc-sync commit is — verify live with `git log --oneline -3`.
 - Branch: `feature/objc-to-swift-test-migration`
-- Working tree: **clean** (all work committed)
+- Working tree: **clean** (all work committed) — verify with `git status`
 - Remote: **0 ahead / 0 behind** `origin/feature/objc-to-swift-test-migration` — everything PUSHED
 - Sync marker: `b5d37d807` present, NOT an ancestor of HEAD (expected — semantic re-impl) — **do not advance it**
 
