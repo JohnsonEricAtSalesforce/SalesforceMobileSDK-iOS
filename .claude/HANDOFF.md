@@ -5,7 +5,7 @@ directory. It states what is done, the current status, the remaining task list, 
 hard constraints. Deeper detail lives in the linked source-of-truth docs — do not
 re-derive; read them.
 
-Last updated: 2026-07-29. Prepared at session close for a fresh agent to continue.
+Last updated: 2026-08-15. Prepared at session close for a fresh agent to continue.
 
 ---
 
@@ -22,11 +22,11 @@ Last updated: 2026-07-29. Prepared at session close for a fresh agent to continu
   (flagged, deliberately not changed) — see "Awaiting human decision" below.
 
 ### Git state at handoff (verify these on resume)
-- HEAD: `b15e03e42` (the 6-test port commit; parent `aa1c9347e` = the HANDOFF commit)
+- HEAD: `077a019b0` (this close-out doc-sync commit; chain: `b15e03e42` 6-test port → `1e090a7df` doc → `fd7c21f07` B1/B2 fixes → `077a019b0` doc-sync)
 - Branch: `feature/objc-to-swift-test-migration`
-- Working tree: clean after the port commit (a follow-up doc-only commit updates this file)
-- Remote: **1+ ahead** of `origin/…` — the 6-test port is committed but **NOT pushed** (awaiting operator)
-- Sync marker: `b5d37d807` present — **do not advance it**
+- Working tree: **clean** (all work committed)
+- Remote: **0 ahead / 0 behind** `origin/feature/objc-to-swift-test-migration` — everything PUSHED
+- Sync marker: `b5d37d807` present, NOT an ancestor of HEAD (expected — semantic re-impl) — **do not advance it**
 
 ---
 
@@ -138,41 +138,46 @@ Milestones (all committed + pushed):
 
 ---
 
-## Awaiting HUMAN decision (flagged, NOT changed — do not auto-act)
+## B1 / B2 — FIXED 2026-08-15 (operator + reviewer approved; still flag in PR)
 
 Per `CLAUDE.md` escalation rules (account switching, OAuth/credential, public API, sync
-engine, localization, build system → STOP and flag). Full write-up:
-`.claude/phase2-pr-escalation-summary.md`.
+engine, localization, build system → STOP and flag). Full write-up + RESOLUTION notes:
+`.claude/phase2-pr-escalation-summary.md` §B (both marked RESOLVED).
 
-- **B1 — `currentUserAccount` public setter divergence (account switching / public API).**
-  Migration's setter is gated + persists `LastUserIdentity`
-  (`SFUserAccountManager.swift`, setter → `setCurrentUserInternalFull`); the oracle's is the
-  compiler-synthesized bare `_currentUser = user`. Proven via controlled experiment (oracle
-  passes the `testNotEnabled → testShouldShowBackButton` pair; migration fails). Blast
-  radius LOW (prod login always upserts before setting current user). Reviewer options in
-  the summary §B1. **Not fixed** — needs human sign-off.
+Both were production regressions vs the oracle; operator + reviewer approved byte-faithful
+fixes, now committed in `fd7c21f07` and pushed. They REMAIN escalation-class (account
+switching / public REST path) → **still call out in the PR** — but they are no longer open
+decisions, and a fresh agent should NOT re-open or re-implement them.
 
-- **B2 — `testAssertionForUnauthenticatedClient` restore (public REST send path).**
-  Faithful restore needs converting `SFRestAPI.swift:297` `assert(...)` (non-catchable Swift
-  trap) into a catchable `NSException` matching the oracle's `NSAssert`. Escalation-class
-  REST-behavior change → deferred. Left documented-blocked; option in summary §B2.
+- **B1 — `currentUserAccount` public setter (account switching / public API). FIXED.**
+  `SFUserAccountManager.swift` public setter reverted to the bare synthesized form
+  (`willChange` / `_currentUser = newValue` / `didChange`) — no managed-account gate, no
+  `LastUserIdentity` persistence, matching the oracle's `@synthesize currentUser`. The gate +
+  persistence still live in `setCurrentUserInternal(_:)`/`…Full(_:)`, which the internal
+  login/switch paths + `TestSetupUtils` call directly (unchanged). Fixed `testNotEnabled` +
+  `testShouldShowBackButton`.
 
-These are surfaced for the PR, not blockers. Do NOT change them without explicit operator
-direction.
+- **B2 — `testAssertionForUnauthenticatedClient` (public REST send path). FIXED.**
+  `SFRestAPI.swift` `send(...)` replaced the uncatchable Swift `assert()` with a catchable
+  `NSInternalInconsistencyException`, gated to assertions-enabled builds (detected at runtime
+  via the public `assert()` autoclosure side-effect — `#if DEBUG` is unusable: the framework
+  target lacks `DEBUG` in `SWIFT_ACTIVE_COMPILATION_CONDITIONS`). Mirrors `NSAssert` (no-op in
+  release → zero release delta). Test restored via the `SFSDKCatchException` bridge.
+
+**Verify (already done):** full SDKCore suite, freshly-erased sim + live token =
+**230 executed / 1 failure**; the sole failure is `testRedirect` (§D baseline, fails on the
+oracle too). Former B1 pair + restored B2 test all PASS. Tracked failures 3 → 1.
 
 ---
 
 ## Remaining task list
 
 - **Phase 2 / migration work: NONE pending.** Do not re-port, re-run retirement, or advance
-  the marker.
+  the marker. B1/B2 are FIXED (above) — do not re-open.
 - **Human PR review** of the escalation set in `.claude/phase2-pr-escalation-summary.md`
-  (§A committed prod changes, §B1/§B2 deferred items, §C Phase-1 porting escalations, §D
-  confirmed baselines). This is a human step — the agent's role is to answer questions and,
-  only if the operator explicitly authorizes, apply B1/B2.
-- **Optional future work** (only if operator asks): (a) apply the reviewer's chosen B1
-  option; (b) if desired, do the B2 prod assert→NSException conversion + restore the test
-  via the existing `SFSDKCatchException` bridge; (c) chase forcedotcom/dev if it has moved
+  (§A committed prod changes, §B1/§B2 now-RESOLVED prod fixes, §C Phase-1 porting escalations,
+  §D confirmed baselines). This is a human step — the agent's role is to answer questions.
+- **Optional future work** (only if operator asks): chase forcedotcom/dev if it has moved
   past `b5d37d807` (re-run Phase 0 grouping from the marker) — forcedotcom is a moving
   target, a fresh backlog on re-fetch is expected/fine.
 
